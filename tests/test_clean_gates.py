@@ -269,12 +269,17 @@ class GatesTests(clean_support.CleanCase):
         # registry path's included.
         mismatch = TEXT["plan_incomplete"].format(CODE="inspection-incomplete",
                                                   REMEDY=TEXT["remedy_inspection_incomplete_redirect"])
+        # Where a row's path could not be read, the remedy names no git
+        # worktree prune (#19's round (l); W87 M-1, lead ruling R-307).
+        unread = TEXT["plan_incomplete"].format(CODE="inspection-incomplete",
+                                                REMEDY=TEXT["remedy_inspection_incomplete_unread"])
 
-        def assert_incomplete(added):
+        def assert_incomplete(added, message=None):
             """The copy's plan, with added (path to reason) beside the
             scenario's rows: incomplete, its preview exit 1, and --apply with
-            --yes refused with exit 2, nothing removed."""
-            message = mismatch if "registration-mismatch" in added.values() else refused
+            --yes refused with exit 2, nothing removed; the refusal's message
+            is message when given."""
+            message = message or (mismatch if "registration-mismatch" in added.values() else refused)
             before = self.snapshot(root)
             result = self.preview(root, cwd=current)
             self.assert_status(result, 1)
@@ -302,7 +307,7 @@ class GatesTests(clean_support.CleanCase):
             self.git(root, "worktree", "add", "-q", "-b", "021-unreadable", tree)
             hidden.chmod(0o600)
             try:
-                assert_incomplete({str(tree): "inspection-error"})
+                assert_incomplete({str(tree): "inspection-error"}, unread)
             finally:
                 hidden.chmod(0o700)
                 self.git(root, "worktree", "remove", "--force", tree)
@@ -1347,6 +1352,271 @@ class GatesTests(clean_support.CleanCase):
                 out_status, out, err = self.main_in_process("clean", root, *words, run_bounded=run_bounded)
                 self.assertEqual((out_status, err), (status, "REFUSED: " + message + "\n"), out)
         self.assertEqual(self.snapshot(root), before, "nothing removed")
+
+    # #19's round (l) (lane 3's W87 M-1; lead rulings R-307 and R-310): a row
+    # whose path could not be read at planning. `git worktree prune` deletes
+    # the admin directory of a live worktree whose path Git cannot stat
+    # (EACCES), on Git 2.43.0 and 2.36.6, and acts on the whole repository, so
+    # such a row's next step (T1), and the remedy (T2, T3) and the
+    # inspection-error and registration-mismatch next steps (T4, T5) of a plan
+    # that holds one, name prune only to warn against it.
+
+    def unread_worktree(self, root, branch):
+        """W73's layout under the test's base: a merged linked worktree at
+        par/wt, then `chmod 000 par`, so that the row's planning lstat fails
+        with EACCES (`present` null, an `os-error`, `inspection-error`). The
+        mode is restored in a cleanup that tolerates a missing path. Returns
+        (the worktree's path, a function that restores par's mode now)."""
+        parent = self.base / "par"
+        parent.mkdir()
+        tree = self.merged_worktree(branch, path=parent / "wt", root=root)
+        mode = parent.stat().st_mode & 0o7777
+
+        def restore():
+            with contextlib.suppress(FileNotFoundError):
+                parent.chmod(mode)
+        self.addCleanup(restore)
+        parent.chmod(0o000)
+        return tree, restore
+
+    def excluded_group(self, reason, rows, step=None):
+        """An Excluded group of the human preview: its line, NEXT STEP step or
+        the fixtures' for reason, then one line per (path, branch) of rows."""
+        return [TEXT["excluded_group"].format(REASON=reason, K=len(rows), NEXT_STEP=step or STEPS[reason]),
+                *(TEXT["excluded_row"].format(PATH=path, BRANCH=branch) for path, branch in rows)]
+
+    def assert_unread_runs(self, root, runs, message, rows):
+        """Each of runs, (label, words, status, body), made human under the
+        counting wrapper: exit status, standard error the one refusal
+        `inspection-incomplete` with message, the human lines after the
+        header body (unless None), and no removal child; and, but for push
+        and delete-branch, which take no --json, made with --json too: the
+        document's refusals that one, its rows by path (present,
+        classification) as rows gives them, no removal child, and standard
+        error the human plan, its lines after the header body, under --apply
+        (run.human), else nothing."""
+        for label, words, status, body in runs:
+            with self.subTest(label):
+                result, records = self.run_counted("clean", root, *words)
+                self.assert_status(result, status)
+                self.assertEqual(result.stderr, "REFUSED: " + message + "\n")
+                if body is not None:
+                    self.assertEqual(result.stdout.splitlines()[3:], body)
+                self.assertEqual(removals(records), [])
+                if "push" in words or "delete-branch" in words:
+                    continue
+                result, records = self.run_counted("clean", root, *words, "--json")
+                self.assert_status(result, status)
+                document = self.load_json(result)
+                self.assertEqual(document["refusals"], [{"code": "inspection-incomplete", "message": message}])
+                self.assertEqual({row["path"]: (row["present"], row["classification"])
+                                  for row in document["worktrees"]}, rows)
+                self.assertEqual(removals(records), [])
+                if "--apply" not in words:
+                    self.assertEqual(result.stderr, "")
+                elif body is not None:
+                    self.assertEqual(result.stderr.splitlines()[3:], body)
+
+    @clean_support.not_root
+    def test_clean_an_unread_row_s_next_step_and_remedy_name_no_prune(self):
+        # A merged worktree and an unread one: the unread row's next step is
+        # T1, and the plan's remedy T2, in the report, the --all-safe preview
+        # and apply, a single removal naming the unread row (with and without
+        # --yes), human and --json (where --apply prints the plan to standard
+        # error), and push and delete-branch, which take no --json; a single
+        # removal naming the other row is complete, its preview printing T1
+        # for the unread row's group before it stops at
+        # confirmation-required. The exit codes and every other line are as
+        # before.
+        root = self.repo()
+        self.bare_remote()
+        merged = self.merged_worktree("001-merged", path=self.base / "001-merged")
+        tree, _ = self.unread_worktree(root, "002-unread")
+        step = TEXT["next_step_unread_row"]
+        self.assertEqual(step, "inspect the row by hand; its path could not be read, so do not run git worktree "
+                               "prune until it can")
+        self.assertEqual(TEXT["remedy_inspection_incomplete_unread"],
+                         "repair or remove the inspection-error rows first: git worktree repair, or remove the row "
+                         "by hand after review; a row's path could not be read, so do not run git worktree prune "
+                         "until it can")
+        message = TEXT["plan_incomplete"].format(CODE="inspection-incomplete",
+                                                 REMEDY=TEXT["remedy_inspection_incomplete_unread"])
+        main = self.excluded_group("main-worktree", [(root, "main")])
+        unread = self.excluded_group("inspection-error", [(tree, "002-unread")], step)
+        selected = [TEXT["selected_heading"].format(N=1),
+                    TEXT["selected_row"].format(PATH=merged, BRANCH="001-merged")]
+        batch = [*selected, TEXT["excluded_heading"].format(M=2), *main, *unread, TEXT["residual_window_line"]]
+        named = [TEXT["excluded_heading"].format(M=3), *main, *unread,
+                 *self.excluded_group("not-requested", [(merged, "001-merged")])]
+        rows = {str(root): (True, "protected-default"), str(merged): (True, "merged-removable"),
+                str(tree): (None, "inspection-error")}
+        before = self.snapshot(root)
+        self.assert_unread_runs(root, (
+            ("report", (), 1, None),
+            ("--all-safe", ("--all-safe",), 1, batch),
+            ("--all-safe --apply", ("--all-safe", "--apply", "--yes"), 2, batch),
+            ("--worktree W, the unread row", ("--apply", "--action", "remove", "--worktree", tree), 2, named),
+            ("--worktree W --yes, the unread row", ("--apply", "--action", "remove", "--worktree", tree, "--yes"),
+             2, named),
+            ("push", ("--apply", "--action", "push", "--branch", "001-merged", "--yes"), 2, None),
+            ("delete-branch", ("--apply", "--action", "delete-branch", "--branch", "001-merged", "--yes"), 2, None),
+        ), message, rows)
+        document = self.preview(root).document
+        self.assertEqual(row_of(document, tree)["errors"], [{"code": "os-error", "message": TEXT[
+            "row_error_os_error"].format(OPERATION="lstat", STRERROR=os.strerror(errno.EACCES))}])
+        self.assertEqual(by_path(document), {str(root): "main-worktree", str(tree): "inspection-error"})
+        with self.subTest("--worktree W, the other row: complete, T1 in the preview"):
+            # No --yes, and standard input no terminal: the plan is printed,
+            # then refused as confirmation-required, before any removal.
+            result, records = self.run_counted("clean", root, "--apply", "--action", "remove", "--worktree", merged)
+            self.assert_status(result, 2)
+            self.assertEqual((result.stdout.splitlines()[3:], result.stderr),
+                             ([*selected, TEXT["excluded_heading"].format(M=2), *main, *unread,
+                               TEXT["residual_window_line"]], "REFUSED: " + TEXT["confirmation_required"] + "\n"))
+            self.assertEqual(removals(records), [])
+        self.assertEqual(self.snapshot(root), before, "nothing removed")
+        self.assertTrue((self.common_dir(root) / "worktrees" / "wt").is_dir(), "the unread row's admin directory")
+
+    @clean_support.not_root
+    def test_clean_an_unread_row_beside_a_readable_inspection_error_row(self):
+        # R-307's precedence: T2 wherever any row of the plan has a path that
+        # could not be read, whether or not the refusal counts that row and
+        # whether or not the work deadline stopped it; T1 for that row alone,
+        # in a group of its own under inspection-error, first, while a
+        # readable inspection-error row (a reflog read that fails with
+        # EISDIR, gate 7) takes T4 in the group that follows (R-310). With
+        # the path readable again, the plain remedy and next step print as
+        # before.
+        root = self.repo()
+        self.bare_remote()
+        failing = self.merged_worktree("001-failing", path=self.base / "001-failing")
+        tree, restore = self.unread_worktree(root, "002-unread")
+        self.reflog_file("001-failing", root).unlink()
+        self.reflog_file("001-failing", root).mkdir()  # EISDIR: gate 7's other read error
+        self.assertEqual(TEXT["next_step_inspection_error_unread"],
+                         "review, then git worktree repair, or remove the row by hand; a row's path could not be "
+                         "read, so do not run git worktree prune until it can")
+        unread_remedy = TEXT["plan_incomplete"].format(CODE="inspection-incomplete",
+                                                       REMEDY=TEXT["remedy_inspection_incomplete_unread"])
+        main = self.excluded_group("main-worktree", [(root, "main")])
+        unread = self.excluded_group("inspection-error", [(tree, "002-unread")], TEXT["next_step_unread_row"])
+        beside = self.excluded_group("inspection-error", [(failing, "001-failing")],
+                                     TEXT["next_step_inspection_error_unread"])
+        plain = self.excluded_group("inspection-error", [(failing, "001-failing")])
+        groups = [TEXT["excluded_heading"].format(M=3), *main, *unread, *beside]
+        rows = {str(root): (True, "protected-default"), str(failing): (True, "inspection-error"),
+                str(tree): (None, "inspection-error")}
+        before = self.snapshot(root)
+        self.assert_unread_runs(root, (
+            ("--all-safe, both rows counted", ("--all-safe",), 1, groups),
+            ("--all-safe --apply", ("--all-safe", "--apply", "--yes"), 2, groups),
+            ("--worktree W, the readable row: the unread row not counted",
+             ("--apply", "--action", "remove", "--worktree", failing), 2, groups),
+            ("--worktree W --yes, the readable row",
+             ("--apply", "--action", "remove", "--worktree", failing, "--yes"), 2, groups),
+        ), unread_remedy, rows)
+        self.assertEqual(self.snapshot(root), before, "nothing removed")
+        restore()
+
+        with self.subTest("the unread row stopped at the work deadline, not counted"):
+            # The path readable again, the stand-in alone cuts its lstat.
+            raw, real_fs_call, calls = os.fsencode(tree), project.fs_call, []
+
+            def fs_call(fn, *args, **options):
+                if fn is os.lstat and args == (raw,):
+                    calls.append(args[0])
+                    return project.DriverOutcome(None, "deadline", detail="no time was left to start it")
+                return real_fs_call(fn, *args, **options)
+
+            stopped = {"code": "deadline-exceeded", "message": TEXT["row_error_deadline_exceeded"].format(
+                OPERATION="lstat")}
+            refusals = [{"code": "inspection-incomplete", "message": unread_remedy},
+                        {"code": "deadline-exceeded", "message": TEXT["plan_incomplete"].format(
+                            CODE="deadline-exceeded", REMEDY=TEXT["remedy_deadline_exceeded"])}]
+            out_status, out, err = self.main_in_process("clean", root, "--all-safe", "--json", fs_call=fs_call)
+            self.assertEqual(out_status, 1, out + err)
+            document = json.loads(out)
+            row = row_of(document, tree)
+            self.assertEqual((row["present"], row["classification"], row["errors"]),
+                             (None, "inspection-error", [stopped]))
+            self.assertEqual(document["refusals"], refusals)
+            out_status, out, err = self.main_in_process("clean", root, "--all-safe", fs_call=fs_call)
+            self.assertEqual((out_status, err), (1, "REFUSED: " + unread_remedy + "\n"), out)
+            self.assertEqual(out.splitlines()[3:], groups)
+            self.assertEqual(calls, [raw, raw], "one lstat of the unread row per run")
+
+        with self.subTest("the path readable again: the plain texts"):
+            result, records = self.run_counted("clean", root, "--all-safe")
+            self.assert_status(result, 1)
+            self.assertEqual(result.stderr, "REFUSED: " + TEXT["plan_incomplete"].format(
+                CODE="inspection-incomplete", REMEDY=TEXT["remedy_inspection_incomplete"]) + "\n")
+            self.assertEqual(result.stdout.splitlines()[3:], [
+                TEXT["selected_heading"].format(N=1), TEXT["selected_row"].format(PATH=tree, BRANCH="002-unread"),
+                TEXT["excluded_heading"].format(M=2), *main, *plain, TEXT["residual_window_line"]])
+            self.assertEqual(removals(records), [])
+
+    @clean_support.not_root
+    def test_clean_an_unread_row_beside_a_redirected_row(self):
+        # Beside a row the refusal counts as registration-mismatch (#19's
+        # round (h)), the unread form of the redirect's variant, T3: the
+        # report, the --all-safe preview and apply, and a single removal
+        # naming the redirected row. A single removal naming the unread row
+        # counts P's rows alone, none redirected, so T2: the variant's
+        # counting is unchanged. In every preview the redirected row's group
+        # takes T5 (R-310). With the path readable again, the variant and the
+        # plain next step print as before.
+        root = self.repo()
+        self.bare_remote()
+        redirected = self.merged_worktree("001-redirected", path=self.base / "001-redirected")
+        tree, restore = self.unread_worktree(root, "002-unread")
+        self.git(root, "config", "extensions.worktreeConfig", "true")
+        self.git(redirected, "config", "--worktree", "core.bare", "true")
+        self.assertEqual(TEXT["remedy_inspection_incomplete_redirect_unread"],
+                         "repair or remove the inspection-error rows first: git worktree repair, unset core.worktree "
+                         "and core.bare in the repository's config or in a worktree's config.worktree, or remove the "
+                         "row by hand after review; a row's path could not be read, so do not run git worktree prune "
+                         "until it can")
+
+        def message(key):
+            return TEXT["plan_incomplete"].format(CODE="inspection-incomplete", REMEDY=TEXT[key])
+
+        self.assertEqual(TEXT["next_step_registration_mismatch_unread"],
+                         "review, then git worktree repair, unset core.worktree and core.bare in the repository's "
+                         "config, or in that worktree's config.worktree, or remove the row by hand; a row's path "
+                         "could not be read, so do not run git worktree prune until it can")
+        main = self.excluded_group("main-worktree", [(root, "main")])
+        mismatch = self.excluded_group("registration-mismatch", [(redirected, "001-redirected")])
+        groups = [TEXT["excluded_heading"].format(M=3), *main,
+                  *self.excluded_group("registration-mismatch", [(redirected, "001-redirected")],
+                                       TEXT["next_step_registration_mismatch_unread"]),
+                  *self.excluded_group("inspection-error", [(tree, "002-unread")], TEXT["next_step_unread_row"])]
+        rows = {str(root): (True, "protected-default"), str(redirected): (True, "inspection-error"),
+                str(tree): (None, "inspection-error")}
+        before = self.snapshot(root)
+        self.assert_unread_runs(root, (
+            ("report", (), 1, None),
+            ("--all-safe", ("--all-safe",), 1, groups),
+            ("--all-safe --apply", ("--all-safe", "--apply", "--yes"), 2, groups),
+            ("--worktree W, the redirected row", ("--apply", "--action", "remove", "--worktree", redirected), 2,
+             groups),
+            ("--worktree W --yes, the redirected row",
+             ("--apply", "--action", "remove", "--worktree", redirected, "--yes"), 2, groups),
+        ), message("remedy_inspection_incomplete_redirect_unread"), rows)
+        self.assert_unread_runs(root, (
+            ("--worktree W, the unread row", ("--apply", "--action", "remove", "--worktree", tree), 2, groups),
+            ("--worktree W --yes, the unread row", ("--apply", "--action", "remove", "--worktree", tree, "--yes"),
+             2, groups),
+        ), message("remedy_inspection_incomplete_unread"), rows)
+        self.assertEqual(self.snapshot(root), before, "nothing removed")
+        restore()
+        with self.subTest("the path readable again: the variant"):
+            result, records = self.run_counted("clean", root, "--all-safe")
+            self.assert_status(result, 1)
+            self.assertEqual(result.stderr, "REFUSED: " + message("remedy_inspection_incomplete_redirect") + "\n")
+            self.assertEqual(result.stdout.splitlines()[3:], [
+                TEXT["selected_heading"].format(N=1), TEXT["selected_row"].format(PATH=tree, BRANCH="002-unread"),
+                TEXT["excluded_heading"].format(M=2), *main, *mismatch, TEXT["residual_window_line"]])
+            self.assertEqual(removals(records), [])
 
     def test_clean_operation_in_progress_a_marker_git_leaves_is_deleted_by_hand(self):
         # #19's round (h) at b3228bb (design.md D18; writer E's table, R-259):

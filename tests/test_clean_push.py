@@ -46,6 +46,10 @@ CHANGED = "Cleanup state changed after confirmation; no command was run."
 JSON_REFUSED = "--json cannot be combined with --apply; use JSON for the read-only plan."
 INCOMPLETE = "REFUSED: " + TEXT["plan_incomplete"].format(
     CODE="inspection-incomplete", REMEDY=TEXT["remedy_inspection_incomplete"]) + "\n"
+# The same where a row's path could not be read: no git worktree prune (#19's
+# round (l); W87 M-1, lead ruling R-307).
+INCOMPLETE_UNREAD = "REFUSED: " + TEXT["plan_incomplete"].format(
+    CODE="inspection-incomplete", REMEDY=TEXT["remedy_inspection_incomplete_unread"]) + "\n"
 NO_TERMINAL = f"REFUSED: {CONFIRM} Supply explicit options when stdin is not a terminal.\n"
 
 # Lead ruling R-101 (e) 2 (lane 3's M-1): a signal recorded once the push or
@@ -593,7 +597,7 @@ class PushTests(clean_support.CleanCase):
                     [(CONFIRM, seal), ("", "yes")], controlling_tty=True, env=env)
                 os.chmod(sealed, 0o755)
                 self.assert_status(result, 2)
-                self.assertEqual(result.stderr, f"{CONFIRM} {INCOMPLETE}", "refused after confirmation")
+                self.assertEqual(result.stderr, f"{CONFIRM} {INCOMPLETE_UNREAD}", "refused after confirmation")
                 self.assertEqual(children(clean_support.child_log(log)), [], "no delegate")
         self.assertEqual(self.git(remote, "rev-parse", "refs/heads/001-feature"), pushed)
         self.assertNotEqual(self.git(root, "for-each-ref", "refs/heads/002-merged"), "")

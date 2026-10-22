@@ -364,8 +364,11 @@ class BatchTests(clean_support.CleanCase):
             self.git(unreadable, "worktree", "add", "-b", "021-hidden", hidden / "tree")
             hidden.chmod(0o600)
             self.addCleanup(hidden.chmod, 0o700)
+            # The row's path could not be read, so its next step and the
+            # remedy name no git worktree prune (#19's round (l); W87 M-1,
+            # lead ruling R-307).
             refused = "REFUSED: " + TEXT["plan_incomplete"].format(
-                CODE="inspection-incomplete", REMEDY=TEXT["remedy_inspection_incomplete"]) + "\n"
+                CODE="inspection-incomplete", REMEDY=TEXT["remedy_inspection_incomplete_unread"]) + "\n"
             # The preview exits 1 and, as the plan is refused (FR-024), names the
             # refusal and its remedy too.
             preview = self.run_cli("clean", unreadable, "--all-safe")
@@ -373,7 +376,7 @@ class BatchTests(clean_support.CleanCase):
             self.assertEqual(preview.stderr, refused)
             self.assertNotIn(TEXT["empty_line"], preview.stdout, "never reported as empty")
             self.assertIn(TEXT["excluded_group"].format(REASON="inspection-error", K=1,
-                                                        NEXT_STEP=steps["inspection-error"]),
+                                                        NEXT_STEP=TEXT["next_step_unread_row"]),
                           preview.stdout.splitlines())
             for words in (("--all-safe", "--apply"), ("--all-safe", "--apply", "--yes")):
                 with self.subTest(arguments=words):
