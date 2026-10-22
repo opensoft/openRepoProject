@@ -215,17 +215,20 @@ for the unread row, `next_step_inspection_error_unread` and
 and `remedy_inspection_incomplete_unread` or
 `remedy_inspection_incomplete_redirect_unread` for the refusal, each as the
 contract's "The unread forms" gives it (#19's round (l); lane 3's W87 M-1;
-lead rulings R-307 and R-310, confirmed by Brett Heap (R-319); writer's `e569564`, merged as `1edf64e`).
-R-320 (lane 3's W86 NM-1; ruled by Brett Heap, "R-320: yes", lead R-321;
-writer's `dfc2baa`, merged as `12c1821`) adds
+lead rulings R-307 and R-310, confirmed by Brett Heap (R-319); writer's
+`e569564`, merged as `1edf64e`). R-320 (lane 3's W86 NM-1; ruled by Brett
+Heap, "R-320: yes", lead R-321; writer's `dfc2baa`, merged as `12c1821`) adds
 `recommendation_stale_worktree_unread`, or, locked,
 `recommendation_stale_locked_unread`, as each `stale-worktree` row's
 recommendation wherever the set is not empty, set by `stale_recommendations()`
 once every row is gated, and makes the `inspect-cap` remedy
 `remedy_inspect_cap`, which carries the same warning always, since the rows
-past the cap are never read. Only texts change: no field, code, class or
-reason does, though a stale row's `recommendation` in the report and in
-`--json` carries the new text.
+past the cap are never read. R-324 (ruled by Brett Heap, "R-324: yes", lead
+R-343; #19's round (n) at `2250830`; writer's `e8dda2a`) makes each of these
+warnings, and `partial_removal_note_unread`'s, also name `git worktree remove`
+and `git gc`. Only texts change: no field, code, class or reason does, though
+a stale row's `recommendation` in the report and in `--json` carries the new
+text.
 
 ### Classification (D6; FR-007)
 
@@ -256,24 +259,33 @@ marked):
 | `merged-current` | merged and current |
 | `pushed-unmerged` | otherwise |
 
-The ladder is a pure function of the row (OQ-28). The partial-removal note
-is added after it by a separate function (D4): a present,
-registration-verified, `dirty` linked worktree whose status records read
-are all tracked-file deletions (`" D"`), judged on the records read when
-the stream stopped at its bound. It changes no class, rung or gate. The
-recommendation is the ladder's too, but in two cases `row_evidence()`
-replaces it after the ladder has run (lane 3's W52 F-6 and F-10; writer E's
-`02aa71d`, merged as `d764c26`; lead ruling R-259): the main worktree's
-row, where the ladder says `merged-removable` or `merged-current`, takes
-`The main worktree is never removed by project clean.`, since no removal of
-it can succeed, and a locked `stale-worktree` row takes `Review, unlock it,
-then prune stale worktree metadata manually.`, since `git worktree prune`
-keeps a locked entry. The class is unchanged in both. Where any row of the plan is unread (`unread_paths(plan)`), `stale_recommendations()`, which `build_plan()` calls once every row is gated, replaces each `stale-worktree` row's recommendation by `Review and prune stale worktree metadata manually; a row's path could not be read, so do not run git worktree prune until it can.` (`recommendation_stale_worktree_unread`) or, locked, `Review, unlock it, then prune stale worktree metadata manually; a row's path could not be read, so do not run git worktree prune until it can.` (`recommendation_stale_locked_unread`), from what planning recorded and nothing read again (R-320; lane 3's W86 NM-1; ruled by Brett Heap, "R-320: yes", lead R-321). `status` is not among
-them: its `repo_state()` keeps the baseline's `Review the stale worktree
-metadata before pruning it manually.` for every stale entry, a locked one
-included, a known residual left to a follow-on change (lane 3's W65 LOW-3;
-lead ruling R-269; contracts/project-clean.md, "`status`, `doctor` and
-`update`").
+The ladder is a pure function of the row (OQ-28). The partial-removal note is
+added after it by a separate function (D4): a present, registration-verified,
+`dirty` linked worktree whose status records read are all tracked-file
+deletions (`" D"`), judged on the records read when the stream stopped at its
+bound. It changes no class, rung or gate. The recommendation is the ladder's
+too, but in two cases `row_evidence()` replaces it after the ladder has run
+(lane 3's W52 F-6 and F-10; writer E's `02aa71d`, merged as `d764c26`; lead
+ruling R-259): the main worktree's row, where the ladder says
+`merged-removable` or `merged-current`, takes `The main worktree is never
+removed by project clean.`, since no removal of it can succeed, and a locked
+`stale-worktree` row takes `Review, unlock it, then prune stale worktree
+metadata manually.`, since `git worktree prune` keeps a locked entry. The
+class is unchanged in both. Where any row of the plan is unread
+(`unread_paths(plan)`), `stale_recommendations()`, which `build_plan()` calls
+once every row is gated, replaces each `stale-worktree` row's recommendation
+by `Review and prune stale worktree metadata manually; a row's path could not
+be read, so do not run git worktree prune, git worktree remove or git gc until
+it can.` (`recommendation_stale_worktree_unread`) or, locked, `Review, unlock
+it, then prune stale worktree metadata manually; a row's path could not be
+read, so do not run git worktree prune, git worktree remove or git gc until it
+can.` (`recommendation_stale_locked_unread`), from what planning recorded and
+nothing read again (R-320; lane 3's W86 NM-1; ruled by Brett Heap, "R-320:
+yes", lead R-321). `status` is not among them: its `repo_state()` keeps the
+baseline's `Review the stale worktree metadata before pruning it manually.`
+for every stale entry, a locked one included, a known residual left to a
+follow-on change (lane 3's W65 LOW-3; lead ruling R-269;
+contracts/project-clean.md, "`status`, `doctor` and `update`").
 
 ### Gate (FR-020 to FR-023; D10, D12, D13)
 
@@ -529,32 +541,34 @@ read was not made, failed, was cut at its budget or was abandoned by a second
 SIGINT), with `git_file_read`, whether the read was made, false until the
 rescan makes it, and in no record, so that no document carries either: the
 reconciliation record, `notes` and the JSON result are unchanged. Only the
-human partial-removal note of the result reads them (`partial_removal_text()`),
-in this order. First, where `git_file_read` is true and `git_file_present` is null, or where
-the reconciliation record's `path_present` is null (the lstat of the target's
-own path failed other than for absence, as where a directory above the target
-denies search, so that no read was made), whatever the record shows of the
-entry (the read is made only where the rescan shows the entry and the path
-present), `Probable partial removal:
-inspect PATH by hand; its .git could not be read, so do not run git worktree
-prune until it can.`, since `git worktree prune` deletes the admin directory of
-a live worktree whose `.git` Git cannot stat (`EACCES`, for a worktree
-directory the process may not search; #19's round (i) at `1a4785e`; lane 3's
-W73 M-1; lead ruling R-284, which Brett Heap ruled "R-284: yes", R-290;
-writer G's `6a32d10`, merged as `3bc1d68`; for the null path, lane 3's W90 M-1, lead ruling R-329, which applies Brett Heap's R-284 as ruled; writer's `b96b335`, merged as `7149e08`). Otherwise D18's `git worktree
-remove --force` form where `registry_entry_present` and `git_file_present` are
-both true, and `Probable partial removal: inspect, then git worktree prune and
-delete PATH by hand.` for the rest, since Git refuses `git worktree remove
---force` once the `.git` file is gone ("validation failed", as a kill part way
-through a removal usually leaves it) or the entry is gone ("is not a working
-tree"), and accepts `git worktree prune`, which leaves the path a plain
-directory for deletion by hand; a value not established never shows both
-present. A report row's note is the baseline's
-and keeps its text, its `.git` file and entry being present (lane 3's W52
-F-1; Brett Heap's ruling "F-1: prune-then-delete" of 2026-10-22, lead ruling
-R-263, which amends ratified text, the `project-clean` delta's `spec.md:253-256`
-and `:922-926` at `0050f3e`; #19 at `b3228bb`; writer G's `3eb2e9c`, merged
-as `7164d7f`).
+human partial-removal note of the result reads them
+(`partial_removal_text()`), in this order. First, where `git_file_read` is
+true and `git_file_present` is null, or where the reconciliation record's
+`path_present` is null (the lstat of the target's own path failed other than
+for absence, as where a directory above the target denies search, so that no
+read was made), whatever the record shows of the entry (the read is made only
+where the rescan shows the entry and the path present), `Probable partial
+removal: inspect PATH by hand; its .git could not be read, so do not run git
+worktree prune, git worktree remove or git gc until it can.`, since `git
+worktree prune` deletes the admin directory of a live worktree whose `.git`
+Git cannot stat (`EACCES`, for a worktree directory the process may not
+search; #19's round (i) at `1a4785e`; lane 3's W73 M-1; lead ruling R-284,
+which Brett Heap ruled "R-284: yes", R-290; writer G's `6a32d10`, merged as
+`3bc1d68`; for the null path, lane 3's W90 M-1, lead ruling R-329, which
+applies Brett Heap's R-284 as ruled; writer's `b96b335`, merged as `7149e08`).
+Otherwise D18's `git worktree remove --force` form where
+`registry_entry_present` and `git_file_present` are both true, and `Probable
+partial removal: inspect, then git worktree prune and delete PATH by hand.`
+for the rest, since Git refuses `git worktree remove --force` once the `.git`
+file is gone ("validation failed", as a kill part way through a removal
+usually leaves it) or the entry is gone ("is not a working tree"), and accepts
+`git worktree prune`, which leaves the path a plain directory for deletion by
+hand; a value not established never shows both present. A report row's note is
+the baseline's and keeps its text, its `.git` file and entry being present
+(lane 3's W52 F-1; Brett Heap's ruling "F-1: prune-then-delete" of 2026-10-22,
+lead ruling R-263, which amends ratified text, the `project-clean` delta's
+`spec.md:253-256` and `:922-926` at `0050f3e`; #19 at `b3228bb`; writer G's
+`3eb2e9c`, merged as `7164d7f`).
 
 ### Revalidation step and `probes_performed` (D7; FR-046, FR-047)
 

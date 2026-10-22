@@ -1180,6 +1180,15 @@ written".
   `inspect-cap` remedy carries it always, since the rows past the cap are
   never read. FR-027's list of remedies stands as written, each where it fits, and the
   requirement's text is unchanged.
+  Note, 2026-10-22: every no-prune warning, R-284's
+  `partial_removal_note_unread` and the unread remedies, next steps and
+  recommendations above, nine `TEXT` entries in all, also names `git worktree
+  remove` and `git gc`: "so do not run git worktree prune, git worktree remove
+  or git gc until it can", and, in the `inspect-cap` remedy, "if a worktree's
+  path cannot be read, do not run git worktree prune, git worktree remove or
+  git gc until it can" (R-324, ruled by Brett Heap, "R-324: yes", lead R-343;
+  #19's round (n) at `2250830`; writer's `e8dda2a`). The requirement's text
+  stands as written.
 - **FR-029**: Each `project clean` invocation MUST set one monotonic deadline
   60 s after it starts and hold back a 10 s reconciliation reserve, so that
   work stops 50 s after start, both moving later by the time spent blocked at
