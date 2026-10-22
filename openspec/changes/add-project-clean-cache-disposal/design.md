@@ -7,8 +7,9 @@ Lane: openRepoProject-5
 See `proposal.md` for why and what, and the deltas under `specs/` for the
 requirements. Citations follow the proposal's key: the packet at `da33d92`
 (`BA`, `SY`, `OV`, `HO`), change 1 (`CAS`, `CAS/pc`, `CAS/rs`, `CAS/cmd`) and
-change 2 (`APO`, `APO/ov`) at `961c405`, draft PR #19 at `2e819ad` (`PR19/pc`,
-`PR19/rs`; at `a664799` in round B10 and at `c462d87` before it), and
+change 2 (`APO`, `APO/ov`) at `961c405`, draft PR #19 at `9267303` (`PR19/pc`,
+`PR19/rs`; at `2e819ad` in round B11, at `a664799` in round B10 and at
+`c462d87` before it), and
 `project:N` at `961c405`; at
 `origin/main` `15504f1`, `project`, `openspec/specs/` and the directories of
 change 1 and change 2 equal `961c405`'s, `ideation/` differs by PR #16's
@@ -49,7 +50,13 @@ restates the fit on it. Codex's P2 on `d4e960b` at
 `specs/project-clean/spec.md:866`, which reader RG verified and found wider,
 ruled as B-56, and PR #19's round (c) at `2e819ad`, on which the two blocks
 are re-based and whose three bases D4's fit follows, are applied in round B11
-(proposal, "Re-read and Codex Findings (round B11)").
+(proposal, "Re-read and Codex Findings (round B11)"). PR #19's round (d) at
+`9267303`, with the lead's R-208 on filesystem reads at revalidation, on which
+"Cleanup revalidates destructive actions" is re-based, and the lead's B-57 and
+B-58 are applied in round B12 (proposal, "Re-read and Codex Findings (round
+B12)"), with the lead's B-59 on its first drafts: the bounds block's fit clause
+says that the first 14 targets start before only the removal floor remains, and
+the drain sentence words the drain past the 16-enumeration cap on its own.
 
 How the packet's contract and the rulings map to the decisions below:
 
@@ -112,6 +119,9 @@ How the packet's contract and the rulings map to the decisions below:
 | B-54 | reader RF's H1 and this change's share of its M1: the two blocks written on PR #19's text rewritten on its text at `a664799`, its round (b), the revalidation's step lists kept in one order; the fit restated on PR #19's D14 at `a664799`, and the caps' Open Question with it; every re-base or re-copy checked by a second diff, from this change's block as committed at its ratified head, and `tasks.md` 3.2 given its return route | Context, Goals, D4, D10, D14, Migration Plan |
 | B-55 | the lead's rulings on round B10's first drafts: its choices kept; the enumeration's child at revalidation follows PR #19's round (b) rule (R-171), a cut by the work deadline giving `deadline-exceeded` and its own failure or timeout `state-changed`, B-34's preflight rule unchanged; D13's and the B-19 decision's figures labelled "at `c462d87`"; the Context's account of main corrected to `origin/main` at `15504f1` | Context, D10, D13 |
 | B-56 | Codex's P2 on `d4e960b`, verified by reader RG: a candidate that a gate after `deferred-target-cap` excludes keeps its enumeration and its target place and counts as held for a persistent reason, the stall line naming such rows by those gates' reasons with change 1's next steps, and the drain sentence excepting change 1's own deferral stall (RG's (b)); such a row is not counted toward the invocation's totals, the plan applying those gates to each row that reaches them before it applies the totals to any later row, in one canonical pass (T2); running those gates before the enumeration declined; the admin-directory pre-filter put to Brett Heap | Goals, D2, D4, D11, D14, Risks, Migration Plan, Open Questions |
+| B-57 | the lead's rulings on round B11's choices, and lane openRepoProject-2's two corrections on its YES: the drain sentence carries PR #19's own condition in full, "removed or excluded by a gate before the cap", and 45 s, the 50 s work deadline less the 5 s removal floor, is the spawn limit wherever this change's text means that instant | D4 |
+| B-58 | the plan for round B12: "Cleanup revalidates destructive actions" re-based on PR #19's round (d) at `9267303` for the lead's R-208, every filesystem call of the revalidation following the rule of a Git child, a path found absent (`ENOENT` or `ENOTDIR`) a decided value; the bounds block's fit clause "before the spawn limit"; the fit re-cited at `9267303` | D4, D7, D10 |
+| B-59 | the lead's rulings on round B12's first drafts: the bounds block's fit clause reads "before only the removal floor remains, and the last two are", since no spec defines the spawn limit, which the design and proposal keep where D4 defines it; `ENOTDIR` at the preflight is either a non-directory where the plan recorded a directory or an ancestor that is no longer a directory, a decided absence as R-208 reads it, a difference either way | D4, D7 |
 
 What in `project` shapes the approach:
 
@@ -173,8 +183,8 @@ Facts checked here, on Git 2.43.0 and Linux 6.18, with Python 3.10.21 and
   and was not deleted when a stage stops (D7, D8).
 - Keep change 1's bounds: the 50 s work deadline, the 64 s run bound, the
   removal floor, at most six children per revalidation, seven where the plan
-  read `extensions.worktreeConfig` as true, as PR #19 states them at `2e819ad`
-  (B-54, round B11), and the fit (D4, D12).
+  read `extensions.worktreeConfig` as true, as PR #19 states them at `9267303`
+  (B-54, B-58), and the fit (D4, D12).
 
 **Non-Goals:**
 
@@ -261,7 +271,7 @@ The gates after `deferred-target-cap`, `contains-submodule` and
 `worktree-only-commits`, are not part of the candidate test: the hidden-state
 probe and D21's reachability probe that they read each cost a Git child a row,
 which change 1 runs only for the 16 rows past the cap (PR #19's D12, its
-design.md:839-857 at `2e819ad`). So a candidate that one of them excludes, a
+design.md:848-866 at `9267303`). So a candidate that one of them excludes, a
 cache-only row holding an initialized submodule among them, is enumerated,
 passes the `ignored-local-files` rung, and holds one of the 16 enumerations and
 one of the 16 target places, as change 1's index-gate rows hold theirs; it
@@ -423,13 +433,17 @@ and its line names it.
 | `cache_bytes_total` | 1,073,741,824 (1 GiB) | bytes, likewise, and at each cache stage's preflight the bytes it measures (B-26) | likewise; at a preflight, that target `refused` with `cache-changed`, where no signal was received first (B-41) |
 
 A cap reached keeps the row `ignored-local-files` and the plan complete, so the
-batch removes everything else, and a later run takes the rest as the rows ahead
-of them are removed or excluded by a gate before the cap, as PR #19's deferral
-drains (PR19/pc:1000-1014 at
-`2e819ad`, its round (c)), unless each of the 16 enumerated candidates is held
-for a persistent reason, or the rows that `deferred-target-cap` defers will not
-drain, which change 1's line then names (B-56). A candidate left at the rung
-keeps its place among the 16, as change 1's index gates keep theirs, and one
+batch removes everything else. A later run takes the rows that
+`deferred-target-cap` defers as the rows ahead of them are removed or excluded
+by a gate before the cap, as PR #19's deferral drains (PR19/pc:1001-1015 at
+`9267303`, as at its round (c)), and, unless each of the 16 enumerated
+candidates is held for a persistent reason, the candidates past the 16th as the
+candidates ahead of them are removed or cease to be candidates, both unless the
+rows that `deferred-target-cap` defers will not drain, which change 1's line
+then names (B-56). The rung does not free an enumeration (round B12): a
+candidate left at the rung keeps its place among the 16, though the
+classification, a gate before `deferred-target-cap`, excludes it, as change 1's
+index gates keep theirs, and one
 that passes the rung and that a gate after `deferred-target-cap` then excludes
 keeps it in just that way (D2). The sample
 test (D2) keeps out every row whose samples show a blocking name; what can
@@ -484,7 +498,7 @@ later row: one pass in canonical order. Feature 004's planner
 it takes. This change's feature runs as one pass, row by row in canonical
 order, every gate from the row's classification when it is not
 `merged-removable` through `worktree-only-commits`, the last of PR #19's list
-at `2e819ad` (PR19/pc:664-671): the classification, `not-requested`,
+at `9267303` (PR19/pc:664-671): the classification, `not-requested`,
 `unstarted-branch` or `reflog-unavailable`, `deferred-target-cap`, its count
 kept inline, `contains-submodule`, `hidden-local-state`,
 `operation-in-progress` and `worktree-only-commits`. Those are feature 004's
@@ -514,12 +528,12 @@ preflight requires each listed cache's entries to equal the plan's, whose sum
 the plan already capped at 4,096. The check adds no filesystem call: the
 preflight already `lstat`s every entry it re-lists.
 
-The fit is change 1's as PR #19 states it at `2e819ad` (its design.md D14,
-lines 874-996; `BA:729-735`), on the first of its three bases, the packet's
-flat 150 ms per Git child (its :879-881) and 0.3 s per removal, with the
+The fit is change 1's as PR #19 states it at `9267303` (its design.md D14,
+lines 883-1023; `BA:729-735`), on the first of its three bases, the packet's
+flat 150 ms per Git child (its :888-891) and 0.3 s per removal, with the
 enumerations added, for a plan that read `extensions.worktreeConfig` as false
-(B-54, round B11; the same rows and figures on `a664799` in round B10, and
-other rows on `c462d87` before it):
+(B-54, B-58; the same rows and figures on `2e819ad` in round B11 and on
+`a664799` in round B10, and other rows on `c462d87` before it):
 
 | Mode | Children | Time | Fits the 50 s work deadline |
 | --- | --- | --- | --- |
@@ -567,15 +581,15 @@ took about 0.25 s here (AE-4's 1,248 calls in 236 to 273 ms).
 
 B-54 restates the fit on PR #19's text, on which this change's two blocks are
 written since round B10 (reader RF's H1), first at `a664799`, its round (b),
-and, in round B11, at `2e819ad`, its round (c), on whose 150 ms basis every
-figure of this paragraph for a plan that read `extensions.worktreeConfig` as
-false is unchanged. PR #19's
-D14 (its design.md:874-996) has F = 8, D21's reachability probe for at most 16
+in round B11, at `2e819ad`, its round (c), and, in round B12, at `9267303`,
+its round (d), on whose 150 ms basis every figure of this paragraph for a plan
+that read `extensions.worktreeConfig` as false is unchanged. PR #19's
+D14 (its design.md:883-1023) has F = 8, D21's reachability probe for at most 16
 rows, and six revalidation children a target, seven where the plan read
-`extensions.worktreeConfig` as true (PR19/pc:1023-1025, PR19/rs:76-77): where it
+`extensions.worktreeConfig` as true (PR19/pc:1024-1026, PR19/rs:76-77): where it
 read it as false, 8 + 128 + 16 + 16 + 96 + 3 = 267 children, the 16th removal
 spawning at 44.1 s with 5.9 s left, by the formula this section uses, on that
-basis (its design.md:887 and :905-909). With this change's 16 enumerations,
+basis (its design.md:897 and :915-919). With this change's 16 enumerations,
 target k reaches its cache stage, or its spawn, after the 184 planning children
 (8 + 128 + 16 + 16 + 16), the 6k revalidation children of it and the targets
 before it, and k - 1 removals, at 0.15 x (184 + 6k) + 0.3 x (k - 1) =
@@ -586,32 +600,34 @@ the walk and the stages at B-25's bound, through one worker, 11 of 16 do at
 224 us a call, or 12 with the 8
 cache targets last, and 12 at 169 us; at a thread per call 6 do with the 8 cache
 targets first, and 9 with them last. On PR #19's measured basis, D5's, task
-2.1's warm medians with the 1.5 margin at 10,000 files (its design.md:924-936),
+2.1's warm medians with the 1.5 margin at 10,000 files (its design.md:935-950),
 its 16th removal spawns at 35.1 s where the plan read
 `extensions.worktreeConfig` as false, D21's 32 children counted there at 11.5 s
-(its design.md:948 and :966-971); the enumerations' at most 3.7 s and the walk
+(its design.md:962 and :992-997); the enumerations' at most 3.7 s and the walk
 and the stages bring the 16th to about 42.7 s through one worker, so all 16 fit
 there, and to about 49.7 s at a thread per call, past the spawn limit, and with
 PR #19's 20,000-file removals, its 16th at 42.8 s, the 16th is past the spawn
 limit through one worker too. At `a664799` this sentence added D21's 7.7 s
 without the margin to task 2.1's 23.6 s, which carries it (its
-`tasks.md`:117-118 at `2e819ad`), and read 38.9 s and 45.9 s. Where the plan
+`tasks.md`:120-121 at `9267303`), and read 38.9 s and 45.9 s. Where the plan
 read
 `extensions.worktreeConfig` as true, PR #19's D14 gives the 128-row case on
-three bases and chooses none (its design.md:946-951): on the 150 ms basis no
+three bases and chooses none (its design.md:960-965), and a second table gives
+each option of its open question LQ-20 on each basis (its design.md:967-990),
+none chosen: on the 150 ms basis no
 removal, the first due at 45.3 s, every target `not-attempted` with
 `deadline-exceeded` and the run exiting 1, never unsafe; on its measured basis,
 with its per-row work-tree probe and its `rev-list` costed by stand-ins, all 16
 (15 with 20,000-file removals); and on its mixed basis 11. The first step of
 its open question LQ-20, before Brett Heap, is to measure those two probes or
-to decide which basis the cap test uses (its design.md:961-964 and
-:1730-1741). This change's enumerations add to those children, and it states
+to decide which basis the cap test uses (its design.md:986-988 and
+:1762-1777). This change's enumerations add to those children, and it states
 no figure of its own for that case (B-55). The paragraphs of this section that
 follow keep their arithmetic on change 1's terms at `c462d87`, F = 7 with no
 reachability probe and five revalidation children a target, where target k
-arrives at 24.75 + 1.05k s, 2.55 + 0.15k s earlier than at `2e819ad` on its
+arrives at 24.75 + 1.05k s, 2.55 + 0.15k s earlier than at `9267303` on its
 150 ms basis, and the report mode's Git children take 2.55 s less; each count
-of targets there is therefore an upper bound on that count at `2e819ad`, and
+of targets there is therefore an upper bound on that count at `9267303`, and
 the counts of this paragraph are the ones that the Open Question on the caps
 cites.
 
@@ -730,8 +746,9 @@ lowers `cache_rows` in steps of 4 and the entry caps in powers of two before
 the feature starts. The fit sentence of the bounds block counts the Git
 children and the removals, on the packet's 150 ms basis, which it names since
 round B11, with the first 14 of 16 targets starting before the spawn limit on
-that count, which the block words as before the removal floor, its wording
-reviewed in round B12, and the last two `not-attempted` (lane
+that count, which the block words as before only the removal floor remains,
+since no spec defines the spawn limit (B-59, round B12), and the last two
+`not-attempted` (lane
 openRepoProject-2's check of round B10), states the walk's and the stages'
 filesystem calls as
 outside it, and a target whose stage or spawn cannot start under the floor is
@@ -942,7 +959,14 @@ this run, within the invocation's 1 GiB (B-26, D4). Any `OSError` (`ENOTDIR`
 or `ELOOP` from a swapped symlink, `ENOENT`, `EACCES`), any identity, shape or
 entry-count difference, either byte cap exceeded, or a call past its own 5 s
 budget (`probe-timeout`) ends the stage `refused` with `cache-changed`, unless a
-signal was received first (B-41, below). A read of the preflight, or of the
+signal was received first (B-41, below). `ENOENT` here is a planned path found
+absent, which the lead's R-208 counts at revalidation as a decided value and
+not as a failed read; `ENOTDIR` from a no-follow open is either a symbolic link
+or other non-directory where the plan recorded a directory, or an ancestor that
+is no longer a directory, which R-208 reads as a decided absence; each is a
+difference from the plan, and the target is `state-changed` either way, the
+reason R-208 gives a failed read (B-58, B-59).
+A read of the preflight, or of the
 reopening of the first listed cache's chain after it, that the removal floor or
 the deadline stops is not one of these (B-34, Codex's P2 at
 `specs/project-clean-review-safety/spec.md:353` on `e1049b2`): the read's budget
@@ -1094,9 +1118,9 @@ B-15), and where it is missing the check fails closed.
 ### D10. Revalidating a cache target
 
 The targeted revalidation keeps the order and the limit of PR #19's text at
-`2e819ad`, on which the MODIFIED "Cleanup revalidates destructive actions" is
-written (B-54; re-based from `a664799` in round B11): six Git children, seven
-where the plan read
+`9267303`, on which the MODIFIED "Cleanup revalidates destructive actions" is
+written (B-54, B-58; re-based from `2e819ad` in round B12): six Git children,
+seven where the plan read
 `extensions.worktreeConfig` as true (PR19/rs:76-77). In the target worktree, a
 target with listed caches runs the D3 child
 instead of the combined probe: it must read no record other than ignored ones,
@@ -1109,12 +1133,18 @@ own budget while the deadline is not the limit, refuses the target with
 CAS/rs:92-93), before any cache is touched. A child that the work deadline
 cuts counts as no difference, and the target and every later one are
 `not-attempted` with `deadline-exceeded`, nothing touched, by the one rule that
-PR #19's round (b) states for every Git child of the revalidation
-(PR19/rs:118-128 at `2e819ad`, lane 2's R-171; B-55), its round (c) having the
-sentence on a value that cannot be re-read leave a read that the work deadline
-cuts to that rule (PR19/rs:113-118); the child is one of those steps, so
-the block needs no sentence of its own for it. B-34's rule for a read of the
-stage's preflight is unchanged. The hidden-state probe and PR #19's
+PR #19 states for every Git child and every filesystem call of the revalidation
+(PR19/rs:113-133 at `9267303`; lane 2's R-171 and the lead's R-208; B-55,
+B-58); the child is one of those steps, so the block needs no sentence of its
+own for it. This change adds no filesystem call to the revalidation. A listed
+cache missing there is a record that the child does not print, a value it
+decided, so a listed-cache difference, `state-changed`, as R-208 keeps a
+decided value's own reason; a cache directory that cannot be read either
+changes the child's records, a difference, or meets the stage's preflight,
+whose failed read refuses the target with `state-changed` (D7), the reason
+R-208 gives a failed read; and a read that the deadline cuts is
+`deadline-exceeded` in both. B-34's rule for a read of the stage's preflight is
+unchanged. The hidden-state probe and PR #19's
 `worktree-only-commits` check follow it, in that order, as for every target.
 Where the two step lists meet (reader RF's H1), the block's order is therefore:
 the combined status probe, or for a target whose plan lists caches the D3
@@ -1185,9 +1215,9 @@ and `REASONS` substituted:
   excluded after the target cap as REASONS (follow their groups' next
   steps)`, in the form of change 1's index-gate line (CAS design.md:743-746),
   `REASONS` listing each of those rows' reasons once, in gate order, joined by
-  `, `, as change 1's deferral line forms its own (PR19 design.md:1111-1117 at
-  `2e819ad`). Each such row also prints in its own group with change 1's next
-  step (PR19 design.md:1124-1142): "review, then remove the worktree yourself"
+  `, `, as change 1's deferral line forms its own (PR19 design.md:1137-1143 at
+  `9267303`). Each such row also prints in its own group with change 1's next
+  step (PR19 design.md:1150-1168): "review, then remove the worktree yourself"
   for `contains-submodule` and `hidden-local-state`, "finish or abort it ...
   then run again" for `operation-in-progress`, and "keep it on a branch or tag,
   or review, then git worktree remove yourself" for `worktree-only-commits`
@@ -1350,8 +1380,8 @@ own check.`; otherwise it is change 1's line, unchanged.
 The deltas hold 55 scenarios in `project-clean` (5 classification, 14 retire,
 11 batch, 6 bounds, 8 reconcilable result and 11 ADDED), 32 in
 `project-clean-review-safety` (6 preservation, 15 revalidation, the 14 of
-PR #19's text at `2e819ad` and this change's one (B-54; 13 at `a664799`
-before round B11), 4 narrow
+PR #19's text at `9267303` and this change's one (B-54, B-58; 14 at `2e819ad`
+in round B11, 13 at `a664799` before it), 4 narrow
 guarantee and 7 ADDED, B-26's among them) and 8 in `project-overview` (the one
 MODIFIED block of B-14). The new ones, 1 + 1 + 1 + 11 + 1 + 1 + 1 + 7 + 1 = 25,
 each get a test
@@ -1477,8 +1507,8 @@ cache phase" and "A file placed in a cache directory during the stage".
   later rows (reader RG's W3)] -> Sixteen of them ahead of a backlog stall it,
   plain rows with no ignored file included, as change 1's index-gate rows do,
   and change 1's line names them ("these deferred rows will not drain while
-  the 16 rows ahead of them are REASONS", PR19 design.md:1111-1117 at
-  `2e819ad`), as the stall line does for the cache rows behind them;
+  the 16 rows ahead of them are REASONS", PR19 design.md:1137-1143 at
+  `9267303`), as the stall line does for the cache rows behind them;
   `--apply --action remove --worktree P` still removes an eligible P, since in
   single mode the target limit counts P alone (B-56). The admin-directory
   pre-filter before Brett Heap would keep rows holding an initialized
@@ -1559,8 +1589,8 @@ cache phase" and "A file placed in a cache directory during the stage".
    admin-directory pre-filter (B-56).
 2. Before the Speckit handoff (`tasks.md` section 2): change 1 archived after
    feature 004 merges, with PR #19's amendment of change 1 landed (L-16), or
-   PR #19 closed, and the two blocks written on its text at `2e819ad` (B-54,
-   round B11) re-checked, or re-based on change 1's text at main if PR #19
+   PR #19 closed, and the two blocks written on its text at `9267303` (B-54,
+   B-58) re-checked, or re-based on change 1's text at main if PR #19
    closes unmerged (B-52), each block written on change 1's or PR #19's text
    checked by the two diffs below, a change to this change's added text
    returning the block to Brett Heap before the Speckit handoff (B-52, B-53,
@@ -1606,7 +1636,7 @@ them would still show additions only, validate and archive. The second,
 `diff -u` of this change's block as committed at its ratified head against the
 re-based block, shows only the archived block's own text carried in: for the
 two blocks written on PR #19's text, change 1's archived text in place of
-PR #19's at `2e819ad`; for the other blocks of `project-clean` and
+PR #19's at `9267303`; for the other blocks of `project-clean` and
 `project-clean-review-safety`, change 1's archived text in place of its text at
 `961c405`; and for the `project-overview` block, main's text in place of change
 2's at `961c405`, every amendment that landed there included. Any change that
