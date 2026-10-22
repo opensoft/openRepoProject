@@ -1507,9 +1507,10 @@ Nothing migrates: without `--remote` no output, flag or exit changes.
 4. The change is archived after that merge, after change 2's archive, which
    itself follows change 1's archive and feature 005's merge, and after task
    2.4: PR #19's amendment landed or, if PR #19 closed, the block of [E]
-   re-based on change 1's text, and that block re-based on
-   `add-project-clean-branch-retirement`'s archived block if that change
-   archives first (L-17).
+   re-based on change 1's text, re-read against change 1's archived block and
+   re-based on it if that block moved past PR #19's text at `c462d87`, and that
+   block re-based on `add-project-clean-branch-retirement`'s archived block if
+   that change archives first (L-17).
 
 Each re-read or re-base of a block in steps 2 and 4 (tasks 2.3 and 2.4) is
 checked by two diffs (reader RF's M1; C-51). The first, `diff -u` of the
