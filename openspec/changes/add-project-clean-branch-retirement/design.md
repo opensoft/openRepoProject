@@ -93,18 +93,20 @@ LOW-4 the proposal (proposal, "Re-read and Codex Findings (round A14)").
 Round A15 maps A-48 (reader RI's RI-5, RI-7 and RI-9, and the RE-6 record),
 A-49 (Codex's P2 on `7b224c7`: the line of a failed re-proof names an
 inspection of the reflog before the retry, superseding A-46's keeping of W47's
-LOW-3), A-50 (the restatements of PR #19's moving facts worded relatively:
-RI-2 and M2, RI-1 and M3, RI-8, L1 and L3) and A-51 (lane openRepoProject-3's
-W54 confirm read of round A14, its LOW-1 to LOW-3) to D3 (the branch child's
-environment), D4 (the re-proof's next step, the RE-6 closure), D6 (the stop
-rule's two sites), D5 and D7 (the realization notes, the counts, the fit
-sentence's quote), D8 (the `Kept` lines and the residual-window line), the
-Context table (a row for a rebase stopped in the main worktree) and Risks; the
-spec deltas edit the bounds block's start test, step 4 of the ADDED
-requirement, its `state-changed` definition and `Kept` next steps, the
-literals in four ADDED scenarios' ANDs, one AND added to "The merge target
-moves before the branch stage", and the review-safety scenario's last AND
-(proposal, "Re-read and Codex Findings (round A15)").
+LOW-3), A-50 (the restatements of PR #19's moving facts worded relatively: RI-2
+and M2, RI-1 and M3, RI-8, L1 and L3), A-51 (lane openRepoProject-3's W54
+confirm read of round A14, its LOW-1 to LOW-3) and A-52 (lane
+openRepoProject-3's W52, F-4: the retry of a name that begins with `-`, which
+feature 004's `delete-branch` still runs with no `--`) to D3 (the branch
+child's environment), D4 (the re-proof's next step, the RE-6 closure), D5 and
+D7 (the realization notes, the counts, the fit sentence's quote), D6 (the stop
+rule's two sites), D8 (the `Kept` lines, the residual-window line, the retry of
+a name that begins with `-`), the Context table (a row for a rebase stopped in
+the main worktree) and Risks; the spec deltas edit the bounds block's start
+test, step 4 of the ADDED requirement, its `state-changed` definition and
+`Kept` next steps, the literals in four ADDED scenarios' ANDs, one AND added to
+"The merge target moves before the branch stage", and the review-safety
+scenario's last AND (proposal, "Re-read and Codex Findings (round A15)").
 
 Citations follow `proposal.md`: packet files at `da33d92`, `CAS` for change 1,
 `APO` for change 2, `project:N` and `tests:N` at `961c405`, all unchanged at
@@ -1246,7 +1248,17 @@ openRepoProject-3's delta read, D5): whether that action passes it after `--`
 is change 1's question, carried as a Dependency (proposal, Dependencies and
 Sequencing), and this change prints the retry that action is given. RETRY
 below is `project clean ROOT --apply --action delete-branch --branch BRANCH`,
-or `--branch=BRANCH` for such a name. Without the flag every line is change 1's.
+or `--branch=BRANCH` for such a name. The retry for such a name therefore
+depends on change 1's `delete-branch` putting `--` before the name, and feature
+004 at `e69f6ef` lacks it: its `delete-branch` still runs `git branch -d
+<branch>` with no `--` (`project:6487`), so that `--branch=-f` reaches Git as
+`git branch -d -f`, which answers "branch name required", exit 128, and leaves
+the branch, where `branch -d -- -f` deletes it, exit 0 (lane
+openRepoProject-3's W52, F-4, reproduced there on Git 2.43.0 and on the 2.36.6
+floor; ruling A-52). Lane openRepoProject-2 holds the fix, so the printed retry
+text is kept as it is, and the item stays open at the alignment with feature
+004, beside RE-4, RE-5, RE-7 and RE-8. Without the flag every line is change
+1's.
 
 A command printed in the `$'...'` form needs a shell that implements that
 form, bash, zsh, ksh93 or a POSIX.1-2024 shell, and, for its `\u` and `\U`
