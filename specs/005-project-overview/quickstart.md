@@ -30,6 +30,47 @@ python3 -m unittest discover -s tests -v -k test_overview_floor_
 The suite must pass with every test that existed on `main` unchanged
 (FR-049).
 
+## The 004-touching changes (lane openRepoProject-2's conditions)
+
+Slice 1's three changes to feature 004's code (research.md R3) are checked
+before its pull request is read by lane openRepoProject-2 or
+openRepoProject-3; the pull request quotes each result.
+
+```bash
+F=$(mktemp -d)                            # a scratch directory
+B=$(git merge-base HEAD origin/main)      # the base: main after PR #33
+# (a) feature 004's tests and helpers unedited, and the suite green
+git diff --stat "$B" HEAD -- tests/test_clean_*.py \
+    tests/test_status_doctor_update.py tests/test_project.py \
+    tests/clean_support.py tests/launch_project.py     # expect no output
+python3 -m unittest discover -s tests -v
+# (d) clean's help unchanged; the top-level help gains one line only
+mkdir "$F/base" && git show "${B}:project" > "$F/base/project" \
+    && chmod +x "$F/base/project"       # same name, so usage lines match
+diff <("$F/base/project" clean --help) <(./project clean --help)
+diff <("$F/base/project" --help) <(./project --help)
+# expect only the subcommand list's new name and the overview's help line
+```
+
+(c) is a unit test of the split: `Invocation("clean")` keeps `work_end` 50 s
+and `reserve_end` 60 s after its start under the real table, and feature
+004's timing tests pass unedited.
+
+(b), the side-by-side run: one script builds each fixture at a fixed path
+with fixed `GIT_AUTHOR_DATE` and `GIT_COMMITTER_DATE`, so that object names
+agree between builds, and runs the same commands against
+`$F/base/project` and `./project`, the counting wrapper first on `PATH`;
+an `--apply` command runs on a fresh build for each. Fixtures: a merged
+worktree; a dirty one; an unstarted branch; 17 merged worktrees (the
+target cap); 257 registered rows (the report cap); a failed status probe
+and a held one (fake Gits); a reflog read and a status probe cut by the
+deadline through `tests/launch_project.py --timing=...` (the
+deadline-stopped marker); a bare repository. Commands: `clean ROOT --json`,
+`clean ROOT --all-safe --json`, `clean ROOT --all-safe --apply --yes
+--json`. Compared: exit statuses, `probes` and `operations`, each document
+with every `observed_at` masked, and the wrapper's logs with process IDs
+and times masked. Every comparison is identical, or the slice stops.
+
 ## The Git 2.36 floor run
 
 With a Git 2.36.6 built as feature 004's `git-floor` job builds it, first

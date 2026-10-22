@@ -26,14 +26,15 @@ plan, and isolate what only Brett Heap can still decide:
 
 Each entry gives a Decision, its Rationale and the Alternatives considered.
 Citations, as [plan.md](plan.md) "Citations" defines them: `project:N` is
-line N of feature 004's `project` at `4b4c36b` (branch
+line N of feature 004's `project` at `0a82a62` (branch
 `004-project-clean-all-safe`, draft PR #33), read with `git show
-4b4c36b:project`; `A1:N` and `A1 design.md:N` are lines of change 2's
+0a82a62:project`; `A1:N` and `A1 design.md:N` are lines of change 2's
 `specs/project-overview/spec.md` and `design.md` at `e4a30fc`; `PCM:N`,
 `PCL:N` and `#19 design.md:N` are lines of change 1's
 `specs/project-command/spec.md`, `specs/project-clean/spec.md` and
-`design.md` at PR #19's `ccc52b9`; POD, PRSD, CMD, CLN and DI are as
-[spec.md](spec.md) defines them. Nothing here was run against a repository:
+`design.md` at PR #19's `20084cd`; POD, PRSD, CMD, CLN and DI are as
+[spec.md](spec.md) defines them. Revision 1 moved every cite from
+`4b4c36b` and `ccc52b9` (R1). Nothing here was run against a repository:
 the plan step ran no `project` and no owner tool (R18).
 
 ## R1. Authority, pins and re-pins
@@ -41,43 +42,57 @@ the plan step ran no `project` and no owner tool (R18).
 - **Finding**: C-56 (Q2 A) and A1's task 1.7 have the plan start only after
   feature 004 merges into `main`, on Brett Heap's word given after that
   merge. Feature 004 has not merged: PR #33 is a draft, its branch at
-  `4b4c36b`. Brett Heap said, at 2026-10-22T19:46:57Z, "lane 4 plans 005
+  `0a82a62`. Brett Heap said, at 2026-10-22T19:46:57Z, "lane 4 plans 005
   now".
 - **Decision**: that word moves C-56's order for this plan step only, as his
   "lane 4 specifies 005 now" moved change 2's order for the specify step
   (C-21). It authorizes this plan and nothing after it: no `tasks.md`, no
   code and no test is written, and the tasks and the implementation each
   wait for his word (R2). This plan pins its reads at:
-  - feature 004's `project`, tests and documents at `4b4c36b`;
-  - PR #19's change 1 at `ccc52b9`, its round (l), with T1 to T5 confirmed;
-    round (m) at `20084cd`, which carries T6 to T8 on Brett Heap's "R-320:
-    yes", is read for R20 only;
+  - feature 004's `project`, tests and documents at `0a82a62`;
+  - PR #19's change 1 at `20084cd`, its round (m), accepted by lane
+    openRepoProject-2 (R-323), with T1 to T8 confirmed by Brett Heap
+    ("R-320: yes" for T6 to T8);
   - A1 at `e4a30fc`;
-  - #24's change at `fe5b245` (PR #27; its `project-overview` block is blob
-    `a40458cb` at `fe5b245`, `dc39ec3` and `383da59` alike) and #25's at
-    `05a424a` (PR #29 at `a529310`), both read only to confirm that neither
-    gates this feature (C-71).
-- **Re-pins**: before `tasks.md` is written, every `project:N` cite here is
-  re-read at feature 004's next head, the merge that its doc round 21 makes
-  after `impl/004-r320-stale-cap` (T6 to T8 in code; lane
-  openRepoProject-2's R-321) and `impl/004-codex-closed-stdout` (R-322)
-  merge into its branch. Those merges touch the evidence
-  (`project:2299-3490`), plan (`:4183-4737`), preview (`:5298-5507`),
-  apply (`:5509-6605`) and dispatcher (`:3603-3961`) regions and the
-  `TEXT` table (`:682-880`), where T6 and T7 change the stale
-  recommendations and T8 the cap remedy; the overview reuses definitions
-  of the evidence and dispatcher regions and rows of `TEXT` (R3), so each
-  of those cites is read again there, and the overview's own stale and
-  cap texts stay A1's (R20). After PR #33 merges, the implementation
-  re-pins against that `main`, as C-56 asks.
+  - #24's change at `fe5b245` (PR #27 at `04be7f6`, its round B21; its
+    eight pinned ranges identical by the lead's `cmp`, and its
+    `project-overview` block blob `a40458cb` at `fe5b245` and `04be7f6`
+    alike) and #25's at `05a424a` (PR #29 at `a529310`), both read only to
+    confirm that neither gates this feature (C-71).
+- **Re-pin of revision 1, feature 004**: `0a82a62` is three merges after
+  the first draft's `4b4c36b`: `7e0a61e` (`impl/004-codex-closed-stdout`,
+  R-322: a `--json` apply run whose standard output was closed at startup
+  refuses before any removal, in `check_writes`, `:3770-3801`), `12c1821`
+  (`impl/004-r320-stale-cap`: T6 and T7 as `TEXT` rows `:873-878` with
+  `stale_recommendations`, `:4362-4382`, and the preview's
+  `UNREAD_NEXT_STEPS`, `:5486-5490`; T8 in `remedy_inspect_cap`,
+  `:795-797`) and doc round 21. Every `project:N` cite here was moved by a
+  line map of the two files and spot-checked by text: no definition the
+  overview reuses changed but in its line, the runner (`:1111-1972`), the
+  parsers (`:1974-2241`) and `Invocation` among them byte for byte, and
+  `row_evidence` (`:3224`) only in its docstring. None of the three merges
+  reaches the overview's texts: its stale and cap texts stay A1's (R20, O6
+  and O8), and it calls neither `check_writes` nor `stale_recommendations`.
+- **Re-pin of revision 1, PR #19**: `20084cd` leaves
+  `specs/project-command/spec.md` byte-identical to `ccc52b9` (by `cmp`),
+  so PCM cites stand; `specs/project-clean/spec.md` gains a five-line AND
+  at PCL:1099-1103, after PCL:1098 (T8 in "Row cap and planning
+  failures"), so a PCL line after 1098 moves down 5 (this plan cites
+  none); its design carries T6 and T7 at `#19 design.md:1337-1350` and T8
+  at `:1440-1446`, and F-1's (b) stays OPEN in its Open Questions at
+  `:2187-2192`.
+- **Re-pins still due**: after PR #33 merges, the implementation re-pins
+  against that `main`, as C-56 asks; a later head of feature 004 before
+  then (lane openRepoProject-2's R-332, R9) is re-cited the same way
+  before `tasks.md` is written.
 - **Rationale**: the plan's design depends on feature 004's runner, parsers
-  and deciders, which are complete at `4b4c36b` (133 of 133 tasks were
+  and deciders, which are complete at `0a82a62` (133 of 133 tasks were
   ticked at `2cf34d3`, the spec's re-check); writing it now costs at most a
   re-cite, while C-56's risk, a second plan, is bounded by R3's reuse list,
   which names every interface the plan leans on.
 - **Alternatives considered**: waiting for PR #33 (C-56 as written),
   overtaken by his word; pinning at `2cf34d3`, the spec's re-check head,
-  rejected because `4b4c36b` is the branch head the lead named and carries
+  rejected because `0a82a62` is the branch head the lead named and carries
   the later fixes.
 
 ## R2. Implementation base and order (brief decision 1)
@@ -117,60 +132,104 @@ the plan step ran no `project` and no owner tool (R18).
 
 - **Decision**: the overview is one new subcommand in the same `project`
   script, in new regions after feature 004's, reusing these definitions
-  unchanged (`project:N` at `4b4c36b`; each re-cited per R1):
+  unchanged (`project:N` at `0a82a62`; R1):
 
   - timing: `TIMING` (`:560-570`): deadline 60, probe budget 5, grace 2,
     reap wait 2, tick 0.1;
   - contracts: `LIMITS` (`:589-600`), for the shared constants and the
     record bounds; `GIT_FLOOR` (`:602`); the `TEXT` rows the contract
     names;
-  - git environment: `GIT_SCRUB` (`:1014-1026`, 31 names), `TRACE2_OFF`
-    (`:1034`), `PROTOCOL_PINS` (`:1038-1043`), `STATUS_PINS`
-    (`:1050-1051`), `GIT_KINDS` (`:1056-1069`; kinds `probe` and `status`
-    only), `git_env` (`:1072`), `git_argv` (`:1085`),
-    `relative_config_paths` (`:943`), `config_path_message` (`:983`);
-  - runner: `ChildHandle` (`:1111-1245`), `LIVE_PROBES` (`:1104`),
-    `kill_live_probes` (`:1248-1267`), `Interrupted` and `Terminated`
-    (`:1276-1294`), `Invocation` (`:1303-1418`, one branch added),
-    `signal_scope` (`:1458`), `raising_signals` (`:1528`),
-    `signal_wakeup` (`:1604`), `RawOutput` and `DriverOutcome`
-    (`:1623-1673`), `git_version` (`:1925`);
+  - git environment: `GIT_SCRUB` (`:1034-1046`, 31 names), `TRACE2_OFF`
+    (`:1054`), `PROTOCOL_PINS` (`:1058-1063`), `STATUS_PINS`
+    (`:1070-1071`), `GIT_KINDS` (`:1076-1089`; kinds `probe` and `status`
+    only), `git_env` (`:1092`), `git_argv` (`:1105`),
+    `relative_config_paths` (`:963`), `config_path_message` (`:1003`);
+  - runner: `ChildHandle` (`:1131-1265`), `LIVE_PROBES` (`:1124`),
+    `kill_live_probes` (`:1268-1287`), `Interrupted` and `Terminated`
+    (`:1296-1314`), `Invocation` (`:1323-1438`, one branch added),
+    `signal_scope` (`:1478`), `raising_signals` (`:1548`),
+    `signal_wakeup` (`:1624`), `RawOutput` and `DriverOutcome`
+    (`:1643-1693`), `git_version` (`:1945`);
   - parsers: `ParseError`, `RecordStream`, `StatusParser`,
     `WorktreeListParser`, `RefParser` and `MergedSetParser`
-    (`:1955-2193`);
+    (`:1975-2213`);
   - escaping: `escaping_decode`, `json_path` and `human_path`
-    (`:2230-2296`);
+    (`:2250-2316`);
   - evidence: `RECOMMENDATIONS` and `SECOND_RECOMMENDATIONS`
-    (`:2308-2328`), `classify` (`:2331`), `IDENTITY_OPTIONS`,
+    (`:2328-2348`), `classify` (`:2351`), `IDENTITY_OPTIONS`,
     `REF_FORMAT`, `STATUS_PROBE`, `GITFILE_BYTES` and `HEAD_BRANCH_REF`
-    (`:2543-2555`), `WorktreeRow` (`:2558`), `git_operation`,
-    `unparseable_error`, `probe_error` and `os_error` (`:2596-2641`),
-    `_direct` (`:2659`), `presence_from_lstat` (`:2679`), `gitdir_line`
-    (`:2744`), `main_worktree_decision` (`:2804`),
-    `registration_verdict` (`:2889`), `verify_registration` with
-    `fs=_direct` (`:2926`), `status_warned` (`:2960`),
-    `WORK_TREE_PROBE` (`:2999`), `shared_paths` (`:3162`),
-    `shared_identities` (`:3172`) and `row_evidence` (`:3204`);
-  - guard: `observed_at` (`:3513`);
-  - dispatcher: `divert_stream` (`:3696`), `write_failed` (`:3720`) and
-    `advise` (`:3780`);
-  - reflog: `reflog_path` (`:4969`) and `reflog_outcome` (`:4982`).
+    (`:2563-2575`), `WorktreeRow` (`:2578`), `git_operation`,
+    `unparseable_error`, `probe_error` and `os_error` (`:2616-2661`),
+    `_direct` (`:2679`), `presence_from_lstat` (`:2699`), `gitdir_line`
+    (`:2764`), `main_worktree_decision` (`:2824`),
+    `registration_verdict` (`:2909`), `verify_registration` with
+    `fs=_direct` (`:2946`), `status_warned` (`:2980`),
+    `WORK_TREE_PROBE` (`:3019`), `shared_paths` (`:3182`),
+    `shared_identities` (`:3192`) and `row_evidence` (`:3224`);
+  - guard: `observed_at` (`:3536`);
+  - dispatcher: `divert_stream` (`:3719`), `write_failed` (`:3743`) and
+    `advise` (`:3818`);
+  - reflog: `reflog_path` (`:5034`) and `reflog_outcome` (`:5047`).
 
   Changed, without changing any behaviour of feature 004 (its tests pass
   unchanged, FR-049):
-  - `Invocation.__init__` (`:1326-1340`) gains one branch: for `overview`,
+  - `Invocation.__init__` (`:1346-1360`) gains one branch: for `overview`,
     `work_end` and `reserve_end` are both the start plus
     `TIMING["invocation_deadline"]`, so `child_budget()` gives
     `min(5 s, deadline - now)` with no reserve (FR-011);
-  - `run_bounded` (`:1731-1860`) is factored into `start_child()` (budget,
-    spawn, count, budget end; `:1755-1775`) and `conclude()` (the outcome
-    from the handle's state and the parser; `:1844-1859`), as R-54's X-2
+  - `run_bounded` (`:1751-1880`) is factored into `start_child()` (budget,
+    spawn, count, budget end; `:1775-1795`) and `conclude()` (the outcome
+    from the handle's state and the parser; `:1864-1879`), as R-54's X-2
     leaves to this feature, keeping its `feed_stderr` and `tick` hooks; the
     one-wide loop stays in `run_bounded` between them;
-  - `parser()` (`:7706`) gains the `overview` subparser and `main()`
-    (`:7761`) one dispatch line; every exception of an overview run is
+  - `parser()` (`:7788`) gains the `overview` subparser and `main()`
+    (`:7843`) one dispatch line; every exception of an overview run is
     mapped inside its own entry point (R15), so `main()`'s handlers keep
     their behaviour for every other subcommand.
+
+  **Lane openRepoProject-2's five conditions.** Lane 2 owns feature 004 and
+  agrees in principle to these three changes as refactors that keep feature
+  004's behaviour unchanged, on five conditions. Each is a gate on the
+  changes and on their verification, and lane 2 or lane
+  openRepoProject-3 reads the 004-touching diff before feature 005 merges:
+  - **(a)** feature 004's existing tests pass with no edit; new tests may be
+    added. Check: the whole suite at the change's commit, and no diff in
+    feature 004's test files (`tests/test_clean_*.py`,
+    `tests/test_status_doctor_update.py`, `tests/test_project.py`,
+    `tests/clean_support.py`, `tests/launch_project.py`) against the base.
+  - **(b)** the `run_bounded` split keeps every probe count, every
+    per-probe budget and deadline figure, and the cut semantics (lane 2's
+    R-80 P-2; the deadline-stopped marker, `deadline_stopped`, `:4316`)
+    byte-identical in `clean`'s output. Check: a side-by-side run of the
+    base `project` and the split one over `clean`'s fixtures, each fixture
+    built twice from one script, comparing exit statuses, `probes` and
+    `operations`, the documents with each `observed_at` masked, and the
+    counting wrapper's child logs (argument vectors, directories, order);
+    the runs include deadline cuts under the launcher's shortened table,
+    with a fake Git holding a chosen child so that the cut falls on the
+    same child in both. It is a hand run, recorded in the change's pull
+    request, not a CI test, since CI's checkout holds no base `project`
+    ([quickstart.md](quickstart.md)).
+  - **(c)** the `Invocation` branch leaves `clean`'s 50 s work deadline and
+    its 10 s reserve untouched: the `clean` branch (`:1353-1355`) is not
+    edited and the overview's is a branch of its own. Check: feature 004's
+    timing tests unchanged, and a new unit test that `Invocation("clean")`
+    gives `work_end` 50 s and `reserve_end` 60 s after its start under the
+    real table.
+  - **(d)** `parser()` and `main()` add `overview` only; `clean`'s
+    arguments, help text, refusals and exit codes are unchanged. Check:
+    `project clean --help` byte-identical side by side, `project --help`
+    differing only by the overview's name in the subcommand list and its
+    help line, and feature 004's argument and refusal tests unchanged.
+  - **(e)** the changes land on `main` after PR #33 (R2's base). If the
+    split changes anything PR #19's text describes of the driver or of
+    bounded work (its design D1 and D2, `run_bounded`'s contract at `#19
+    design.md:212-217`; D9, the removal child, `:628`; D14, the fit
+    arithmetic, `:974`), feature 005's spec says so and PR #19 is not
+    edited for it. This plan's split changes none of them: `run_bounded`
+    keeps its signature, its outcomes and every caller. The spec is not
+    this plan's to edit, so a finding of that kind goes to lane
+    openRepoProject-4's lead before the change lands.
 
   New, in the overview's regions: the control loop and its slots (R4, R6),
   the per-candidate collectors (R5), the filesystem task (R7), the
@@ -179,16 +238,16 @@ the plan step ran no `project` and no owner tool (R18).
   and the message composer (R12), the envelope, the human report and the
   writer (R15, R16), and the overview's tables of messages, attention codes
   and remedies (the contract).
-- **Not reused**: `run_bounded`'s loop, `fs_call` (`:1862`), `_fs`,
-  `_lstat` and `_realpath` (`:2644-2704`), `identity_probe` (`:2715`),
-  `worktree_config` (`:3002`), `effective_work_tree` (`:3019`),
-  `inspect_repository` (`:3050`), `_read_row`, `_identity_unchanged`,
-  `_read_status` and `worktree_rows` (`:3283-3489`), `read_reflog`
-  (`:5049`) and `declared_tracking_branch` (`:2406`): each blocks its
+- **Not reused**: `run_bounded`'s loop, `fs_call` (`:1882`), `_fs`,
+  `_lstat` and `_realpath` (`:2664-2724`), `identity_probe` (`:2735`),
+  `worktree_config` (`:3022`), `effective_work_tree` (`:3039`),
+  `inspect_repository` (`:3070`), `_read_row`, `_identity_unchanged`,
+  `_read_status` and `worktree_rows` (`:3306-3512`), `read_reflog`
+  (`:5114`) and `declared_tracking_branch` (`:2426`): each blocks its
   caller until one child or call ends, or reads as R9 says the overview may
   not, while the overview's one loop drives four children and many tasks at
   once (FR-019). The overview calls the same deciders from its own
-  generators instead, in the same order. `resolve_merge_target` (`:2483`)
+  generators instead, in the same order. `resolve_merge_target` (`:2503`)
   is not called: it refuses on no target and reads its declared name from
   `declared_tracking_branch`; the overview applies the same order (FR-024)
   in a small resolver of its own over the keep-filter's records, and
@@ -197,7 +256,7 @@ the plan step ran no `project` and no owner tool (R18).
   snapshot are never called (FR-003).
 - **FR-040's ban kept**: the overview starts only `probe` and `status`
   handles, every one read-only with `GIT_OPTIONAL_LOCKS=0`, the 31-name
-  scrub, `TRACE2_OFF` and the seven protocol pins (`GIT_KINDS`, `:1056`);
+  scrub, `TRACE2_OFF` and the seven protocol pins (`GIT_KINDS`, `:1076`);
   it starts no `removal`, `delegate` or `push` child and calls no
   `execute()`; it writes no file; and it calls no function of the plan,
   preview, apply, result or push regions. A test asserts every child's
@@ -205,7 +264,7 @@ the plan step ran no `project` and no owner tool (R18).
   (R18).
 - **Rationale**: one evidence model is the change's point ([E]); the
   deciders were split out of feature 004's readers for exactly this caller
-  (its R-54 X-1; `shared_identities`, `:3172-3189`, names "another driver
+  (its R-54 X-1; `shared_identities`, `:3192-3209`, names "another driver
   (feature 005's overview)"). Reusing the deciders keeps the ladder's
   classification equal to `project clean`'s (FR-026), while new readers are
   needed only where the reading itself must not block.
@@ -232,10 +291,10 @@ the plan step ran no `project` and no owner tool (R18).
   drains and caps standard error (`keep_stderr`, never shown; FR-022),
   stops a child at its budget, and calls `advance()` on every terminating
   handle each tick, so no grace delays another child (`kill_live_probes`'s
-  rule, `:1248-1267`). On deadline expiry it terminates every in-flight
+  rule, `:1268-1287`). On deadline expiry it terminates every in-flight
   child at once and refuses every later start (FR-012). The run is entered
   under `signal_scope()` (record-only handlers, FR-044); the loop raises
-  `Interrupted` (a `BaseException`, `:1276`) once the slot is set, and its
+  `Interrupted` (a `BaseException`, `:1296`) once the slot is set, and its
   `finally` terminates and reaps every live handle before the scope's exit
   kills any group left (`kill_live_probes`).
 - **Rationale**: A1's design D1 fixes this shape; feature 004's handle
@@ -243,7 +302,7 @@ the plan step ran no `project` and no owner tool (R18).
   loop with no new process code.
 - **One departure from D1's wording**: D1 names "one self-pipe" that the
   workers and the signal handlers write to. `signal_scope` keeps its pipe's
-  write end private (`:1458-1521`), so the plan registers two read ends on
+  write end private (`:1478-1541`), so the plan registers two read ends on
   the one selector, the scope's and the loop's task pipe. The behaviour D1
   asks for, any signal or finished task waking the loop at once, holds;
   exposing the scope's write end would change feature 004's signal code for
@@ -260,7 +319,7 @@ the plan step ran no `project` and no owner tool (R18).
   its `OSError`, or its cut). Its steps are FR-021's, in order: the marker
   checks (done by its root's task, R10), the identity probe and, on any
   line count but two, the one-option re-reads (`IDENTITY_OPTIONS`,
-  `:2543`; EC-032); for the first candidate of a repository, that
+  `:2563`; EC-032); for the first candidate of a repository, that
   repository's steps: the registry listing, D3's gitfile steps where the
   first record is `common_dir`, the manifest read at `repository.root` (at
   the row's `path` when that is null, or at the candidate without Git),
@@ -342,7 +401,7 @@ the plan step ran no `project` and no owner tool (R18).
   - one per re-verification (the same reads again, R17);
   - one per linked row whose work-tree probe ran: the strict realpath of
     the toplevel it printed, compared with the row's;
-  - one per reflog read (at most 64 KiB, `reflog_path`, `:4969`);
+  - one per reflog read (at most 64 KiB, `reflog_path`, `:5034`);
   - one at start for the working directory's realpath (FR-026).
 - **The bound (PN-10)**: abandoned workers are bounded by the tasks a run
   can start, since no task starts after the deadline: 32 roots, 1 working
@@ -363,14 +422,14 @@ the plan step ran no `project` and no owner tool (R18).
 ## R8. The ref listing's keep-filter (FR-015; PN-16)
 
 - **Decision**: a new `KeptRefParser(RefParser)` in the overview's region
-  overrides `_take` (`:2151-2169`): it parses each record as `RefParser`
+  overrides `_take` (`:2171-2189`): it parses each record as `RefParser`
   does, then keeps it only if it is a local head (`refs/heads/`), is
   `refs/remotes/origin/HEAD`, or is the upstream that a kept head names;
   for every other `refs/remotes/<remote>/<name>` record it sets the
   remote-copy flag of `<name>` when `<name>` is one of the candidate names
   known before the listing (the manifest's `tracking_branch` less
   `origin/`, `main`, `master`) and keeps nothing else. `for-each-ref
-  refs/heads refs/remotes` (`:3140`) sorts by refname, so every head and
+  refs/heads refs/remotes` (`:3160`) sorts by refname, so every head and
   the upstream it names are known before the first remote record arrives
   (A1 design D9); a `refs/heads/` record that arrives after a
   `refs/remotes/` record breaks that order, since an upstream it names may
@@ -394,25 +453,40 @@ no Git and a later ruling edits one function:
   with nothing on either stream is false with no error; any other outcome
   is true with the row error change 2's table gives (`probe-failed`, its
   DETAIL `unparseable output` for other output; `probe-timeout`;
-  `deadline-exceeded`). Feature 004's `worktree_config` (`:3002-3016`)
-  reads every exit 1 as false and other output as true with no error. The
-  ladder's classes agree but where an exit 1 with a warning hides a
-  work-tree redirect, which this reading fails closed on.
+  `deadline-exceeded`). Feature 004's `worktree_config` (`:3022-3036`)
+  still reads every exit 1 as false at `0a82a62` (`return outcome.status !=
+  1`, `:3036`) and other output as true with no error, so the classes
+  differ only where an exit 1 that prints something hides a work-tree
+  redirect, which this reading fails closed on. Lane openRepoProject-2's
+  R-332 has feature 004 follow PR #19's D7 (`#19 design.md:482-485`), "an
+  unset value is false and any other failure counts as true", so that an
+  exit 1 that prints something counts as true there too; the fix is queued
+  for feature 004's next window, after which the value agrees and the
+  overview differs only in also recording `probe-failed` on the project
+  row (A1:369). PENDING: the A1 drafter checks whether that recorded
+  `probe-failed` has the same effect as #19's "counts as true"; if it does
+  not, the difference is a held A1 item and joins R20, and this decider
+  stays as written until Brett Heap's word. The draft's copy at sha256
+  `10890e2c0b9342c6...` (2,353 lines) reads it as no item: the work-tree
+  reads still run, so rows, classes, gates and suggestions come from the
+  same evidence as `clean`'s, and the one difference is the row error,
+  which gates nothing and makes the run incomplete (exit 1); the point
+  stays pending until the lead confirms that reading.
 - **Realpaths**: the overview's tasks use `os.path.realpath(...,
   strict=True)`, so `ENOENT` and `ENOTDIR` can be told from other errors
-  as FR-007 and FR-026 need; feature 004's `_realpath` (`:2703`) is not
+  as FR-007 and FR-026 need; feature 004's `_realpath` (`:2723`) is not
   strict, and never raises.
 - **An abandoned child**: feature 004's `conclude()` path maps an abandoned
-  handle to `timeout` (`:1848-1849`), as [E] has it (PCM:263-269); FR-011
+  handle to `timeout` (`:1868-1869`), as [E] has it (PCM:263-269); FR-011
   makes an abandoned child that the deadline cut `deadline-exceeded`. The
   overview's loop maps that case itself after `conclude()`.
 - **The deadline's text**: `OPERATION stopped at the invocation deadline`
-  (A1's table), not feature 004's "work deadline" (`:874`).
+  (A1's table), not feature 004's "work deadline" (`:894`).
 - **`tracking_freshness`**: the overview's own constant, `local refs only;
   no fetch` (FR-036; C-32), not feature 004's `TRACKING_FRESHNESS`
-  (`:4188`).
+  (`:4226`).
 - **The work-tree probe's output**: "not exactly one line" disagrees, as A1
-  is ratified; PR #19's round (j) and feature 004 (`:3019-3047`) read one
+  is ratified; PR #19's round (j) and feature 004 (`:3039-3067`) read one
   path less the final line feed. Held as R20's O5.
 
 ## R10. Discovery details (FR-001 to FR-005; PN-9, PN-13)
@@ -468,11 +542,11 @@ no Git and a later ruling edits one function:
 - **Decision**: every fixed text the overview prints is one row of the
   contract's message table, keyed by code and condition, held items marked;
   [L]'s recommendations are read from `RECOMMENDATIONS` and
-  `SECOND_RECOMMENDATIONS` (`:2308-2328`), never from `row_evidence`'s two
-  overrides (`:3272-3275`), which are feature 004's report texts. PN-1's
+  `SECOND_RECOMMENDATIONS` (`:2328-2348`), never from `row_evidence`'s two
+  overrides (`:3295-3298`), which are feature 004's report texts. PN-1's
   sentences are fixed in the contract, each under 200 characters, from
   texts feature 004 already prints where one exists (`no-merge-target`,
-  `:863`; `merge-target-conflict`, `:835-836`; `main-worktree`, `:857`). The
+  `:883`; `merge-target-conflict`, `:842-843`; `main-worktree`, `:864`). The
   message of a gated finding is built by one pure function,
   `compose_message(own, remedy, warning=None)`: own text, `; `, remedy,
   within 200 characters, the own text shortened with `...` when both do not
@@ -490,7 +564,7 @@ no Git and a later ruling edits one function:
   decided by two sources (a manifest and the ref listing for
   `merge-target-conflict`; a status probe and the ref listing for a
   default-branch finding) takes the later. RFC 3339 UTC to the second, as
-  `observed_at()` (`:3513`) writes it.
+  `observed_at()` (`:3536`) writes it.
 - **Alternatives considered**: the envelope's `observed_at` for every
   finding not decided by a Git child, rejected: it hides when the deciding
   read happened.
@@ -517,7 +591,7 @@ no Git and a later ruling edits one function:
   - The document is `json.dumps(doc, indent=2, ensure_ascii=True)` and one
     line feed, keys in the order the contract lists them (the delta's
     order), never sorted (PN-6), as feature 004's `write_document`
-    (`:3578-3600`) writes its own.
+    (`:3601-3623`) writes its own.
   - Exit-2 outputs: under `--json`, `{"error": MESSAGE, "code": CODE}`;
     without it, `REFUSED: MESSAGE` on standard error. For an exception of
     any other kind outside the boundary (PN-2) the message is `internal
@@ -528,18 +602,18 @@ no Git and a later ruling edits one function:
     instead (FR-039).
   - The writer: the whole report is rendered to bytes (UTF-8, every
     interpolated string escaped by [P]) after the loop has reaped or
-    abandoned every child; then, inside `raising_signals()` (`:1528`),
+    abandoned every child; then, inside `raising_signals()` (`:1548`),
     entered inside the run's `signal_scope`, it is written by `os.write`
     on the standard-output descriptor, so nothing is buffered for exit to
     flush (C-69). An interrupted or failed write diverts the descriptor
-    (`divert_stream`, `:3696`). Where standard output has no descriptor
+    (`divert_stream`, `:3719`). Where standard output has no descriptor
     (an in-process test), the stream's `write` is used.
 - **Rationale**: one rendering step makes C-66's "rendered whole before its
   first byte" and C-69's raising span hold together; `os.write` leaves
   nothing for the interpreter to flush after a signal.
 - **Alternatives considered**: `sys.stdout.write` then `flush`, which can
   leave buffered bytes for exit; feature 004's `internal_error` text,
-  `TYPE: TEXT` (`:3518`), rejected because A1's table names the class only.
+  `TYPE: TEXT` (`:3541`), rejected because A1's table names the class only.
 
 ## R16. Human report details (PN-3; PN-5)
 
@@ -553,14 +627,14 @@ no Git and a later ruling edits one function:
 
 ## R17. FR-007's re-verification against feature 004's fix (PN-18)
 
-- **Finding**: feature 004's R-101 fix is built at `4b4c36b` as
-  `_identity_unchanged` (`:3324-3354`): one bounded call re-reads the
+- **Finding**: feature 004's R-101 fix is built at `0a82a62` as
+  `_identity_unchanged` (`:3347-3377`): one bounded call re-reads the
   `lstat`, the realpath and the registration, and a changed value, a
   failed read or a cut stops the status probe. Compared with FR-007:
   - the class is `inspection-error` in both for every outcome, so no class
     differs and nothing goes to the lead under PN-18;
   - a re-read `lstat` failing with `ENOENT` or `ENOTDIR` appends an `os-error`
-    in feature 004 (`_direct`, `:2659-2667`), while FR-007 counts it as a
+    in feature 004 (`_direct`, `:2679-2687`), while FR-007 counts it as a
     changed value with no row error; feature 004 has no findings, so its
     `registered: false` on a now-disagreeing registration has no counterpart,
     and the overview's finding is the class's `inspection-error` either way;
@@ -579,6 +653,13 @@ no Git and a later ruling edits one function:
     helpers) and `tests/launch_project.py` reused unchanged. Each delta
     scenario has a test named `test_overview_<scenario>`, in human and
     `--json` form; the existing tests pass unchanged.
+  - **The 004-touching changes**: lane openRepoProject-2's conditions (a)
+    to (e) of R3, checked in slice 1 before the change is read: the suite
+    with feature 004's tests unedited (a), the side-by-side run (b), a unit
+    test of `Invocation("clean")`'s figures and of `start_child()` and
+    `conclude()` in `tests/test_overview_factoring.py` (c), the help diffs
+    (d), and the base and the spec check of (e)
+    ([quickstart.md](quickstart.md)).
   - **Isolation**: every test runs with a scratch `HOME`, `PROJECTS_DIR`
     set or unset explicitly, `WORKBENCHES_ROOT` at an empty scratch
     directory, the fixtures outside every Git work tree, and a bin
@@ -606,7 +687,7 @@ no Git and a later ruling edits one function:
     asserts the row's five upstream fields null, `inspection-error`, the
     project row's `git for-each-ref failed: unparseable output`, and the
     status probes' `git status failed: unparseable output` that Git's
-    ambiguity warning causes (`status_warned`, `:2960`).
+    ambiguity warning causes (`status_warned`, `:2980`).
   - **Parity**: every fixture compared with `project clean <root> --json`
     keeps its ignored file a `local.env` (C-71). Two cases are recorded as
     not compared until their owners settle them: a failed ref listing
@@ -712,17 +793,23 @@ have no design impact.
   one message-table condition and the composer's `warning` branch; with D5's
   rule alone, beside the report-cap remedy (75 characters at 260 rows) the
   message would be 206 characters and the cut would fall inside T6's warning,
-  which the length tests pin.
+  which the length tests pin. PR #19's T6 fires on any row of its plan or
+  listing (`#19 design.md:1337-1350`); the overview, which has neither, takes
+  the draft's own trigger, any worktree row of the same repository with
+  `present: null`, and `compose_message` (R12) holds the whole cut rule, so it
+  is tested by itself.
 - **O7. Item 10 part 2, the `main-worktree-missing` remedy**. Under the
   same test: "restore or prune the main worktree by hand; a row's path could
   not be read, so do not run git worktree prune until it can" (121
   characters). As ratified: "restore or prune the main worktree by
   hand". Design: one message-table row; it carries no gate, so no cut.
-- **O8. T7's locked form**. Whether a locked stale row's message takes
-  feature 004's "Review, unlock it, then prune stale worktree metadata
-  manually." (lane openRepoProject-3's W52 F-10), with T7's warning; as
-  ratified, A1 carries [L]'s one stale text for every stale row. No text
-  is drafted. Design: one message-table row keyed on `locked`.
+- **O8. T7's locked form**. Whether a locked stale row's message takes feature
+  004's "Review, unlock it, then prune stale worktree metadata manually." (lane
+  openRepoProject-3's W52 F-10; `TEXT`, `:865`), with T7's warning (`:876-878`
+  at `0a82a62`, where feature 004 now builds T6 and T7); as ratified, A1
+  carries [L]'s one stale text for every stale row, and the overview's test for
+  the warning is its own (O6). No text is drafted. Design: one message-table
+  row keyed on `locked`.
 - **O9. M1, parity when the working directory's realpath fails** (FR-026;
   C-61). The overview makes only `merged-removable` and `merged-current`
   rows `inspection-error`; feature 004 makes every present row so. Design:
@@ -730,8 +817,8 @@ have no design impact.
   case out until he rules (R18).
 - **O10. LQ-15's extension** (FR-043; EC-036). If he strikes the test of
   `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`, feature 004's
-  `CONFIG_PATH_EXTENSION` (`:940`) loses them and the overview follows,
-  since it calls `relative_config_paths` (`:943`); should
+  `CONFIG_PATH_EXTENSION` (`:960`) loses them and the overview follows,
+  since it calls `relative_config_paths` (`:963`); should
   `relative-config-path` itself be struck, the code falls back to
   `refused`, exit 2, one row of the contract's exit-2 table.
 - **Recorded, no design impact**: F-1's (b) beside an unread row, open in

@@ -50,7 +50,8 @@ Implementation slices, in dependency order; each leaves the suite green:
    `tests/overview_support.py`: scratch `HOME`, explicit `PROJECTS_DIR`,
    `WORKBENCHES_ROOT` at an empty directory, fake owner tools first on
    `PATH`, the audit hook, the snapshot, the allow-list on feature 004's
-   counting wrapper. Scenarios 47, 55, 56 and 64.
+   counting wrapper. Scenarios 47, 55, 56 and 64. The three 004-touching
+   changes ship in this slice alone, under the gates below.
 2. **Discovery** (R7, R10). `FsTask`, the root tasks with their cancel
    flag, markers, candidates, the dedupe and the root, entry and candidate
    caps. Scenarios 1 to 4, 13, 14 and 23; PN-9, PN-13.
@@ -80,27 +81,62 @@ The held items are built as ratified, each in its own row, decider or
 term (research.md R20), so that an answer of Brett Heap's lands as a change
 to that place and its tests alone.
 
+### Gates on the three 004-touching changes
+
+Slice 1 changes feature 004's code in three places: `Invocation` (one
+branch), `run_bounded` (split into `start_child()` and `conclude()`) and
+`parser()` with `main()` (the `overview` subcommand). Lane
+openRepoProject-2, which owns feature 004, agrees to them in principle as
+refactors that keep its behaviour unchanged, on five conditions, each a
+gate on the change and on its verification (research.md R3):
+
+- **(a)** feature 004's existing tests pass with no edit (new tests may be
+  added): the whole suite green, and no diff in feature 004's test files
+  or helpers against the base.
+- **(b)** the split keeps every probe count, every per-probe budget and
+  deadline figure and the cut semantics (R-80 P-2, the deadline-stopped
+  marker) byte-identical in `clean`'s output, shown by a side-by-side run
+  of the base and the split `project` over `clean`'s fixtures comparing
+  probes, operations, exit statuses, documents (each `observed_at`
+  masked) and the wrapper's child logs ([quickstart.md](quickstart.md)).
+- **(c)** the `Invocation` branch leaves `clean`'s 50 s work deadline and
+  10 s reserve untouched: its `clean` branch is not edited, and a unit test
+  pins both figures.
+- **(d)** `parser()` and `main()` add `overview` only: `clean`'s arguments,
+  help text, refusals and exit codes unchanged.
+- **(e)** the changes land on `main` after PR #33; if the split changes
+  anything PR #19's text describes of the driver or bounded work (its D1,
+  D2, D9 and D14), feature 005's spec says so and PR #19 is not edited for
+  it.
+
+Lane 2 or lane openRepoProject-3 reads the 004-touching diff before
+feature 005 merges, and slice 1's pull request quotes the checks of (a) to
+(d).
+
 ## Citations
 
-- `project:N`: line N of feature 004's `project` at `4b4c36b` (branch
+- `project:N`: line N of feature 004's `project` at `0a82a62` (branch
   `004-project-clean-all-safe`, draft PR #33), read with `git show`; the
   other files of that branch at the same commit, as `tests/NAME:N` and
-  `specs/004-project-clean-all-safe/NAME:N`. Re-cited at feature 004's
-  next head before tasks are written, and at `main` after PR #33 lands
-  (research.md R1).
+  `specs/004-project-clean-all-safe/NAME:N`. Revision 1 moved every cite
+  from `4b4c36b`; a later head is re-cited before tasks are written, and
+  `main` after PR #33 lands (research.md R1).
 - `A1:N`, `A1 design.md:N`: change 2's `specs/project-overview/spec.md`
   and `design.md` at `e4a30fc` (branch
   `change/amend-project-overview-clarify-answers`).
 - `PCM:N`, `PCL:N`, `#19 design.md:N`: change 1's
   `specs/project-command/spec.md`, `specs/project-clean/spec.md` and
-  `design.md` at `ccc52b9` (branch `change/amend-clean-all-safe-push-pins`,
-  PR #19, round (l)); round (m) at `20084cd` where named.
+  `design.md` at `20084cd` (branch `change/amend-clean-all-safe-push-pins`,
+  PR #19, round (m), accepted as lane openRepoProject-2's R-323), moved
+  from `ccc52b9` in revision 1.
 - POD, PRSD, CMD, CLN, DI, BA and the labels [E], [L], [G], [R] and [P]:
   as [spec.md](spec.md) defines them.
-- The lane's A1 re-alignment draft: the copy read at sha256
+- The lane's A1 re-alignment draft, held for Brett Heap's review and not
+  a source of behaviour: its items 1 to 10 as read at sha256
   `00205d73ba3831d23cf87ff67bf22b79099b2767bad8cc9091ff9064c8a802ea`
-  (2,295 lines), held for Brett Heap's review and not a source of
-  behaviour.
+  (2,295 lines), and its note on row 4c's exit 1 as read at sha256
+  `10890e2c0b9342c68832df71e0cc2742d3092be08beb81a12684e3c70c33398c`
+  (2,353 lines; research.md R9).
 
 ## Technical Context
 
@@ -110,7 +146,7 @@ in the benches, 2.36.6 in the `git-floor` job. `os.path.realpath(...,
 strict=True)` needs 3.10, the floor already in force.
 
 **Primary Dependencies**: the Python standard library only, every module
-the overview needs already imported by `project` at `4b4c36b`
+the overview needs already imported by `project` at `0a82a62`
 (`selectors`, `signal`, `threading`, `os`, `stat`, `json`, `argparse`);
 PyYAML through the existing requirement, for manifests. No dependency is
 added (FR-047).
@@ -121,7 +157,7 @@ added (FR-047).
 fixtures, with feature 004's counting wrapper, fake Gits, death watch and
 launcher (`tests/clean_support.py`, `tests/launch_project.py`), and new
 modules `tests/test_overview_*.py` with `tests/overview_support.py`
-(research.md R18). At `4b4c36b` the suite holds 477 test methods; all
+(research.md R18). At `0a82a62` the suite holds 484 test methods; all
 pass unchanged after this feature (FR-049).
 
 **Target Platform**: Linux and macOS, at a terminal and in scripts; CI runs
@@ -170,7 +206,7 @@ counts and the orders (FR-049).
 
 Feature 004 measured 257 rows registered directly in 0.93 s against 24.0 s
 by `worktree add`, and 4,097 untracked files in 4.3 s
-(`specs/004-project-clean-all-safe/plan.md:259-262`).
+(`specs/004-project-clean-all-safe/plan.md:259-260`).
 
 **CI shape**: the `test` matrix runs the whole suite unchanged; feature
 004's `git-floor` job gains `-k test_overview_floor_` beside its own
@@ -242,11 +278,15 @@ suggestions lead to `project clean`.
 
 ## Risks and Notes
 
-- **Feature 004 moves under the plan.** Its next head (T6 to T8, R-322,
-  doc round 21) changes the evidence, plan, preview, apply and dispatcher
-  regions and the `TEXT` table; R3's reuse list is re-cited there before
-  tasks, and at `main` after PR #33 (R1). A change to a reused decider's
+- **Feature 004 moves under the plan.** Revision 1 re-cites every line at
+  `0a82a62` (R-322, T6 to T8, doc round 21), where no reused definition
+  changed but in its line (research.md R1). A later head, such as the one
+  that carries lane openRepoProject-2's R-332, is re-cited the same way
+  before tasks, and `main` after PR #33. A change to a reused decider's
   signature or result is the one re-plan trigger.
+- **The 004-touching changes** stay inside lane 2's five conditions
+  (Summary, "Gates"); a failed gate stops slice 1 and returns the change
+  to lane 2 and the lead, never an edit of feature 004's tests.
 - **PR #19 not ratified as written.** The overview cites [E]'s `commondir`
   check, status pins, extension read, work-tree probe and
   configuration-path test as pending #19; a different ruling there changes
@@ -256,9 +296,11 @@ suggestions lead to `project clean`.
   (O9); and, if #24's realization merges first, a cache-only worktree
   (C-71). Parity tests leave these cases out by name.
 - **Readings that differ from feature 004's code** (research.md R9): the
-  extension read's exit 1 with a warning, strict realpaths, an abandoned
-  child the deadline cut, the deadline text and `tracking_freshness`; each
-  is the overview's own decider, tested alone.
+  extension read's exit 1 with a warning (feature 004 to follow PR #19's D7
+  by R-332, queued; whether A1's recorded `probe-failed` matches #19's
+  "counts as true" is PENDING the A1 drafter's check), strict realpaths, an
+  abandoned child the deadline cut, the deadline text and
+  `tracking_freshness`; each is the overview's own decider, tested alone.
 - **Threads**: at most 2,465 tasks a run, each its own daemon thread, the
   stuck ones never joined (R7); a filesystem call stuck in the kernel can
   hold process exit (EC-001), which the README states.

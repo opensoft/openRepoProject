@@ -7,14 +7,14 @@ keeps no state beyond the invocation (FR-040); these are the values one run
 reads, derives and reports. The JSON shapes and key orders are in
 [contracts/project-overview.md](contracts/project-overview.md); exact human
 text is A1's design D3, D4, D5 and D10 and the contract's message table.
-`project:N` is feature 004's `project` at `4b4c36b` ([plan.md](plan.md),
+`project:N` is feature 004's `project` at `0a82a62` ([plan.md](plan.md),
 "Citations").
 
 ## Entities
 
 ### Invocation (FR-011, FR-043, FR-044)
 
-Feature 004's `Invocation` (`project:1303-1418`), entered by `main()` for
+Feature 004's `Invocation` (`project:1323-1438`), entered by `main()` for
 command `overview`, with one added branch: its deadline is set when it is
 made, after the arguments parse and before any root is listed, at the start
 plus `TIMING["invocation_deadline"]` (60 s), with no reserve. It carries:
@@ -94,7 +94,7 @@ One generator per candidate, resumed with each step's result.
 ARGS`, of kind `probe` or `status`; `parser` one of feature 004's
 incremental parsers, the keep-filter (`KeptRefParser`) or `RawOutput`.
 `FsStep(fn, args)`: one filesystem task. A result carries the
-`DriverOutcome` (`project:1639-1673`) or the task's value, its `OSError`,
+`DriverOutcome` (`project:1659-1693`) or the task's value, its `OSError`,
 or its cut, and the wall-clock time it completed (research.md R13).
 
 ### Child outcome to row error (FR-011, FR-012, FR-022)

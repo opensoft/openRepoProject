@@ -46,6 +46,26 @@ Test modules under `tests/`, with `overview_support.py`:
 | `test_overview_yaml.py` | the `project-review-safety` carve-out |
 | `test_overview_floor.py` | FR-050's two floor tests |
 | `test_overview_units.py` | deciders, keep-filter, composer, counts |
+| `test_overview_factoring.py` | condition (c); `start_child`, `conclude` |
+
+## The 004-touching changes (research.md R3)
+
+Lane openRepoProject-2's five conditions, each a gate on slice 1 and on
+its verification ([quickstart.md](quickstart.md), "The 004-touching
+changes"); lane 2 or lane openRepoProject-3 reads the diff before feature
+005 merges:
+
+- (a) feature 004's tests unedited and passing: the whole suite; no diff
+  in its test files and helpers against the base.
+- (b) probes, budgets, deadline figures and cut semantics byte-identical
+  in `clean`'s output: the side-by-side run of the base and the split
+  `project`, recorded in slice 1's pull request.
+- (c) `clean`'s 50 s work deadline and 10 s reserve untouched:
+  `test_overview_factoring.py`, and feature 004's timing tests unedited.
+- (d) `overview` added only: the `--help` diffs, and feature 004's
+  argument and refusal tests unedited.
+- (e) on `main` after PR #33; a change to what PR #19's D1, D2, D9 or D14
+  describe goes into feature 005's spec, never into PR #19.
 
 ## Functional requirements
 

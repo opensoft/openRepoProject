@@ -62,7 +62,7 @@ No other option, variable or file changes a limit or a time (FR-047).
 1. Parse the arguments (above); the invocation's deadline is set as it is
    entered (60 s, no reserve).
 2. The configuration-path test of [E] (feature 004's
-   `relative_config_paths`, `project:943`): a variable that fails it
+   `relative_config_paths`, `project:963`): a variable that fails it
    refuses with `relative-config-path`, exit 2, before any Git child.
 3. The version check, once (`git --version`): `git-too-old` or
    `git-unavailable`, exit 2, and no other Git child.
@@ -295,7 +295,7 @@ config`, `git for-each-ref`, `git status`), a filesystem call (`lstat`,
 - `error.root-unreadable`: "root is unreadable (CAUSE)", CAUSE one of "no
   such directory", "not a directory", STRERROR
 
-### Findings from the ladder (FR-028; [L], `project:2308-2328`)
+### Findings from the ladder (FR-028; [L], `project:2328-2348`)
 
 The class's recommendation, verbatim:
 
@@ -367,7 +367,7 @@ The class's recommendation, verbatim:
     main worktree by hand; a row's path could not be read, so do not run
     git worktree prune until it can"
 - `finding.main-worktree`: "The main worktree is never removed by project
-  clean." (feature 004's text, `project:857`)
+  clean." (feature 004's text, `project:864`)
 - `finding.locked-worktree`: "This worktree is locked; unlock it before
   project clean can remove it."
 - `finding.registration-mismatch`: "Git's registration of this worktree
@@ -379,10 +379,10 @@ The class's recommendation, verbatim:
   common directory is not valid UTF-8, so no clean command can name it;
   rename the path to valid UTF-8."
 - `finding.no-merge-target`: "Cannot determine the default branch from the
-  manifest, origin/HEAD, main, or master." (feature 004's, `project:863`)
+  manifest, origin/HEAD, main, or master." (feature 004's, `project:883`)
 - `finding.merge-target-conflict`: "The manifest names NAME and origin/HEAD
   names OTHER; NAME is the merge target." (feature 004's,
-  `project:835-836`)
+  `project:842-843`)
 
 ### Remedies (FR-035; A1:620-631)
 
@@ -438,10 +438,10 @@ from `limits` when the message is built.
   Git 2.36 or later."
 - `refusal.git-unavailable`: "Git is unavailable (DETAIL); overview needs
   Git 2.36 or later.", DETAIL one of "not found", "exit N", "timed out",
-  "unparseable version" (feature 004's details, `project:805-808`)
+  "unparseable version" (feature 004's details, `project:812-815`)
 - `refusal.relative-config-path`: per failing variable, in the order
   `HOME`, `XDG_CONFIG_HOME`, `GIT_CONFIG_GLOBAL`, `GIT_CONFIG_SYSTEM`, one
   line "NAME is set to a path that does not begin with /; make it absolute
   or unset it.", the lines joined by a line feed (feature 004's
-  `config_path_message`, `project:983-986`)
+  `config_path_message`, `project:1003-1006`)
 - `refusal.internal-error` (PN-2): "internal error (CLASS)"
