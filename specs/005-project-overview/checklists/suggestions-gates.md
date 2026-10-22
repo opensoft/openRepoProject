@@ -39,16 +39,17 @@ Lane: openRepoProject-4
   - Result: pass; once PR #19 is ratified, `operation-in-progress` (LQ-14,
     `43f7107`) and `worktree-only-commits` (LQ-13, `93de4bb`) join them, after
     them in [G]'s order, and the overview evaluates neither (FR-032), as
-    amendment A1 at `4261ff8` proposes, pending, keeping the overview's
+    amendment A1 at `c193f7b` proposes, pending, keeping the overview's
     `--all-safe` suggestion of such a worktree and under the one outcome rule
     of each gate that R-124 settles at `2b86a5f`, as #19's round (d) amends it
     at `9267303`, pending: the batch excludes the worktree on a decided result;
     an error on the listing, any other error on the `logs/HEAD` read, and a
-    `rev-list` child that cannot be started, exits nonzero or is stopped at its
-    5 s budget make it `inspection-error`; a listing or read not finished
-    within the filesystem budget, the deadline not being the limit, records
-    `probe-timeout` and makes it `inspection-error`; the deadline's cut records
-    `deadline-exceeded`; and each leaves its plan incomplete.
+    `rev-list` child that cannot be started or exits nonzero make it
+    `inspection-error`; a child stopped at its 5 s budget, or a listing or read
+    not finished within the filesystem budget, the deadline not being the
+    limit, records `probe-timeout` and makes it `inspection-error`; the
+    deadline's cut records `deadline-exceeded`; and each leaves its plan
+    incomplete.
 
 ## Requirement Clarity
 
@@ -125,10 +126,11 @@ still pass, and CHK012, CHK020, CHK025 and CHK027 after PR #19's LQ-13 and
 LQ-14, theirs too, and CHK012 again after A1's revision 3 at `367223a`, and
 CHK012 and CHK020 after PR #19's R-124 and R-126, and again after A1's revision
 5 at `3ee860c`, with R-124's outcome rule in `2b86a5f`'s words, and CHK012
-after its revisions 6, 7, 8 and 9 at `d644517`, `0394be4`, `177eadf` and
-`4261ff8`, and after #19's round (d) at `9267303`. 29 items: 28 pass, 1 fixed
-in the spec, 0 open, 0 plan notes, 0 new questions. An open item waits on the
-question or residual its result names; a plan note is for the plan, not the
+after its revisions 6, 7, 8, 9 and 10 at `d644517`, `0394be4`, `177eadf`,
+`4261ff8` and `c193f7b`, after #19's rounds (d) and (e) at `9267303` and
+`f0bf538`, and after lane openRepoProject-3's W39 LOW-4. 29 items: 28 pass, 1
+fixed in the spec, 0 open, 0 plan notes, 0 new questions. An open item waits on
+the question or residual its result names; a plan note is for the plan, not the
 spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: none.
