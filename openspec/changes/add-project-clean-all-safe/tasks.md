@@ -86,9 +86,13 @@ duplicate them, and nothing here is an implementation step.
   lead's R-285, R-287 and R-291, with LQ-11's work-tree probe read as one path,
   and Brett Heap's confirmation of R-284 on 2026-10-22, "R-284: yes" (R-290)
   (the commit titled 'Amend change 1: round (j), lane 3's W70 read of round (h)
-  and LQ-11's one-path probe (R-285, R-287, R-290, R-291)'); verified by the
-  table "Questions Resolved by the Alignment Review" in `proposal.md` and the
-  later-rulings list under it, which name the section each ruling edited.
+  and LQ-11's one-path probe (R-285, R-287, R-290, R-291)'); and round (k), lane
+  3's W80 read of round (i), with its W81 read of feature 004, under the lead's
+  R-294, and lane 4's reading of a revalidation scenario, under the lead's R-299
+  (the commit titled 'Amend change 1: round (k), lane 3's W80 read of round (i)
+  (R-294, R-299)'); verified by the table "Questions Resolved by the Alignment
+  Review" in `proposal.md` and the later-rulings list under it, which name the
+  section each ruling edited.
 - [x] 1.3 Council resolved: every concern is VALID, none dismissed, the verdicts
   V1 to V12 applied to `proposal.md` (`ea9c73b`) and the five NOTED constraints
   recorded as N1 to N5 in `clarifications.md` (`1d4ed5b`); verified by

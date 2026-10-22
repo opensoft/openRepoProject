@@ -59,10 +59,12 @@ identity probe and lane openRepoProject-3's W73 M-1 under the lead's R-284,
 Context, D6, D9 and D18; and round (j), lane openRepoProject-3's W70 read of
 round (h), under the lead's R-285, R-287 and R-291, with Brett Heap's
 confirmation of R-284 on 2026-10-22, "R-284: yes" (the lead's R-290), Context,
-D7, D9, D18 and Open Questions. Brett Heap's ruling of 2026-10-09 on open
-question 1, that a local ancestry proof outranks `remote-gone` for worktree
-rows, is in `proposal.md` Decisions and edited Context, D6, D7, D20, Risks, the
-Migration Plan and Open Questions here.
+D7, D9, D18 and Open Questions; and round (k), lane openRepoProject-3's W80 read
+of round (i), with its W81 read of feature 004 at `2707ff2`, under the lead's
+R-294, Context, D4, D6, D18 and Open Questions. Brett Heap's ruling of
+2026-10-09 on open question 1, that a local ancestry proof outranks
+`remote-gone` for worktree rows, is in `proposal.md` Decisions and edited
+Context, D6, D7, D20, Risks, the Migration Plan and Open Questions here.
 
 Citations are `file:line` at `da33d92`: `BA`, `DI`, `OV` and `HO` are the
 packet's batch-cleanup, project-discovery, overview and handoff documents, and
@@ -272,7 +274,9 @@ ratified recovery text of `0050f3e`, which the delta keeps for every other row,
 by Brett Heap's ruling of 2026-10-22, "F-2: yes" (lane openRepoProject-3's W59
 G-1, R-253; R-263). A report row's `.git` file and registry entry are present,
 so its note keeps `git worktree remove --force`; the ceiling's recovery text for
-a target whose `.git` file or entry is gone is D9's.
+a target whose `.git` file or entry is gone is D9's, and so is its third text,
+which a target whose `.git` file the rescan cannot read shows whether or not it
+is locked (D18; lane openRepoProject-3's W80 M-1).
 
 When Git had already deleted `<path>/.git` (readdir order decides), the
 registration check fails, no status probe runs, and the row is excluded as
@@ -354,17 +358,19 @@ replaces `default_branch()`'s calls and the per-worktree `rev-parse` and
 `rev-list` calls (BA:617-621); row 7 replaces `ancestor()`.
 
 Row 3 prints one value per line, and Git has no NUL form for it. Two lines mean
-a plain checkout. Three lines mean a submodule checkout, whose third line is
-the superproject's toplevel, or a line feed in a path: a plain checkout whose
-toplevel or common directory, a separate git directory among them, holds one
-line feed in its path prints three lines too, on Git 2.43.0 and 2.36.6. The
-count cannot tell the two apart, so on any count but two the probe is repeated
-as one child per option, each child's output one value, counted, rather than
-guessed at, and that tells them apart (lane openRepoProject-4's finding; feature
-004's `identity_probe()` at `7164d7f`, `project:2663-2689`). F is therefore at
-most 8, BA:615-616's 7 and row 4c, plus row 4b in the gitfile layout and the
-rare repeat. Row 3b runs only when the resolution refuses, before any plan, so
-no plan counts it.
+a plain checkout. Three lines mean a submodule checkout, whose third line is the
+superproject's toplevel, or a line feed in a path, and more than three a line
+feed: a plain checkout prints three lines where only one of its two values holds
+one line feed, as where a separate git directory holding one serves a toplevel
+that holds none, and four where its toplevel holds one and its common directory
+lies under that toplevel, carrying the same line feed, on Git 2.43.0 and 2.36.6
+(lane openRepoProject-3's W80 L-3). The count cannot tell the two apart, so on
+any count but two the probe is repeated as one child per option, each child's
+output one value, counted, rather than guessed at, and that tells them apart
+(lane openRepoProject-4's finding; feature 004's `identity_probe()` at
+`7164d7f`, `project:2663-2689`). F is therefore at most 8, BA:615-616's 7 and
+row 4c, plus row 4b in the gitfile layout and the rare repeat. Row 3b runs only
+when the resolution refuses, before any plan, so no plan counts it.
 
 Per row: the identity reads (`lstat` without following, the `.git` file, the
 admin `gitdir` and `commondir` files), each a filesystem call on a daemon
@@ -1335,7 +1341,17 @@ PATH by hand.` (W52 F-2, R-248). For a locked row that note replaces the
 ratified recovery text of `0050f3e`, which the delta keeps for every other row,
 by Brett Heap's ruling of 2026-10-22, "F-2: yes" (W59 G-1, R-253; R-263); a
 report row needs no other text, since its `.git` file and registry entry are
-present (D4).
+present (D4). Where the `.git` file cannot be read, the third note takes
+precedence over the locked one, as it does over the entry's state, by R-284's
+letter, "A `.git` read that fails or is cut gets a third note": Git treats a
+path it cannot stat as missing, so that once such a worktree is unlocked, `git
+worktree remove`, with or without `--force`, deletes its administrative
+directory as `git worktree prune` does, on Git 2.43.0 and 2.36.6 (lane
+openRepoProject-3's W80 M-1; the lead's R-294). The third note's words name only
+`git worktree prune`; naming `git worktree remove` in them too, or `git gc`,
+whose automatic worktree prune deletes such a directory once its index is three
+months old (W80 L-6), would change Brett Heap's ruled text and waits on his
+word.
 
 Refusal messages keep the baseline wording where a test reads it:
 `target-excluded` for the current worktree, `Cannot remove the current
@@ -1371,20 +1387,31 @@ plan is refused before any gate's exclusion, never with `target-excluded` and
 the class wording. A redirect of the main worktree itself, by a `core.worktree`
 or `core.bare` in the repository's `config` or in the main worktree's
 `config.worktree`, is refused earlier, at resolution, with
-`target-not-repository-root`, before any plan is built, where the root is
-passed by an absolute path or a bare name (round (h), with feature 004 at
-`d764c26` on Git 2.43.0 and 2.36.6; lane openRepoProject-3's W64 M-1). A
-relative path or no argument, run from the root, resolves as "Clean resolves
-its target Git-first" states, to the repository Git finds there with `root` set
-to its main worktree: under a `core.bare` true Git finds no worktree there, and
-the run is refused the same way, but under a `core.worktree` it is not refused
-and builds a plan whose main row Git reads where `core.worktree` points (lane
-openRepoProject-3's W70 LOW-3; round (i)'s fixtures, where such runs exit 0, or
-1 with an incomplete plan). That refusal names the redirect, since feature 004's
-plain message for the code, `Not the main worktree of a repository: PATH; pass
-the repository root.`, asks for the root that was passed: it reads `Not the main
-worktree of a repository: PATH; core.worktree or core.bare redirects the main
-worktree; unset both in the repository's config, or in the main worktree's
+`target-not-repository-root`, before any plan is built, where the root is passed
+by an absolute path, or by a bare name that `discover()` resolves to the root
+itself, through a family holder or a manifest there (round (h), with feature 004
+at `d764c26` on Git 2.43.0 and 2.36.6; lane openRepoProject-3's W64 M-1 and W80
+M-2). Otherwise a bare name takes Git's toplevel, row 2, as D8 and BA:860 have
+it, and under a `core.worktree` that toplevel is the redirect target: a target
+outside any repository, or a missing one, is refused with the plain message
+quoted below, which names that target; one inside the repository resolves to the
+repository; and another repository's root resolves to that other repository.
+Under a `core.bare` true row 2 fails, and the run is refused with
+`repository-not-found`, `No project found at PATH; supply a path or name.` (W80
+M-2, reading feature 004's `discover()` at `2707ff2`, with row 2 run on Git
+2.43.0 and 2.36.6). A relative path naming the root, from any directory, as
+`./X` from its parent or `../X` from a sibling, or no argument run from the
+root, resolves as "Clean resolves its target Git-first" states, to the
+repository Git finds there with `root` set to its main worktree: under a
+`core.bare` true Git finds no worktree there, and the run is refused the same
+way, but under a `core.worktree` it is not refused and builds a plan whose main
+row Git reads where `core.worktree` points (lane openRepoProject-3's W70 LOW-3
+and W80 L-4; round (i)'s fixtures, where such runs exit 0, or 1 with an
+incomplete plan). A refusal at resolution names the redirect, since feature
+004's plain message for the code, `Not the main worktree of a repository: PATH;
+pass the repository root.`, asks for the root that was passed: it reads `Not the
+main worktree of a repository: PATH; core.worktree or core.bare redirects the
+main worktree; unset both in the repository's config, or in the main worktree's
 config.worktree, then run again.` It does so only where the directory the
 resolution examined holds its own `.git`, a directory or a gitfile, whose
 realpath is the repository's common directory, and Git run there uses another
@@ -1392,12 +1419,20 @@ work tree or none: another where row 3 succeeded and its toplevel is not that
 directory, which only a `core.worktree` gives, and none where row 3 failed and
 row 3b prints that `.git` as both the git directory and the common directory,
 and `true`, which only a `core.bare` true gives, each from the repository's
-`config` or the main worktree's `config.worktree`; a submodule checkout is
-excluded first. Where row 3 succeeded the decision reads only the filesystem
-(the `lstat` of the `.git`, its gitdir line and the realpaths). Every other
-`target-not-repository-root` refusal keeps the plain message: a subdirectory, a
-linked worktree, a linked worktree that its own `config.worktree` redirects, a
-directory outside any repository, a submodule checkout, and a `git init --bare`
+`config` or the main worktree's `config.worktree`. A relative `core.worktree`
+naming a missing directory redirects too, but Git run there uses no work tree at
+all: row 3 and row 3b each exit 128 with Git's own `fatal: cannot chdir to
+'<value>'`, so the plain message prints, in the plain layout, the `.git`-file
+layout and a submodule checkout moved by hand alike (lane openRepoProject-3's
+W80 L-2 and W81 M-1, on Git 2.43.0 and 2.36.6); run there, `git config --unset`
+fails the same way, as does `git config --file`, while run outside the
+repository `git config --file X/.git/config --unset core.worktree` clears it
+(round (k), on Git 2.43.0). Where row 3 succeeded the decision reads only the
+filesystem (the `lstat` of the `.git`, its gitdir line and the realpaths). Every
+other `target-not-repository-root` refusal keeps the plain message: a
+subdirectory, a linked worktree, a linked worktree that its own
+`config.worktree` redirects, a directory outside any repository, a submodule
+checkout whose own configuration redirects nothing, and a `git init --bare`
 repository passed by its own directory, which holds no `.git` and which an unset
 of `core.bare` does not make a work tree. A repository made by `git init --bare
 X/.git` and passed as X has the configuration of a checkout at X whose
@@ -1405,13 +1440,27 @@ X/.git` and passed as X has the configuration of a checkout at X whose
 variant, which is true of it: with `core.bare` unset, X resolves. A main
 checkout whose `.git` is a file and whose `core.worktree` names that checkout
 resolves as before (D8); one whose `core.worktree` names another directory, or
-whose `core.bare` is true, takes the variant. Row 3b runs only on that refusal,
-after the resolution has decided to refuse, counted and bounded as row 3 is, and
-only where the directory holds a `.git`, so a run that resolves spawns no child
-for it, and a row 3b that fails or is cut leaves the plain message (round (i),
-with feature 004 at `7164d7f` on Git 2.43.0 and 2.36.6; the lead's R-271).
-`relative-config-path` prints one line per variable that fails
-D11's test, in the order `HOME`, `XDG_CONFIG_HOME`, `GIT_CONFIG_GLOBAL`,
+whose `core.bare` is true, takes the variant. A submodule checkout keeps the
+plain message only where its own configuration redirects nothing, its toplevel
+then being its own directory, or where, moved by hand, its relative
+`core.worktree` names a missing directory; feature 004's check that excludes a
+checkout whose row 3 prints a superproject decided no outcome in any fixture
+that W80 or W81 built. One whose module's `config`, `modules/<name>/config`,
+sets `core.bare` true, or a `core.worktree` naming another directory, a sibling
+submodule's checkout among them, takes the variant, which is true of the
+redirect, and so does a copy of a submodule checkout whose gitfile names the
+module, where row 3 run in the copy finds no gitlink and prints two lines.
+Unsetting the redirect does not make any of them a main worktree: the first
+three are then refused again, with the plain message, and the superproject's
+root is what resolves, so a person is refused twice, and for the copy the remedy
+may not clear the cause either. These are known limits, recorded and not fixed
+(W80 L-5 and W81 L-1, on Git 2.43.0 and 2.36.6). Row 3b runs only on that
+refusal, after the resolution has decided to refuse, counted and bounded as row
+3 is, and only where the directory holds a `.git`, so a run that resolves spawns
+no child for it, and a row 3b that fails or is cut leaves the plain message
+(round (i), with feature 004 at `7164d7f` on Git 2.43.0 and 2.36.6; the lead's
+R-271). `relative-config-path` prints one line per variable that fails D11's
+test, in the order `HOME`, `XDG_CONFIG_HOME`, `GIT_CONFIG_GLOBAL`,
 `GIT_CONFIG_SYSTEM`: `NAME is set to a path that does not begin with /; make it
 absolute or unset it.`, never the value; doctor's `error` row and status's
 `errors` entry carry the same text. The line and its order are a fill of this
@@ -2083,7 +2132,9 @@ holds (D18) and the line-feed exception to the revalidation and rescan bounds
 three ratified sentences: a locked row's recovery text (D4, D18), the ceiling's
 recovery text (D9, D18) and gate 7's read that the deadline cuts (D10); his
 "R-284: yes" of the same day confirms the ceiling's third text, for a `.git` the
-rescan cannot read (D9, D18). Four more amendments of ratified sentences rest on
-the lead's rulings and wait on his ratification of this amendment: the line-feed
-exception to the bounds (D7, D14), the next steps of F-7 and F-8 (D18, the
-Migration Plan), the cap's re-run and the count split (`proposal.md` Decisions).
+rescan cannot read (D9, D18). Five more amendments of ratified sentences rest on
+lane rulings and findings rather than his word, and wait on his ratification of
+this amendment: the line-feed exception to the bounds (D7, D14), the next steps
+of F-7 and F-8 (D18, the Migration Plan), the cap's re-run and the count split
+(`proposal.md` Decisions), and the identity probe's line count, which repeats
+the probe on any count but two (D6; lane openRepoProject-3's W80 M-3).

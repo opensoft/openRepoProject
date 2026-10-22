@@ -500,19 +500,19 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     a removal past the ceiling is decided by the rescan, `removed` when the
     registry entry and path are gone and otherwise `unknown` with
     `partially-removed`, the reason `removal-ceiling` either way, its recovery
-    text naming `git worktree prune` and a deletion by hand once the `.git`
-    file or the registry entry is gone (Brett Heap's ruling F-1), and warning
-    against `git worktree prune` where the `.git` file cannot be read (R-284,
-    which Brett Heap confirmed on 2026-10-22, "R-284: yes"); after `project` and
-    its child are killed with SIGKILL mid-deletion, the report shows the
-    partial-removal note beside the `dirty` advice. By the lead's R-147, a
-    sentence after `:59-61` names branch deletion's refusals, the default
-    branch, a branch a present linked worktree holds, a branch the main worktree
-    holds and a branch the plan's evidence does not show merged into the merge
-    target, with the added scenario "Branch deletion refuses a branch it may not
-    delete"; by the lead's R-248, the main worktree's refusal names detaching
-    HEAD there, or checking out the merge target there, and then retrying (lane
-    openRepoProject-3's W52 F-5).
+    text naming `git worktree prune` and a deletion by hand once the `.git` file
+    or the registry entry is gone (Brett Heap's ruling F-1), and instead warning
+    against `git worktree prune` where the `.git` file cannot be read, whatever
+    the rescan finds of the registry entry (R-284, which Brett Heap confirmed on
+    2026-10-22, "R-284: yes"); after `project` and its child are killed with
+    SIGKILL mid-deletion, the report shows the partial-removal note beside the
+    `dirty` advice. By the lead's R-147, a sentence after `:59-61` names branch
+    deletion's refusals, the default branch, a branch a present linked worktree
+    holds, a branch the main worktree holds and a branch the plan's evidence
+    does not show merged into the merge target, with the added scenario "Branch
+    deletion refuses a branch it may not delete"; by the lead's R-248, the main
+    worktree's refusal names detaching HEAD there, or checking out the merge
+    target there, and then retrying (lane openRepoProject-3's W52 F-5).
   - MODIFIED (`:70`): `### Requirement: Clean hands off work requiring review`.
     `:75-76` requires "explicit confirmation and action targets", and
     `--all-safe --apply --yes` names no single target, so the text defines
@@ -1193,8 +1193,11 @@ day (the lead's R-290):
   are all deletions of tracked files shows the recovery text "inspect, unlock
   it, then `git worktree remove --force <path>` by hand", since `git worktree
   remove --force` refuses a locked worktree; every other such row keeps the
-  ratified text (the delta `Clean classifies preservation and cleanup actions`
-  and its scenario "Only tracked-file deletions"; design D4, D18).
+  ratified text; where the rescan cannot read a `partially-removed` target's
+  `.git` file, the third ceiling text below takes precedence over this one,
+  locked or not (the delta `Clean classifies preservation and cleanup actions`
+  and its scenario "Only tracked-file deletions"; design D4, D18; for the
+  precedence, lane openRepoProject-3's W80 M-1 and the lead's R-294).
 - **The ceiling's recovery text** (W52 F-1; amends `0050f3e` pcl:253-256 and
   pcl:922-926): a `partially-removed` target shows "inspect, then `git worktree
   remove --force <path>` by hand" only where the rescan finds both its `.git`
@@ -1204,24 +1207,29 @@ day (the lead's R-290):
   `.git` file or the entry is gone while the path remains, exit 128 on Git
   2.43.0 and 2.36.6, and accepts it once the path itself is gone (W70 LOW-1);
   the rescan reads the `.git` file by one `lstat`, a filesystem call, so it
-  still spawns at most three Git children (the deltas `Clean can explicitly
-  retire verified worktrees`, with its scenario "A removal past the hard
-  ceiling", and `Clean records a reconcilable result for every removal target`;
-  design D9, D18).
+  still spawns at most three Git children, and where that read fails or is cut
+  the third text below takes precedence over both, whatever the rescan finds of
+  the registry entry (lane openRepoProject-3's W80 L-1; the deltas `Clean can
+  explicitly retire verified worktrees`, with its scenario "A removal past the
+  hard ceiling", and `Clean records a reconcilable result for every removal
+  target`; design D9, D18).
 - **The ceiling's recovery text where the `.git` file cannot be read** (lane
   openRepoProject-3's W73 M-1; the lead's R-284, which refines how F-1 applies
   to a read that fails, and which Brett Heap confirmed on 2026-10-22, "R-284:
   yes" (the lead's R-290); amends `0050f3e` pcl:253-256 and pcl:922-926 with
   F-1): a `partially-removed` target whose `.git` file the rescan cannot read,
   its `lstat` failing other than for the file's absence or cut at its budget,
-  shows, whatever the rescan finds of its registry entry,
-  "inspect `<path>` by hand; its `.git` could not be read, so do not run `git
-  worktree prune` until it can", since `git worktree prune` deletes a live
-  worktree's administrative directory where Git cannot stat its `.git` (round
-  (i); the deltas `Clean can explicitly retire verified worktrees`, with an AND
-  clause in its scenario "A removal past the hard ceiling", and `Clean records a
-  reconcilable result for every removal target`; What Changes; Capabilities
-  `:55`; design D9, D18).
+  shows, whatever the rescan finds of its registry entry and whether or not the
+  worktree is locked, "inspect `<path>` by hand; its `.git` could not be read,
+  so do not run `git worktree prune` until it can", since `git worktree prune`
+  deletes a live worktree's administrative directory where Git cannot stat its
+  `.git`, and so, once it is unlocked, does `git worktree remove`, with or
+  without `--force` (round (i); for the lock, lane openRepoProject-3's W80 M-1
+  and the lead's R-294, by R-284's letter, "A `.git` read that fails or is cut
+  gets a third note"; the deltas `Clean can explicitly retire verified
+  worktrees`, with an AND clause in its scenario "A removal past the hard
+  ceiling", and `Clean records a reconcilable result for every removal target`;
+  What Changes; Capabilities `:55`; design D4, D9, D18).
 - **Gate 7's read that the deadline cuts** (lane openRepoProject-5's O-1;
   amends `0050f3e` pcl:606-608): a branch reflog read that the work deadline
   cuts records `deadline-exceeded` and leaves the row unprobed and the plan
@@ -1283,6 +1291,17 @@ amendment (lane openRepoProject-3's W70 M-1, the lead's R-285):
   count" gains "of children other than the three removals, and its
   `operations.performed` is 3" (the delta `Clean bounds its Git work and reports
   omitted work`).
+- **The identity probe's line count** (lane openRepoProject-4's finding, through
+  the lead, in round (i)'s `b60f6ac`, which names no ruling; lane
+  openRepoProject-3's W80 M-3; amends `0050f3e` design:298-301, "Two lines mean
+  a plain checkout and three a submodule checkout; a value containing a line
+  feed makes the count exceed what was asked, and the probe is then repeated as
+  one child per option, counted, rather than guessed at."): three lines mean a
+  submodule checkout or a line feed in a path, which the count cannot tell
+  apart, so on any count but two the probe is repeated one option per child, as
+  feature 004's `identity_probe()` does; every submodule checkout's probe is
+  therefore repeated, three more children, and a plain checkout whose one value
+  holds a line feed is no longer read as a submodule checkout (design D6).
 
 Packet decisions adopted, not open: OQ-5, the caps and bounds of `BA:966`,
 subject to OQ-4, less the target cap's refusal; OQ-9, the budgets of
@@ -2111,9 +2130,10 @@ Round (i), round (h)'s open point, under the lead's R-271: a redirect of the
 main worktree, by a `core.worktree` or `core.bare` in the repository's `config`,
 or in the main worktree's `config.worktree` where `extensions.worktreeConfig` is
 true, is refused at resolution with `target-not-repository-root` where the root
-is passed by an absolute path or a bare name, rightly, since no main worktree is
-there to clean, but feature 004's message for that code,
-`Not the main worktree of a repository: PATH; pass the repository root.`, asks a
+is passed by an absolute path, or by a bare name that `discover()` resolves to
+the root itself (lane openRepoProject-3's W80 M-2, round (k)), rightly, since no
+main worktree is there to clean, but feature 004's message for that code, `Not
+the main worktree of a repository: PATH; pass the repository root.`, asks a
 person who passed the root to pass it. The message is feature 004's, from its
 contract, not the baseline's (`project` at `961c405` holds no such text), so
 the rule that keeps baseline wording does not hold it. Fixtures on Git 2.43.0
@@ -2122,9 +2142,13 @@ builds: with `core.bare` true, from either file, the identity probe exits 128
 with `fatal: this operation must be run in a work tree`, while `git rev-parse
 --path-format=absolute --git-dir --git-common-dir --is-bare-repository` prints
 the checkout's `.git` twice and `true`; with `core.worktree` naming another
-directory, a missing one included, from either file, the identity probe prints
-that directory as the toplevel while the registry's first record is the
-checkout; without the extension Git ignores `config.worktree` and the
+directory, a missing one included where the value is absolute, from either file,
+the identity probe prints that directory as the toplevel while the registry's
+first record is the checkout (a relative value naming a missing directory makes
+both probes and `git config --unset` exit 128 with `fatal: cannot chdir to
+'<value>'`, so the refusal keeps the plain message, in the plain layout, the
+`.git`-file layout and a submodule checkout moved by hand alike; W80 L-2, W81
+M-1, round (k)); without the extension Git ignores `config.worktree` and the
 root resolves; a separate git directory whose `core.worktree` names another
 directory, or whose `core.bare` is true, is refused the same way; and once
 `core.worktree` and `core.bare` are unset in both files, every one of these
@@ -2139,20 +2163,22 @@ identity probe failed, run only on that refusal and only where the directory
 holds a `.git`, so that a run that resolves spawns no child for it. A `git init
 --bare` repository passed by its own directory keeps the plain message, as do a
 subdirectory, a linked worktree, a linked worktree that its own
-`config.worktree` redirects, a submodule checkout and a directory outside any
+`config.worktree` redirects, a submodule checkout whose own configuration
+redirects nothing (W80 L-5, W81 L-1, round (k)) and a directory outside any
 repository; a repository made by `git init --bare X/.git` and passed as X cannot
 be told from a checkout at X whose `core.bare` is true by anything Git reads,
 and takes the variant, which is true of it, since with `core.bare` unset X
-resolves. Design D6 also no longer says that three lines from the identity
-probe mean a submodule checkout: a plain checkout whose toplevel or common
-directory, a separate git directory among them, holds a line feed in its path
-prints three lines too, and on any count but two the probe is read again one
-option per child, which tells the two apart, as feature 004's
-`identity_probe()` does at `7164d7f` (lane openRepoProject-4's finding, through
-the lead). No delta states this code's message text, so neither of those items
-edits a delta. Lane openRepoProject-3's W73 M-1 reproduced on Git 2.43.0 and
-2.36.6, and this round again, that where Git cannot stat a worktree's `.git`,
-as under `EACCES` on its path, `git worktree prune` deletes that live
+resolves. Design D6 also no longer says that three lines from the identity probe
+mean a submodule checkout: a plain checkout whose toplevel or common directory
+holds a line feed in its path prints three lines too where only one of the two
+holds it, as a separate git directory may, or four where a toplevel holding it
+has its common directory under it (W80 L-3, round (k)), and on any count but two
+the probe is read again one option per child, which tells the two apart, as
+feature 004's `identity_probe()` does at `7164d7f` (lane openRepoProject-4's
+finding, through the lead). No delta states this code's message text, so neither
+of those items edits a delta. Lane openRepoProject-3's W73 M-1 reproduced on Git
+2.43.0 and 2.36.6, and this round again, that where Git cannot stat a worktree's
+`.git`, as under `EACCES` on its path, `git worktree prune` deletes that live
 worktree's administrative directory, its index, `HEAD`, per-worktree refs and
 reflog with it, while F-1's text sent a `partially-removed` target whose `.git`
 the rescan could not read, a read that failed or was cut, to `git worktree
@@ -2162,21 +2188,22 @@ he did on 2026-10-22 in his words "R-284: yes" (the lead's R-290), such a
 target's recovery text is "inspect `<path>` by hand; its `.git`
 could not be read, so do not run `git worktree prune` until it can", whatever
 the rescan finds of the registry entry, while "where either is gone" keeps a
-`.git` file shown absent and an entry gone; the deltas `Clean can explicitly
-retire verified worktrees` and `Clean records a reconcilable result for every
-removal target` state it, the scenario "A removal past the hard ceiling" gains
-an AND clause, and What Changes, Capabilities, the amendments list and design
-D9 and D18 carry it. Design D18 also narrows round (h)'s sentence that a
-redirect of the main worktree is refused at resolution to an absolute path or a
-bare name, and says what a relative path or no argument from the root does:
-refused the same way under `core.bare` true, where Git finds no worktree there,
-but under a `core.worktree` not refused, the plan reading the main row where
-`core.worktree` points, as round (i)'s fixtures show, exit 0, or 1 with an
-incomplete plan (lane openRepoProject-3's W70 LOW-3); the variant's unset is
-the remedy in every form. The scenario counts stay 71, 22 and 24. The round's
-commits also re-wrapped the paragraphs their edits lengthened, with no other
-change of words (What Changes; design Context, D6, D9 and D18), and `tasks.md`
-1.2 names the round.
+`.git` file shown absent and an entry gone where the `.git` file was read (W80
+L-1, round (k)); the deltas `Clean can explicitly retire verified worktrees` and
+`Clean records a reconcilable result for every removal target` state it, the
+scenario "A removal past the hard ceiling" gains an AND clause, and What
+Changes, Capabilities, the amendments list and design D9 and D18 carry it.
+Design D18 also narrows round (h)'s sentence that a redirect of the main
+worktree is refused at resolution to an absolute path or a bare name, and says
+what a relative path or no argument from the root does: refused the same way
+under `core.bare` true, where Git finds no worktree there, but under a
+`core.worktree` not refused, the plan reading the main row where `core.worktree`
+points, as round (i)'s fixtures show, exit 0, or 1 with an incomplete plan (lane
+openRepoProject-3's W70 LOW-3); the variant's unset is the remedy wherever the
+refusal prints (W80 L-4, round (k)). The scenario counts stay 71, 22 and 24. The
+round's commits also re-wrapped the paragraphs their edits lengthened, with no
+other change of words (What Changes; design Context, D6, D9 and D18), and
+`tasks.md` 1.2 names the round.
 
 Round (j), lane openRepoProject-3's W70 confirm read of round (h) at `b3228bb`
 (HIGH 0, MEDIUM 3, LOW 5; validate 9 of 9, the scenario counts 71, 22 and 24),
@@ -2235,6 +2262,72 @@ list; design Context, D7, D9, D18, Open Questions; `tasks.md` 1.2; the deltas'
 `Clean can explicitly retire verified worktrees`, `Clean records a reconcilable
 result for every removal target`, `Cleanup revalidates destructive actions` and
 the `project-command` ADDED evidence model).
+
+Round (k), lane openRepoProject-3's W80 confirm read of round (i) at `e0c91bb`
+(HIGH 0, MEDIUM 3, LOW 6; validate 9 of 9, the scenario counts 71, 22 and 24),
+under the lead's R-294 and R-299, with the two findings of its W81 read of
+feature 004 at `2707ff2` that bear on this text, M-1 and L-1, which the lead
+relayed. Where Git cannot stat a worktree's `.git`, `git worktree remove`, with
+or without `--force`, deletes its administrative directory as `git worktree
+prune` does, on Git 2.43.0 and 2.36.6, so that the locked note's unlock and
+forced removal would delete it too (W80 M-1, its E5 and E7): design D18 now says
+that the third ceiling text takes precedence over the locked note wherever the
+`.git` file cannot be read, as R-284's letter gives it, "A `.git` read that
+fails or is cut gets a third note", and design D4 and the amendments list's F-2
+and R-284 entries say the same. The third text's words stay as Brett Heap
+confirmed them: naming `git worktree remove` in them, or `git gc`, whose
+automatic worktree prune deletes such a directory once its index is three months
+old (W80 L-6), would change his ruled text and waits on his word. The scenario
+"A removal past the hard ceiling", Capabilities `:55` and the amendments list's
+F-1 entry now say that the third text applies whatever the rescan finds of the
+registry entry, and round (i)'s entry that "where either is gone" keeps an entry
+gone where the `.git` file was read (W80 L-1). Design D18's sentence that a
+redirect of the main worktree is refused at resolution where the root is passed
+by a bare name held only where `discover()` resolves the name to the root
+itself, through a family holder or a manifest there; otherwise a bare name takes
+Git's toplevel, the redirect target, which is refused with the plain message, or
+resolves where it is a work tree, inside the repository or another repository's
+root, and under a `core.bare` true the run is refused with
+`repository-not-found`, as D18 and round (i)'s entry now say (W80 M-2, reading
+feature 004's `discover()` at `2707ff2`). Round (i)'s `b60f6ac` replaced a
+ratified sentence of design D6 on lane openRepoProject-4's finding, which names
+no ruling, so that every submodule checkout's identity probe is now repeated,
+three more children; it joins the second group of amendments of ratified text,
+quoting `0050f3e` design:298-301, and design Open Questions counts it (W80 M-3).
+A relative `core.worktree` naming a missing directory makes the identity probe,
+row 3b and `git config --unset`, run in the checkout, exit 128 with `fatal:
+cannot chdir to '<value>'`, so the refusal keeps the plain message, in the plain
+layout, the `.git`-file layout and a submodule checkout moved by hand, and round
+(i)'s "a missing one included" holds for an absolute value only, as D18's
+variant sentence and round (i)'s entry now say (W80 L-2, W81 M-1); this round
+found on Git 2.43.0 that `git config --file` fails the same way in the checkout
+and clears the setting when run outside the repository. A toplevel that holds
+one line feed, with its common directory under it, prints four lines, not three,
+in design D6 and round (i)'s entry (W80 L-3). D18's relative path resolves the
+same way from any directory, not only from the root, and round (i)'s "the remedy
+in every form" reads "the remedy wherever the refusal prints" (W80 L-4). D18 no
+longer says that a submodule checkout keeps the plain message because it is
+excluded first: one keeps it only where its own configuration redirects nothing,
+while one whose module's `config` sets `core.bare` true, or a `core.worktree`
+naming another directory, a sibling submodule's checkout among them, takes the
+variant and, after the remedy, is refused again with the plain message, as does
+a copy of a checkout whose gitfile names the module take the variant, known
+limits that D18 records and round (i)'s entry reflects (W80 L-5, W81 L-1). By
+the lead's R-299, on lane openRepoProject-4's finding that two readers took it
+for a cut-off clause, the THEN line of the scenario "A work-tree probe at
+revalidation" ends "since the probe's two lines are read as one path, which is
+D's", where round (j)'s wording ended "the probe's two lines being read as one
+path, D's", its meaning unchanged. The delta edits are the AND clause of the
+scenario "A removal past the hard ceiling", in `Clean can explicitly retire
+verified worktrees`, and that THEN line, in `Cleanup revalidates destructive
+actions`; F-1's three texts and F-2's text are unchanged, byte for byte, and the
+scenario counts stay 71, 22 and 24. This round's commit also re-wrapped the
+lines after each of its edits, up to where the old line breaks resume, with no
+other change of words (Capabilities `:55`; Decisions, amendments; this list;
+design Context, D4, D6, D18, Open Questions; `tasks.md` 1.2; the deltas' `Clean
+can explicitly retire verified worktrees`, its scenario "A removal past the hard
+ceiling", and `Cleanup revalidates destructive actions`, its scenario "A
+work-tree probe at revalidation").
 
 ### Council Verdicts
 
