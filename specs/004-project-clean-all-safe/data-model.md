@@ -42,8 +42,7 @@ either stream, which is `config --get`'s answer for a key that is not set, and
 only from a child that failed with `probe-failed`; every other outcome is
 true, an exit 1 that printed anything on standard output or on standard error,
 or a cut child's exit 1, included (R-332; #19's design D7, "an unset value is
-false and any other failure counts as true"; writer's `c8e23cd`, merged as
-`7149e08`). Where row 5 fails, `repository.root` stays null, and the
+false and any other failure counts as true"; writer's `c8e23cd`). Where row 5 fails, `repository.root` stays null, and the
 resolution still names the main worktree as the command directory from the
 evidence's `main_path`, the path `main_worktree()` named before row 5 ran
 (the plan review's F2; lead ruling R-101 (c)).
