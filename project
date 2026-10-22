@@ -3026,14 +3026,22 @@ def worktree_config(common_dir, directory, run):
     `config` file alone and without includes, by `git config --file
     <common_dir>/config --type=bool --get extensions.worktreeConfig` in
     directory. Only where it is true does Git apply a `core.worktree` or
-    `core.bare` to a linked worktree. False when Git prints `false` or exits
-    1, the key not being set; True when it prints `true`, and for any other
-    outcome, a failure, a timeout or other output, which fails closed."""
+    `core.bare` to a linked worktree. False when Git prints `false`, or exits
+    1 with nothing on standard output and nothing on standard error, which is
+    how `config --get` answers a key that is not set (#19's design D7, "an
+    unset value is false and any other failure counts as true"; the lead's
+    R-332). True when it prints `true`, and for any other outcome, which fails
+    closed: an exit 1 that printed anything on standard output or on standard
+    error (Git's `hint:` lines count, and so does any byte past the 4 KiB of
+    standard error the runner keeps, `stderr_bytes`, as status_warned() reads
+    it), another exit status, a signal, a timeout, or other output."""
     outcome, error = _git(run, directory, ["config", "--file", os.path.join(common_dir, b"config"), "--type=bool",
                                            "--get", "extensions.worktreeConfig"], "config")
     if error is None:
         return outcome.result.strip() != b"false"
-    return outcome.status != 1
+    unset = (error["code"] == "probe-failed" and outcome.status == 1
+             and not (outcome.result or outcome.stderr or outcome.stderr_bytes))
+    return not unset
 
 
 def effective_work_tree(raw, run, strict=False):
