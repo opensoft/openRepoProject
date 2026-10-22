@@ -573,21 +573,25 @@ When more than 16 rows pass every gate before `deferred-target-cap`, the first
 16 in canonical order SHALL go on to the gates after it, the two index gates,
 `operation-in-progress` and `worktree-only-commits`, and the rest SHALL be
 excluded as `deferred-target-cap`, with the command to run next. The plan SHALL
-stay complete and apply SHALL be allowed; re-running SHALL take the next 16,
-each run building its own fresh plan and revalidating each of its targets. Rows
-that a gate after the cap then excludes SHALL keep their places among the 16,
-so that when every one of those 16 is excluded by a gate after the cap no
-re-run reaches a deferred row, and the human report SHALL say why the deferred
-rows will not drain, naming those gates' reasons. No plan SHALL be refused for
-having more than 16 such rows. In a single-target removal the limit SHALL count
-P alone, because `not-requested` precedes it.
+stay complete and apply SHALL be allowed; re-running SHALL take the next 16 as
+the rows ahead of them are removed or excluded by a gate before the cap, each
+run building its own fresh plan and revalidating each of its targets, so that a
+run that removes none of its 16, as when the deadline leaves every target
+`not-attempted`, leaves its 16 to the next run. Rows that a gate after the cap
+then excludes SHALL keep their places among the 16, so that when every one of
+those 16 is excluded by a gate after the cap no re-run reaches a deferred row,
+and the human report SHALL say why the deferred rows will not drain, naming
+those gates' reasons. No plan SHALL be refused for having more than 16 such
+rows. In a single-target removal the limit SHALL count P alone, because
+`not-requested` precedes it.
 
 The cache enumerations SHALL count in the fit that sets the row and target
 caps: with 128 worktree rows, 16 cache enumerations and 16 targets, planning,
 revalidation and the final rescan spawn at most 283 Git children besides the 16
 removals where the plan read the repository's `extensions.worktreeConfig` as
-false, about 47.3 s at 150 ms per child and 0.3 s per removal, the cache
-walk's and the cache stages' filesystem calls not counted, on which count the
+false, about 47.3 s on the packet's basis of 150 ms per child and 0.3 s per
+removal, the cache walk's and the cache stages' filesystem calls not counted,
+on which count the
 first 14 targets start any cache stage and their removal child before the
 removal floor and the last two are `not-attempted` with `deadline-exceeded`; a
 target whose cache stage or spawn cannot start under the removal floor SHALL be
@@ -909,7 +913,10 @@ caps, or when its cache stage could not remove them:
   passes the access check, its entries or bytes would take the invocation's
   totals, summed in canonical order over such rows, past 4,096 entries
   (`limits.cache_entries_total`) or 1 GiB (1,073,741,824,
-  `limits.cache_bytes_total`), its own then not counted;
+  `limits.cache_bytes_total`), its own then not counted, nor those of a row
+  ahead of it that a gate after `deferred-target-cap` excludes, the plan
+  applying those gates to each row that reaches them before it applies the
+  totals to any later row;
 - `cache-unverified`: its child failed or timed out, read a record that is not
   an ignored one or an ignored record whose path, its trailing `/`
   disregarded, begins with `/` or holds an empty, `.` or `..` component, or
@@ -924,21 +931,27 @@ caps, or when its cache stage could not remove them:
 A cache cap reached, or an access check failed, SHALL NOT make the plan
 incomplete, and a row left with `cache-unwritable` SHALL NOT be selected and
 SHALL NOT stop the run. A candidate whose enumeration leaves it at the
-`ignored-local-files` rung SHALL keep its place among the 16 enumerations. The
+`ignored-local-files` rung, and one that passes the rung and that a gate after
+`deferred-target-cap` then excludes, SHALL keep its place among the 16
+enumerations. The
 sample test keeps out of them a row whose samples show a blocking name, but not
 a row whose samples all have cache names while it holds a blocking path beyond
 its 8 samples, a path with a cache name that is blocking by its type, its
 contents or its device, more recorded cache objects or bytes than a
 per-worktree cap allows, an enumeration that fails, or a cache directory that
-the running user cannot change. A candidate left at the rung SHALL count as
-held there for a persistent reason when any one of these holds:
+the running user cannot change; nor does any test keep out a row that a gate
+after `deferred-target-cap` excludes, since those gates are checked only for
+rows that pass every gate before it. A candidate SHALL count as held for a
+persistent reason when any one of these holds:
 
-- its enumeration finished with `blocking` above 0;
-- its `reason` is `cache-cap` from a per-worktree cap, which leaves its counts
-  null, and not from the invocation's totals, which leave them established, nor
-  from the 16-enumeration cap, which leaves only candidates past the 16th;
-- its `reason` is `cache-unverified`;
-- its `reason` is `cache-unwritable`.
+- it is left at the rung and its enumeration finished with `blocking` above 0;
+- it is left at the rung with `reason` `cache-cap` from a per-worktree cap,
+  which leaves its counts null, and not from the invocation's totals, which
+  leave them established, nor from the 16-enumeration cap, which leaves only
+  candidates past the 16th;
+- it is left at the rung with `reason` `cache-unverified`;
+- it is left at the rung with `reason` `cache-unwritable`;
+- it passes the rung and a gate after `deferred-target-cap` excludes it.
 
 The test SHALL read these reasons and never `blocking` alone, which is null for
 `cache-cap` and `cache-unverified` and 0 for `cache-unwritable`. When each of
@@ -949,13 +962,17 @@ that holds and, besides those 16, at least one later candidate is left with
 then, say why the rows left with `cache-cap` will not drain (the stall line),
 naming from those 16 rows' reasons how many hold ignored files that are not
 caches, how many exceed a per-worktree cache cap, how many could not be
-enumerated and how many hold a cache directory that the running user cannot
-change, each with its next step, and SHALL never tell the person to remove by
-hand a worktree whose state was not established. When that holds but no later
-candidate is so left, as when there are exactly 16 candidates, each row's own
-reason and next step SHALL print as usual, and no stall line SHALL print. When
-any of the first 16 is not held for a persistent reason, a later run SHALL take
-the rows the caps left. A deadline that passes
+enumerated, how many hold a cache directory that the running user cannot
+change, and how many a gate after `deferred-target-cap` excludes, by those
+gates' reasons, each with its next step, and SHALL never tell the person to
+remove by hand a worktree whose state was not established. When that holds but
+no later candidate is so left, as when there are exactly 16 candidates, each
+row's own reason and next step SHALL print as usual, and no stall line SHALL
+print. When any of the first 16 is not held for a persistent reason, a later
+run SHALL take the rows the caps left as the rows ahead of them are removed or
+excluded by a gate before the cap, unless the rows that `deferred-target-cap`
+defers will not drain, as "Clean bounds its Git work and reports omitted work"
+states, whose human report then says so. A deadline that passes
 during an enumeration SHALL make the plan incomplete with `deadline-exceeded`,
 as it does during any probe. A row whose enumeration finished with no cap
 reached SHALL have its ignored records counted as `disposable`, those that are
@@ -1210,6 +1227,18 @@ and its residual window" states.
   the five that could not be enumerated and the five that this user cannot
   change, each with its next step, and no count of rows holding ignored files
   that are not caches
+- **AND** when the sixteen instead each hold only caches and an initialized
+  submodule, or an entry flagged assume-unchanged, each is enumerated, passes
+  the `ignored-local-files` rung and is excluded as `contains-submodule` or
+  `hidden-local-state`, its caches untouched, the seventeenth stays
+  `ignored-local-files` with `cache-cap` on every run, and the line names the
+  sixteen as excluded after the target cap by those reasons, with their next
+  step
+- **AND** when eight candidates each hold caches of 500 entries and an
+  initialized submodule, ahead of a ninth holding caches of 500 entries, the
+  eight are excluded as `contains-submodule`, their entries are not counted
+  toward the 4,096, and the ninth is selected, its caches disposed of and its
+  worktree removed
 - **AND** when there is no seventeenth candidate, so that exactly sixteen
   candidates exist and each is held for a persistent reason as in any of the
   cases above, no stall line is printed, and each row's preview line gives its
