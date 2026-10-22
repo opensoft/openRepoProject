@@ -1260,15 +1260,15 @@ ruling R-102 (c) 3) names `clean`, `status`, `doctor` and `update`, and what
 reaches the overview reaches it through [E] and [G], which this change cites;
 beyond that, each item is A1's own proposal, put to Brett Heap here. Each
 follows PR #19's text at the commits its heading names, a draft pending its
-own ratification; PR #19's tip is `1ebdd90`, and its rulings R-124
-(`2b86a5f`), R-125 (`93f3194`) and R-126 (`1ebdd90`) are taken in below. Each
-lands only with or after PR #19's ratification of the commits it follows, and
-is re-aligned before A1 is ratified if one of those commits changes first,
-and, if A1 is ratified first, is re-aligned for Brett Heap's review before PR
-#34 merges. So PR #34 does not merge before that ratification; if Brett Heap
-wants it to land sooner, the four items move to a later amendment of this
-change, and A1 lands without them. Each item is declared here for Brett Heap's
-review:
+own ratification; PR #19's tip is `9267303`, and its rulings R-124 (`2b86a5f`,
+amended at `9267303` by PR #19's round (d)), R-125 (`93f3194`) and R-126
+(`1ebdd90`) are taken in below. Each lands only with or after PR #19's
+ratification of the commits it follows, and is re-aligned before A1 is
+ratified if one of those commits changes first, and, if A1 is ratified first,
+is re-aligned for Brett Heap's review before PR #34 merges. So PR #34 does not
+merge before that ratification; if Brett Heap wants it to land sooner, the
+four items move to a later amendment of this change, and A1 lands without
+them. Each item is declared here for Brett Heap's review:
 
 - **`relative-config-path` (LQ-15; PR #19 at `cc000ea` and `9fb22fa`), a
   declared item.** Once its arguments are parsed, and before any Git child
@@ -1298,28 +1298,32 @@ review:
   (DI:1086-1089). If Brett Heap strikes the code, the fallback is `refused`
   with exit 2, which departs from nothing.
 - **`operation-in-progress` and `worktree-only-commits` (LQ-14, PR #19 at
-  `43f7107` and `1ebdd90`; LQ-13, at `93de4bb`; both at `2b86a5f`), a declared
-  proposal.** PR #19 adds them as [G]'s last two gates, in that order after
-  `hidden-local-state`: an operation marker of [G]'s list at `1ebdd90` (its
-  `specs/project-clean/spec.md:650-659`, after R-126) in the worktree's
-  administrative directory, read by one listing and no Git child; and a commit
-  that only the worktree's HEAD reflog or a ref under its `refs/worktree/`
-  holds, read from `logs/HEAD` and one `rev-list` child. A1 makes both further
-  exclusions that only the batch applies, beside the index gates: the overview
-  evaluates neither, makes no listing, `logs/HEAD` read or `rev-list` child
-  for them, and keeps its `--all-safe` suggestion, which `project clean`'s
-  batch then excludes itself. That clause follows the one outcome rule of each
-  gate that R-124 settles at `2b86a5f`, pending PR #19's ratification: the
-  overview still evaluates neither gate, and the batch decides each itself. It
-  excludes the worktree on a decided result: a marker present; a `rev-list`
-  child that exits 0 and prints anything; a `logs/HEAD` read to its 64 KiB
-  bound or holding a line that cannot be parsed. An error on the listing, any
-  other error on the read (a missing or empty `logs/HEAD` giving no
-  candidate), and a child that cannot be started, exits nonzero or is stopped
-  at its 5 s budget, make the worktree `inspection-error`; a listing or read
-  not finished within the filesystem budget leaves the row unprobed; the
-  deadline's cut records `deadline-exceeded`; and each of these leaves the
-  batch's plan incomplete. Amended: requirement 7 (POD:525-526) and design D5
+  `43f7107` and `1ebdd90`; LQ-13, at `93de4bb`; both at `2b86a5f` and
+  `9267303`), a declared proposal.** PR #19 adds them as [G]'s last two gates,
+  in that order after `hidden-local-state`: an operation marker of [G]'s list
+  at `1ebdd90` (its `specs/project-clean/spec.md:650-659`, after R-126) in the
+  worktree's administrative directory, read by one listing and no Git child;
+  and a commit that only the worktree's HEAD reflog or a ref under its
+  `refs/worktree/` holds, read from `logs/HEAD` and one `rev-list` child. A1
+  makes both further exclusions that only the batch applies, beside the index
+  gates: the overview evaluates neither, makes no listing, `logs/HEAD` read or
+  `rev-list` child for them, and keeps its `--all-safe` suggestion, which
+  `project clean`'s batch then excludes itself. That clause follows the one
+  outcome rule of each gate that R-124 settles at `2b86a5f`, as PR #19's round
+  (d) amends it at `9267303` (its `specs/project-clean/spec.md:719-722` and
+  :741-745 there; lane openRepoProject-2's R-207 and R-208, and lane
+  openRepoProject-3's W32 L1), pending PR #19's ratification: the overview
+  still evaluates neither gate, and the batch decides each itself. It excludes
+  the worktree on a decided result: a marker present; a `rev-list` child that
+  exits 0 and prints anything; a `logs/HEAD` read to its 64 KiB bound or
+  holding a line that cannot be parsed. An error on the listing, any other
+  error on the read (a missing or empty `logs/HEAD` giving no candidate), and
+  a child that cannot be started, exits nonzero or is stopped at its 5 s
+  budget, make the worktree `inspection-error`; a listing or read not finished
+  within the filesystem budget, the deadline not being the limit, records
+  `probe-timeout` and makes the worktree `inspection-error`; the deadline's
+  cut records `deadline-exceeded`; and each of these leaves the batch's plan
+  incomplete. Amended: requirement 7 (POD:525-526) and design D5
   (design.md:324-325), with the proposal's summaries of the batch's exclusions
   in What Changes (proposal.md:100-101) and in Capabilities, requirement 7
   (proposal.md:290-291), and design's in D5's `target-cap` item
