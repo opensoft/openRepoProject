@@ -10,7 +10,7 @@ duplicate them, and nothing here is an implementation step.
 
 - [x] 1.1 Proposal written: `proposal.md` adopts the packet's cache-disposal
   contract (`BA:1314-1337`) under the lane's rulings L-1 to L-17 and B-1 to
-  B-62, names three departures from B-6 as first written, which B-11 accepted,
+  B-64, names three departures from B-6 as first written, which B-11 accepted,
   and one from B's list of modified requirements (CD-1 to CD-4) with the rest
   of its own decisions (CD-5 to CD-18), and puts six Open Questions before
   Brett Heap; verified by its Capabilities section accounting for every
@@ -54,7 +54,7 @@ duplicate them, and nothing here is an implementation step.
   and committed as `9f30fb9`, and B-30's scope, lane 4's own words, committed
   as `4d5855a` (2.2); `design.md` holds D1 to D14 and `clarifications.md` the
   NOTED S-4; verified by `grep -c '^#### Scenario'` on each delta, by a script
-  run after the council round and again after each round from B3 to B13
+  run after the council round and again after each round from B3 to B14
   that compares every scenario of each of the nine MODIFIED blocks with its
   source text, the two blocks written on PR #19's text against it at
   `f0bf538` since round B13, and by `design.md`'s headings.
@@ -66,7 +66,7 @@ duplicate them, and nothing here is an implementation step.
   branch after 1.4, after the alignment fix round, after the council round
   (the last with the B-22 `project-overview` edit not yet committed), again
   after lane 4's agreement and that edit's commit, after round B3, after round
-  B4, and after each round from B5 to B13. The
+  B4, and after each round from B5 to B14. The
   INFO lines, that the archive would refuse a delta
   whose MODIFIED requirement change 1 or change 2 adds until that change is
   archived, are the expected state for blocks written on sister changes.

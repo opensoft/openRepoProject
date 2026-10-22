@@ -27,8 +27,10 @@ lead's R-208, with the revalidation block re-based on it and lane
 openRepoProject-2's check of both blocks, in round B12 (B-57 to B-59), and
 PR #19's round (e) at `f0bf538`, with the revalidation block re-based on it,
 and lane openRepoProject-3's W33 read of rounds B10 to B12, with lane
-openRepoProject-2's check of both blocks, in round B13 (B-60 to B-62); nothing
-here is ratified.
+openRepoProject-2's check of the three held blocks, the two written on PR #19's
+text and the ADDED requirement, in round B13 (B-60 to B-62), and lane
+openRepoProject-3's W44 read of round B13, with its three wording LOWs, in
+round B14 (B-63 and B-64); nothing here is ratified.
 Governing issue:
 opensoft/openRepoProject#24, claimed by lane
 openRepoProject-5 (comment 6111257933); refs #6, the record of the project
@@ -61,12 +63,13 @@ is the executable at `961c405`. L-n and B-n are the lane's rulings for the three
 extensions and for this one: L-1 to L-9 and B-1 to B-9 of 2026-10-11, L-10 to
 L-15 and B-10 to B-15 of 2026-10-18, L-16 and L-17 of 2026-10-19 with B-16 to
 B-24, the lead's council verdicts of that date, and B-25 to B-46 of 2026-10-20
-and B-47 to B-56 of 2026-10-21, and B-57 to B-62 of 2026-10-22; A-n are the
+and B-47 to B-56 of 2026-10-21, and B-57 to B-64 of 2026-10-22; A-n are the
 rulings for #23 that this proposal cites, and R-n are lane openRepoProject-2's
 rulings for PR #19, cited by number, such as R-171 and R-208; lane
-openRepoProject-3's W38 read of PR #19's round (d) and its W33 read of this
-change's rounds B10 to B12 are cited by their findings, as "W38's L-4" and
-"W33's M-1", which are not the lane's L-n. SA-n, QA-n and
+openRepoProject-3's W38 read of PR #19's round (d), its W33 read of this
+change's rounds B10 to B12 and its W44 read of round B13 are cited by their
+findings, as "W38's L-4", "W33's M-1" and "W44's LOW-1", which are not the
+lane's L-n. SA-n, QA-n and
 G1 to G5 are the alignment review's findings on this draft at `7290100`. P-n,
 S-n and AE-n are the council's concerns
 (product-advocate, systems-architect, adversary-engineer) on `9ebe9f0`, and M1
@@ -2353,8 +2356,9 @@ PR #19 lands; its two added lines move PR #19's later `project-clean` lines
 by 2. Under the lead's B-60 this round re-bases the revalidation block on
 `f0bf538`, reads this change's own words against W38's L-4, keeps the bounds
 block byte-identical to round B12's, moves every cite of PR #19's current text
-to `f0bf538`, and holds both blocks for lane openRepoProject-2's check before
-their commit. Lane openRepoProject-3's W33 read of rounds B10 to B12 as one
+to `f0bf538`, and holds the two blocks written on PR #19's text and, under
+B-62, the ADDED requirement for lane openRepoProject-2's check before their
+commit. Lane openRepoProject-3's W33 read of rounds B10 to B12 as one
 range, `e07cc42..25f7333`, found no HIGH, one MEDIUM and four LOWs, with three
 observations, and the lead ruled them as B-62, all into this round, with B-61
 on this round's own observation on the admin-directory pre-filter; the
@@ -2363,13 +2367,15 @@ written on PR #19's text do not. Lane 2 said YES on 2026-10-22 to the three
 blocks as held, and they are committed on its YES. Every range of
 `proposal.md`, `design.md` and `tasks.md` that lane openRepoProject-4's spec
 005 pins keeps its bytes, as `cmp` against `25f7333` confirms, though some of
-their line numbers move. Of the 13 items here, 11 are applied, 2 are applied
+their line numbers move. Of the 12 items here, 9 are applied, 2 are applied
 with change (W33's M-1, each cap given its own condition, and its O-1, only in
-passages this round edits), and none is declined; no scenario is added, so the
-counts stay 55, 32 and 8. The round also updates the Status, the key (PR #19
-at `f0bf538`, the ruling range to B-62, and W38's and W33's findings as
-citation forms), design's Context, its ruling range, which still read B-1 to
-B-56, and its ruling table, and `tasks.md` 1.1, 1.4, 1.5 and 2.1.
+passages this round edits), and 1 needs no action (W33's O-2 and O-3, as B-62
+rules); none is declined, and the count is corrected in round B14 (W44's
+LOW-2). No scenario is added, so the counts stay 55, 32 and 8. The round also
+updates the Status, the key (PR #19 at `f0bf538`, the ruling range to B-62,
+and W38's and W33's findings as citation forms), design's Context, its ruling
+range, which still read B-1 to B-56, and its ruling table, and `tasks.md` 1.1,
+1.4, 1.5 and 2.1.
 `specs/project-overview/spec.md` is not edited: none of the rulings needs it,
 and its block is lane openRepoProject-4's.
 
@@ -2388,3 +2394,36 @@ and its block is lane openRepoProject-4's.
 | B-61, round B13's own observation: if the admin-directory pre-filter were adopted, an error on its listing for a would-be candidate past the first 16 would make the plan incomplete, where change 1 alone defers that row and keeps the plan complete | not graded | applied: the pre-filter's Open Question gains one sentence: an error or timeout of the pre-filter's listing filters nothing, the row stays a would-be candidate and meets change 1's own gates in their turn, so the pre-filter never makes a plan incomplete | Open Questions (the admin-directory pre-filter) |
 | W33 (25f7333) O-1: short lines left by re-wraps, at prop:2258, pc:594 and :597, and des:446, :462, :613, :734 and :751 | none | B-62: applied with change, only in passages this round edits: des:446 and :462 (the drain and stall paragraph of D4) and :613 (D4's measured-basis sentence) re-wrapped, the re-wrap changing no word; pc:594 and :597 are in the bounds block, which stays byte-identical to its held file, and prop:2258 (the round B11 record) and des:734 and :751 are in passages this round does not edit, so they stay | `design.md` D4 |
 | W33 (25f7333) O-2 and O-3: B-57 to B-59 have no Decisions bullet, and LQ-20's option table is cited with none of its rows restated | none | B-62: no action | none |
+
+### Re-read and Codex Findings (round B14)
+
+Lane openRepoProject-3's W44 read of round B13, `25f7333..bced895` (its file
+`confirm-b13-findings.md`, brett-wip `16108c574`), found no HIGH, no MEDIUM, no
+departure and three wording LOWs, and confirmed that the revalidation block is
+PR #19's requirement at `f0bf538` plus this change's declared additions only,
+that the bounds block is byte-identical to round B12's, that the ADDED
+requirement is round B12's plus the totals sentence and "Each holds", that all
+three equal their held files, that M-1's three drain conditions each hold, and
+that all 58 hunks of round B13 are declared. The lead queued the three LOWs for
+this change's next round (B-63) and ran that round on Brett Heap's word of
+2026-10-22 to do as much as possible in parallel, the trigger that B-63 waited
+for (B-64). It is a wording round: no spec file is edited, so the two blocks
+written on PR #19's text and the ADDED requirement stay byte-identical to the
+three held files of round B13, as `cmp` confirms, no PR #19 block is touched,
+and lane openRepoProject-2 needs no check. Every range of `proposal.md`,
+`design.md` and `tasks.md` that lane openRepoProject-4's spec 005 pins keeps its
+bytes, as `cmp` against `bced895` confirms, though some of their line numbers
+move. Of the 3 items here, all 3 are applied, and none is declined (the Codex
+row is left out of the count, as in rounds B10 to B12); no scenario is added, so
+the counts stay 55, 32 and 8. The round also updates the Status, the key (the
+ruling range to B-64, and W44's findings as a citation form), design's Context,
+its ruling range and its ruling table, and `tasks.md` 1.1, 1.4 and 1.5.
+`specs/project-overview/spec.md` is not edited: none of the rulings needs it,
+and its block is lane openRepoProject-4's.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| W44 (bced895) LOW-1: the Status and the round B13 record say "both blocks" for lane openRepoProject-2's check of round B13, which covered three held files, the two blocks written on PR #19's text and the ADDED requirement, as the same record says further on (its "three blocks as held") | LOW | B-63, B-64: applied: the Status says "the three held blocks, the two written on PR #19's text and the ADDED requirement"; the round B13 record says that the round holds the two blocks written on PR #19's text and, under B-62, the ADDED requirement for lane 2's check; the round B11 and B12 records, whose check did cover two blocks, stay | Status; "Re-read and Codex Findings (round B13)" |
+| W44 (bced895) LOW-2: the round B13 tally, "Of the 13 items here, 11 are applied, 2 are applied with change ... and none is declined", counts the Codex row and counts the "no action" row of W33's O-2 and O-3 as applied, where the tallies of rounds B10 to B12 leave the Codex row out (14 rows and 13 items, 11 and 10, 7 and 6) | LOW | B-63, B-64: applied: corrected in place, a round record, in W44's form: "Of the 12 items here, 9 are applied, 2 are applied with change (W33's M-1 and O-1), and 1 needs no action (W33's O-2 and O-3, as B-62 rules), and none is declined"; the Codex row stays in the table, and this row records the correction | "Re-read and Codex Findings (round B13)" |
+| W44 (bced895) LOW-3: the round B13 row on D10 and the comment on the pull request say that D10 states a decided absence keeping its step's own reason, which D10 said only by analogy, "as R-208 keeps a decided value's own reason", beside a second "as" clause, so that the two read as two grounds for `state-changed` | LOW | B-63, B-64: applied: D10 states the rule outright, with its cite: a filesystem call that finds no file or directory at its path (`ENOENT` or `ENOTDIR`) decides that the path is absent, and a decided value keeps its step's own reason (PR19/rs:122-127 at `f0bf538`; R-208, W38's L-4), so a decided absence keeps its step's own reason, a listed cache missing at revalidation `state-changed` and an administrative directory that the `operation-in-progress` listing finds absent `identity-changed`; the round B13 row on D10, which says that D10 states that rule, is exact as D10 now reads and is left as it is, and the comment stands (B-63); no word of the deltas changes | `design.md` D10 |
+| Codex's review of `bced895` found no major issues (2026-10-22T08:08:46Z) | none | no action | none |
