@@ -739,7 +739,7 @@ reported two nits, both in `tests/test_project.py`. The lead ruled both
 fixed by T029, as lane step 2 says: "a fix is a new task on its own file
 set, after which the review re-runs on the new head".
 
-- [ ] T029 [S] Fix the review's two nits in `tests/test_project.py` (FS-T) and
+- [X] T029 [S] Fix the review's two nits in `tests/test_project.py` (FS-T) and
   change no other line. (1) In N7
   `test_pty_triad_answer_below_a_file_leaves_the_file_intact` and N8
   `test_inproc_triad_answer_below_a_file_leaves_the_file_intact`, delete the
