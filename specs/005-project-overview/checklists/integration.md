@@ -55,9 +55,11 @@ Lane: openRepoProject-4
     (Dependencies; FR-050).
 - [x] CHK013 Is the state of feature 004 that must exist before the plan
   decided? [Completeness, Dependency, Spec Dependencies]
-  - Result: pass with C-56: feature 004 merged into `main`, the plan starting
-    on Brett Heap's word given after it; re-checked on 2026-10-21 at its head
-    `2cf34d3`, 133 of 133 tasks ticked and not on `main`.
+  - Result: pass with C-56: the plan was to start after feature 004's merge, on
+    Brett Heap's word given after it, and on his word of 2026-10-22, "lane 4
+    plans 005 now", it started first (`a80f10b`, revised at `aeb0bb2` and
+    `6fb619c`). Re-checked on 2026-10-21 at its head `2cf34d3`, 133 of 133
+    tasks ticked and not on `main`.
 
 ## Requirement Clarity
 
@@ -144,11 +146,12 @@ CHK012 and CHK020 again after A1's revision 3 at `367223a`, and CHK020 after PR
 CHK020 with R-124's outcome rule in `2b86a5f`'s words, and again after its
 revisions 6, 7, 8, 9 and 10 at `d644517`, `0394be4`, `177eadf`, `4261ff8` and
 `c193f7b` and its ratification at `e4a30fc`, CHK020 also after #19's rounds (d)
-to (m) at `9267303`, `f0bf538`, `662be89`, `4f1c0e0`, `3dcd2d8`, `6bf9f77`,
-`b3228bb`, `e0c91bb`, `e14ada0`, `173d83c`, `ccc52b9` and `20084cd` and after
-lane openRepoProject-3's W39 LOW-4, their categories unchanged. 26 items: 24
-pass, 0 fixed in the spec, 0 open, 2 plan notes, 0 new questions. An open item
-waits on the question or residual its result names; a plan note is for the
+to (n) at `9267303`, `f0bf538`, `662be89`, `4f1c0e0`, `3dcd2d8`, `6bf9f77`,
+`b3228bb`, `e0c91bb`, `e14ada0`, `173d83c`, `ccc52b9`, `20084cd` and `2250830`
+and after lane openRepoProject-3's W39 LOW-4, their categories unchanged, and
+CHK013 after the plan word of 2026-10-22, its category unchanged too. 26 items:
+24 pass, 0 fixed in the spec, 0 open, 2 plan notes, 0 new questions. An open
+item waits on the question or residual its result names; a plan note is for the
 plan, not the spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: PN-16 (CHK025), PN-18 (CHK026).

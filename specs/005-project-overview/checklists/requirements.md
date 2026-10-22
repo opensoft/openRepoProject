@@ -1081,10 +1081,10 @@ Lane: openRepoProject-4
   for change 2: FR-028 (the stale finding's message), FR-009 (the
   `main-worktree-missing` remedy) and FR-035 (D5's cut) carry held notes, and
   CHK025 of `discovery-identity.md` and CHK005 of `ux.md` name the hold, their
-  categories unchanged. Lane openRepoProject-2's R-332 reads the extension read
-  as FR-007 already does, with no hold. #24 at its draft PR #27's head
-  `04be7f6`, after round B21, with round B20 at `383da59` on the way: the eight
-  ranges byte-identical to their text at `dc39ec3` by `cmp`, the
+  categories unchanged. Lane openRepoProject-2's R-332 has feature 004 read the
+  extension read as FR-007 already does, with no hold. #24 at its draft PR
+  #27's head `04be7f6`, after round B21, with round B20 at `383da59` on the
+  way: the eight ranges byte-identical to their text at `dc39ec3` by `cmp`, the
   `project-overview` block the same blob, `a40458cb`. The round (l) record's
   cites are corrected by lane openRepoProject-3's W93 L1 and L2 (D18's
   resolution sentences at :1432-1511, and the variant remedy's sentence running
@@ -1099,6 +1099,45 @@ Lane: openRepoProject-4
   No pin moves, A1 stays cited at `e4a30fc`, and `clarify-questions.md` is
   unchanged. Re-validation: 16 of 16 items pass, with the checks of iteration 2
   re-run by script on the edited spec.
+- 2026-10-22, a thirty-fourth pass, by the lead's commit 3af decisions: Brett
+  Heap's "yes, recommended for O1-O10", typed at 21:24:03Z (lane
+  openRepoProject-4's RULED line at 21:30:52Z, with NOTED corrections at
+  21:33:31Z, 21:51:17Z and 21:54:01Z), is recorded as C-72: change 2 takes O1
+  (A), O2 (A), O4 (a) with its sub-items (c) and (d) and D5's clause 2 case,
+  and O6 (A) and O7, A1's items 2, 6, 8 and 10, and O3, O5, O8, O9 and O10 stay
+  open for his direct word; since A1's ordering rule governs, the spec records
+  his word and follows A1 as ratified until A1's re-alignment lands, so no
+  requirement moves. Each held note now says which option was chosen or that
+  its item stays open and cites C-72: C-22, EC-020, FR-034 (item 6); EC-032,
+  FR-020 (item 7); FR-006 and User Story 8 (item 8); FR-007 (item 9); FR-009,
+  FR-028, FR-035 and the Dependencies record of round (m) (item 10); FR-035
+  (item 2); the A1 bullet's open point (O9) and LQ-15's extension (O10); and
+  CHK010, CHK017 and CHK023 of `suggestions-gates.md`, CHK016 and CHK025 of
+  `discovery-identity.md`, CHK003 of `observability.md` and CHK005 of `ux.md`.
+  #19's round (n) at `2250830` (lane openRepoProject-2's R-345), with Brett
+  Heap's "R-324: yes" (21:23:55Z; R-343), is recorded: every no-prune warning,
+  the ceiling's third text and T1 to T8, names `git worktree prune`, `git
+  worktree remove` and `git gc`, and FR-009's and FR-028's held strings take
+  those words; the 256 rows and W99 L-5's two (pcl :164 and :1099-1103 at
+  `20084cd`) were re-checked by line alignment: 10 change in the closing phrase
+  alone, 122 move down 2, 11 stay, pcm and the review-safety spec unchanged.
+  Lane openRepoProject-3's W99 read of 3ae is taken: M-1 and L-1 (the plan word
+  in the A1 bullet, the Assumptions, the Feature 004 bullet, the creation note,
+  C-21, the re-pin sentences, and the Results of CHK001 of `deployment.md`,
+  CHK013 of `integration.md` and CHK019 here), L-2 (FR-028 says part 1 is A1's
+  own rule), L-3 (feature 004 at `211e43d` reads the extension read so), L-4
+  (FR-028 gives #19's key of T1 to T8), L-5 (the two rows), O-1 (typing times,
+  with the RULED stamps beside them) and O-3 ("as ratified", O8 open). Lane
+  openRepoProject-3's W96 read of the plan is taken on the spec side: FR-005
+  reads `ENOTDIR` as "no marker" (DI:142), FR-013 names the re-verification
+  task, FR-021 reads the manifest once the root is named, and the Feature 004
+  bullet records the plan's two read ends (research.md R4 at `6fb619c`); no
+  C-72 is added for the plan word, which C-56 holds. CHK001, CHK013, CHK019 and
+  the items above keep their categories, and the totals below were recounted by
+  script. Traceability is checked against A1's ratified deltas at `e4a30fc` (64
+  of 64). No pin moves, A1 stays cited at `e4a30fc`, and `clarify-questions.md`
+  is unchanged. Re-validation: 16 of 16 items pass, with the checks of
+  iteration 2 re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -1167,9 +1206,11 @@ Lane: openRepoProject-4
 ### Dependencies and Assumptions
 
 - [x] CHK019 Is the dependency on feature 004 stated with the commit it is read at, and is the open choice of its state before the plan recorded? [Dependency, Spec Dependencies]
-  - Result: pass; the plan starts once feature 004 has merged into `main`, on
-    Brett Heap's word given after it (C-56). Re-checked on 2026-10-21 at its
-    head `2cf34d3`, with the pins kept (header).
+  - Result: pass with C-56: the plan was to start after feature 004's merge, on
+    Brett Heap's word given after it, and on his word of 2026-10-22, "lane 4
+    plans 005 now", it started first (`a80f10b`, revised at `aeb0bb2` and
+    `6fb619c`). Re-checked on 2026-10-21 at its head `2cf34d3`, with the pins
+    kept (header).
 - [x] CHK020 Are the measured assumptions stated with their source and date (48.3 s, 219 candidates, 96 tests)? [Assumption, Spec Assumptions]
   - Result: pass. 96 tests re-counted in `tests/test_project.py` at this commit.
 - [x] CHK021 Is the assumption that no other process changes the estate stated where determinism depends on it? [Assumption, Spec FR-019, EC-023]
@@ -1220,5 +1261,5 @@ notes (PN-1 to PN-18 but PN-4 and PN-11, withdrawn on 2026-10-21; PN-2 narrowed
 to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
-passes of that day, and after the thirteenth to thirty-third passes on
+passes of that day, and after the thirteenth to thirty-fourth passes on
 2026-10-22.

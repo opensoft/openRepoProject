@@ -35,7 +35,8 @@ Lane: openRepoProject-4
   - Result: pass. FR-035 also records that the remedies of `unstarted-branch`
     and `reflog-unavailable` follow amendment A1 at `e4a30fc`, their
     re-alignment to PR #19's ratified wording after its rounds (g) and (g2)
-    (F-7, R-252) being held for Brett Heap's review with #19's ratification.
+    (F-7, R-252) being chosen for change 2 by Brett Heap's word of 2026-10-22
+    (O1 (A); C-72) and landing with A1's re-alignment after #19's ratification.
 - [x] CHK011 Is the path the `--root <repository parent>` remedy names defined? [Completeness, Spec FR-035, Clarifications C-11]
   - Result: pass.
 - [x] CHK012 Is it specified which gates the overview leaves to the batch (`contains-submodule`, `hidden-local-state`)? [Completeness, Spec FR-032]
@@ -82,8 +83,9 @@ Lane: openRepoProject-4
     repository first (FR-009), and `project clean` refuses it with the plain
     message (#19's round (k) at `173d83c`). A suggestion there is therefore
     refused or reaches another repository, an exception to the "never" of C-55
-    and of User Stories 4 and 8; A1's re-alignment for that layout is held for
-    Brett Heap's ruling for change 2 (FR-006).
+    and of User Stories 4 and 8; A1's re-alignment for that layout, its item 8,
+    was chosen for change 2 by Brett Heap's word of 2026-10-22 (O4 (a); C-72)
+    and lands with the rest of A1's re-alignment (FR-006).
 - [x] CHK018 Are the causes of `inspection-incomplete` consistent across FR-007, FR-013, FR-033 and FR-034 (failed or cut presence, registration and reflog reads)? [Consistency, Spec Clarifications C-23]
   - Result: pass; since 2026-10-21 the twins of FR-007 and a row whose identity
     changed before its probe are `inspection-error` too, so FR-034's
@@ -111,8 +113,9 @@ Lane: openRepoProject-4
 - [x] CHK023 Exception: are `inspection-error` rows, an unreadable reflog and unprobed rows covered? [Coverage, Spec US4 s1, US4 s6, US6 s3]
   - Result: pass. Since PR #19's round (h) (O-1), [G] ends a plan whose reflog
     read the deadline cut `deadline-exceeded`; the overview keeps
-    `inspection-incomplete`, as amendment A1 gives it, held for Brett Heap's
-    ruling for change 2 (FR-034).
+    `inspection-incomplete`, as amendment A1 gives it, until the re-alignment
+    that Brett Heap's word of 2026-10-22 chose for change 2 lands (O2 (A);
+    C-72; FR-034).
 - [x] CHK024 Recovery: does the suggestion return after a repair, and does a re-run drain a backlog? [Recovery, Spec US4 s1, FR-035]
   - Result: pass.
 - [x] CHK025 Non-functional: do the gates need no Git child beyond design D3's and one bounded read per gated row? [Coverage, Spec FR-032, FR-033]
@@ -148,15 +151,15 @@ LQ-14, theirs too, and CHK012 again after A1's revision 3 at `367223a`, and
 CHK012 and CHK020 after PR #19's R-124 and R-126, and again after A1's revision
 5 at `3ee860c`, with R-124's outcome rule in `2b86a5f`'s words, and CHK012
 after its revisions 6, 7, 8, 9 and 10 at `d644517`, `0394be4`, `177eadf`,
-`4261ff8` and `c193f7b`, after #19's rounds (d) to (m) at `9267303`, `f0bf538`,
+`4261ff8` and `c193f7b`, after #19's rounds (d) to (n) at `9267303`, `f0bf538`,
 `662be89`, `4f1c0e0`, `3dcd2d8`, `6bf9f77`, `b3228bb`, `e0c91bb`, `e14ada0`,
-`173d83c`, `ccc52b9` and `20084cd`, after lane openRepoProject-3's W39 LOW-4,
-and after A1's ratification at `e4a30fc`, and CHK010 after #19's rounds (g) and
-(g2), and CHK023 after its round (h), and CHK017 after its round (i), lane
-openRepoProject-3's W83 read of it, its round (k) and lane openRepoProject-3's
-W88 read. 29 items: 28 pass, 1 fixed in the spec, 0 open, 0 plan notes, 0 new
-questions. An open item waits on the question or residual its result names; a
-plan note is for the plan, not the spec; a new question is asked in
-`clarify-questions.md`.
+`173d83c`, `ccc52b9`, `20084cd` and `2250830`, after lane openRepoProject-3's
+W39 LOW-4, and after A1's ratification at `e4a30fc`, and CHK010 after #19's
+rounds (g) and (g2), and CHK023 after its round (h), and CHK017 after its round
+(i), lane openRepoProject-3's W83 read of it, its round (k) and lane
+openRepoProject-3's W88 read. 29 items: 28 pass, 1 fixed in the spec, 0 open, 0
+plan notes, 0 new questions. An open item waits on the question or residual its
+result names; a plan note is for the plan, not the spec; a new question is
+asked in `clarify-questions.md`.
 
 Plan notes: none.

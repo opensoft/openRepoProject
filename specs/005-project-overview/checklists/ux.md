@@ -23,8 +23,9 @@ Lane: openRepoProject-4
   - Result: plan note PN-1.
 - [x] CHK005 Is the message of a gated finding specified: its own text, then `; `, then the remedy, within 200 characters, the own text shortened with `...` when both do not fit? [Completeness, Spec FR-035, Clarifications C-11]
   - Result: pass. C-11 cites design D5 for the composition and the shortening
-    rule. A rule that keeps the warning of A1's item 10 whole is held with that
-    item, for Brett Heap's word for change 2 (FR-035).
+    rule. A rule that keeps the warning of A1's item 10 whole was chosen for
+    change 2 with that item by Brett Heap's word of 2026-10-22 (O6 (A); C-72)
+    and lands with A1's re-alignment (FR-035).
 - [ ] CHK006 Are the human text of an exit-2 refusal without `--json` (`git-too-old`, `git-unavailable`, an internal error) and the stream it is written to specified? [Completeness, Gap, Spec FR-039, FR-043]
   - Result: plan note PN-2, narrowed to an exception of any other kind in human
     mode. The rest is fixed in spec.md, FR-039 and FR-043 (2026-10-20, after
@@ -139,7 +140,7 @@ open, 4 plan notes, 0 new questions. An open item waits on the question or
 residual its result names; a plan note is for the plan, not the spec; a new
 question is asked in `clarify-questions.md`. CHK024 was re-read on 2026-10-22
 after the re-read's N1, its category unchanged, and CHK005 after PR #19's round
-(m) at `20084cd`, its category unchanged too.
+(m) at `20084cd` and after C-72, its category unchanged too.
 
 Plan notes: PN-1 (CHK004, CHK023), PN-2 (CHK006, narrowed to an exception of
 any other kind in human mode, and since 2026-10-21 also the standard-error line
