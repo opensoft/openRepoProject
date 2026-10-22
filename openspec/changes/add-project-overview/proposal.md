@@ -6,8 +6,9 @@ Status: ratified by Brett Heap on 2026-10-09, in his words to lane
 openRepoProject-2, "ratify, merge #11 and run the runbook". It lands by
 squash-merge of PR #12 after PR #11 (`add-project-clean-all-safe`), and the
 Speckit handoff `005-project-overview` follows after feature 004 merges;
-amendment A1 (PR #34) is drafted and not ratified, and lands only on Brett
-Heap's word. The change was
+amendment A1 (PR #34) is ratified by Brett Heap's word of 2026-10-22,
+"ratify 34", and lands by squash-merge of PR #34 as its section states.
+The change was
 revised after the alignment review, the lead's later rulings, the council and
 the packet author's final delta read (resolutions on PR #12 and in "Questions
 Resolved by the Alignment Review"; noted constraints in `clarifications.md`).
@@ -714,10 +715,10 @@ Departures from packet decisions, each citing the decision departed from:
   (`inspection-incomplete`). Either code keeps the finding with the
   read-only suggestion, that `suggestion_gate` and requirement 7's message.
   Only the index gates stay residual exclusions the batch applies.
-  Amendment A1 (proposed, not ratified): after the index gates,
-  `operation-in-progress` and `worktree-only-commits` are further exclusions
-  that only the batch applies (section "Amendment A1" below); the words above
-  are this entry's as ratified.
+  Amendment A1 (ratified by Brett Heap on 2026-10-22, "ratify 34"): after the
+  index gates, `operation-in-progress` and `worktree-only-commits` are further
+  exclusions that only the batch applies (section "Amendment A1" below); the
+  words above are this entry's as PR #12 ratified them.
 - **Determinism scoped** (DI:440-449, "never depends on timing"):
   requirement 3 promises timing-independent JSON only for an uncut run, and
   starts a repository's phase 2 only once every candidate earlier in
@@ -1071,21 +1072,30 @@ engineer) read `6204234`: V1 to V12 are applied here, N1 to N4 are in
 
 ## Amendment A1: Brett Heap's answers to feature 005's clarify questions (2026-10-21)
 
-Status: A1 drafted; not ratified; it lands only on Brett Heap's word. It is
-draft PR #34, https://github.com/opensoft/openRepoProject/pull/34.
+Status: A1 ratified by Brett Heap on 2026-10-22, at about 12:04Z in lane
+openRepoProject-4's session, in his words "ratify 34", which that lane
+recorded as a RULED line:
+https://github.com/opensoft/brett-wip/blob/13257af5b39798741fd762ca770c180cef2dae28/lanes/log/openRepoProject-4.md#L184
+and which is quoted on PR #34:
+https://github.com/opensoft/openRepoProject/pull/34#issuecomment-6340336911
+It is PR #34, https://github.com/opensoft/openRepoProject/pull/34, which stays
+a draft until PR #19's ratification of the commits its four LQ items follow
+and then lands by squash-merge, as the ordering rule below has it, or lands
+sooner without those items on his word (task 1.7).
 
 A1, `amend-project-overview-clarify-answers`, is lane openRepoProject-4's
 amendment of this change in place, under its governing issue
 opensoft/openRepoProject#10, in the form in which draft PR #19 amends
-`add-project-clean-all-safe`. Until Brett Heap's word ratifies it, the
-ratified text is this change as PR #12 landed it (`961c405`), and the text A1
-amends is its draft.
+`add-project-clean-all-safe`. Brett Heap's word has ratified it; until PR #34
+lands, `main` holds this change as PR #12 landed it (`961c405`), which is the
+text A1 amends.
 
 Task 1.7 records A1's ratification and holds feature 005's plan until it, a
 gate beyond the words of Q2 A, which waits for feature 004's merge and Brett
 Heap's word after it. The gate is declared here as the cautious direction: it
 matches spec 005's interim rule that nothing is planned or built from the
-answers A1 carries until A1 is ratified.
+answers A1 carries until A1 is ratified. With A1 ratified, that gate is met
+(task 1.7), and Q2 A's still holds.
 
 Brett Heap's words, in lane openRepoProject-4's session at about
 2026-10-21T10:31Z, answering the seventeen clarify questions of feature 005
@@ -1488,13 +1498,13 @@ requirement 2's case for a check that cannot be completed; LQ-10's four stat
 pins, restated where this change quoted two; the merge order, under which PR
 #34 does not merge before PR #19's ratification of the commits its four LQ
 items follow, unless Brett Heap moves those items to a later amendment; and
-the open point M1. All of A1 stays drafted, not ratified.
+the open point M1. Brett Heap ratified A1 whole, with these points, on
+2026-10-22 ("ratify 34").
 
 The changes that carry this change's requirements in MODIFIED blocks are to
 re-align them to A1's text: lane openRepoProject-5's
 `add-project-clean-cache-disposal` (#24, PR #27) for requirement 5, and
-`add-project-overview-remote-merge-status`
-(#25, PR #29) for requirements 3, 8 and 9 and, through its task 2.3, for the
-spawning sentence of its design D7. Spec 005 folded its FR-011, FR-022,
-FR-039, FR-044, SC-009 and SC-011 ahead of A1, and re-reads them against A1's
-text once A1 is ratified.
+`add-project-overview-remote-merge-status` (#25, PR #29) for requirements 3, 8
+and 9 and, through its task 2.3, for the spawning sentence of its design D7.
+Spec 005 folded its FR-011, FR-022, FR-039, FR-044, SC-009 and SC-011 ahead of
+A1, and re-reads them against A1's text, now ratified.
