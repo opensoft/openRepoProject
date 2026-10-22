@@ -974,11 +974,13 @@ run SHALL take the candidates that the 16-enumeration cap left as the
 candidates ahead of them are removed or cease to be candidates, since a
 candidate that its enumeration leaves at the `ignored-local-files` rung keeps
 its place among the 16 enumerations though a gate before `deferred-target-cap`
-excludes it. A later run SHALL take the rows that `deferred-target-cap` left as
-the rows ahead of them are removed or excluded by a gate before the cap. Both
-hold unless the rows that `deferred-target-cap` defers will not drain, as
-"Clean bounds its Git work and reports omitted work" states, whose human report
-then says so. A deadline that passes
+excludes it. A later run SHALL take the candidates that the invocation's totals
+left as the candidates ahead of them are removed, cease to be candidates or
+cease to count toward those totals. A later run SHALL take the rows that
+`deferred-target-cap` left as the rows ahead of them are removed or excluded by
+a gate before the cap. Each holds unless the rows that `deferred-target-cap`
+defers will not drain, as "Clean bounds its Git work and reports omitted work"
+states, whose human report then says so. A deadline that passes
 during an enumeration SHALL make the plan incomplete with `deadline-exceeded`,
 as it does during any probe. A row whose enumeration finished with no cap
 reached SHALL have its ignored records counted as `disposable`, those that are
