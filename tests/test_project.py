@@ -471,6 +471,52 @@ class ProjectTests(unittest.TestCase):
         self.assertTrue(path.is_file() and not path.is_symlink(), f"{path} is no longer a regular file")
         self.assertEqual(path.read_text(), self.parent_file_content)
 
+    def blocked_parents(self):
+        """The givens of refuse-non-directory-parent-early design D3 item 1 (research R5, K1 to K12),
+        built under self.base at names apart from parent_fixtures()'s. Returns label to (the arguments
+        after the name, the environment change, the expected question line, the kept path); a change
+        value of None removes that variable. When an AF_UNIX socket cannot be bound here the socket's
+        items are empty and its kept path is None, and a test calls skipTest for that given."""
+        import socket
+        blocked = self.parent_file_fixture(self.base / "blocked file")
+        link = self.base / "link to blocked file"
+        link.symlink_to(blocked)
+        fifo = self.base / "blocked fifo"
+        os.mkfifo(fifo)  # never opened
+        below_link = self.base / "link below blocked file"
+        below_link.symlink_to(blocked / "x")  # dangling, and below the file
+        sock = self.base / "sock"
+        try:
+            with socket.socket(socket.AF_UNIX) as listener:
+                listener.bind(str(sock))
+        except OSError:
+            sock = None
+        home_projects = self.parent_file_fixture(Path(self.env["HOME"]) / "projects")
+        null = Path("/dev/null")
+
+        def not_a_directory(parent):
+            return OBSTACLE_PARENT_NOT_A_DIRECTORY.format(PARENT=parent)
+
+        def below_a_non_directory(parent):
+            return OBSTACLE_PARENT_BELOW_A_NON_DIRECTORY.format(PARENT=parent, ANCESTOR=blocked)
+
+        return {"the file": (("--into", blocked), {}, not_a_directory(blocked), blocked),
+                "a link to the file": (("--into", link), {}, not_a_directory(blocked), blocked),
+                "a FIFO": (("--into", fifo), {}, not_a_directory(fifo), fifo),
+                "the file with a trailing slash": (("--into", str(blocked) + os.sep), {}, not_a_directory(blocked),
+                                                   blocked),
+                "below the file": (("--into", blocked / "sub"), {}, below_a_non_directory(blocked / "sub"), blocked),
+                "two below the file": (("--into", blocked / "a" / "b"), {},
+                                       below_a_non_directory(blocked / "a" / "b"), blocked),
+                "a link below the file": (("--into", below_link), {}, below_a_non_directory(blocked / "x"), blocked),
+                "a socket": ((), {}, None, None) if sock is None
+                else (("--into", sock), {}, not_a_directory(sock), sock),
+                "/dev/null": (("--into", null), {}, not_a_directory(null), null),
+                "the file, positional": ((blocked,), {}, not_a_directory(blocked), blocked),
+                "the file as PROJECTS_DIR": ((), {"PROJECTS_DIR": str(blocked)}, not_a_directory(blocked), blocked),
+                "the file as ~/projects": ((), {"PROJECTS_DIR": None}, not_a_directory(home_projects),
+                                           home_projects)}
+
     def run_cli_streams(self, *args, stdin="", stderr=subprocess.PIPE, prefix=()):
         """Like run_cli, with the stdin text and the stderr target chosen by the test (a pipe,
         subprocess.STDOUT, a descriptor or a file) and an optional command prefix, such as a
@@ -1583,6 +1629,54 @@ class ProjectTests(unittest.TestCase):
         self.assertNotIn("warning:", asked.stdout + asked.stderr)
         self.assertIsNone(self.shape_record())
         self.assert_parent_file_unchanged(parent_file, before)
+
+    def test_blocked_parent_by_flag_is_refused_before_the_plan(self):
+        # refuse-non-directory-parent-early design D1, D2 and D3 items 2 and 3, forms F1 (--type test
+        # --yes) and F2 (--type test --dry-run) for every given of blocked_parents(): refused before
+        # the plan, with the head refusal, exit 2, nothing printed on standard output, nothing created.
+        pristine = self.env
+        for label, (extra, change, line, kept) in self.blocked_parents().items():
+            for form, flags in (("F1", ("--type", "test", "--yes")), ("F2", ("--type", "test", "--dry-run"))):
+                with self.subTest(given=label, form=form):
+                    if kept is None:
+                        self.skipTest("an AF_UNIX socket cannot be bound here")
+                    self.env = pristine
+                    self.env = {key: value for key, value in {**self.question_env(None), **change}.items()
+                                if value is not None}
+                    before = sorted(self.base.rglob("*"))
+                    result = self.run_cli("new", "MyApp", *extra, *flags)
+                    self.assert_status(result, 2)
+                    self.assertEqual(result.stdout, "")
+                    self.assertEqual(result.stderr, REFUSED + head_refusal(line) + "\n")
+                    if kept.is_file():
+                        self.assert_parent_file_unchanged(kept, before)
+                    else:
+                        self.assertEqual(sorted(self.base.rglob("*")), before)
+                        self.assertTrue(kept.is_fifo() or kept.is_socket() or kept.is_char_device(), kept)
+
+    def test_blocked_parent_is_refused_without_a_terminal(self):
+        # refuse-non-directory-parent-early design D1, D2 and D3 item 3, form F5 (no choosing flag,
+        # standard input not a terminal) for every given of blocked_parents(): the question is not
+        # asked, and the head refusal comes first.
+        pristine = self.env
+        for label, (extra, change, line, kept) in self.blocked_parents().items():
+            with self.subTest(given=label, form="F5"):
+                if kept is None:
+                    self.skipTest("an AF_UNIX socket cannot be bound here")
+                self.env = pristine
+                self.env = {key: value for key, value in {**self.question_env(None), **change}.items()
+                            if value is not None}
+                before = sorted(self.base.rglob("*"))
+                result = self.run_cli("new", "MyApp", *extra)
+                self.assert_status(result, 2)
+                self.assert_not_asked(result)
+                self.assertEqual(result.stdout, "")
+                self.assertEqual(result.stderr, REFUSED + head_refusal(line) + "\n")
+                if kept.is_file():
+                    self.assert_parent_file_unchanged(kept, before)
+                else:
+                    self.assertEqual(sorted(self.base.rglob("*")), before)
+                    self.assertTrue(kept.is_fifo() or kept.is_socket() or kept.is_char_device(), kept)
 
     def test_pty_symbolic_link_to_a_directory_names_no_obstacle(self):
         # fix-parent-obstacle-wording design D3: a symbolic link to a directory is a parent, and the
