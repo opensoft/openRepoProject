@@ -1678,6 +1678,82 @@ class ProjectTests(unittest.TestCase):
                     self.assertEqual(sorted(self.base.rglob("*")), before)
                     self.assertTrue(kept.is_fifo() or kept.is_socket() or kept.is_char_device(), kept)
 
+    def test_pty_blocked_parent_by_type_without_yes_is_refused(self):
+        # refuse-non-directory-parent-early design D1, D2 and D3 item 2, form F3 (--type test at a
+        # terminal, no --yes) for every given of blocked_parents(): refused before the plan and before
+        # the confirmation prompt, with the head refusal, exit 2, nothing created.
+        for label, (extra, change, line, kept) in self.blocked_parents().items():
+            with self.subTest(given=label, form="F3"):
+                if kept is None:
+                    self.skipTest("an AF_UNIX socket cannot be bound here")
+                env = {key: value for key, value in {**self.question_env(None), **change}.items()
+                       if value is not None}
+                before = sorted(self.base.rglob("*"))
+                result = self.run_pty("new", "MyApp", *extra, "--type", "test", env=env)
+                self.assert_status(result, 2)
+                self.assertEqual(result.stdout, "")
+                self.assertEqual(result.stderr, REFUSED + head_refusal(line) + "\n")
+                if kept.is_file():
+                    self.assert_parent_file_unchanged(kept, before)
+                else:
+                    self.assertEqual(sorted(self.base.rglob("*")), before)
+                    self.assertTrue(kept.is_fifo() or kept.is_socket() or kept.is_char_device(), kept)
+
+    def test_pty_blocked_parent_is_refused_where_ci_is_true(self):
+        # refuse-non-directory-parent-early design D1, D2 and D3 item 3, form F4 (no choosing flag,
+        # CI=true, at a terminal) for every given of blocked_parents(): the question is not asked.
+        for label, (extra, change, line, kept) in self.blocked_parents().items():
+            with self.subTest(given=label, form="F4"):
+                if kept is None:
+                    self.skipTest("an AF_UNIX socket cannot be bound here")
+                env = {key: value for key, value in {**self.question_env("true"), **change}.items()
+                       if value is not None}
+                before = sorted(self.base.rglob("*"))
+                result = self.run_pty("new", "MyApp", *extra, env=env)
+                self.assert_status(result, 2)
+                self.assert_not_asked(result)
+                self.assertEqual(result.stdout, "")
+                self.assertEqual(result.stderr, REFUSED + head_refusal(line) + "\n")
+                if kept.is_file():
+                    self.assert_parent_file_unchanged(kept, before)
+                else:
+                    self.assertEqual(sorted(self.base.rglob("*")), before)
+                    self.assertTrue(kept.is_fifo() or kept.is_socket() or kept.is_char_device(), kept)
+
+    def test_pty_blocked_parent_is_refused_for_a_workspace_name(self):
+        # refuse-non-directory-parent-early design D1, D2 and D3 item 3, form F6 (the workspace name
+        # alice-wip, no choosing flag, at a terminal) for every given of blocked_parents(): the question
+        # is not asked for that name, and the head refusal comes first. The last subtest adds the dry run
+        # that is not asked either (research R5, R-3.1).
+        givens = self.blocked_parents()
+        for label, (extra, change, line, kept) in givens.items():
+            with self.subTest(given=label, form="F6"):
+                if kept is None:
+                    self.skipTest("an AF_UNIX socket cannot be bound here")
+                env = {key: value for key, value in {**self.question_env(None), **change}.items()
+                       if value is not None}
+                before = sorted(self.base.rglob("*"))
+                result = self.run_pty("new", "alice-wip", *extra, env=env)
+                self.assert_status(result, 2)
+                self.assert_not_asked(result)
+                self.assertEqual(result.stdout, "")
+                self.assertEqual(result.stderr, REFUSED + head_refusal(line) + "\n")
+                if kept.is_file():
+                    self.assert_parent_file_unchanged(kept, before)
+                else:
+                    self.assertEqual(sorted(self.base.rglob("*")), before)
+                    self.assertTrue(kept.is_fifo() or kept.is_socket() or kept.is_char_device(), kept)
+        extra, change, line, kept = givens["the file"]
+        with self.subTest(given="the file", form="F6 --dry-run"):
+            env = self.question_env(None)
+            before = sorted(self.base.rglob("*"))
+            result = self.run_pty("new", "alice-wip", *extra, "--dry-run", env=env)
+            self.assert_status(result, 2)
+            self.assert_not_asked(result)
+            self.assertEqual(result.stdout, "")
+            self.assertEqual(result.stderr, REFUSED + head_refusal(line) + "\n")
+            self.assert_parent_file_unchanged(kept, before)
+
     def test_pty_symbolic_link_to_a_directory_names_no_obstacle(self):
         # fix-parent-obstacle-wording design D3: a symbolic link to a directory is a parent, and the
         # question names no obstacle, as in test_pty_no_known_obstacle_names_none.
