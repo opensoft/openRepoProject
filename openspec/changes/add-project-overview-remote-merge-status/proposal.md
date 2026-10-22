@@ -15,15 +15,15 @@ L2 to L5), with no spec edit, in `design.md` and `tasks.md`, C-47 also in Impact
 and Open Question 1; round C14's C-48, RC's other five findings, its spec edit
 committed on lane openRepoProject-4's YES of 2026-10-21, and C-49, lane
 openRepoProject-3's eight LOWs, both also in `design.md`, Impact and `tasks.md`;
-and rounds C15 to C19 (C-50 to C-63: W16, RF's M1, W22, W28, the currency check,
-RH's M4, RI-6, W57-1, RH's L4, W53's cites), in `design.md` and `tasks.md`, C-58
-also in the spec, C-63 in Decisions; ratification by Brett Heap pending; nothing
-here is ratified. Governing issue: opensoft/openRepoProject#25, claimed by lane
-openRepoProject-5 (comment 6111242617); refs #6, the record of the project
-maintenance design packet. Proposed on Brett Heap's word "usage reset, resume
-all. read handoff and resume and fan out wide and do as much as possible in
-parallel" (2026-10-11), read by lanes openRepoProject-4 and openRepoProject-5 as
-a go for the candidate list they put to him.
+and rounds C15 to C20 (C-50 to C-66: W16, RF's M1, W22, W28, the currency check,
+RH's M4, RI-6, W57-1, RH's L4, W53's cites, W61), in `design.md` and `tasks.md`,
+C-58, C-66 also in the spec, C-63, C-65 in Decisions; ratification by Brett Heap
+pending; nothing here is ratified. Governing issue: opensoft/openRepoProject#25,
+claimed by lane openRepoProject-5 (comment 6111242617); refs #6, the record of
+the project maintenance design packet. Proposed on Brett Heap's word "usage
+reset, resume all. read handoff and resume and fan out wide and do as much as
+possible in parallel" (2026-10-11), read by lanes openRepoProject-4 and
+openRepoProject-5 as a go for the candidate list they put to him.
 
 Citations are `file:line`. The packet is cited at `da33d92`, equal to main
 `961c405` for `ideation/`: `DI`, `SY`, `BA` and `OV` are its
@@ -42,7 +42,7 @@ executable. Change 1's evidence model, `Repository inspection requires Git 2.36
 and shares one evidence model` (CAS/cmd:90), is [E]. The lane's rulings are
 cited as L-1 to L-9 and C-1 to C-8 (2026-10-11), L-10 to L-15, B-14, C-9 and
 C-10 (2026-10-18), L-16, L-17 and C-11 to C-14 (2026-10-19), and F-3 and C-15 to
-C-63 (2026-10-20 to 2026-10-22, C-16 to C-22 being the council's verdicts).
+C-66 (2026-10-20 to 2026-10-22, C-16 to C-22 being the council's verdicts).
 `PR19/cmd` is draft PR #19's
 `openspec/changes/add-project-clean-all-safe/specs/project-command/spec.md` at
 `c462d87`.
@@ -890,15 +890,15 @@ Packet open decisions taken, each citing the text that leaves it open:
   `unavailable` with that reason, so that the order is the run-wide
   `unavailable`, then `request-cap`, then an expiry's `cancelled` (C-25, C-28,
   C-34); and a lookup of `gh` that fails, as for a relative `GH_CONFIG_DIR`,
-  `XDG_CONFIG_HOME` or `HOME` (C-44), or reaches its 5 s limit, as on an
-  unreachable `PATH` directory, gives what one that finds none gives,
-  `gh-unavailable`, never a row or scan error, while one that the deadline stops
-  first leaves its rows as an expiry does, `cancelled` within the cap and
-  `request-cap` past it (C-26, C-28). Rejected: `request-cap` for those keys,
-  one of the two outcomes that Codex's P1 on `e198548` found both applying,
-  because it would make `remote.completeness` `incomplete` in a run where
-  nothing was cut, the reason "`unavailable` beyond DI:1041-1042" below gives
-  for `unknown` (C-25); and a row or scan error for the lookup, which the
+  `XDG_CONFIG_HOME` or `HOME` (C-44; C-58 for the last two), or reaches its 5 s
+  limit, as on an unreachable `PATH` directory, gives what one that finds none
+  gives, `gh-unavailable`, never a row or scan error, while one that the
+  deadline stops first leaves its rows as an expiry does, `cancelled` within the
+  cap and `request-cap` past it (C-26, C-28). Rejected: `request-cap` for those
+  keys, one of the two outcomes that Codex's P1 on `e198548` found both
+  applying, because it would make `remote.completeness` `incomplete` in a run
+  where nothing was cut, the reason "`unavailable` beyond DI:1041-1042" below
+  gives for `unknown` (C-25); and a row or scan error for the lookup, which the
   isolation clause forbids (Codex's P2 on `e198548`).
 
 Decisions where the sources and the rulings are silent:
@@ -1924,8 +1924,8 @@ The writer checked these on 2026-10-22, in a scratch directory outside this
 tree. The heads, read with `git ls-remote origin` before the round's last
 commit, were `f0bf538` for PR #19's branch, `e4a30fc` for amendment A1's and
 `15504f1` for main, with no move. The cites of C-58 were read with `git show`:
-`PR19/cmd:116-128` at `f0bf538` is the "Configuration paths" paragraph (a test
-of `HOME` and `XDG_CONFIG_HOME`, and of `GIT_CONFIG_GLOBAL` and
+`PR19/cmd` at `f0bf538`, :116-129, is the "Configuration paths" paragraph (a
+test of `HOME` and `XDG_CONFIG_HOME`, and of `GIT_CONFIG_GLOBAL` and
 `GIT_CONFIG_SYSTEM`, before any Git child, `git --version` included, and where
 one is relative the subcommand starts no Git child and inspects no repository,
 `relative-config-path`); and `:868-876` of change 2's
@@ -1951,7 +1951,7 @@ for placeholders found none.
 
 | Finding | Severity | Ruling | Section edited |
 | --- | --- | --- | --- |
-| Reader RH's M4 and the alignment reader AL1's conflict C1 (the ADDED requirement says that a relative `HOME` or `XDG_CONFIG_HOME` gives no `gh` child and both rows `unavailable` with `gh-unavailable`: the Requests paragraph at `:417-422`, the Results paragraph at `:484-489` and the last AND of "No gh, or a gh without authentication" at `:619`, unchanged at `2ab3743`; but change 1's evidence model on PR #19's text at `f0bf538` (`PR19/cmd:116-128`, LQ-15) and change 2's requirement 11 as amendment A1 words it (`e4a30fc`, `:868-876`) refuse such a run before any child starts, so that it has no row to be `gh-unavailable`, and a test written to the AND fails on either text; the queued A1 re-alignment does not cover this ADDED requirement) | MEDIUM | C-58: applied, in a form that holds on any base. The Requests paragraph and the Results paragraph's parenthesis keep the rule whole for `GH_CONFIG_DIR` and state it for `XDG_CONFIG_HOME` and `HOME` only in a run that neither `Repository inspection requires Git 2.36 and shares one evidence model` nor `Overview exits by completeness and severity` refuses before any child starts, the spec naming the two requirements by header and never A1's code, which this change's own base does not define; the two texts, with their cites, are named in `design.md` D5 and not in the spec. The AND keeps its relative `GH_CONFIG_DIR` case as it was, with the absolute and empty cases, and for the relative `HOME` and relative `XDG_CONFIG_HOME` cases says that no `gh` child starts on every base and that both rows are `unavailable` with `gh-unavailable` where neither requirement refuses the run first. The scenario count stays 36 in either form, since the AND edits an existing scenario; the form was chosen on what the scenario tests: moving the two cases out of the AND would leave the property that no `gh` child starts under a relative `HOME` or `XDG_CONFIG_HOME` (C-44's planted-configuration point) with no scenario at all on a base that has neither text, where the conditional AND keeps it tested on every base, a test of it being able to pass on each. AL1's proposed edit (the two cases exit 2 with `relative-config-path`) is not taken: it names A1's code, which this change's own base, change 2 at `961c405` and PR #19's block at `c462d87`, does not define, and it would contradict this change on a base without A1; the ruling prefers the conditional form. Not edited, and read with D5's new paragraph: D4, the rest of D5, D10, D11 and Risks in `design.md`, Impact's README bullet and the Decisions entry for C-44 here, which restate C-44's refusal for all three variables without the condition, and the 21 other places of AL1's list, which join the A1 alignment rounds (C-59) | spec, ADDED requirement (Requests, Results, "No gh, or a gh without authentication"); `design.md` D5 |
+| Reader RH's M4 and the alignment reader AL1's conflict C1 (the ADDED requirement says that a relative `HOME` or `XDG_CONFIG_HOME` gives no `gh` child and both rows `unavailable` with `gh-unavailable`: the Requests paragraph at `:417-422`, the Results paragraph at `:484-489` and the last AND of "No gh, or a gh without authentication" at `:619`, unchanged at `2ab3743`; but change 1's evidence model on PR #19's text (`PR19/cmd` at `f0bf538`, :116-129, LQ-15) and change 2's requirement 11 as amendment A1 words it (`e4a30fc`, `:868-876`) refuse such a run before any child starts, so that it has no row to be `gh-unavailable`, and a test written to the AND fails on either text; the queued A1 re-alignment does not cover this ADDED requirement) | MEDIUM | C-58: applied, in a form that holds on any base. The Requests paragraph and the Results paragraph's parenthesis keep the rule whole for `GH_CONFIG_DIR` and state it for `XDG_CONFIG_HOME` and `HOME` only in a run that neither `Repository inspection requires Git 2.36 and shares one evidence model` nor `Overview exits by completeness and severity` refuses before any child starts, the spec naming the two requirements by header and never A1's code, which this change's own base does not define; the two texts, with their cites, are named in `design.md` D5 and not in the spec. The AND keeps its relative `GH_CONFIG_DIR` case as it was, with the absolute and empty cases, and for the relative `HOME` and relative `XDG_CONFIG_HOME` cases says that no `gh` child starts on every base and that both rows are `unavailable` with `gh-unavailable` where neither requirement refuses the run first. The scenario count stays 36 in either form, since the AND edits an existing scenario; the form was chosen on what the scenario tests: moving the two cases out of the AND would leave the property that no `gh` child starts under a relative `HOME` or `XDG_CONFIG_HOME` (C-44's planted-configuration point) with no scenario at all on a base that has neither text, where the conditional AND keeps it tested on every base, a test of it being able to pass on each. AL1's proposed edit (the two cases exit 2 with `relative-config-path`) is not taken: it names A1's code, which this change's own base, change 2 at `961c405` and PR #19's block at `c462d87`, does not define, and it would contradict this change on a base without A1; the ruling prefers the conditional form. Not edited, and read with D5's new paragraph: D4, the rest of D5, D10, D11 and Risks in `design.md`, Impact's README bullet and the Decisions entry for C-44 here, which restate C-44's refusal for all three variables without the condition, and the 21 other places of AL1's list, which join the A1 alignment rounds (C-59) | spec, ADDED requirement (Requests, Results, "No gh, or a gh without authentication"); `design.md` D5 |
 | Reader RI's RI-6, which sharpens RE-15 (feature 004's `ChildHandle.start(argv, cwd, kind)` always spawns with `env=git_env(kind)`, `project:1049` at `e69f6ef`, which removes the Git names, sets `TRACE2_OFF` and takes only a `GIT_KINDS` key; a `gh` row there would break the spec's "every other variable passed on unchanged" and D5's tested residual; the start path that takes its own environment is not built) | LOW | C-57: applied as RI words its fix, a design note and no spec edit. This change records no item called RE-15 (a search of the three files found none); the finding's text, "adds a phase and a child kind to that loop", stands in the Context's realization bullet, so the note is added there, with the cites of the brief (the spec's `:405-417`, that bullet and D5's `:579-584`, at `2ab3743`): feature 004 cannot yet give a `gh` child the environment this change specifies, and the start path is not built | `design.md` Context (realization bullet) |
 | C-56, the lead's ruling: task 1.3's lag of one round ends in round C18 (each brief named 1.3 for the previous round's clause only, so that 1.3 always lagged by one round; lane openRepoProject-3's W28-2 found it, and round C17 repeated it) | ruling | C-56: applied: `tasks.md` 1.3 gains, after its round C16 clause, a round C17 clause (W28 and the currency check, C-53 and C-54) and a round C18 clause (C-56, C-57, C-58 and C-61, the spec edit and its sha256, and what is held, described and not reproduced), and its verified-by list gains "Re-read and Codex Findings (round C17)" and "Re-read and Codex Findings (round C18)"; 1.1 lists C-45 to C-61 and 1.5 names round C18. 1.4 gains one clause, for C-58's committed spec edit, which is beyond the brief's list: 1.4 records each round's committed spec edit, and the clause says that this one is committed on the lead's ruling for lane openRepoProject-4's view. The task is still one line, and `tasks.md` 45 lines. Each later round records itself in 1.3 | `tasks.md` 1.1, 1.3, 1.4, 1.5 |
 | Reader RH's L4 (task 2.4, `tasks.md:23`, says "re-read" for the case where PR #19 lands first and #26 has not archived, though its own check, `diff -u` of the archived block against this change's block "showing additions only", and the second `diff -u`, can pass only after a re-base, PR #19's block at `f0bf538` differing from the text this change carries by about 1,371 words and five scenarios; #26's task 2.2 says "re-based if that text moved past `c462d87`") | LOW | C-58 carries it, held: the wording of 2.4 is drafted, with the old and the new line, and not committed, since the line is inside lane openRepoProject-4's pinned lines 20-23; `cmp` of those lines against `2ab3743` holds. It is held for lane openRepoProject-4's YES, which the lead will ask for; `design.md`'s Migration Plan, step 4, takes the same clause in the round that commits it | none (held for lane openRepoProject-4) |
@@ -2063,8 +2063,8 @@ the file at `f0bf538`, 359 lines with the block of [E] at `:108-359`, 252 lines,
 as round C18's correction counts it. No place in this change's three files
 states PR #19's current head as live text. Every mention of `f0bf538` is in the
 round C17 and C18 sections, which record the head as it stood, in the round C18
-clause of task 1.3, or is a cite of the spec text read there (D5's
-`PR19/cmd:116-128`, `design.md:650`), which round (f) leaves equal; so nothing
+clause of task 1.3, or is a cite of the spec text read there (D5's `PR19/cmd` at
+`f0bf538`, :116-129, `design.md:650`), which round (f) leaves equal; so nothing
 moves to `662be89`, and history stays. Every `c462d87` stays as the ratification
 base. Every `423a532` (`design.md:107`, `:174` and `:591`, and the round C15
 section) cites feature 005's Q9 B at the sha where it was read: the nine lines
@@ -2101,6 +2101,155 @@ backslash-u, and a grep of the three files for placeholders found none.
 | W53's 29-02 (#29, DI, lane-only: "gh's own traffic off" says that each `gh` child runs with six variables removed and five set, and cites DI:1038-1039 only, while the Git scrub does not apply and what a `gh` child reads, writes or sends beyond its argv and those switches is the GitHub client's own, a residual, against the packet's "read-only" and "never ... writes files") | ruling | C-63: applied: the entry's last sentence cites DI:1038-1039 with the packet's words ("opt-in and read-only"), says that the Git scrub does not apply, names what a `gh` child reads, writes or sends beyond its argv and these switches as the client's own, a residual (What This Repository Does Not Own), and cites DI:307-308 ("never ... writes files") beside DI:1038-1039 as the lines that residual stands against. The six removed and five set variables are unchanged; the words "beyond its documented switches" became "beyond its argv and these switches", those of the third bullet of What This Repository Does Not Own. No departure's meaning changes | Decisions ("gh's own traffic off") |
 | W53's 29-R and its note that #29's own "Departures" list rests on C-5 and not on the packet (the list's two entries depart from C-5's example wording and its listed `closed` state, lane 4's three departures from change 2's text and L-10, and none from a packet line; the MODIFIED block of [E] carries PR #19's rows) | note | C-63: kept as W53 has it: the list's two departures, the merged-row wording and no `closed` state, stay as they are, resting on C-5 and cited to it, and the cites of 29-01 and 29-02 go into the two Decisions entries that declare the packet departures, so that the Departures list is not mixed with them. Its heading, "Departures, each naming what it departs from:", now reads "Departures from C-5, each naming what it departs from:", so that a reader takes the list as departures from a lane ruling and finds the two packet departures in Decisions. No departure's meaning changes | Departures list (heading) |
 | W53's 29-03 (five readings of the packet: the credential store, the URL's user information, "recorded as unknown", the two keys against "Every field ... is always present", and the 1 MiB body) | ruling | C-63: nothing to cite: W53 marks the row DECLARED as readings, and "Readings of packet and ratified text" already cites DI:310, DI:1056-1058, DI:1053, DI:823 with DI:834-835, and DI:1048-1050; its packet line to change is optional clarifying clauses. Left as it is | none |
-| The lead's currency check for round C19: PR #19 is now at `662be89` (round (f): design, proposal and tasks only, with spec text equal to `f0bf538`'s), feature 004 at `8f6fa31` | ruling | applied by reading every place, and no place edited: no place in the proposal, design or tasks states PR #19's current head as live text, so none moves to `662be89`. Read and left: every `f0bf538` (the round C17 and C18 sections, the round C18 clause of task 1.3 and D5's `PR19/cmd:116-128` at `design.md:650`, whose spec text is the same at `662be89`); every `c462d87`, the ratification base; every `423a532`, Q9 B's nine lines, equal at `423a532`, `f0bf538` and `662be89`; RI-6's `e69f6ef`, since `project` at `8f6fa31` is byte for byte `e69f6ef`'s; and main's `15504f1`, still main's head. The paragraph above gives each | none |
+| The lead's currency check for round C19: PR #19 is now at `662be89` (round (f): design, proposal and tasks only, with spec text equal to `f0bf538`'s), feature 004 at `8f6fa31` | ruling | applied by reading every place, and no place edited: no place in the proposal, design or tasks states PR #19's current head as live text, so none moves to `662be89`. Read and left: every `f0bf538` (the round C17 and C18 sections, the round C18 clause of task 1.3 and D5's `PR19/cmd` at `f0bf538`, :116-129 (`design.md:650`), whose spec text is the same at `662be89`); every `c462d87`, the ratification base; every `423a532`, Q9 B's nine lines, equal at `423a532`, `f0bf538` and `662be89`; RI-6's `e69f6ef`, since `project` at `8f6fa31` is byte for byte `e69f6ef`'s; and main's `15504f1`, still main's head. The paragraph above gives each | none |
 | The record: Status, the citation key, and tasks 1.1, 1.3 and 1.5, in place | ruling | C-56 and C-63's record: Status says "rounds C15 to C19" and "C-50 to C-63" and names RH's L4 and W53's cites, within its 22 lines; the citation key reads "C-15 to C-63", a span that still includes C-55 and C-60, which this change cites nowhere, and C-59, which it cites as not applied; `tasks.md` 1.1 lists C-45 to C-63, 1.3 gains a round C19 clause (C-62, C-63 and the currency check, this round recording itself as C-56 orders) and "Re-read and Codex Findings (round C19)" in its verified-by list, and 1.5 names round C19; the tasks file is 45 lines still | Status; citation key; `tasks.md` 1.1, 1.3, 1.5 |
 | Codex's review of `e1a9f84` (2026-10-22T13:19:21Z) | no finding | "Didn't find any major issues", as the lead's late read of 13:25:49Z records it, which also found CI and SonarCloud passing at `e1a9f84`; nothing to apply | none |
+
+### Re-read and Codex Findings (round C20)
+
+Round C20 (2026-10-22, on team-01m) applies C-65 on the lead's brief for the
+round (`rulings-2026-10-20.md`: the bullets "Lane 3's W61 on C18" and "C-65"),
+and C-66, which the lead sent to the running round. Lane openRepoProject-3's W61
+(`confirm-c18-findings.md`, received by the lead at 14:13:13Z) read round C18,
+`2ab3743..e1a9f84`, and found 0 HIGH, 0 MEDIUM and 4 LOW, with nothing that
+departs from a ruling, the packet or ratified text: C-56, C-57, C-58 and C-61
+are applied, the spec's sha256 and the counts are as recorded, lane
+openRepoProject-4's pins are cmp-identical, and 8 of 8 validate. W61 also
+answered the lead's question on the passages that C18 left unedited, which D5
+had declared were read with its paragraph and re-aligned with task 2.3. D4, D10,
+Impact's README bullet and the Decisions index entry for C-44 are right, as read
+with D5 or as history. D5's restatement of the rule, D11's test and Risks' entry
+are not, and the Decisions bullet "Run-wide unavailability, C-25 and C-26" in
+this file, which the lead's list had left out, reads like D4 without D5's cite
+and is misleading in the same way. C-65 applies those answers, in the design and
+this file only. W61's third LOW (C18-3), that the spec says "refuses" of change
+1's evidence model, which only bars every Git child, is a spec edit: C-65 held
+it for lane openRepoProject-4's decision, lane openRepoProject-4 said YES to the
+wording at 14:16:29Z, outside its pins, and C-66 lifts the brief's "no spec
+edit" for that item alone, in lane openRepoProject-4's form, each verb paired
+with its own requirement and not "refuses or bars" for both.
+
+The round edits `specs/project-overview/spec.md` (`e053ad6`, committed first:
+the ADDED requirement's Requests paragraph and the parenthesis of its Results
+paragraph, 660 lines becoming 661), `design.md` (`6527f73`: D5 at two places,
+D11 and Risks, 1548 lines becoming 1560) and, in its last commit, this file
+(Status, the citation key, the Decisions bullet "Run-wide unavailability, C-25
+and C-26", the cite of `PR19/cmd` in the round C18 and C19 sections, and this
+section) and `tasks.md` (1.1, 1.3, 1.4 and 1.5, in place, 45 lines still). The
+spec file is now sha256
+`6fda0ae8c5c60dab3a94c453af58503e11a6f19f62ddbde4d5ed7d098d26ee6c`, which
+replaces `dee66d4f6608b3c53a2d9ae0464af023f4c87662719247543ca74cdb6ce3c46f`, the
+sha that the round C18 and C19 sections record as it stood; it holds 36
+scenarios, none added, removed, renamed or moved, and
+`specs/project-command/spec.md` is unchanged (`git diff 9a3f684` on it is empty,
+sha256 `208c06c36656194d2560614c44251cf404786cce90c54c9d8f6a0d6a5f2b601d`) with
+its 10, so that the count stays 46.
+
+The spec edit, as `git diff --word-diff` against `9a3f684` shows it: in the
+Requests paragraph, the clause "in a run that neither `Repository inspection
+requires Git 2.36 and shares one evidence model` nor `Overview exits by
+completeness and severity` refuses before any child starts" now reads "in a run
+that neither `Repository inspection requires Git 2.36 and shares one evidence
+model` (by barring every Git child and inspecting no repository) nor `Overview
+exits by completeness and severity` (by refusing the run) stops it before any
+child starts", and the paragraph takes one line more, 6 becoming 7; in the
+parenthesis of the Results paragraph, "not refused" now reads "not stopped",
+with the line count unchanged. The two headers are as the spec already names
+them, and the scenario AND on "No gh, or a gh without authentication" is not
+edited, so that it keeps "no `gh` child starts" for every case. That AND still
+says, for the relative `HOME` and `XDG_CONFIG_HOME` cases, "where neither
+`Repository inspection requires Git 2.36 and shares one evidence model` nor
+`Overview exits by completeness and severity` refuses the run before any child
+starts", one verb for both. The clause is outside the places that lane
+openRepoProject-4 agreed and that C-66 names, so the round leaves it as it is
+and reports it to the lead, whose call it is; the fix would be one word, "stops"
+for "refuses". Lines 1 to 419 of the spec are byte for byte as at `9a3f684`, the
+three MODIFIED blocks (:1-342) and lines 1 to 410, which spec 005's Dependencies
+list compares, among them; lines 426 to 660 of `9a3f684` are lines 427 to 661
+now, but for that one word.
+
+`design.md`: D5's "(C-44)" at the former :606 reads "(C-44; `XDG_CONFIG_HOME`
+and `HOME` as the "Two texts" paragraph says, C-58)", naming the paragraph by
+its opening words and not by its line. That paragraph, at :646-670, now says
+that the two texts "stop a run under" a relative `HOME` or `XDG_CONFIG_HOME`
+before any child starts; that change 1's evidence model, on PR #19's text, tests
+the four variables before any Git child and, where one is relative, "bars every
+Git child and inspects no repository (`relative-config-path`), whether the
+subcommand then refuses or reports being its own requirement's rule", which
+echoes `PR19/cmd` at `f0bf538`, :128-129; that change 2's exit rule, as
+amendment A1 words it, "refuses the overview" with that code and status 2; and
+that the spec states the rule for those two variables only in a run that neither
+requirement "stops" before any child starts. Its last sentence names "D4 and the
+rest of this decision" as the places that state the rule without the condition,
+D11 and Risks having been corrected. D11's Refused list is split in two
+(:1181-1201), the `GH_CONFIG_DIR` cases kept as they were, and Risks' bracket
+(:1412-1414) gains "for `XDG_CONFIG_HOME` and `HOME`, where C-58's condition
+holds". The two D5 edits are line for line, :603-619 staying 17 lines and
+:646-670 staying 25, so that D5's residual :574-601 (sha256 `da48e5684e354a9d`
+at its first 16 digits) and D7 :954-989 (`8a03ba68b8166c74`) keep their lines
+and bytes; D11 takes 11 more lines and Risks one, and nothing before :1181
+moved.
+
+This file: the Decisions bullet "Run-wide unavailability, C-25 and C-26" reads
+"(C-44; C-58 for the last two)" at its cite of C-44, re-wrapped within its 11
+lines at :892-902. The cite of `PR19/cmd` is written "`PR19/cmd` at `f0bf538`,
+:116-129" wherever it appeared: in `design.md` D5 (:650), in the round C18
+section (its paragraph on the cites of C-58, at :1927, and its first row) and in
+the round C19 section (its paragraph on the currency check, at :2067, and its
+currency row), each re-wrapped within the lines it had, with the other words of
+those sections left as history. The key still defines `PR19/cmd` at `c462d87`,
+and `design.md:396`'s `PR19/cmd:123-125` is a cite at that sha (the pins
+sentence is :123-125 at `c462d87`), so it stays. Status, within its 22 lines,
+and the citation key, at :45, name round C20 and C-66.
+
+Lines 1252 to 1417 of this file, rounds C6 to C12, are unchanged (`cmp` against
+`9a3f684`), as are lines 334-345, 367-370 and 430-438, "Dependencies and
+Sequencing" (181 lines, sha256 `c4d7a1797d240880` at its first 16 digits) and
+"Open Questions" (39 lines, `ca53d0f392adc7e5`), each compared whole by sha256,
+and `tasks.md` lines 20-23 (sha256
+`2e177de7a91d644759bb5e12177696c749be9d9e90a763ce9899e238e7c0e2c0`, the one that
+the round C19 section records): lane openRepoProject-4's pinned ranges. No line
+of this file moved: lines 1 to 2106 keep their numbers, this section following
+them, and every paragraph before line 1252 keeps its line count and its place
+(55 paragraphs, each with the same first line and length), Status (5-26), the
+citation key (45) and the Decisions bullet (892-902) each replacing as many
+lines as they had. To hold Status's 22 lines, its clause on rounds C15 to C20
+reads "C-58, C-66 also in the spec, C-63, C-65 in Decisions" and names "W61" and
+not its LOWs.
+
+The writer checked these on 2026-10-22, in a scratch directory outside this
+tree. W61's report was read from lane openRepoProject-3's attachments on the
+register's `origin/main` with `git show`, and its lines were found at this head
+by their text. The "Configuration paths" paragraph was read from PR #19's
+`specs/project-command/spec.md` with `git show`: at `f0bf538` it begins at :116
+("Configuration paths: before any Git child starts") and ends at :129 ("as for
+the version."), and that file is the same sha256
+(`d4cb310646343df40119a5fdeca3da8f475b5d9b5427492d834c053965ed0f71`) at
+`f0bf538`, `662be89` and `4f1c0e0`, so the cite holds at each. The carry check
+of every MODIFIED block against its source is as in round C19, since lines 1 to
+342 of the overview spec and the whole `project-command` spec are byte for byte
+as at `9a3f684`: "Overview is local and read-only" 1 of 1 scenarios, +33/-0;
+"Overview bounds its work and reports what it omitted" 13 of 13, +26/-0;
+"Overview prints a versioned JSON envelope" 6 of 6, +12/-0, against change 2 at
+`961c405`; and [E] 9 of 9, +11/-0, against PR #19 at `c462d87`. Validation, run
+before each of the round's commits and again at its head (a commit cannot hold
+its own sha; the head is in the round's report): `/usr/bin/openspec validate
+add-project-overview-remote-merge-status --strict` reports the change valid with
+its two INFO lines, `/usr/bin/openspec validate --all --strict` passes 8 of 8,
+and `/usr/bin/openspec status --change add-project-overview-remote-merge-status
+--json` shows every artifact done. The added text holds no non-ASCII character,
+bidi control, host path or literal backslash-u, and a grep of the three files
+for placeholders found none.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| Lane openRepoProject-3's W61 on round C18 (`2ab3743..e1a9f84`, `confirm-c18-findings.md`, received by the lead at 14:13:13Z) | 0 HIGH, 0 MEDIUM, 4 LOW | C-65: W61 found 0 HIGH, 0 MEDIUM and 4 LOW (C18-1 to C18-4) and six observations, none of them a departure from a ruling, the packet or ratified text; C-56, C-57, C-58 and C-61 are applied, the spec's sha256 and the counts are as recorded (`dee66d4f...`, 36 and 10), lane openRepoProject-4's pins are cmp-identical, and 8 of 8 validate. Its four LOWs and its answers on the seven passages are the rows below; nothing else to apply | none |
+| W61's C18-1 (D11's test of C-44's rule, the Refused list at the former `design.md:1181-1196`, gives both rows `gh-unavailable` for a relative `XDG_CONFIG_HOME` or `HOME` and says that each case gives them, though on a base with amendment A1 those runs exit 2 before any row exists: WRONG there as a test map, right on this change's own bases) | LOW | C-65: applied: D11's Refused list is split in two. The first, "Refused on every base", keeps the `GH_CONFIG_DIR` cases as they were (`GH_CONFIG_DIR=.gh-config`, a relative `GH_CONFIG_DIR` beside an absolute `XDG_CONFIG_HOME` and an absolute `HOME`, and the values ` /x`, `~/x` and `.`), with their results. The second, "Refused only where neither requirement stops the run first (C-58, C-66)", takes the `XDG_CONFIG_HOME` and `HOME` cases (`XDG_CONFIG_HOME=cfg`, `HOME=h`, either one relative beside an absolute `GH_CONFIG_DIR`, and each of the two relative beside the other two absolute): where neither `Repository inspection requires Git 2.36 and shares one evidence model` nor `Overview exits by completeness and severity` stops the run before any child starts, each gives the first list's results; where either does, the run has no lookup and no row, and the case asserts only that no `gh` child starts and that the run ends as that requirement says (status 2 with `relative-config-path` under amendment A1's requirement). The "Not refused" cases, the 70-key case and the AND's cases are as they were | `design.md` D11 (:1181-1201) |
+| W61's C18-2 for D5 (the restatement of the rule at the former `design.md:604-606`, "the lookup of `gh` counts as failing when any of `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` and `HOME` is set ... (C-44)", is the first thing a reader meets, 40 lines before the condition at :646: MISLEADING; the rest of D5 is right as read with it) | LOW | C-65: applied: the sentence now ends "(C-44; `XDG_CONFIG_HOME` and `HOME` as the "Two texts" paragraph says, C-58)", pointing at the paragraph by its opening words ("Two texts that land before this change", still at :646) and not by its line. The paragraph :603-619 keeps its 17 lines by re-wrapping, and the edit lies after D5's residual :574-601, which stays `cmp`-identical to `9a3f684`. The rest of D5 is right as W61 reads it and is not edited | `design.md` D5 (:603-619) |
+| W61's C18-2 for Risks (the bracket of the entry at the former `design.md:1401-1403`, "makes every keyed row `gh-unavailable` and starts no child (C-44)", states the outcome for all three variables: MISLEADING; the rest of the entry stays true) | LOW | C-65: applied: the bracket now ends "starts no child (C-44; for `XDG_CONFIG_HOME` and `HOME`, where C-58's condition holds)", the brief's clause in the same parenthesis as C-44's cite; the rest of the entry is as it was | `design.md` Risks (:1412-1414) |
+| W61's C18-2 for this file (the Decisions bullet "Run-wide unavailability, C-25 and C-26", at the former `proposal.md:892-893`, "a lookup of `gh` that fails, as for a relative `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` or `HOME` (C-44)": MISLEADING in the same way as D4, with no cite of D5; a place that the lead's list omitted) | LOW | C-65: applied: "(C-44; C-58 for the last two)", the bullet re-wrapped within its 11 lines (:892-902) so that every paragraph before the round C6 section keeps its line count | Decisions ("Run-wide unavailability, C-25 and C-26") |
+| W61's C18-4 (`PR19/cmd:116-128` is `f0bf538`'s text, but this file's key defines `PR19/cmd` at `c462d87`, where :116-128 is the push child's protocol pins; and the "Configuration paths" paragraph runs to :129, the clause that hands refuse-or-report to the subcommand) | LOW | C-65: applied: written "`PR19/cmd` at `f0bf538`, :116-129" in `design.md` D5 (:650), in the round C18 section (its paragraph on the cites of C-58 and its first row) and in the round C19 section (its paragraph on the currency check and its currency row). Read with `git show`: at `f0bf538` the paragraph is :116-129, and the file is byte for byte the same at `662be89` and `4f1c0e0` (sha256 `d4cb3106...`), so the cite holds at each of the three; the key keeps `c462d87`, and `design.md:396`'s `PR19/cmd:123-125` is a cite at `c462d87` and stays | `design.md` D5; the round C18 and C19 sections |
+| W61's C18-3 (the spec says that change 1's evidence model "refuses" the run, in the Requests paragraph and the Results paragraph's parenthesis, and D5's first sentence says "refuse"; but [E] only bars every Git child and inspects no repository, leaving "whether the subcommand then refuses or reports" to its own requirement (`PR19/cmd` at `f0bf538`, :124-129; #19's proposal leaves the overview's code and exit status to change 2); the refusal with exit 2 is change 2's requirement 11 as A1 words it) | LOW | C-65: held, a spec edit, for lane openRepoProject-4's decision; its words were to be "refuses or bars every Git child". Lane openRepoProject-4 then said YES at 14:16:29Z, outside its pins, in the form that pairs each verb with its own requirement, and C-66 (next row) applies it | none here (see C-66) |
+| C-66, the lead's ruling, sent to the running round: the spec edit in lane openRepoProject-4's form, with no scenario added and lane openRepoProject-4's cited spec spans byte for byte | ruling | C-66: applied, in `e053ad6`, committed first. Change 1's evidence model bars every Git child and inspects no repository, change 2's exit rule refuses the run, and `gh-unavailable` holds for a relative `XDG_CONFIG_HOME` or `HOME` only in a run that neither stops first: the Requests paragraph says "neither `Repository inspection requires Git 2.36 and shares one evidence model` (by barring every Git child and inspecting no repository) nor `Overview exits by completeness and severity` (by refusing the run) stops it before any child starts", the Results paragraph's parenthesis says "not stopped" for "not refused", and D5's paragraph pairs the verbs the same way (the design commit). The headers are as the spec already names them, no scenario is added or removed (36 and 10), the AND's "no `gh` child starts" holds for every case, and lines 1 to 419 of the spec are byte for byte as at `9a3f684`. New sha256 `6fda0ae8c5c60dab3a94c453af58503e11a6f19f62ddbde4d5ed7d098d26ee6c`, 661 lines, replacing `dee66d4f...`. Not edited, and reported to the lead: the AND on "No gh, or a gh without authentication" says "neither ... nor ... refuses the run before any child starts" for both requirements; it is not in C-66's list and not in the wording that lane openRepoProject-4 agreed | spec, ADDED requirement (Requests; Results); `design.md` D5 (:646-670) |
+| W61's answers on the passages that C18 left unedited and found right: D4 (`design.md:524-527`, names the cause as an example and cites D5), D10 (names none of the three variables and not C-44; the lead's list read C-26's row), Impact's README bullet (the list of remedies for a code a person sees; on a base with A1 the two extra variables are inert and never harmful) and the C-44 index entry in Decisions (history), and W61's observations OBS-1 to OBS-6 | note | C-65: left as they are. The rest of D5, which W61 finds right as read with its paragraph, is left too. OBS-3 (D5's "Two texts that land before this change" states an order, though amendment A1 is not a named dependency; "that are to land before this change is re-read (tasks 2.3, 2.4)" would be exact) is harmless and not taken | none |
+| The record: Status, the citation key, and tasks 1.1, 1.3, 1.4 and 1.5, in place | ruling | C-65 and C-66's record: Status says "rounds C15 to C20" and "C-50 to C-66" and names W61, within its 22 lines (the clause reading "C-58, C-66 also in the spec, C-63, C-65 in Decisions" to hold them); the citation key reads "C-15 to C-66", a span that still includes C-55 and C-60, which this change cites nowhere, and C-59, which it cites as not applied; `tasks.md` 1.1 lists C-45 to C-66, 1.3 gains a round C20 clause (this round recording itself, as C-56 orders) and "Re-read and Codex Findings (round C20)" in its verified-by list, 1.4 gains one clause for C-66's committed spec edit, which is beyond the brief's list as C18's was (1.4 records each round's committed spec edit), and 1.5 names round C20; the tasks file is 45 lines still | Status; citation key; `tasks.md` 1.1, 1.3, 1.4, 1.5 |
