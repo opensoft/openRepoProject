@@ -3852,7 +3852,7 @@ checkpoint, beside US2, US3 and US9.
   merged as `60631eb`) gives a main worktree that a `core.worktree` or
   `core.bare` of the repository's own redirects the refusal's variant message,
   `target_not_repository_root_redirect`, which names the redirect; every other
-  such refusal keeps the plain one. Five tests, with the module's `ROW_3B` and
+  such refusal keeps the plain one. Eight tests, with the module's `ROW_3B` and
   its `redirected()` message:
   `test_clean_a_redirected_main_worktree_names_the_redirect` (`core.bare` true,
   or `core.worktree` naming another directory or a missing one named
@@ -3871,13 +3871,28 @@ checkpoint, beside US2, US3 and US9.
   `test_clean_plain_refusals_beside_a_redirected_main_worktree` (a
   subdirectory, a linked worktree, a linked worktree that its own
   `config.worktree` redirects, a submodule checkout and a directory outside any
-  repository keep the plain message) and
+  repository keep the plain message),
   `test_clean_a_row_3b_that_fails_or_is_cut_keeps_the_plain_message` (row 3b a
   `probe` child through `run_bounded()`, run once; one that fails, times out or
   meets the work deadline leaves the plain message, and answered it gives the
-  variant).
+  variant) and, since lane 3's W81 (M-1 to M-3, lead ruling R-297; its writer's
+  `1061dd7`, merged as `769215d`), three tests that pin the plain message where
+  the layout gives no redirect:
+  `test_clean_a_main_checkout_refused_for_another_reason_keeps_the_plain_message`
+  (a main checkout whose `.git` is a symbolic link to a git directory elsewhere
+  is refused `unnamed` for another reason, its toplevel is the directory itself,
+  and no row 3b runs: the plain message in the report and in `--json`, no plan),
+  `test_clean_a_dot_git_file_that_names_no_git_directory_keeps_the_plain_message`
+  (a `.git` file with no gitdir line runs no row 3b; one naming a git directory
+  that is not there runs row 3b once, which fails; both keep the plain message)
+  and
+  `test_clean_a_relative_core_worktree_naming_a_missing_directory_keeps_the_plain_message`
+  (a relative `core.worktree` naming a missing directory, in the plain layout
+  and under `--separate-git-dir`, makes Git itself fail in rows 3 and 3b: row 3b
+  runs once, fails, and the plain message prints, with no plan; the same value
+  written absolutely takes the variant and runs no row 3b).
   — files: `tests/test_clean_resolution.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_resolution.py 'test_clean_a_bare_repository_reached_from_a_linked_worktree' 'test_clean_a_separate_git_directory' 'test_clean_a_separate_git_directory_with_a_relative_core_worktree' 'test_clean_a_submodule_checkout' 'test_clean_a_redirected_main_worktree_names_the_redirect' 'test_clean_a_redirected_main_worktree_whose_git_is_a_file' 'test_clean_a_bare_repository_beside_a_main_worktree_that_core_bare_redirects' 'test_clean_plain_refusals_beside_a_redirected_main_worktree' 'test_clean_a_row_3b_that_fails_or_is_cut_keeps_the_plain_message'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_resolution.py 'test_clean_a_bare_repository_reached_from_a_linked_worktree' 'test_clean_a_separate_git_directory' 'test_clean_a_separate_git_directory_with_a_relative_core_worktree' 'test_clean_a_submodule_checkout' 'test_clean_a_redirected_main_worktree_names_the_redirect' 'test_clean_a_redirected_main_worktree_whose_git_is_a_file' 'test_clean_a_bare_repository_beside_a_main_worktree_that_core_bare_redirects' 'test_clean_plain_refusals_beside_a_redirected_main_worktree' 'test_clean_a_row_3b_that_fails_or_is_cut_keeps_the_plain_message' 'test_clean_a_main_checkout_refused_for_another_reason_keeps_the_plain_message' 'test_clean_a_dot_git_file_that_names_no_git_directory_keeps_the_plain_message' 'test_clean_a_relative_core_worktree_naming_a_missing_directory_keeps_the_plain_message'`
 - [x] T106 [US7] [S] Add to `tests/test_clean_resolution.py`:
   `test_clean_merge_target_missing_invalid_or_conflicting` (no candidate:
   `no-merge-target` with its baseline message, exit 2, `--json` printing the
@@ -3948,9 +3963,12 @@ checkpoint, beside US2, US3 and US9.
   message (T105 tests it). Where a relative `core.worktree` names a missing
   directory Git itself fails in rows 3 and 3b, and the plain message prints;
   a submodule whose own configuration redirects takes the variant (#19's round
-  (k); lane 3's W81 M-1 and L-1).
+  (k); lane 3's W81 M-1 and L-1). T105's three W81 tests (M-1 to M-3, R-297) pin
+  the plain message where a main checkout's `.git` is a symbolic link, a `.git`
+  file names no git directory, or a relative `core.worktree` names a missing
+  directory.
   — files: `project`
-  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'resolution:is_bare_name' 'resolution:main_worktree_redirected' && python3 -m unittest discover -s tests -p 'test_clean_resolution.py' -k '*.test_clean_bare_name_predicate' -k '*.test_clean_a_submodule_checkout' -k '*.test_clean_a_bare_repository_reached_from_a_linked_worktree' && python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'resolution~os.getcwdb()'`
+  — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'resolution:is_bare_name' 'resolution:main_worktree_redirected' && python3 -m unittest discover -s tests -p 'test_clean_resolution.py' -k '*.test_clean_bare_name_predicate' -k '*.test_clean_a_submodule_checkout' -k '*.test_clean_a_bare_repository_reached_from_a_linked_worktree' -k '*.test_clean_a_main_checkout_refused_for_another_reason_keeps_the_plain_message' -k '*.test_clean_a_dot_git_file_that_names_no_git_directory_keeps_the_plain_message' -k '*.test_clean_a_relative_core_worktree_naming_a_missing_directory_keeps_the_plain_message' && python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'resolution~os.getcwdb()'`
 - [x] T108 [US7] [O] Fill `declared_tracking_branch(root)` (region `evidence`; D8,
   FR-018, FR-060) with a bounded read: an `st_size` over 1 MiB is
   `manifest-invalid` without a read, the read never passes 1 MiB, and an
