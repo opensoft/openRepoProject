@@ -889,6 +889,48 @@ class RevalidationTests(clean_support.CleanCase):
                 self.assertEqual((result.status, result.document["exit_code"]), (status, status))
                 self.assert_nothing_removed(root, trees, before, log)
 
+    def test_clean_a_redirected_work_tree_beside_a_later_check_s_difference(self):
+        # The lead's R-198: the review-safety delta orders the target's
+        # identity, its `modules` check and its operation-in-progress listing,
+        # by filesystem reads, before its effective-work-tree probe, stopping at
+        # the first difference. A work tree redirected after the plan (lane E's
+        # decoy in P's config.worktree) beside a `modules` entry made at the
+        # same time is contains-submodule, and beside a marker
+        # operation-in-progress, and no work-tree probe runs at P's
+        # revalidation. The redirection alone stays identity-changed (lane E's
+        # test of a work tree redirected after the plan).
+        probe = ["rev-parse", "--path-format=absolute", "--show-toplevel"]
+        for case, entry, reason in (("modules", "modules", "contains-submodule"),
+                                    ("marker", "MERGE_HEAD", "operation-in-progress")):
+            with self.subTest(case):
+                root, trees = self.batch("redirected-" + case)
+                self.git(root, "config", "extensions.worktreeConfig", "true")
+                decoy = self.base / ("decoy-" + case)
+                decoy.mkdir()
+                for name in self.git(trees[0], "ls-files", "-z").split("\0"):
+                    if name:
+                        shutil.copy2(trees[0] / name, decoy / name)
+                admin = self.admin(trees[0])
+
+                def redirect_and_mark(admin=admin, decoy=decoy, entry=entry):
+                    self.git(trees[0], "config", "--file", admin / "config.worktree", "core.worktree", decoy)
+                    if entry == "modules":
+                        (admin / entry).mkdir()
+                    else:
+                        (admin / entry).write_text(self.head(root) + "\n")
+
+                before = self.snapshot(root, trees)
+                env, log = self.counting()
+                result = self.apply(root, redirect_and_mark, env=env, log=log)
+                self.assertEqual(self.git(trees[0], *probe).strip(), str(decoy), "P's work tree is redirected")
+                self.assert_stopped_at_first(result, trees, reason)
+                records = clean_support.child_log(log)
+                self.assertEqual([record for record in records if subcommand(record) == probe], [],
+                                 "the work-tree probe's child is skipped")
+                self.assertEqual(result.document["targets"][0]["probes_performed"], 3,
+                                 "the identity probe, the registry listing and the ref listing only")
+                self.assert_nothing_removed(root, trees, before, log)
+
     # The lead's R-195 (#19 at 4485678, "Cleanup revalidates destructive
     # actions"): every Git child of the revalidation that fails, or runs past
     # its own budget while the deadline is not the limit, is state-changed,

@@ -5558,11 +5558,7 @@ def revalidation_difference(plan, target, run, part, seen):
        target re-resolved as planned, else `state-changed`.
     5. By filesystem reads, each checked row's path present with its planned
        `dev` and `ino`, and its two-way registration holding with its planned
-       `admin_id` (verify_registration()), else `identity-changed`; where the
-       plan's row 4c read true, the target's effective work tree
-       (effective_work_tree(), strict), `identity-changed` only for a decided
-       other toplevel and `state-changed` for a probe that decided nothing
-       (the lead's R-171); then no
+       `admin_id` (verify_registration()), else `identity-changed`; then no
        other present entry of the registry listing sharing a checked row's
        realpath or admin id, a twin made after planning (registry_twin();
        lead ruling R-81 (a)), and no entry whose lstat or realpath cannot
@@ -5570,7 +5566,13 @@ def revalidation_difference(plan, target, run, part, seen):
        R-93 (e), LOW-3), else `identity-changed`; then the target's
        `modules` check, else `contains-submodule`; then the listing of its
        admin directory (operation_check(); D22, LQ-14), else
-       `operation-in-progress` for a marker it finds.
+       `operation-in-progress` for a marker it finds; then, where the plan's
+       row 4c read true, the target's effective work tree
+       (effective_work_tree(), strict), `identity-changed` only for a decided
+       other toplevel and `state-changed` for a probe that decided nothing
+       (the lead's R-171). The filesystem checks come before that probe, in
+       the review-safety delta's order (the lead's R-198), so that one of
+       them that refuses spares its child.
     6. The combined status probe in the target, which must print no record,
        else `state-changed`.
     7. The hidden-state probe in the target: its own reason
@@ -5704,16 +5706,6 @@ def revalidation_difference(plan, target, run, part, seen):
             return "deadline-exceeded" if read_cut(exc.error) else "identity-changed"
         if not registered or admin_id != row.admin_id:
             return "identity-changed"
-    if evidence.get("worktree_config") is True:  # the target's effective work tree, as row 4c read (LQ-11)
-        if slot_set(run):
-            return "interrupted"
-        holds, error = effective_work_tree(target.row.raw_path, run, strict=True)
-        if read_cut(error):
-            return "deadline-exceeded"
-        if holds is None:
-            return "state-changed"  # a probe that decided nothing (R-171)
-        if not holds:
-            return "identity-changed"  # a decided different work tree
     if slot_set(run):
         return "interrupted"
     unread = {row.raw_path for row in getattr(plan, "rows", None) or () if row["present"] is None}
@@ -5736,6 +5728,18 @@ def revalidation_difference(plan, target, run, part, seen):
         return "state-changed"  # a value that cannot be re-read (R-124, R-127)
     if reason is not None:
         return reason
+    # The target's effective work tree, as row 4c read (LQ-11), after the
+    # filesystem checks, in the text's order (the lead's R-198).
+    if evidence.get("worktree_config") is True:
+        if slot_set(run):
+            return "interrupted"
+        holds, error = effective_work_tree(target.row.raw_path, run, strict=True)
+        if read_cut(error):
+            return "deadline-exceeded"
+        if holds is None:
+            return "state-changed"  # a probe that decided nothing (R-171)
+        if not holds:
+            return "identity-changed"  # a decided different work tree
 
     if slot_set(run):
         return "interrupted"
