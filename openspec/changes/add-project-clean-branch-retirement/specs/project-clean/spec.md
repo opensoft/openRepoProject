@@ -1438,6 +1438,13 @@ N; branches kept: `; and then the residual-window line.
   `not-attempted` with `target-not-removed` when the target's own is `retired`
   with reason null and with `branch-retention-stop` otherwise, and the exit
   status is 143
+- **AND** when SIGINT instead arrives after a target's rescan and before that
+  target's re-read starts, no read or child of its stage runs, the branch is
+  `retained` with `interrupted`, the result prints `Kept <branch>
+  (interrupted); <branch>'s reflog was proven merged into <merge target> only
+  at this run's plan; inspect git -C <root> reflog show refs/heads/<branch>
+  before retrying: project clean <root> --apply --action delete-branch
+  --branch <branch>`, since no re-proof ran, and the exit status is 130
 
 #### Scenario: Exit 0 without retirement
 
@@ -1485,6 +1492,10 @@ N; branches kept: `; and then the residual-window line.
   `branch_retirement` is `retained` with `removal-ceiling`, no re-read or
   branch child runs, the branch remains, later targets are `not-attempted`,
   and the exit status is 1
+- **AND** the result prints `Kept <branch> (removal-ceiling); <branch>'s reflog
+  was proven merged into <merge target> only at this run's plan; inspect git -C
+  <root> reflog show refs/heads/<branch> before retrying: project clean <root>
+  --apply --action delete-branch --branch <branch>`, since no stage ran
 
 #### Scenario: A removal that does not end removed under the flag
 
