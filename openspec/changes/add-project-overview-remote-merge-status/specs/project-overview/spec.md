@@ -419,9 +419,10 @@ keeps its configuration and hold no credential value, SHALL be read only to
 test whether any is set to a non-empty value whose first byte is not `/`, an
 empty or unset one being no such value; when `GH_CONFIG_DIR` is one, or
 `XDG_CONFIG_HOME` or `HOME` is one in a run that neither `Repository inspection
-requires Git 2.36 and shares one evidence model` nor `Overview exits by
-completeness and severity` refuses before any child starts, the lookup of `gh`
-SHALL count as failing, whether or not a `gh` lies on `PATH`, since from the
+requires Git 2.36 and shares one evidence model` (by barring every Git child and
+inspecting no repository) nor `Overview exits by completeness and severity` (by
+refusing the run) stops it before any child starts, the lookup of `gh` SHALL
+count as failing, whether or not a `gh` lies on `PATH`, since from the
 filesystem root such a value may name a configuration other than the caller's.
 At most 64 requests SHALL be sent per invocation; a key past the 64th SHALL NOT
 be sent, and its rows SHALL be `unknown` with reason `request-cap` unless the
@@ -486,7 +487,7 @@ SHALL have a positive integer `number`, a `state` of `OPEN`, `CLOSED` or
 `https://github.com/<nameWithOwner>/pull/<number>`; one that fails any of these
 SHALL make its whole key `api-error`, never a partial answer. When the lookup
 of `gh` finds none, fails (as it does when `GH_CONFIG_DIR`, or `XDG_CONFIG_HOME`
-or `HOME` in a run not refused before any child starts, is set to a non-empty
+or `HOME` in a run not stopped before any child starts, is set to a non-empty
 value whose first byte is not `/`, as the Requests paragraph states), or
 reaches its 5 s limit, as on an unreachable
 `PATH` directory, every queried row that has a key, whether or not its key is
