@@ -745,6 +745,24 @@ Lane: openRepoProject-4
   `clarify-questions.md` is unchanged. No checklist result changes, and the
   totals below were recounted by script. Re-validation: 16 of 16 items pass,
   with the checks of iteration 2 re-run by script on the edited spec.
+- 2026-10-22, a twenty-first pass: the lane openRepoProject-4 lead's re-read of
+  the units folded ahead of A1 against A1's ratified text at `e4a30fc`, as A1's
+  `proposal.md:1509-1510` asks. A1's relative-config-path refusal (LQ-15) had
+  reached FR-043 but not the two rules A1 changes for it: FR-039's exit-2 code
+  list now names `relative-config-path` (A1's spec:752-757), and FR-042's
+  exit-2 clause names a relative configuration path (A1's spec:860-866), each
+  landing with PR #19's ratification of LQ-15's commits, so that SC-011 reads
+  true. With A1 there are 64 delta scenarios (62 and 2): SC-012 says so and
+  names its key; US10 gains scenario 5 and lists "A relative configuration
+  path"; and the Appendix gains row 64, A1's, mapped to FR-042, FR-043, US10 s5
+  and EC-036, its key and coverage saying so. FR-043 records the sites. CHK022
+  of `api.md` moves from pass to fixed in the spec, having been marked pass
+  while FR-039 and FR-042 lacked the code, and CHK002 and CHK015 here were
+  re-read; the totals below were recounted by script. Traceability is now
+  checked against A1's ratified deltas at `e4a30fc` (64 of 64), as CHK002
+  records. No pin moves, A1 stays cited at `e4a30fc`, and
+  `clarify-questions.md` is unchanged. Re-validation: 16 of 16 items pass, with
+  the checks of iteration 2 re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -757,7 +775,12 @@ Lane: openRepoProject-4
 - [x] CHK001 Does every ADDED and MODIFIED requirement of change 2's deltas map to at least one functional requirement? [Completeness, Traceability, Spec Appendix Requirements]
   - Result: pass. 13 of 13, by script against the delta headers.
 - [x] CHK002 Does every delta scenario map to at least one functional requirement and exactly one story scenario? [Completeness, Traceability, Spec Appendix Scenarios]
-  - Result: pass. 63 of 63, by script.
+  - Result: pass. 64 of 64, by script against amendment A1's ratified deltas at
+    `e4a30fc`, the traceability basis since A1's ratification, A1's "A relative
+    configuration path" (its `specs/project-overview/spec.md:908-912`) mapped
+    as row 64 (US10 s5); against change 2's deltas at `961c405`, which the
+    branch still holds, the script counts 63 of 63 and takes row 64 as an extra
+    (the lane openRepoProject-4 lead's re-read against A1's ratified text).
 - [x] CHK003 Does each of FR-001 to FR-046 realize at least one row of the traceability tables, with FR-047 to FR-049 traced to the proposal's Impact and design D13? [Traceability, Spec Appendix Coverage]
   - Result: pass, by script over the tables' FR ranges.
 - [x] CHK004 Are requirements present for every scenario class the feature has: primary (a healthy estate), alternate (layouts, `--attention`, `--strict`), exception (one row's failure, a failure outside the boundary), recovery (remedies, repair, re-runs) and non-functional (bounds, read-only, determinism)? [Coverage, Spec US1 to US11, FR-011 to FR-022, FR-040]
@@ -792,7 +815,9 @@ Lane: openRepoProject-4
 - [x] CHK015 Are the exit rules consistent across FR-029, FR-042, FR-043, FR-044 and the stories? [Consistency, Spec FR-042]
   - Result: pass; FR-043's pointer also names FR-042's exit-2 causes
     (POD:765-766), for which amendment A1 at `e4a30fc` proposes
-    `relative-config-path` with exit 2, ratified.
+    `relative-config-path` with exit 2, ratified. Since the lane
+    openRepoProject-4 lead's re-read against A1's ratified text, FR-042 names
+    that cause itself, and FR-039 its code.
 
 ### Acceptance Criteria Quality
 
@@ -848,13 +873,16 @@ CHK025 after the fifth. 25 items: 24 pass, 1 fixed in the spec, 0 open, 0 plan
 notes, 0 new questions. An open item waits on the question or residual its
 result names; a plan note is for the plan, not the spec; a new question is
 asked in `clarify-questions.md`. The counts are for the cross-cutting section
-above; the 16 built-in items before it carry no ids and are not counted.
+above; the 16 built-in items before it carry no ids and are not counted. CHK002
+and CHK015 were re-read on 2026-10-22 after the lane openRepoProject-4 lead's
+re-read against A1's ratified text, their categories unchanged.
 
 Plan notes: none.
 
-All 17 checklists: 414 items: 373 pass, 25 fixed in the spec, 0 open, 16 plan
+All 17 checklists: 414 items: 372 pass, 26 fixed in the spec, 0 open, 16 plan
 notes (PN-1 to PN-18 but PN-4 and PN-11, withdrawn on 2026-10-21; PN-2 narrowed
 to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
-passes of that day, and after the thirteenth to twentieth passes on 2026-10-22.
+passes of that day, and after the thirteenth to twenty-first passes on
+2026-10-22.

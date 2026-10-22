@@ -1628,10 +1628,21 @@ large output.
    collected, **When** SIGINT is sent, **Then** every in-flight child is
    terminated and reaped, no result document is printed, `Cancelled.` goes
    to standard error, and the exit status is 130, not 1.
+5. **Given** `HOME` set to the relative `h`, or `XDG_CONFIG_HOME` to the
+   relative `cfg` beside an absolute `HOME`, **When** the overview runs,
+   **Then** it exits 2 with code `relative-config-path` and a message naming
+   that variable, never its value, before listing any root or starting any Git
+   child, `git --version` included, and under `--json` it prints only
+   `{"error": "<message>", "code": "relative-config-path"}`; the same holds for
+   a relative `HOME` beside an absolute `XDG_CONFIG_HOME` and an absolute
+   `GIT_CONFIG_GLOBAL`, although Git would then read no configuration file
+   under `HOME`, since the test does not follow Git's order of precedence
+   (FR-043; LQ-15, pending #19's ratification; A1's
+   `specs/project-overview/spec.md:908-912` at `e4a30fc`, ratified).
 
-**Delta scenarios**: "Local and read-only"; "Git too old"; "Git
-unavailable"; "SIGTERM or SIGHUP during collection"; "SIGINT during
-collection".
+**Delta scenarios**: "Local and read-only"; "Git too old"; "Git unavailable";
+"A relative configuration path" (A1's, FR-043); "SIGTERM or SIGHUP during
+collection"; "SIGINT during collection".
 
 ---
 
@@ -2783,34 +2794,36 @@ and [P] are change 1's requirements as the header names them.
   (EC-034; Clarifications, C-62).
 - **FR-039**: Under `--json`, an exit status 2 other than an argument error or
   a failed write to standard output (below) MUST print only `{"error":
-  "<message>", "code": "<code>"}`, the code being
-  `git-too-old` or `git-unavailable` for a version refusal, and otherwise
-  that of an exception raised outside the per-candidate boundary, mapped by
-  its kind: a refusal gives `refused`, an operating-system error `os-error`,
-  and any other exception `internal-error` with a message naming the
-  exception class, each with exit status 2 and no traceback. Without
+  "<message>", "code": "<code>"}`, the code being `git-too-old` or
+  `git-unavailable` for a version refusal, `relative-config-path` for FR-043's
+  refusal of a relative configuration path (A1's
+  `specs/project-overview/spec.md:752-757` at `e4a30fc`, landing with PR #19's
+  ratification of LQ-15's commits, as FR-043 and Dependencies state), and
+  otherwise that of an exception raised outside the per-candidate boundary,
+  mapped by its kind: a refusal gives `refused`, an operating-system error
+  `os-error`, and any other exception `internal-error` with a message naming
+  the exception class, each with exit status 2 and no traceback. Without
   `--json`, a refusal or an operating-system error MUST keep the baseline
   report, `REFUSED: <message>` on standard error (feature 002,
   `contracts/project-new.md:121`, "Streams"), and an exception of any other
   kind MUST also exit 2, never with the interpreter's default 1. An argument
   error MUST print the command-line parser's usage message on standard error
-  and no JSON (POD:675-679, :705-707; DI:1083-1090). POD:705-707 says only
-  "an exception" and gives `internal-error`; this feature's reading, which
-  narrows that scenario's WHEN, is an exception of the kind the collector
-  table maps to `internal-error`, the other two kinds having the outputs
-  above, and the scenario's test keeps its name. The whole document or report
-  MUST be rendered before its first byte is written, as UTF-8 whatever the
-  locale, the JSON document with ASCII escapes as feature 004 writes its own
-  (its lead ruling R-38), every interpolated string already escaped by [P]'s
-  rule. A failed write to standard output MUST end the run with exit status 2,
-  no traceback and no retry, every child being already reaped or abandoned:
-  nothing more goes to standard output, and one line goes to standard error on
-  a best-effort basis. Besides an argument error, it is the one exit 2 under
-  `--json` that prints no error object, and so no code; a recorded signal
-  decides the status, also over that exit 2 (FR-044). Every other exception
-  outside the collector ends as this requirement maps it (POD:675-679 and the
-  packet's DI:1086-1089, from which C-66 carves the failed write out;
-  Clarifications, C-66).
+  and no JSON (POD:675-679, :705-707; DI:1083-1090). POD:705-707 says only "an
+  exception" and gives `internal-error`; this feature's reading, which narrows
+  that scenario's WHEN, is an exception of the kind the collector table maps to
+  `internal-error`, the other two kinds having the outputs above, and the
+  scenario's test keeps its name. The whole document or report MUST be rendered
+  before its first byte is written, as UTF-8 whatever the locale, the JSON
+  document with ASCII escapes as feature 004 writes its own (its lead ruling
+  R-38), every interpolated string already escaped by [P]'s rule. A failed
+  write to standard output MUST end the run with exit status 2, no traceback
+  and no retry, every child being already reaped or abandoned: nothing more
+  goes to standard output, and one line goes to standard error on a best-effort
+  basis. Besides an argument error, it is the one exit 2 under `--json` that
+  prints no error object, and so no code; a recorded signal decides the status,
+  also over that exit 2 (FR-044). Every other exception outside the collector
+  ends as this requirement maps it (POD:675-679 and the packet's DI:1086-1089,
+  from which C-66 carves the failed write out; Clarifications, C-66).
 
 **Local and read-only**
 
@@ -2855,13 +2868,16 @@ and [P] are change 1's requirements as the header names them.
 
 **Exits and signals**
 
-- **FR-042**: The overview MUST exit 0 when `completeness` is `complete` and
-  no finding has severity `error`; 1 when the result is incomplete, a
-  finding has severity `error`, or `--strict` is given and a finding has
-  severity `warning`; 2 for an invalid invocation, an exception raised
-  outside the per-candidate boundary, or a Git refusal; and 130, 143 or 129
-  on SIGINT, SIGTERM or SIGHUP. On 0 or 1 the full result MUST be printed,
-  and a root problem MUST never cause status 2 (POD:762-768).
+- **FR-042**: The overview MUST exit 0 when `completeness` is `complete` and no
+  finding has severity `error`; 1 when the result is incomplete, a finding has
+  severity `error`, or `--strict` is given and a finding has severity
+  `warning`; 2 for an invalid invocation, an exception raised outside the
+  per-candidate boundary, a Git refusal or a relative configuration path
+  (FR-043); and 130, 143 or 129 on SIGINT, SIGTERM or SIGHUP. On 0 or 1 the
+  full result MUST be printed, and a root problem MUST never cause status 2
+  (POD:762-768, as A1's `specs/project-overview/spec.md:860-866` at `e4a30fc`
+  amends it, landing with PR #19's ratification of LQ-15's commits, as FR-043
+  and Dependencies state).
 - **FR-043**: The overview MUST run [E]'s version check once per invocation,
   after the deadline is set and before any root is listed, and MUST refuse a
   Git older than 2.36 with `git-too-old`, and a missing `git`, a failed or
@@ -2895,7 +2911,10 @@ and [P] are change 1's requirements as the header names them.
   codes (POD:677-678; its `specs/project-overview/spec.md:753-757`) and in
   requirement 11's exit rule (POD:765-768; FR-042), with a paragraph after it
   and the scenario "A relative configuration path" (its :860-876 and :908-912),
-  ratified by Brett Heap in PR #34 (Dependencies). The code departs from the
+  ratified by Brett Heap in PR #34 (Dependencies). FR-039 and FR-042 restate
+  those two sites, and US10 s5, SC-012 and the Appendix carry the scenario (the
+  lane openRepoProject-4 lead's re-read against A1's ratified text, as A1's
+  `proposal.md:1509-1510` at `e4a30fc` asks). The code departs from the
   packet's closed list of exit-2 codes (DI:1086-1089); should he strike it, the
   fallback is `refused` with exit 2, inside change 2's lists, which departs
   from nothing (Dependencies).
@@ -3214,11 +3233,15 @@ and [P] are change 1's requirements as the header names them.
   still unreaped 2 s after SIGKILL, no result document was started after the
   signal was read, and one that was being written was stopped (EC-035;
   Clarifications, C-69).
-- **SC-012**: Each of the 63 delta scenarios has at least one automated test
-  named after it that runs, a skipped test not counting; every test on
-  `main` when the feature is implemented keeps passing unchanged; the CI
-  jobs stay green; the requirements file gains no dependency; and no
-  subcommand but `overview` changes its output, flags or exits.
+- **SC-012**: Each of the 64 delta scenarios, 62 in
+  `specs/project-overview/spec.md` and 2 in
+  `specs/project-review-safety/spec.md` as amendment A1 at `e4a30fc` gives
+  change 2's deltas (its "A relative configuration path" landing with PR #19's
+  ratification of LQ-15's commits; FR-043), has at least one automated test
+  named after it that runs, a skipped test not counting; every test on `main`
+  when the feature is implemented keeps passing unchanged; the CI jobs stay
+  green; the requirements file gains no dependency; and no subcommand but
+  `overview` changes its output, flags or exits.
 - **SC-013**: The README's overview section covers 100% of FR-048's items,
   confirmed by a review checklist with one line per item, so that a reader
   of that section alone can say how to scan the default roots, check one
@@ -4096,12 +4119,15 @@ extension needing its own proposal (OQ-27):
 ## Appendix: Traceability
 
 Every requirement and scenario of change 2's spec deltas
-(`specs/project-overview/spec.md` and `specs/project-review-safety/spec.md`
-at `961c405`), by header, mapped to the functional requirements, user
+(`specs/project-overview/spec.md` and `specs/project-review-safety/spec.md` at
+`961c405`), and the one scenario that amendment A1 at `e4a30fc` adds to them,
+"A relative configuration path" (its `specs/project-overview/spec.md:908-912`),
+whose row, 64, is A1's and lands with PR #19's ratification of LQ-15's commits
+(FR-043; Dependencies), by header, mapped to the functional requirements, user
 stories and edge cases of this spec that realize it. Requirement numbers are
 the proposal's (1 to 12); PRS is the MODIFIED `project-review-safety`
-requirement. A story scenario is written `USn sk`. The test names come with
-the tasks, in the feature's `traceability.md`, as feature 003 records them.
+requirement. A story scenario is written `USn sk`. The test names come with the
+tasks, in the feature's `traceability.md`, as feature 003 records them.
 
 ### Requirements
 
@@ -4188,17 +4214,19 @@ the tasks, in the feature's `traceability.md`, as feature 003 records them.
 | 61 | 12 | The scanning notice | FR-046 | US1 s7 | none |
 | 62 | PRS | Manifest is not valid UTF-8 text | FR-023 | US7 s6 | none |
 | 63 | PRS | Overview keeps a manifest with invalid text in its row | FR-021, FR-023 | US7 s5 | none |
+| 64 | 11 | A relative configuration path | FR-042, FR-043 | US10 s5 | EC-036 |
 
 ### Coverage
 
 Delta requirements mapped: 13 of 13 (12 ADDED in `project-overview`, 1 MODIFIED
-in `project-review-safety`). Delta scenarios mapped: 63 of 63 (61 and 2), each
-to at least one FR and exactly one story scenario; "main target" and "master
-target" share US3 s3, the two candidate-cap scenarios share US6 s1, and "Git
-too old" and "Git unavailable" share US10 s2. Functional requirements traced:
-FR-001 to FR-046 each realize at least one row above; FR-047 (scope), FR-048
-(README) and FR-049 (tests) trace to the proposal's Impact and design D13, not
-to one scenario; FR-050 (the Git 2.36 floor job) traces to Brett Heap's answer
-C-57, which amendment A1 carries in that Impact; and FR-051 (`AGENTS.md`)
-traces to his answer C-58, a departure from it. Story scenarios with no delta
-scenario of their own: US1 s8 (POD:18-19; C-1) and US2 s4 (POD:462-468).
+in `project-review-safety`). Delta scenarios mapped: 64 of 64 (62 and 2, row 64
+being A1's), each to at least one FR and exactly one story scenario; "main
+target" and "master target" share US3 s3, the two candidate-cap scenarios share
+US6 s1, and "Git too old" and "Git unavailable" share US10 s2. Functional
+requirements traced: FR-001 to FR-046 each realize at least one row above;
+FR-047 (scope), FR-048 (README) and FR-049 (tests) trace to the proposal's
+Impact and design D13, not to one scenario; FR-050 (the Git 2.36 floor job)
+traces to Brett Heap's answer C-57, which amendment A1 carries in that Impact;
+and FR-051 (`AGENTS.md`) traces to his answer C-58, a departure from it. Story
+scenarios with no delta scenario of their own: US1 s8 (POD:18-19; C-1) and
+US2 s4 (POD:462-468).

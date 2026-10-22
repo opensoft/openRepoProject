@@ -75,7 +75,10 @@ Lane: openRepoProject-4
 - [x] CHK021 Is the schema-evolution rule (additive within version 1, a rename, removal or change of type or meaning incrementing `schema_version`) consistent with the closed enums? [Consistency, Spec FR-037]
   - Result: pass.
 - [x] CHK022 Are the exit statuses consistent between FR-042, FR-039 and the stories, so that a script can rely on them? [Consistency, Spec FR-042, US2, US10]
-  - Result: pass.
+  - Result: fixed in spec.md, FR-039 and FR-042 (the lane openRepoProject-4
+    lead's re-read against A1's ratified text): the item was marked pass while
+    FR-039 and FR-042 lacked A1's `relative-config-path`; they and US10 s5 now
+    agree on it with exit 2, as FR-043 has it.
 
 ## Acceptance Criteria Quality
 
@@ -115,9 +118,11 @@ Lane: openRepoProject-4
 
 Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK006 re-evaluated on
 2026-10-20 after lane openRepoProject-3's packet-fidelity read, and CHK006,
-CHK007 and CHK010 on 2026-10-21 after Brett Heap's answers (C-55 to C-71). 31
-items: 23 pass, 6 fixed in the spec, 0 open, 2 plan notes, 0 new questions. An
-open item waits on the question or residual its result names; a plan note is
-for the plan, not the spec; a new question is asked in `clarify-questions.md`.
+CHK007 and CHK010 on 2026-10-21 after Brett Heap's answers (C-55 to C-71), and
+CHK022 on 2026-10-22 after the lane openRepoProject-4 lead's re-read against
+A1's ratified text, which moves it from pass to fixed in the spec. 31 items: 22
+pass, 7 fixed in the spec, 0 open, 2 plan notes, 0 new questions. An open item
+waits on the question or residual its result names; a plan note is for the
+plan, not the spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: PN-6 (CHK010, narrowed by C-66), PN-7 (CHK011), PN-8 (CHK020).
