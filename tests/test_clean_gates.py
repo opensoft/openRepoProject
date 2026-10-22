@@ -1364,6 +1364,57 @@ class GatesTests(clean_support.CleanCase):
             words = reached[str(trees[name])]
             self.assertEqual(words[3], "--not", "no candidate before the negatives")
 
+    # Gate 11's place (lane 3's W32 M2): after the index gates and only for
+    # the rows the cap takes. In process, every listing of an admin directory
+    # recorded.
+
+    def listings(self, root, *words):
+        """main(clean ROOT WORDS...) in process with every os.listdir through
+        fs_call recorded: (document, the admin directory names listed)."""
+        real_fs_call, listed = project.fs_call, []
+
+        def fs_call(fn, *args, **options):
+            if fn is os.listdir:
+                listed.append(os.path.basename(args[0]).decode())
+            return real_fs_call(fn, *args, **options)
+
+        status, out, err = self.main_in_process("clean", root, *words, fs_call=fs_call)
+        self.assertEqual((status, err), (0, ""), out)
+        return json.loads(out), listed
+
+    def test_clean_operation_in_progress_comes_after_the_index_gates(self):
+        # A marker beside a `modules` entry is contains-submodule (gate 9), and
+        # beside an assume-unchanged flag hidden-local-state (gate 10): the
+        # earlier gate's reason wins, and the listing never runs for either.
+        root = self.repo()
+        self.bare_remote()
+        modules = self.merged_worktree("001-modules", path=self.base / "modules")
+        flagged = self.merged_worktree("002-flagged", path=self.base / "flagged")
+        plain = self.merged_worktree("003-plain", path=self.base / "plain")
+        for tree in (modules, flagged):
+            (self.admin_dir(tree) / "MERGE_HEAD").write_text(self.git(root, "rev-parse", "HEAD"))
+        (self.admin_dir(modules) / "modules").mkdir()
+        self.git(flagged, "update-index", "--assume-unchanged", "work-002-flagged")
+        document, listed = self.listings(root, "--all-safe", "--json")
+        self.assertEqual(by_path(document), {str(root): "main-worktree", str(modules): "contains-submodule",
+                                             str(flagged): "hidden-local-state"})
+        self.assertEqual([entry["path"] for entry in document["selected"]], [str(plain)])
+        self.assertEqual(listed, [plain.name], "the listing runs only where the index gates pass")
+
+    def test_clean_operation_in_progress_never_reaches_a_row_past_the_cap(self):
+        # Seventeen rows pass gates 1 to 7; the seventeenth, which holds a
+        # marker, is deferred as deferred-target-cap and left uninspected:
+        # its admin directory is never listed.
+        root = self.repo()
+        self.bare_remote()
+        trees = [self.merged_worktree(f"{number:03d}-row", path=self.base / f"{number:03d}-row")
+                 for number in range(1, 18)]
+        (self.admin_dir(trees[16]) / "MERGE_HEAD").write_text(self.git(root, "rev-parse", "HEAD"))
+        document, listed = self.listings(root, "--all-safe", "--json")
+        self.assertEqual(by_path(document), {str(root): "main-worktree", str(trees[16]): "deferred-target-cap"})
+        self.assertEqual([entry["path"] for entry in document["selected"]], [str(tree) for tree in trees[:16]])
+        self.assertEqual(listed, [tree.name for tree in trees[:16]], "no listing past the cap")
+
 
 if __name__ == "__main__":
     unittest.main()
