@@ -32,7 +32,10 @@ Lane: openRepoProject-4
 - [x] CHK009 Is `suggestion_gate_rows` defined? [Completeness, Spec FR-035]
   - Result: pass, the row count being C-46's.
 - [x] CHK010 Are the fixed remedies cited, with N and M taken from the shared constants at run time? [Completeness, Spec FR-035]
-  - Result: pass.
+  - Result: pass. FR-035 also records that the remedies of `unstarted-branch`
+    and `reflog-unavailable` follow amendment A1 at `e4a30fc`, their
+    re-alignment to PR #19's ratified wording after its round (g) (F-7) being
+    held for Brett Heap's review with #19's ratification.
 - [x] CHK011 Is the path the `--root <repository parent>` remedy names defined? [Completeness, Spec FR-035, Clarifications C-11]
   - Result: pass.
 - [x] CHK012 Is it specified which gates the overview leaves to the batch (`contains-submodule`, `hidden-local-state`)? [Completeness, Spec FR-032]
@@ -127,11 +130,11 @@ LQ-14, theirs too, and CHK012 again after A1's revision 3 at `367223a`, and
 CHK012 and CHK020 after PR #19's R-124 and R-126, and again after A1's revision
 5 at `3ee860c`, with R-124's outcome rule in `2b86a5f`'s words, and CHK012
 after its revisions 6, 7, 8, 9 and 10 at `d644517`, `0394be4`, `177eadf`,
-`4261ff8` and `c193f7b`, after #19's rounds (d), (e) and (f) at `9267303`,
-`f0bf538` and `662be89`, after lane openRepoProject-3's W39 LOW-4, and after
-A1's ratification at `e4a30fc`. 29 items: 28 pass, 1 fixed in the spec, 0 open,
-0 plan notes, 0 new questions. An open item waits on the question or residual
-its result names; a plan note is for the plan, not the spec; a new question is
-asked in `clarify-questions.md`.
+`4261ff8` and `c193f7b`, after #19's rounds (d) to (g) at `9267303`, `f0bf538`,
+`662be89` and `4f1c0e0`, after lane openRepoProject-3's W39 LOW-4, and after
+A1's ratification at `e4a30fc`, and CHK010 after #19's round (g). 29 items: 28
+pass, 1 fixed in the spec, 0 open, 0 plan notes, 0 new questions. An open item
+waits on the question or residual its result names; a plan note is for the
+plan, not the spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: none.

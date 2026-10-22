@@ -804,6 +804,34 @@ Lane: openRepoProject-4
   No pin moves, A1 stays cited at `e4a30fc`, and `clarify-questions.md` is
   unchanged. Re-validation: 16 of 16 items pass, with the checks of iteration 2
   re-run by script on the edited spec.
+- 2026-10-22, a twenty-fourth pass: #24 is re-checked at its draft PR #27's
+  head `8d34525`, after round B15, #19's round (g) at `4f1c0e0` is recorded,
+  and the LQ-15 item states #25's C-44 in its round C18 form, by the lead's
+  commit 3v decisions. #24: its pin `fe5b245` kept, by lane openRepoProject-5's
+  B15 line map and this spec's own `cmp` against `69cb7a1` and the pin, every
+  pinned range is byte-identical at new lines (proposal :682-685, :706-709,
+  :762-773 and :791-792; design :887-890, :966-969 and :1559-1565; task 3.2 at
+  :185-200), and its `project-overview` block is the same blob. #19: round (g)
+  edits its `project-clean` spec at four hunks that no cited line touches, so
+  that every cite keeps its text, the gate block moving down 7 and the
+  scenarios, the caps and the re-run sentence down 8; F-2, F-5 and F-3 edit the
+  spec, and F-9, F-8 and F-7 D18's strings, none of them reaching the overview
+  through [E] or [G], and the spec quotes neither F-3's nor F-9's text; F-7's
+  two remedies, which change 2 mirrors at A1's six sites, are held for Brett
+  Heap with #19's ratification, FR-035 recording it and the spec's texts
+  following A1; R-252's shorter clause, in round (g2) at `3dcd2d8`, is named
+  and not re-checked. Part C: the LQ-15 item pairs each text with its own verb,
+  change 1's evidence model starting no Git child and change 2's exit rule
+  refusing with exit 2, #29's `gh-unavailable` holding only where neither stops
+  the run first (#29's `spec.md:417-425`, :488-494 and :623 at `e1a9f84`; lane
+  openRepoProject-3's W61 pending in lane openRepoProject-5), and the #25
+  bullet's C18 sentence says the same and names #25's C-44. CHK010 and CHK012
+  of `suggestions-gates.md` and CHK020 of `integration.md` were re-read, no
+  category changing, and the totals below were recounted by script.
+  Traceability is checked against A1's ratified deltas at `e4a30fc` (64 of 64).
+  No pin moves, A1 stays cited at `e4a30fc`, and `clarify-questions.md` is
+  unchanged. Re-validation: 16 of 16 items pass, with the checks of iteration 2
+  re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -925,5 +953,5 @@ notes (PN-1 to PN-18 but PN-4 and PN-11, withdrawn on 2026-10-21; PN-2 narrowed
 to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
-passes of that day, and after the thirteenth to twenty-third passes on
+passes of that day, and after the thirteenth to twenty-fourth passes on
 2026-10-22.
