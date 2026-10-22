@@ -112,8 +112,9 @@ same ranges are byte-identical, three of them at new lines; and at `86324ff`,
 after its round C15, and at `2eeaec4`, which commits C-51's edits of its tasks
 2.3 and 2.4, they are byte-identical as at `3965dfb`, except those two tasks,
 `tasks.md:22-23`, which gain C-51's second diff; and at `6b5bf8f`, after its
-round C16, and at `2ab3743`, after its round C17, they are byte-identical as at
-`2eeaec4` (Dependencies).
+round C16, at `2ab3743`, after its round C17, and at `e1a9f84`, after its round
+C18, which edits its overview spec only at lines that this spec does not cite,
+they are byte-identical as at `2eeaec4` (Dependencies).
 #24's change (`add-project-clean-cache-disposal`) stays pinned at `fe5b245`: at
 `e07cc42`, its draft PR #27's head after its round B9, every pinned range is
 byte-identical at new lines, which the Dependencies list for a later re-pin; at
@@ -1828,9 +1829,10 @@ path"; "Non-UTF-8 common directory".
   with D5's flags, switches and query, exited 1 on the refused connection,
   started no `git`, created no trace file and wrote no file, and the path of a
   200 answer is not verified. Re-checked at `86324ff`, #29's head after its
-  round C15, at `2eeaec4`, at `6b5bf8f`, its head after round C16, and at
-  `2ab3743`, its head after round C17: the residual reads the same, at
-  `design.md:565-592` there, apart from D5 now locating Q9 B at PR #19's
+  round C15, at `2eeaec4`, at `6b5bf8f`, its head after round C16, at
+  `2ab3743`, its head after round C17, and at `e1a9f84`, its head after round
+  C18: the residual reads the same, at `design.md:565-592` up to `2ab3743` and
+  at :574-601 at `e1a9f84`, apart from D5 now locating Q9 B at PR #19's
   `423a532` (C-50).
 - **EC-023**: Each field is as of its own probe. A commit, a new worktree or
   a recreated repository during the scan can mix moments within one row, in
@@ -3605,7 +3607,35 @@ and [P] are change 1's requirements as the header names them.
     main `15504f1` for `e9d6711` and the date (`proposal.md:423-424`); and its
     task 1.3 still records that C-51's edits of 2.3 and 2.4 are made on lane
     openRepoProject-4's YES, 2.3's follow-on for amendment A1 still waiting,
-    and now also records round C16's application of W22 (C-52).
+    and now also records round C16's application of W22 (C-52). Re-checked
+    again at `e1a9f84`, its head after round C18 (`2ab3743..e1a9f84`: `51e854b`
+    in its spec, `78d6c84` and `b0d7c2a` in its design, and `e1a9f84` in its
+    proposal and tasks), the first of its rounds since C14 to edit a spec:
+    `51e854b` applies C-58 to its ADDED requirement alone, at its overview
+    spec's :420-424, :488-491 and :623, text that this spec does not cite, so
+    that a relative `XDG_CONFIG_HOME` or `HOME` fails its `gh` lookup only in a
+    run that neither [E] as PR #19 amends it (LQ-15) nor "Overview exits by
+    completeness and severity" as A1 words it (FR-043) refuses before any child
+    starts, while a relative `GH_CONFIG_DIR` keeps C-44's rule whole, no `gh`
+    child starting in any of the three cases, as the LQ-15 item below reads
+    C-44; no scenario is added or removed (36 and 10), and its
+    `project-command` spec is the blob of `11a0ba2`. Every range that this spec
+    and `clarify-questions.md` cite is byte-identical to `2ab3743`'s, compared
+    by `cmp`: its overview spec's lines 1 to 419, which hold every line of it
+    that they cite, the pin's lines 1 to 155 and the root-path lines at
+    `:209-212`, `:232-233` and `:244-246` among them, and its scenario "Expiry
+    cancels queued and in-flight requests", now at :644-650; its `proposal.md`
+    :334-345, :367-370 and :430-438 (byte-identical to the pin's as well) and
+    :423-424, its "Dependencies and Sequencing", its Open Questions and its
+    `tasks.md` :20-24; and its design D7, now at :954-989, and D5's residual,
+    which EC-022 cites, now at :574-601, D5 gaining after it C-58's paragraph
+    on the two texts that refuse a relative `HOME` or `XDG_CONFIG_HOME` before
+    any child starts (:646-670). Its task 1.3 still records that C-51's edits
+    of 2.3 and 2.4 are made on lane openRepoProject-4's YES, 2.3's follow-on
+    for amendment A1 still waiting, and now records rounds C17 and C18 (C-56,
+    C-57, C-58 and C-61), reader RH's L4, the wording of task 2.4 and A1's note
+    that task 2.3's condition is met being drafted and held for lane
+    openRepoProject-4's YES and written nowhere in that change.
   - `add-project-clean-branch-retirement` (issue #23, draft PR #26) leaves
     `project-overview` untouched. It MODIFIES [E], [G]'s two requirements
     and other `project-clean` requirements for `clean --retire-branches`
@@ -3887,11 +3917,46 @@ and [P] are change 1's requirements as the header names them.
   own, at :270-290; and the Risk that EC-022 cites keeps its text, at
   :1592-1597. LQ-20's option (c) now also moves `project clean`'s ratified 60 s
   invocation deadline (its `proposal.md:1277-1324` there), which this spec does
-  not state, and its step (d) keeps its text, at :1317-1322. So PR #34 does not
-  merge before #19's ratification of those commits; should Brett Heap want #34
-  sooner, the four items move to a later amendment of change 2, and A1 lands
-  without them (its :1281-1284), the parts of this spec that follow them
-  following that amendment instead.
+  not state, and its step (d) keeps its text, at :1317-1322. #19's round (f),
+  `662be89` (Brett Heap's ruling on LQ-20, in his words to lane
+  openRepoProject-2, "LQ-20: go with (i), measure first"; lane
+  openRepoProject-3's W42 read of round (e) and W53 departure ledger; lane
+  openRepoProject-2's R-236 and R-245), follows, and edits no delta: its
+  `specs/` tree is unchanged from `f0bf538` (`git diff --quiet`), so that every
+  line this spec cites from its three specs at `f0bf538` holds at `662be89`,
+  and its round record says that no requirement changes (its
+  `proposal.md:1725-1755`). Its design D7 and D22's Revalidation bullet now
+  carry the clause that the review-safety rule already had at `f0bf538`
+  (:122-126), an administrative directory that the `operation-in-progress`
+  listing finds absent being a registration difference, `identity-changed` (its
+  `design.md:495-497` and :1529-1532; lane openRepoProject-3's W38 L-4 and W42
+  L-2): round (f) brings the design into line with the delta, and no
+  requirement of this spec moves; the Risk that EC-022 cites keeps its text, at
+  :1625-1630. LQ-20 is resolved by measurement (its `proposal.md:1305-1318`,
+  its design D14 at `design.md:956-987` and its task 2.1 at
+  `tasks.md:145-155`): Brett Heap chose its step (i), and on task 2.1's
+  protocol LQ-11's work-tree probe measured 5.8 ms warm, 8.7 ms with the
+  margin, and LQ-13's `rev-list` 106.9 ms warm, 160.3 ms with the margin, so
+  that at 128 rows and 16 targets where `extensions.worktreeConfig` is true all
+  16 removals fit and the caps still stand (its `design.md:1712-1716`); none of
+  options (a) to (d) is taken, each now so marked, and the deltas stand as
+  written (its `proposal.md:1365-1366`). Round (f) therefore takes neither arm
+  of the re-align condition above: #19 does not bound [E]'s plan-time work-tree
+  probe, its :221-227 unchanged and option (b) not taken (:1344-1348), and step
+  (d), lowering the caps, is not taken, its text kept at :1358-1363, its first
+  line now adding "not taken"; both stay untaken pending #19's ratification,
+  and nothing this spec states moves. Its two new departures (its
+  `proposal.md:1087-1109`), that a revalidation read or child that the work
+  deadline cuts counts as no difference and that push refuses a wider set of
+  upstream mappings, each recorded for text its deltas already held, and its
+  push-child exception, which now names the packet lines its process group
+  departs from (:1164-1175), govern `Cleanup revalidates destructive actions`,
+  `Clean can explicitly push safe feature branches` and the push child, none of
+  which the overview runs: none of them changes what reaches the overview
+  through [E] or [G]. So PR #34 does not merge before #19's ratification of
+  those commits; should Brett Heap want #34 sooner, the four items move to a
+  later amendment of change 2, and A1 lands without them (its :1281-1284), the
+  parts of this spec that follow them following that amendment instead.
   - LQ-10, on PR #19 at `ea697ba`, pending its ratification: every status
     probe, the hidden-state probe and the removal pass `-c core.trustctime=true
     -c core.checkStat=default` after `-c core.fsmonitor=false`, four status

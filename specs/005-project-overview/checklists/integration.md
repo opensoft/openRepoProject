@@ -143,11 +143,11 @@ CHK012 and CHK020 again after A1's revision 3 at `367223a`, and CHK020 after PR
 #19's R-124, and CHK012 and CHK020 again after A1's revision 5 at `3ee860c`,
 CHK020 with R-124's outcome rule in `2b86a5f`'s words, and again after its
 revisions 6, 7, 8, 9 and 10 at `d644517`, `0394be4`, `177eadf`, `4261ff8` and
-`c193f7b` and its ratification at `e4a30fc`, CHK020 also after #19's rounds (d)
-and (e) at `9267303` and `f0bf538` and after lane openRepoProject-3's W39
-LOW-4, their categories unchanged. 26 items: 24 pass, 0 fixed in the spec, 0
-open, 2 plan notes, 0 new questions. An open item waits on the question or
-residual its result names; a plan note is for the plan, not the spec; a new
-question is asked in `clarify-questions.md`.
+`c193f7b` and its ratification at `e4a30fc`, CHK020 also after #19's rounds
+(d), (e) and (f) at `9267303`, `f0bf538` and `662be89` and after lane
+openRepoProject-3's W39 LOW-4, their categories unchanged. 26 items: 24 pass, 0
+fixed in the spec, 0 open, 2 plan notes, 0 new questions. An open item waits on
+the question or residual its result names; a plan note is for the plan, not the
+spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: PN-16 (CHK025), PN-18 (CHK026).

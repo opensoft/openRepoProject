@@ -778,6 +778,32 @@ Lane: openRepoProject-4
   A1 stays cited at `e4a30fc`, and `clarify-questions.md` is unchanged.
   Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run by
   script on the edited spec.
+- 2026-10-22, a twenty-third pass: #25 is re-checked at its draft PR #29's head
+  `e1a9f84`, after round C18, and #19's round (f) at `662be89` is recorded, by
+  the lead's commit 3u decisions. #25: its pin `05a424a` kept, every range that
+  the spec and `clarify-questions.md` cite is byte-identical to `2ab3743`'s by
+  `cmp`, its proposal's :334-345, :367-370 and :430-438 and its tasks :20-24
+  among them; round C18 is the first of its rounds since C14 to edit a spec,
+  C-58's `51e854b` rewording the ADDED requirement's `gh` lookup for a relative
+  `XDG_CONFIG_HOME` or `HOME` at :420-424, :488-491 and :623, lines the spec
+  does not cite, with no scenario added or removed (36 and 10); EC-022 and
+  CHK003 of `security.md` add `e1a9f84` for its D5 residual, at
+  `design.md:574-601` there. #19: `git diff --quiet` holds over its `specs/`
+  tree from `f0bf538`, so every spec cite holds; its design D7 and D22 now
+  carry the review-safety rule's L-4 clause (:122-126), round (f) bringing the
+  design into line and no requirement moving; LQ-20 is resolved by measurement,
+  Brett Heap choosing step (i), the work-tree probe at 8.7 ms and the
+  `rev-list` at 160.3 ms with the margin, all 16 removals fitting and the caps
+  standing, so that round (f) takes neither arm of the re-align condition; and
+  its new departures and council decision reach the overview through neither
+  [E] nor [G]. The header paragraph, the #25 bullet, EC-022 and the LQ intro
+  record it; CHK020 of `integration.md` and CHK012 of `suggestions-gates.md`
+  were re-read after round (f), and CHK003 of `security.md` after round C18, no
+  category changing, and the totals below were recounted by script.
+  Traceability is checked against A1's ratified deltas at `e4a30fc` (64 of 64).
+  No pin moves, A1 stays cited at `e4a30fc`, and `clarify-questions.md` is
+  unchanged. Re-validation: 16 of 16 items pass, with the checks of iteration 2
+  re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -899,5 +925,5 @@ notes (PN-1 to PN-18 but PN-4 and PN-11, withdrawn on 2026-10-21; PN-2 narrowed
 to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
-passes of that day, and after the thirteenth to twenty-second passes on
+passes of that day, and after the thirteenth to twenty-third passes on
 2026-10-22.
