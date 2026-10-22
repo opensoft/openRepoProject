@@ -74,6 +74,46 @@ agreed home (report A, P1; see Assumptions). Line numbers are those at
 other statements of features 002 and 003 stay true (such as 003 SC-005 and
 002 FR-013), and neither record is edited.
 
+## Clarifications
+
+### Session 2026-10-22
+
+Brett Heap answered the five questions of `clarify-questions.md` on
+2026-10-22, in his words "all recommended": Q1 B, Q2 A, Q3 A, Q4 B and Q5 A
+(Q5 A as corrected at `f700336`).
+
+- Q: How broad is the test matrix for the head refusal? -> A: Option B
+  (recommended). AC1's six forms for every kind: each kind by `--into`, and
+  the file by each of its three other routes (the positional parent,
+  `PROJECTS_DIR`, the default `~/projects`), in all six forms (`--yes`,
+  `--dry-run`, a terminal without `--yes`, `CI=true` at a terminal, a standard
+  input that is not a terminal, and `alice-wip` at a terminal). About 60 runs
+  before Q3's two kinds. The runs that answer `2` stay at `FILE` and
+  `FILE/sub`.
+- Q: How do the case (b) rows prove that `FILE` stays intact (report A, A1)?
+  -> A: Option A (recommended). A new test takes each case (b) row of the
+  known-obstacle cases through a Triad answer at a terminal and in process, as
+  the two existing tests do, and checks `FILE` and the tree. The two existing
+  tests stay byte for byte.
+- Q: Are the optional kinds, a socket and `/dev/null`, built? -> A: Option A
+  (recommended). Both are included, in the forms Q1 picks for the `--into`
+  kinds. The socket is skipped when binding it raises `OSError` (`design.md`
+  D3 item 1's rule).
+- Q: Which faults does the order test pin against the head refusal? -> A:
+  Option B (recommended). `design.md` D3 item 9 plus two runs with `FILE` as
+  the parent: an invalid `--family`, refused with its own sentence; and
+  `--type test --yes` with `--workbenches` naming a directory that has no
+  `config/bench-config.json`, refused with the head refusal and not "Cannot
+  find workBenches; ...".
+- Q: Where are the change's governance tasks ticked, given FR-016? -> A:
+  Option A (recommended). On this feature's branch, as PR #17 did. Before the
+  first implementation commit, the change's `tasks.md` gets the 1.6 tick with
+  the quote and its link, the 2.1 tick and the Speckit Handoff fields. The 2.2
+  tick follows in the same PR once the first implementation step has run after
+  reading that section, as feature 003 did. 3.1 to 3.3 wait for the archive.
+  FR-016 narrows to the change's proposal, design, clarifications and spec
+  delta, and to its `tasks.md` beyond those entries.
+
 ## User Scenarios & Testing *(mandatory)*
 
 In every scenario below, `FILE` is a regular file with known content in a
@@ -115,10 +155,11 @@ standard output and the unchanged tree.
      and leaves the temporary tree unchanged and `FILE` a regular file with
      its content.
 
-   The parent is a regular file, a symbolic link to one, a FIFO, or the file
-   given as `FILE/`, each given by `--into`. The regular file is also given
-   as the positional parent, by `PROJECTS_DIR`, and as the default
-   `~/projects` with `PROJECTS_DIR` unset.
+   The parent is a regular file, a symbolic link to one, a FIFO, a socket,
+   `/dev/null`, or the file given as `FILE/`, each given by `--into`
+   (Clarifications, Q3). The regular file is also given as the positional
+   parent, by `PROJECTS_DIR`, and as the default `~/projects` with
+   `PROJECTS_DIR` unset.
 2. **Given** a parent that does not exist and whose nearest existing path
    above it is `FILE` (`FILE/sub`, `FILE/a/b`, or a symbolic link to
    `FILE/x`), given by `--into`, **When** the single repository is chosen by
@@ -144,7 +185,10 @@ standard output and the unchanged tree.
    - a generator that does not match (`--type nomatch --yes`);
    - `--workflow` without `setup-openspeckit` on PATH (`--type test
      --workflow --yes`);
-   - any fault found by the workBenches lookup or its generator registry.
+   - any fault found by the workBenches lookup or its generator registry,
+     such as `--workbenches` naming a directory that has no
+     `config/bench-config.json`, refused as the head refusal and not as
+     "Cannot find workBenches; ..." (Clarifications, Q4).
 
 ---
 
@@ -295,7 +339,8 @@ link, the order, the shape-by-flag and the permission cases.
    these faults, **Then** that earlier refusal is made with its own text,
    exit status 2, as before:
    - an invalid name;
-   - a family that is not a single folder name;
+   - a family that is not a single folder name, refused with its own
+     sentence, "Family must be a single folder name." (Clarifications, Q4);
    - `--org`, `--visibility`, `--family` or `--elected-by` without `--shape`
      (such as `--org example --yes`).
 3. **Given** `FILE` or `FILE/sub` as `--into`, **When** the Triad is chosen by
@@ -371,8 +416,10 @@ creates a missing parent, which fails below a file.
 
 - **EC-001**: The reads never open the parent. A FIFO is classed without
   being opened, and the reads create nothing. A socket and `/dev/null` are
-  case (a) too. Tests of them are optional, since a socket path can be too
-  long on macOS (`design.md` D3 item 1).
+  case (a) too. Tests of both are required (Clarifications, Q3): each is a
+  kind of FR-014, and meets every form that the `--into` kinds meet. The
+  socket's runs are skipped where binding the socket raises `OSError`, since
+  a socket path can be too long on macOS (`design.md` D3 item 1).
 - **EC-002**: `FILE/` (with a trailing slash) is case (a), named as the
   resolved `FILE`. A symbolic link to `FILE` is case (a), named by its
   target. A symbolic link to `FILE/x` is case (b), with `FILE` as the path
@@ -396,6 +443,9 @@ creates a missing parent, which fails below a file.
   exit status stays 2. Two family faults come before the head refusal:
   - an invalid `--family` is refused at the family check;
   - a valid `--family` without `--shape` meets the shape-only refusal.
+
+  Both orders, the two family faults before the head refusal and the later
+  faults after it, are pinned by tests (FR-014; Clarifications, Q4).
 - **EC-007**: For an invocation that is asked, `--workflow` without
   `setup-openspeckit` on PATH is refused before the question, and so before
   the head refusal, as today.
@@ -466,8 +516,11 @@ creates a missing parent, which fails below a file.
   - the destination line and the plan, the return of a dry run, the `yes`
     confirmation, and any creation.
 
-  The delta's "generator selection" includes the workBenches lookup, as the
-  proposal's "Reads" and alternative W1 say (report A, A2).
+  The delta's "generator selection" includes the workBenches lookup and its
+  generator registry. The proposal's "One refusal at the head" bullet says
+  so: a not-asked invocation with "a fault found later (workBenches or its
+  registry, the generator, the late `--workflow` check)" gets the parent
+  sentence first (report A, A2).
 - **FR-004**: The step MUST read the parent afresh when it is reached, and
   MUST NOT reuse the facts read for the creation question.
 - **FR-005**: The refusal MUST be printed on standard error, with exit status
@@ -548,6 +601,25 @@ creates a missing parent, which fails below a file.
   criteria 1 to 9. They MUST run on both CI runtime versions, with the new
   strings pinned as fixed text.
 
+  The matrix is the wider one that Brett Heap chose (Clarifications, Q1 and
+  Q3); the matrix of `design.md` D3 is the least that the tests cover. The
+  kinds are:
+  - case (a): `FILE`, a symbolic link to it, a FIFO, `FILE/`, a socket and
+    `/dev/null`;
+  - case (b): `FILE/sub`, `FILE/a/b` and a symbolic link to `FILE/x`.
+
+  Every kind by `--into`, and `FILE` by each of its three other routes (the
+  positional parent, `PROJECTS_DIR` and the default `~/projects`), MUST meet
+  all six forms of the proposal's acceptance criterion 1:
+  - `--type test` with `--yes`, with `--dry-run`, and at a terminal without
+    `--yes`;
+  - not asked, without a choosing flag: with `CI=true` at a terminal, with a
+    standard input that is not a terminal, and with the workspace name
+    `alice-wip` at a terminal.
+
+  The runs that answer `2` stay at `FILE` and `FILE/sub`. The socket's runs
+  are skipped where binding the socket raises `OSError`.
+
   Every existing test, case and assertion MUST stay unchanged except one:
   the test that pins today's late refusal for a single-repository answer
   with a file parent. It is rewritten in its comparison form (User Story 2,
@@ -562,10 +634,18 @@ creates a missing parent, which fails below a file.
     the tree is unchanged. The existing tests of a Triad answer with an
     obstacle check the file only for a parent that itself exists and is not
     a directory, so they would not check it for the new rows. Those tests
-    stay unchanged; a new test MUST instead take each case (b) row through a
-    Triad answer, in the same ways those tests do, and make the check. The
-    existing dry-run obstacle test already checks the tree for each row and
-    the file after all its rows.
+    stay byte for byte, and their guards are not widened (Clarifications,
+    Q2); a new test MUST instead take each case (b) row through a Triad
+    answer, at a terminal and in process, in the same ways those tests do,
+    and make the check. The existing dry-run obstacle test already checks the
+    tree for each row and the file after all its rows.
+  - **The order runs** (Clarifications, Q4). Besides the order runs of
+    `design.md` D3 item 9, two runs with `FILE` as the parent:
+    - an invalid `--family` is refused with its own sentence ("Family must
+      be a single folder name."), not with the head refusal;
+    - `--type test --yes` with `--workbenches` naming a directory that has no
+      `config/bench-config.json` is refused with the head refusal, not with
+      "Cannot find workBenches; ...".
   - **The end of the head refusal** (report A, A3). The tests MUST pin the
     head refusal's end, ` Nothing was created.`, as fixed text of its own,
     as `design.md` D3 item 1 asks. It equals the end of the Triad refusal in
@@ -581,8 +661,20 @@ creates a missing parent, which fails below a file.
     obstacles stays mapped to the narrowed "A single-repository answer is
     unaffected" (feature 003's `traceability.md:25`, row 7).
 - **FR-016**: The records of features 002 and 003, and the OpenSpec change's
-  files, MUST NOT be edited. This spec carries the supersession (above). The
-  main spec changes only when the change is archived.
+  proposal, design, clarifications and spec delta, MUST NOT be edited. The
+  change's `tasks.md` MUST NOT be edited either, except for the entries and
+  fields below, which are edited on this feature's branch, as feature 003's
+  realization did (Clarifications, Q5):
+  - before the first implementation commit, 1.6 is ticked with the quote of
+    Brett Heap's word and its link, 2.1 is ticked, and the Speckit Handoff
+    fields name this feature's identifier, branch and repo-relative
+    `tasks.md` path;
+  - 2.2 is ticked later in the same pull request, once the first
+    implementation step has run after reading that section.
+
+  The other entries of that `tasks.md` stay unedited; 3.1 to 3.3 wait for the
+  archive. This spec carries the supersession (above). The main spec changes
+  only when the change is archived.
 
 ### Key Entities
 
@@ -606,12 +698,14 @@ creates a missing parent, which fails below a file.
 
 - **SC-001**: Every test run that takes a blocked parent onto the
   single-repository path exits with status 2, and its standard error is the
-  head refusal of `design.md` D2, character for character. Across the kinds
-  of `design.md` D3, the runs include each of these forms (D3's matrix is the
-  minimum; see Assumptions):
+  head refusal of `design.md` D2, character for character. The runs include
+  every kind of FR-014 by `--into`, and `FILE` by each of its other routes,
+  in each of the six forms of the first two bullets below (Clarifications, Q1
+  and Q3; Assumptions, Test breadth):
   - by flag with `--yes`, at a terminal without it, and with `--dry-run`;
   - not asked, in each of the three ways;
-  - by an answer `2`, with and without `--dry-run`.
+  - by an answer `2`, with and without `--dry-run`, at `FILE` and
+    `FILE/sub`.
 
   0 such runs print `Create:`, a plan, a generator list, `Select a generator
   number` or `Type yes to run this plan:`, and 0 change the temporary tree
@@ -660,6 +754,8 @@ question (`design.md` D1 to D3):
 - the head refusal;
 - the README edits;
 - the tests;
+- the entries of the change's `tasks.md` that FR-016 allows (1.6, 2.1, 2.2
+  and the Speckit Handoff fields);
 - this feature's records (spec, plan, tasks, traceability, quickstart).
 
 **Out of scope** (proposal, Out of Scope; `design.md` D6):
@@ -688,9 +784,11 @@ question (`design.md` D1 to D3):
 - **Other owners' code**: workBenches, openRepoShape and setup-openspeckit,
   and the archived changes.
 - **Lane steps after the realization merges**, not this feature's: the
-  comment on workBenches#145 (`design.md` D5) and the change's archive (its
-  `tasks.md` 3.2 and 3.3).
-- The records of features 002 and 003, and the OpenSpec change's files.
+  merge sha cited in the change's `tasks.md` 3.1, the comment on
+  workBenches#145 (`design.md` D5), and the change's archive (its `tasks.md`
+  3.2 and 3.3).
+- The records of features 002 and 003, and the OpenSpec change's files except
+  the entries of its `tasks.md` that FR-016 allows.
 
 ## Assumptions
 
@@ -712,8 +810,10 @@ question (`design.md` D1 to D3):
 - **Test breadth.** The proposal's acceptance criterion 1 lists every form
   for "each" kind. `design.md` D3 items 2 and 3 narrow two groups of runs:
   the runs at a terminal without `--yes` to `FILE` and `FILE/sub`, and the
-  not-asked runs to `FILE` by `--into`. The behaviour holds for every kind
-  and route (FR-003); D3's matrix is the minimum that the tests cover.
+  not-asked runs to `FILE` by `--into`. Brett Heap chose the wider reading
+  (Clarifications, Q1 B), and the socket and `/dev/null` are built (Q3 A):
+  the tests cover the kinds and forms of FR-014, and D3's matrix is the least
+  they cover. The behaviour holds for every kind and route (FR-003).
 - **"Unchanged" tests.** "Unchanged" existing tests means that no existing
   assertion, and no existing case's expected values, is edited. New cases
   may be added beside them, as in feature 003.
