@@ -210,7 +210,15 @@ move these lines, and this change's feature re-pins them):
   change 1's child handle (start, readable descriptors, `terminate_group` with
   the 2 s grace, reap). The realization adds a phase and a child kind to that
   loop and asks nothing of feature 005 in advance (`proposal.md`, Open
-  Questions 3).
+  Questions 3). Feature 004's handle is not yet that start path for `gh`
+  (reader RE's RE-15, sharpened by reader RI's RI-6; C-57): `ChildHandle.start`
+  always spawns with `env=git_env(kind)` (004 `project:1049` at `e69f6ef`),
+  which removes the Git names, sets `TRACE2_OFF` and takes only a `GIT_KINDS`
+  key, so it cannot yet give a `gh` child the environment that the Requests
+  paragraph and D5 specify, with the Git scrub not applying and every other
+  variable passed on unchanged. A `gh` row in `GIT_KINDS` would break that
+  "unchanged"; the realization needs a start path that takes its own
+  environment, and that path is not built.
 - Tool facts checked for this design: Git 2.43.0 answers
   `for-each-ref --format='%(upstream:remotename)%00%(upstream:remoteref)'`
   from `branch.<name>.remote` and `.merge` with no remote-tracking ref
@@ -633,6 +641,32 @@ cases on Python 3.10.21, 3.11.16, 3.12.3, 3.13.15 and 3.14.7: each of the three
 alone and relative, a relative `XDG_CONFIG_HOME` or `HOME` beside an absolute
 `GH_CONFIG_DIR`, ` /x`, `~/x`, `.`, a first byte of FF and one of EF, which are
 refused, and `/` alone, empty, unset and all three absolute, which are not.
+
+Two texts that land before this change refuse a relative `HOME` or
+`XDG_CONFIG_HOME` before any child starts, so that such a run has no lookup and
+no row to be `gh-unavailable` (C-58, the lead's ruling on reader RH's M4 and the
+alignment reader AL1's conflict C1). Change 1's evidence model, on draft PR
+#19's text at `f0bf538` (`PR19/cmd:116-128`, LQ-15 there), tests `HOME` and
+`XDG_CONFIG_HOME`, and `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`, before any
+Git child, `git --version` included, and where one is relative the subcommand
+starts no Git child and inspects no repository (`relative-config-path`). Change
+2's `Overview exits by completeness and severity`, as amendment A1 words it
+(ratified by Brett Heap; `add-project-overview/specs/project-overview/spec.md`
+:868-876 at `e4a30fc`), refuses the overview for the same two variables, with
+that code and status 2. This change's own bases hold neither: its block of the
+evidence model is PR #19's text at `c462d87`, change 2 at `961c405` has no such
+refusal, and neither defines `relative-config-path`. So the spec keeps C-44's
+rule whole for `GH_CONFIG_DIR`, which neither text tests, and states it for
+`XDG_CONFIG_HOME` and `HOME` only in a run that neither requirement refuses
+before any child starts; the AND on "No gh, or a gh without authentication"
+says the same for those two cases and keeps "no `gh` child starts" on every
+base, and adds no scenario, so the counts stay 36 and 10. AL1's proposed edit,
+which has those two cases exit 2 with `relative-config-path`, is not taken: it
+names a code that this change's own base does not define. D4, D11, Risks and
+the rest of this decision state C-44's refusal for all three variables without
+that condition; they are read with this paragraph, and are re-aligned, with
+A1's other places, when this change's blocks are re-read against the archived
+texts (task 2.3).
 
 The evidence was observed offline on `gh` 2.96.0 on 2026-10-20 with fake tokens,
 and none of it is a test of this change. The lead's check, with the token
