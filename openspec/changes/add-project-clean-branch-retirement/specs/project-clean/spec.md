@@ -1505,7 +1505,8 @@ N; branches kept: `; and then the residual-window line.
   `Kept <branch> (reflog-unmerged)` line as above, and the exit status is 2
 - **AND** when that re-proof hangs instead, with nothing moved, and starts with
   less than 5 s of the work deadline left above the removal floor, so that its
-  budget ends at the floor, it is stopped there, no branch child is spawned,
+  budget ends when only the removal floor remains, it is stopped there, no
+  branch child is spawned,
   the branch is `retained` with `deadline-exceeded`, and the exit status is 1;
   and when a test `git` instead delays that re-proof by 2 s, with nothing
   moved, and SIGINT arrives while it runs, it is not signalled and runs to its
