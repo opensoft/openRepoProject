@@ -22,8 +22,9 @@ item in its own place:
   withdrawn) and its open Assumption;
 - R18: the test strategy (decision 4);
 - R19: the threat model (PN-15);
-- R20: the held items, every one chosen by his word (C-72), O1 to O16 and
-  D5's clause 2, each with its design and when it is built (decision 2);
+- R20: the held items, O1 to O16 and D5's clause 2 chosen by his word and O17
+  to O20, from #19's round (q), open (C-72), each with its design and when it
+  is built (decision 2);
 - Revision 1: R1's "Re-pin of revision 1" entries;
 - Revision 2: where each finding of lane openRepoProject-3's W96 read is
   taken;
@@ -1364,28 +1365,31 @@ no Git and a later ruling edits one function:
   check refuses a repository another user owns, which the overview
   records as `probe-failed`.
 
-## R20. The held items: all sixteen and D5's clause 2 chosen (decision 2)
+## R20. Held items: O1-O16 and D5's clause 2 chosen, O17-O20 open (decision 2)
 
 Brett Heap typed "yes, recommended for O1-O10" at 2026-10-22T21:24:03Z,
 against this entry as it stood at `7af798a`; "yes, recommended for O3, O5,
 O8-O11 and D5 clause 2" at 2026-10-23T12:19:11Z, against it at `39f4ab6`;
 and "yes, recommended for O12-O16" at 2026-10-23T13:30:30Z, in lane
 openRepoProject-3's pane, on the five items that the review of the plan at
-`39f4ab6` raised. Spec 005 records all three as C-72, and this entry quotes
-C-72 at `7f4ab94` (spec.md:954-1047) whole, as it stands:
+`39f4ab6` raised. Spec 005 records all three as C-72, with O17 to O20, which
+#19's round (q) raised and which are open for his word, and this entry quotes
+C-72 at `8c408e6` (spec.md:956-1097) whole, as it stands:
 
 > - **C-72** Q: Which options of the plan's held items does change 2 take: O1 to
 > O10 (research.md R20 as it stood at `7af798a` when he answered, reworded at
 > `6fb619c` and, at `664461f` as at `464c361`, "five chosen, six open"), O11,
-> added in the plan's revision 3 at `664461f`, D5's clause 2, and O12 to O16,
-> which the review of the plan at `39f4ab6` raised? -> A: On Brett Heap's word
-> typed in lane openRepoProject-4's session at 2026-10-22T21:24:03Z, "yes,
-> recommended for O1-O10", recorded by lane openRepoProject-4 as a RULED line
-> at 21:30:52Z (issue #10), with three NOTED corrections, at 21:33:31Z (O3),
+> added in the plan's revision 3 at `664461f`, D5's clause 2, O12 to O16, which
+> the review of the plan at `39f4ab6` raised, and O17 to O20, which #19's round
+> (q) at `818311a` raised? -> A: On Brett Heap's word typed in lane
+> openRepoProject-4's session at 2026-10-22T21:24:03Z, "yes, recommended for
+> O1-O10", recorded by lane openRepoProject-4 as a RULED line at 21:30:52Z
+> (issue #10), with three NOTED corrections, at 21:33:31Z (O3),
 > 21:51:17Z (O8 to O10) and 21:54:01Z (O5), which read his "recommended" as
 > choosing only where R20 or the lane's A1 re-alignment draft stated a
 > recommendation, change 2 takes five: O1 (A), the draft's item 2, the F-7
-> clause on the `unstarted-branch` and `reflog-unavailable` remedies (FR-035);
+> clause on the `unstarted-branch` and `reflog-unavailable` remedies, two next
+> steps that #19's round (q) has since reworded (O17; FR-035);
 > O2 (A), item 6, `deadline-exceeded` at the overview's reflog gate (FR-034);
 > O4 (a), item 8, `target-not-repository-root` for a main worktree that its own
 > `core.worktree` or `core.bare` redirects, with the sub-items (c) and (d) and
@@ -1459,30 +1463,78 @@ C-72 at `7f4ab94` (spec.md:954-1047) whole, as it stands:
 > O16 (a), a bare repository's main row, which C-68 makes a worktree row while
 > C-40 copies the packet's rule that `branch` is never null: `branch`, `head`
 > and `merged_into_target` are null for that row, recorded against C-40 and in
-> C-68 and FR-008 (C-40, C-68, FR-008). With these, every held item of feature
-> 005, O1 to O16 and D5's clause 2, is chosen. O13 (A) reaches A1 in the
-> re-alignment commit, as O3 and O5 do, and O12 (A) and O14 (A) keep A1's
-> behaviour as ratified, as O9 (A) does. So this spec records his words and
-> follows A1 as ratified until A1's re-alignment lands, changing no requirement
-> ahead of it, and builds O12 (A), O14 (A), O15 (A) and O16 (a). Where applied:
-> C-40; C-68; FR-006; FR-007; FR-008; FR-009; FR-020; FR-026; FR-028; FR-034;
-> FR-035; FR-043; EC-012; EC-020; EC-032; SC-003; User Story 8; Key Entities,
-> Repository identity; Dependencies; the discovery-identity checklist's CHK009.
+> C-68 and FR-008 (C-40, C-68, FR-008). With these, every item from O1 to O16,
+> and D5's clause 2, is chosen. O13 (A), and A1's records for O12 (A), O14 (A)
+> and O15 (A), with its design Risks entry for O14 (A) and D5's sentence for
+> O15 (A), and an entry for the null `branch`, `head` and `merged_into_target`
+> of O16 (a), since A1 adopts the packet's JSON types, reach A1 in the
+> re-alignment commit, as O3 and O5 do. This spec builds O12 (A) and O14 (A)
+> now, as A1 is ratified, as for O9 (A), and O15 (A) and O16 (a) now, ahead of
+> A1's text, declared at FR-035, C-40, C-68 and FR-008; otherwise it records
+> his words and follows A1 as ratified until A1's re-alignment lands, O13 (A)
+> included. Four more items, O17 to O20, which #19's round (q) at `818311a`
+> raised from Brett Heap's "yes, recommended for Q1-Q9" for change 1 (lane
+> openRepoProject-2's R-380) and which lane openRepoProject-4 put to him on
+> 2026-10-23, each with the lane's recommendation, are open for his word, and
+> until he rules this spec builds A1 as ratified, and the four status pins as
+> FR-016 states them. O17, Q5's next steps for the `unstarted-branch` and
+> `reflog-unavailable` gates, 248 and 243 characters in #19, which O1 (A) has
+> the overview show once A1's re-alignment lands, where a gated message is the
+> finding's own text, `; ` and the remedy within D5's 200 characters, so that
+> even with the own text cut to "..." they come to 253 and 248, O15 (A) letting
+> a message pass 200 for the `--root` remedy alone; (A) keep #19's wording
+> whole, cut the own text to "..." and let the message pass 200 for these two
+> remedies too, (B) keep the wording that O1 (A) quoted, #19's at `3dcd2d8`,
+> 136 and 131 characters, the difference from `project clean` recorded as
+> lasting, or (C) keep A1's ratified wording, 102 and 97, and take these two
+> out of O1 (A); recommended, (A), and built until he rules, A1 as ratified
+> (FR-035, User Story 4). O18, Q3 (b)'s warning, which #19 appends to `project
+> clean`'s plain stale recommendation and its locked form, making them 305 and
+> 318 characters, where the overview's stale message is [L]'s 50-character text
+> or, under O8 (A), the 63-character locked form; (A) take the warning, the
+> stale message equal to clean's text and kept whole past 200 characters in
+> that case, or (B) keep the 50- and 63-character texts, the difference from
+> clean recorded as lasting; recommended, (A), the forms for a row whose path
+> could not be read (O6 (A)) unchanged either way, and built until he rules, A1
+> as ratified (FR-028). O19, `registration-mismatch`, which #19 widens to a
+> worktree whose path is the common directory, the main worktree or another
+> row's path, or an ancestor of one, and to one whose registered path is a
+> symbolic link, cases that the overview's evaluation of that gate from its own
+> evidence does not check, so that it can suggest `--all-safe` for a worktree
+> that the batch then excludes, an exclusion that SC-004 does not allow; (A)
+> check the new cases in the overview, the paths compared among the rows the
+> listing gives and the link tested by FR-007's no-follow `lstat`, with no new
+> Git child, or (B) keep the older gate and add `registration-mismatch` to
+> SC-004's list of exclusions as a known limit; recommended, (A), and built
+> until he rules, A1 as ratified (FR-032, SC-004). O20, the fifth status pin,
+> `-c core.ignoreCase=false`, which #19 adds to every status probe, where
+> FR-016 quotes the four that A1 restates, ratified, and the overview reuses
+> feature 004's pin list by name; (A) take it as feature 004's build of it
+> lands, by FR-016's own rule, A1's re-alignment adding it to its requirement 3
+> and design D13, or (B) keep four pins until A1's re-alignment lands, the
+> overview carrying its own copy of them until then; recommended, (A), and
+> built until he rules, the four pins as FR-016 states them (FR-016). Where
+> applied: C-40; C-68; FR-006; FR-007; FR-008; FR-009; FR-016; FR-020; FR-026;
+> FR-028; FR-032; FR-034; FR-035; FR-043; EC-012; EC-020; EC-032; SC-003;
+> SC-004; User Story 8; Key Entities, Repository identity; Dependencies; the
+> discovery-identity checklist's CHK009.
 
-In this entry's terms: every held item is chosen, and none is open. O11's
-part 1 is built now, as the plan's reading of a conflict in ratified text
-(R9); O9 (A), O10 (A), O12 (A) and O14 (A) keep A1's behaviour as ratified;
-O15 (A) and O16 (a) are built now, as the spec builds them; and every other
-choice, O1 to O8, O11's part 2, O13 (A) and D5's clause 2, is built once A1's
-re-alignment lands at PR #34, the ratified text standing until then. Each
-item stays isolated to one table row, one decider, one count term or one
-branch of the composer, so that a change in his review of the final text
-lands without touching the rest, with one exception: a change to O11's
-part 1 would also re-word the scenario "A separate git directory" (O11,
-below). traceability.md's "Held items, chosen: their tests" names each
-item's behaviour test and the assertions that flip. The design changes
-that the review of `39f4ab6` asks of these entries are made in revision 9
-(its record, below).
+In this entry's terms: O1 to O16 are chosen; O17 to O20, from #19's round (q),
+are open (C-72), and for those four the plan builds A1 as ratified, and the
+four pins by FR-016, until his word, the contract marking each OPEN where it
+builds the text or check. O11's part 1 is built now, as the plan's reading of a
+conflict in ratified text (R9); O9 (A), O10 (A), O12 (A) and O14 (A) keep A1's
+behaviour as ratified; O15 (A) and O16 (a) are built now, ahead of A1's text,
+as the spec builds them; and every other choice, O1 to O8, O11's part 2, O13
+(A) and D5's clause 2, is built once A1's re-alignment lands at PR #34, the
+ratified text standing until then. Each item stays isolated to one table row,
+one decider, one count term or one branch of the composer, so that a change in
+his review of the final text lands without touching the rest, with one
+exception: a change to O11's part 1 would also re-word the scenario "A separate
+git directory" (O11, below). traceability.md's "Held items, chosen: their
+tests" names each item's behaviour test and the assertions that flip. The
+design changes that the review of `39f4ab6` asks of these entries are made in
+revision 9 (its record, below).
 
 PR #19 is read at `e0b1671`, its round (p) (R-365, R-377), which leaves T1 to
 T8 unedited; the implementation re-pins at #19's ratified head (R1). Every
@@ -2267,3 +2319,32 @@ the stale cites:
   needs to re-pin its spec cites", W112's words, where it read "name a
   later spec commit"; the Revision 8 record keeps its `:1492-1499`, the
   range as revision 8 wrote it.
+
+## Revision 10: C-72 at 8c408e6, O17 to O20 open
+
+Made from `8c408e6` (spec commit 3an), on the lead's decisions for revision 10,
+in three parts; this is part 1. The plan's other spec cites stay at `7f4ab94`
+and PR #19's at `e0b1671` in this part. Each input of part 1, and where it is
+taken:
+
+- **C-72 at `8c408e6`** (spec.md:956-1097, sha256 `95a516fa4163...`): R20
+  quotes it whole in place of its text at `7f4ab94` (spec.md:954-1047), and
+  R20's opening names the new sha and lines. The quote less its `> ` marks
+  equals those lines by `cmp`, each continuation line less its two-space
+  indent, which the mark takes, as in the quote at `7f4ab94`.
+- **The ordering sentence**: plan.md's quote of it, 99 words, is C-72's at
+  `8c408e6` word for word, at spec.md:1003-1010 (:998-1006 at `7f4ab94`); its
+  cite moves, and its words do not.
+- **O15 (A) and O16 (a)**: built now, ahead of A1's text, as C-72's rule
+  sentence says, in plan.md's Summary and held-items list, R20's opening and
+  the contract's reading note.
+- **O17 to O20**, raised by #19's round (q) and open for his word (C-72): R20
+  is retitled; this file's index, R20's opening, plan.md's Technical design,
+  Summary, closing Technical Context sentence and held-items section, and the
+  contract's reading note say that O1 to O16 are chosen and O17 to O20 open;
+  the contract marks each OPEN where it builds the text or check (the reflog
+  remedies, the stale text, the registration finding and the status pins), and
+  plan.md lists them as still before him: until his word the plan builds A1 as
+  ratified, and the four pins by FR-016.
+- **Still to come**: part 2 re-pins PR #19's cites from `e0b1671`, and part 3
+  takes lane openRepoProject-3's W137 items.

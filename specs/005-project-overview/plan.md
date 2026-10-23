@@ -19,8 +19,8 @@ requirement with 2 scenarios in `project-review-safety`) and
 change governs; where the spec settles a reading of the change, the spec
 does. This plan decides only what they leave to the implementation
 ([research.md](research.md), R1 to R19), records Brett Heap's word on the
-held items and keeps each in its own place (R20: every one chosen, O1 to
-O16 and D5's clause 2).
+held items and keeps each in its own place (R20; C-72: O1 to O16 and D5's
+clause 2 are chosen; O17 to O20, from #19's round (q), are open).
 
 **Authority**: Brett Heap, 2026-10-22T19:46:57Z: "lane 4 plans 005 now".
 That word moves C-56's order (the plan after feature 004's merge) for this
@@ -87,14 +87,16 @@ Implementation slices, in dependency order; each leaves the suite green:
    final `project`, and the full-length timing.
 
 Each held item sits in its own row, decider, term or composer branch
-(research.md R20), and Brett Heap's words chose every one for change 2 (C-72).
-O11's part 1 is built now, as the plan's reading of a conflict in ratified A1
-(R9); O9 (A), O10 (A), O12 (A) and O14 (A) keep A1's behaviour as ratified;
-O15 (A) and O16 (a) are built now, as the spec builds them; and the rest, D5's
+(research.md R20): O1 to O16 are chosen; O17 to O20, from #19's round (q), are
+open (C-72), and for those four the plan builds A1 as ratified, and the four
+pins by FR-016, until his word. O11's part 1 is built now, as the plan's
+reading of a conflict in ratified A1 (R9); O9 (A), O10 (A), O12 (A) and O14 (A)
+keep A1's behaviour as ratified; O15 (A) and O16 (a) are built now, ahead of
+A1's text, as the spec builds them; and the rest of the chosen items, D5's
 clause 2 among them, now chosen by name, are built in their chosen form once
 A1's re-alignment lands at PR #34, in one commit after PR #19's ratification,
 he reviewing the final text before #34 merges; until then the ratified text
-stands. C-72 at `7f4ab94` (spec.md:998-1006) gives the order: "A1's ordering
+stands. C-72 at `8c408e6` (spec.md:1003-1010) gives the order: "A1's ordering
 rule (its `proposal.md:1278-1284`) is the four LQ items' and reaches O10
 (LQ-15's extension) and O5 (item 9, owed under it); the other chosen items
 that change A1's text, its items 2, 6, 7, 8, 10 and 11, rest on his word for
@@ -270,9 +272,9 @@ files for scenario 21's 10,000 and exactly 64.
 prefixes, its one change (FR-050; A1's Impact).
 
 No NEEDS CLARIFICATION remains: the change, A1 and the spec decide every
-behaviour but what research.md R1 to R19 settles, and the held items, every
-one chosen, are planned each in its place, most landing with A1's
-re-alignment (R20).
+behaviour but what research.md R1 to R19 settles, and the held items, O1 to O16
+chosen and O17 to O20, from #19's round (q), open (C-72), are planned each in
+its place, most landing with A1's re-alignment (R20).
 
 ## Constitution Check
 
@@ -402,8 +404,9 @@ suggestions lead to `project clean`.
 
 His "yes, recommended for O1-O10" (2026-10-22T21:24:03Z), "yes, recommended
 for O3, O5, O8-O11 and D5 clause 2" (2026-10-23T12:19:11Z) and "yes,
-recommended for O12-O16" (2026-10-23T13:30:30Z), all in C-72, chose every
-held item for change 2, each as the lane recommended it (research.md R20):
+recommended for O12-O16" (2026-10-23T13:30:30Z), all in C-72, chose O1 to O16
+and D5's clause 2 for change 2, each as the lane recommended it (research.md
+R20):
 
 - built once A1's re-alignment lands at PR #34: O1 (A), the reflog
   remedies' submodule clause; O2 (A), `deadline-exceeded` at the reflog
@@ -417,8 +420,8 @@ held item for change 2, each as the lane recommended it (research.md R20):
   read; repair the repository's config, then run again"; and O13 (A), the
   `core.worktree` read in the shared git directory;
 - built now: O11's part 1, A1's failure table excepting the unset key, as
-  the plan's reading; O15 (A), the remedy kept whole past 200 characters;
-  and O16 (a), a bare main row's null `branch`, `head` and
+  the plan's reading; and, ahead of A1's text, O15 (A), the remedy kept whole
+  past 200 characters, and O16 (a), a bare main row's null `branch`, `head` and
   `merged_into_target`;
 - A1's behaviour kept as ratified: O9 (A), parity leaving out a working
   directory whose realpath fails; O10 (A), LQ-15's extension kept; O12 (A),
@@ -429,6 +432,8 @@ Still before him:
 - The base: `main` after PR #33 (recommended, C-56), or stacked on feature
   004's branch (his word needed; R2).
 - His word on the tasks, then on the implementation.
+- O17 to O20, from #19's round (q), open (C-72; research.md R20): until his
+  word the plan builds A1 as ratified, and the four pins by FR-016.
 
 ## Complexity Tracking
 

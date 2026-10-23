@@ -15,11 +15,13 @@ one space. Placeholders are in capitals (`PATH`, `N`, `M`, `CAUSE`), each
 replaced by an escaped value ([P]; FR-038). A row marked **CHOSEN** is an
 item of research.md R20 that Brett Heap's word chose for change 2 (C-72):
 the text above it is the one built until A1's re-alignment lands at PR
-#34, the text after it the one built then. Every item of R20 is chosen, and
-none is open; O11's part 1, O15 (A) and O16 (a) are built now. Each item of
-R20 changes only its own rows. Every warning is in the words of PR #19's
-round (n) (`2250830`, unchanged at `88d0d36` and `e0b1671`; R-343, his
-"R-324: yes").
+#34, the text after it the one built then. Of R20's items, O1 to O16 are
+chosen; O17 to O20, from #19's round (q), are open (C-72), a line marked
+**OPEN** naming one: until his word the text above it is built, A1 as ratified,
+and the four pins by FR-016. O11's part 1 is built now, and O15 (A) and O16 (a)
+now, ahead of A1's text. Each item of R20 changes only its own rows. Every
+warning is in the words of PR #19's round (n) (`2250830`, unchanged at
+`88d0d36` and `e0b1671`; R-343, his "R-324: yes").
 
 ## Invocation
 
@@ -231,8 +233,9 @@ arguments below, in its own process group, standard input from
 `/dev/null`, with the 31 scrubbed names removed, `GIT_TRACE2`,
 `GIT_TRACE2_EVENT` and `GIT_TRACE2_PERF` set to `0` and
 `GIT_OPTIONAL_LOCKS=0` (feature 004's kind `probe`); the status probe adds
-`STATUS_PINS` (four at `d6bac50`; kind `status`). No other argument vector
-is started.
+`STATUS_PINS` (four at `d6bac50`; kind `status`). OPEN (O20): #19's round (q)
+adds a fifth, `-c core.ignoreCase=false`; until his word the status probe
+carries the four pins by FR-016. No other argument vector is started.
 
 - `version`: `--version` (no `-C`), once.
 - `identity`: `rev-parse --path-format=absolute --show-toplevel
@@ -416,6 +419,8 @@ The class's recommendation, verbatim:
     could not be read, so do not run git worktree prune, git worktree
     remove or git gc until it can." (#19's T7, `#19
     design.md:1360-1380`)
+  - OPEN (O18): #19's round (q) ends both forms, plain and locked, with the
+    warning of Q3 (b), 305 and 318 characters; until his word, A1 as ratified.
 - `finding.inspection-error`: "Preserve this worktree; Git could not
   establish its clean state."; its second rung: "Preserve this worktree;
   Git could not establish its ignored-file state."
@@ -481,6 +486,10 @@ The class's recommendation, verbatim:
 - `finding.registration-mismatch`: "Git's registration of this worktree
   does not match its directory; review it with git worktree list before
   any cleanup."
+  - OPEN (O19): #19's round (q) widens the class to a worktree whose path is
+    the common directory, the main worktree or another row's path, or an
+    ancestor of one, and to one whose registered path is a symbolic link; until
+    his word the overview checks the gate as A1 is ratified.
 - `finding.unsupported-path-bytes.worktree`: "This worktree's path is not
   valid UTF-8, so no clean command can name it; rename it to valid UTF-8."
 - `finding.unsupported-path-bytes.repository`: "The repository's root or
@@ -541,6 +550,8 @@ from `limits` when the message is built.
   - CHOSEN (O1 (A)): "the branch's reflog is missing, expired or
     undecidable; review, then git worktree remove yourself (--force if it
     holds a submodule)"
+  - OPEN (O17): #19's round (q) rewords both remedies, to 248 and 243
+    characters; until his word, A1 as ratified.
 - `remedy.target-cap` (limited): "limited to the batch's target limit of M
   per run; re-run to drain the backlog"
 
