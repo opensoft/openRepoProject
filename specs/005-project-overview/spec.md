@@ -8,10 +8,10 @@ Lane: openRepoProject-4
 
 **Status**: Draft. Created before feature 004 merges, on Brett Heap's word
 (below), and planned before it on his word of 2026-10-22, "lane 4 plans 005
-now" (the plan at `a80f10b`, its revisions 1 to 4 at `aeb0bb2`, `6fb619c`,
-`664461f` and `06b16e1`); the tasks and the implementation still wait for his
-word, as the implementation does for feature 004's merge into `main`
-(Clarifications, C-56).
+now" (the plan at `a80f10b`, its revisions 1 to 5 at `aeb0bb2`, `6fb619c`,
+`664461f`, `06b16e1` and `464c361`); the tasks and the implementation still
+wait for his word, as the implementation does for feature 004's merge into
+`main` (Clarifications, C-56).
 
 **Input**: User description: "Realize the ratified OpenSpec change
 add-project-overview: a read-only `project overview [--root D]...
@@ -139,8 +139,8 @@ byte-identical at new lines once more, by `cmp`, its task 3.2 and its
 are byte-identical at new lines again but for one line of its Archive order
 sentence, which on lane openRepoProject-4's YES now names the blocks "written
 on PR #19's text" (its B-77), and at `97bf4ee`, `9473b2c`, `dc39ec3`,
-`383da59`, `04be7f6` and `dafe476`, after its rounds B17 to B22, they are
-byte-identical at new lines to their text at `57bfc15` (Dependencies).
+`383da59`, `04be7f6`, `dafe476` and `288fc34`, after its rounds B17 to B23,
+they are byte-identical at new lines to their text at `57bfc15` (Dependencies).
 
 **Created before feature 004 merges**: The change creates this feature only
 after feature 004 merges (proposal, Status and "Dependencies and
@@ -681,9 +681,11 @@ that lane agreed on 2026-10-21 to carry it in.
   19:49:51Z (issue #10), the plan step starts before that merge, as C-21's word
   moved the specify step: the plan was committed at `a80f10b`, its revisions 1
   and 2 at `aeb0bb2` and `6fb619c`, its revision 3 at `664461f` (R20's five
-  chosen and six open items after C-72; O11's part 1 built, its part 2 held)
-  and its revision 4 at `06b16e1` (D5's clause 2 only through O6's text; C-72's
-  ordering sentence; feature 004 read at `d6bac50` and #19 at `88d0d36`), and
+  chosen and six open items after C-72; O11's part 1 built, its part 2 held),
+  its revision 4 at `06b16e1` (D5's clause 2 only through O6's text; C-72's
+  ordering sentence; feature 004 read at `d6bac50` and #19 at `88d0d36`) and
+  its revision 5 at `464c361` (C-72's open items at `54dc025` word for word;
+  O11's part 2 (A) with its own remedy row; #27 at `288fc34`), and
   the tasks and the implementation still wait for his word. Where applied:
   header, Status; Assumptions; Dependencies.
 - **C-57** Q: Should the overview's tests also run in the Git 2.36 floor job?
@@ -947,8 +949,8 @@ that lane agreed on 2026-10-21 to carry it in.
 
 - **C-72** Q: Which options of the plan's held items, O1 to O10 (research.md
   R20 as it stood at `7af798a` when he answered, reworded at `6fb619c` and, at
-  `664461f`, "five chosen, six open"), does change 2 take? -> A: On Brett
-  Heap's word typed in lane openRepoProject-4's session at
+  `664461f` as at `464c361`, "five chosen, six open"), does change 2 take? ->
+  A: On Brett Heap's word typed in lane openRepoProject-4's session at
   2026-10-22T21:24:03Z, "yes, recommended for O1-O10", recorded by lane
   openRepoProject-4 as a RULED line at 21:30:52Z (issue #10), with three NOTED
   corrections, at 21:33:31Z (O3), 21:51:17Z (O8 to O10) and 21:54:01Z (O5),
@@ -969,20 +971,22 @@ that lane agreed on 2026-10-21 to carry it in.
   item 9, #19 round (j)'s reading of the work-tree probe (FR-007); O8, the
   locked stale form; O9, the parity case where the working directory's realpath
   fails (FR-026); and O10, LQ-15's extension (FR-043). A sixth, O11, the
-  `core.worktree` read's exit 1 (A1's held item 11; FR-007, FR-008, User Story
-  8), is a plan item added in its revision 3 at `664461f`, after his word, and
-  he has not answered it. They are choices for change 2. A1's ordering rule
-  (its `proposal.md:1278-1284`) is the four LQ items' and reaches O10 (LQ-15's
+  `core.worktree` read's exit 1 (A1's held item 11; FR-007, FR-008, EC-012,
+  User Story 8 and the discovery-identity checklist's CHK009), is a plan item
+  added in its revision 3 at `664461f`, after his word, and he has not answered
+  it. They are choices for change 2. A1's ordering rule (its
+  `proposal.md:1278-1284`) is the four LQ items' and reaches O10 (LQ-15's
   extension) and O5 (item 9, owed under it); O1, O2, O4, O6 and O7 (items 2, 6,
   8 and 10) rest on his word for change 2 and on #19's rounds, and reach A1 in
   the same re-alignment commit, which follows #19's ratification, he reviewing
   the final text before #34 merges; the open O3 and O8 (items 7 and 10), O11's
-  part 2 (item 11) and, should he take (C), O9 wait on his word for change 2
-  too, and O11's part 1 is a text re-alignment on a lane finding for his
-  review. So this spec records his word and follows A1 as ratified until A1's
-  re-alignment lands, changing no requirement ahead of it. Where applied:
-  FR-006; FR-007; FR-008; FR-009; FR-020; FR-028; FR-034; FR-035; EC-020;
-  EC-032; User Story 8; Dependencies.
+  part 2 (item 11) and, should he take (C) (the overview follows feature 004,
+  the plan's R20 O9 (C)), O9 wait on his word for change 2 too, and O11's part
+  1 is a text re-alignment on a lane finding for his review. So this spec
+  records his word and follows A1 as ratified until A1's re-alignment lands,
+  changing no requirement ahead of it. Where applied: FR-006; FR-007; FR-008;
+  FR-009; FR-020; FR-028; FR-034; FR-035; EC-012; EC-020; EC-032; User Story 8;
+  Dependencies; the discovery-identity checklist's CHK009.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -2941,10 +2945,11 @@ and [P] are change 1's requirements as the header names them.
   (Dependencies). Its cut is C-11's, A1's design D5 (its `design.md:386-389`):
   the finding's own text is shortened with `...` and the remedy kept whole; a
   rule that keeps the warning of A1's item 10 whole and, beside item 8's
-  redirect remedy, leaves the recommendation out and shortens the remedy, was
-  chosen for change 2 with those items (O6 (A) and O4 (a), D5's clause 2 only
-  through O6's text at `7af798a`, until his direct word; C-72) and lands with
-  A1's re-alignment (FR-009, FR-028; Dependencies).
+  redirect remedy, leaves the recommendation out and shortens the remedy, which
+  reverses D5's "remedy kept whole" for that case, was chosen for change 2 with
+  those items (O6 (A) and O4 (a), D5's clause 2 only through O6's text at
+  `7af798a`, until his direct word; C-72) and lands with A1's re-alignment
+  (FR-009, FR-028; Dependencies).
 
 **JSON document**
 
@@ -3548,7 +3553,8 @@ and [P] are change 1's requirements as the header names them.
   for the specify step only (header; change `tasks.md` 3.1 and Speckit
   Handoff), and planned before it on his word of 2026-10-22T19:46:57Z, "lane 4
   plans 005 now", for the plan step only, the plan at `a80f10b` and its
-  revisions 1 to 4 at `aeb0bb2`, `6fb619c`, `664461f` and `06b16e1` (C-56).
+  revisions 1 to 5 at `aeb0bb2`, `6fb619c`, `664461f`, `06b16e1` and `464c361`
+  (C-56).
 - workBenches' `onp` and any other installed copy of `project` gain the
   overview only when their owners move their pins; this feature edits
   nothing outside this repository (proposal, "What This Repository Does Not
@@ -3850,7 +3856,16 @@ and [P] are change 1's requirements as the header names them.
     :901-913 and :931-932, its `design.md` ranges at :1134-1137, :1213-1216 and
     D14's :1810-1816, and its task 3.2 at :197-212, each byte-identical to its
     text at `04be7f6`; its `project-overview` block is the same blob,
-    `a40458cb`, and no re-based block is one that this spec reads.
+    `a40458cb`, and no re-based block is one that this spec reads. Re-checked
+    again at `288fc34`, its head after round B23 (`715885c` in its design,
+    `288fc34` in its proposal and tasks, its spec deltas unchanged), B23
+    re-basing no block and recording PR #19's round (o) at `88d0d36`, whose
+    spec text is round (n)'s (its B-107), by lane openRepoProject-5's line map
+    and this spec's own `cmp` of each range against `dafe476`: its
+    `proposal.md` ranges sit at :783-786, :807-810, :910-922 and :940-941, its
+    `design.md` ranges at :1150-1153, :1229-1232 and D14's :1826-1832, and its
+    task 3.2 at :197-212, unmoved, each byte-identical to its text at
+    `dafe476`; its `project-overview` block is the same blob, `a40458cb`.
   - `add-project-overview-remote-merge-status` (issue #25, draft PR #29)
     MODIFIES "Overview bounds its work and reports what it omitted", "Overview
     prints a versioned JSON envelope" and "Overview is local and read-only"
@@ -4130,7 +4145,8 @@ and [P] are change 1's requirements as the header names them.
     `target-not-repository-root`, as #19 refuses the run, which needs his word
     for change 2. The plan's revision 3 builds part 1 as its reading of the
     conflict, and the lane's recommendation, as put to him, is yes to both
-    parts; he has not answered (C-72; FR-007, FR-008, User Story 8).
+    parts; he has not answered (C-72; FR-007, FR-008, EC-012, User Story 8; the
+    discovery-identity checklist's CHK009).
   - Change 1's [E], for Q9 B: lane openRepoProject-2 agreed on 2026-10-21 that
     its draft PR #19, which already edits [E]'s Environment paragraph
     (CMD:98-122), carries the trace pins and the trace-variable scrub names
@@ -4891,13 +4907,14 @@ and [P] are change 1's requirements as the header names them.
   and tasks in their records alone, with no spec text, and feature 004's
   `d6bac50` merges its TEXT rows in R-324's phrase (`e8dda2a`), its tests of a
   `config` that is a directory, on real Git, for rows 4c and 4b (`2057c31`) and
-  its doc round 23; this spec keeps #19 at `2250830` and its feature 004 pins
-  as they stand, and the plan, at its revision 4, `06b16e1`, reads #19 at
-  `88d0d36` and feature 004 at `d6bac50`. So PR #34 does not merge
-  before #19's ratification of those commits; should Brett Heap want #34
-  sooner, the four items move to a later amendment of change 2, and A1 lands
-  without them (its :1281-1284), the parts of this spec that follow them
-  following that amendment instead.
+  its doc round 23, and its `f3724fc`, doc round 24, changes its documents
+  alone, `project` and its tests as at `d6bac50`; this spec keeps #19 at
+  `2250830` and its feature 004 pins as they stand, and the plan, at its
+  revisions 4 and 5, `06b16e1` and `464c361`, reads #19 at `88d0d36` and
+  feature 004 at `d6bac50`. So PR #34 does not merge before #19's ratification
+  of those commits; should Brett Heap want #34 sooner, the four items move to a
+  later amendment of change 2, and A1 lands without them (its :1281-1284), the
+  parts of this spec that follow them following that amendment instead.
   - LQ-10, on PR #19 at `ea697ba`, pending its ratification: every status
     probe, the hidden-state probe and the removal pass `-c core.trustctime=true
     -c core.checkStat=default` after `-c core.fsmonitor=false`, four status

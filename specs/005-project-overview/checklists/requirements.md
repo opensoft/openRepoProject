@@ -1189,6 +1189,27 @@ Lane: openRepoProject-4
   A1 stays cited at `e4a30fc`, and `clarify-questions.md` is unchanged.
   Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run by
   script on the edited spec.
+- 2026-10-23, a thirty-seventh pass, by the lead's commit 3ai decisions: lane
+  openRepoProject-3's W105 read of 3ah is taken. LOW-10: C-72 says what O9's
+  (C) is, the overview following feature 004 (the plan's R20 O9 (C)). LOW-11:
+  C-72's "Where applied" and its O11 list, and the A1 bullet's O11 list, name
+  EC-012 and the discovery-identity checklist's CHK009. W105's optional clause
+  is taken: FR-035 says that the rule's clause beside item 8's remedy reverses
+  D5's "remedy kept whole" for that case. W105 found the thirty-sixth pass's
+  two departures true and declared (the Assumptions naming the plan's
+  revisions; C-28 and FR-019 without an O11 note). #24 at its draft PR #27's
+  head `288fc34`, after round B23, which re-bases no block (its B-107): the
+  eight ranges byte-identical to their text at `dafe476` by `cmp` (proposal
+  :783-786, :807-810, :910-922 and :940-941; design :1150-1153, :1229-1232 and
+  :1826-1832; task 3.2 at :197-212, unmoved), the `project-overview` block the
+  same blob, `a40458cb`. Feature 004's `f3724fc`, doc round 24, which changes
+  documents alone, is recorded as a later head, and the Status, C-56, C-72's
+  question, the Assumptions and the round (n) record name the plan's revision
+  5, `464c361`; no pin moves. No checklist category changes, and the totals
+  below were recounted by script. Traceability is checked against A1's ratified
+  deltas at `e4a30fc` (64 of 64). A1 stays cited at `e4a30fc`, and
+  `clarify-questions.md` is unchanged. Re-validation: 16 of 16 items pass, with
+  the checks of iteration 2 re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -1313,4 +1334,4 @@ to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
 passes of that day, and after the thirteenth to thirty-fourth passes on
-2026-10-22 and the thirty-fifth and thirty-sixth on 2026-10-23.
+2026-10-22 and the thirty-fifth to thirty-seventh on 2026-10-23.
