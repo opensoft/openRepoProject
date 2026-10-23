@@ -1104,7 +1104,28 @@ that lane agreed on 2026-10-21 to carry it in.
   change its merged-set block (lane openRepoProject-2's report to lane 4 of
   2026-10-23): O19's outcome for such a row is stated at that head, and O21's
   case is checked against it. With these, every held item of this feature, O1
-  to O21 and D5's clause 2, is chosen. Where applied: C-40; C-68; FR-006;
+  to O21 and D5's clause 2, is chosen. One more item, O22, which #19's round
+  (s) at `dab8a64` raised (the lead's R-408, on lane openRepoProject-3's W141
+  MEDIUM-1) and which lane openRepoProject-4 put to Brett Heap at
+  2026-10-23T22:39:41Z, with the lane's recommendation, is open for his word,
+  and until he rules this spec builds A1 as ratified. O22, the main worktree's
+  recommendation: #19 gives the main worktree's row, where the ladder classes
+  it `merged-removable` or `merged-current`, one whose upstream was deleted
+  included, "The main worktree is never removed by project clean." in place of
+  its class's, the class unchanged (its `specs/project-clean/spec.md:207-215`
+  at `54e869b`), where the overview's message for a classified row is the
+  ladder's recommendation text (FR-028), so that a `merged-removable` main row
+  already shows those words through the `main-worktree` gate's finding while a
+  `merged-current` main row shows the baseline's "The branch is merged, but
+  this is the current checkout; switch away before removal."; (A) follow round
+  (s) now, the main worktree's row carrying #19's text for both classes, ahead
+  of A1's text, A1's re-alignment narrowing its sentence on a merged row whose
+  upstream was deleted, as #19 narrows its own, or (B) keep the class's
+  baseline message for the main row until A1's re-alignment carries the
+  change, the difference from `project clean` recorded until then;
+  recommended, (A), and built until he rules, A1 as ratified (FR-028), whether
+  #19's change stands waiting on his ratification of #19. Where applied: C-40;
+  C-68; FR-006;
   FR-007; FR-008; FR-009; FR-016; FR-020; FR-026; FR-028; FR-032; FR-034;
   FR-035; FR-043; EC-012; EC-020; EC-032; SC-003; SC-004; User Story 4; User
   Story 8; Key Entities, Repository identity; Dependencies; the
@@ -3032,7 +3053,16 @@ and [P] are change 1's requirements as the header names them.
   gate remedy after it staying whole too, up to 459 and 472 characters beside
   the redirect remedy, and the forms for a row whose path could not be read (O6
   (A)) unchanged, which lands with A1's re-alignment, this spec keeping A1's
-  text until then (O18 (A); FR-035; C-72).
+  text until then (O18 (A); FR-035; C-72). Lane openRepoProject-2's M4, before
+  Brett Heap, asks about the "inspection incomplete" redirect remedy beside an
+  enclosing or shared-path row; should his answer change that remedy, the 459
+  and 472 characters move with it. #19's round (s) gives the main worktree's
+  row, where the ladder classes it `merged-removable` or `merged-current`,
+  "The main worktree is never removed by project clean." in place of its
+  class's (its `specs/project-clean/spec.md:207-215` at `54e869b`): whether the
+  overview's message for that row follows it is O22, open for Brett Heap's
+  word, and until he rules this spec keeps the class's text, A1 as ratified
+  (C-72).
 - **FR-029**: A finding of severity `error` MUST make the exit status 1;
   `warning` MUST do so only under `--strict`; and `info` MUST never affect
   it (POD:465-466).
@@ -5305,11 +5335,11 @@ and [P] are change 1's requirements as the header names them.
   `update` keeping the baseline's plain stale text with no Q3 (b) warning, and
   M3 (a), `project clean` printing a new 197-character next step for an
   enclosing or shared-path `registration-mismatch` row (lane
-  openRepoProject-2's report to lane 4, its R-413; #19's round (t), not on
-  origin, records both, so this spec keeps #19 at `4512441`), texts that the
-  overview never shows (C-59). The texts of O17 to O20 stand unchanged at
-  `4512441`, O18's also in [L]'s new paragraph and scenario, and his word
-  chooses all four (C-72). At `4512441` the cites of the round (n) record above
+  openRepoProject-2's report to lane 4, its R-413; #19's round (t) records
+  both, below), texts that the overview never shows (C-59). The texts of O17
+  to O20 stand unchanged at `4512441`, O18's also in [L]'s new paragraph and
+  scenario, and his word chooses all four (C-72). At `4512441` the cites of
+  the round (n) record above
   and of round (o)'s stand at new lines where their text stands,
   `specs/project-clean/spec.md:166`, the third text at :400-404 and :1268-1273
   and the ceiling's AND at :587-592, and design :550-554 (row 4b) and :73,
@@ -5317,14 +5347,50 @@ and [P] are change 1's requirements as the header names them.
   plain forms and T8's AND (Q3 (b)), R-343's sentence in D18, and the record's
   own proposal and tasks ranges, which rounds (o) to (r) edit, R-343's
   amendment entry keeping its words, re-wrapped, at `proposal.md:2897-2908`.
-  #27's blocks of change 1 are being re-based on `818311a` by lane
-  openRepoProject-5's round B25, in progress, so this spec keeps #27 at
-  `d95eea2` until B25's line map arrives, and #29 keeps its block of [E] on
-  `c462d87` until change 1's archive, its task 2.4 re-basing it then, as its
-  round C23 record says; round (r)'s edits to [L], to `Clean can explicitly
-  retire verified worktrees` (LOW-1), to `Cleanup revalidates destructive
-  actions` and to [E] reach #27's classification, retire and revalidation
-  blocks and #29's block of [E], whose re-bases owe those edits as well. This
+  Its round (s) at `dab8a64` (2026-10-23T21:01:16Z), on the lead's R-408 and
+  R-409, which take lane openRepoProject-3's W141 read of round (r) and its
+  W139 read of feature 004 at `41759a4`, with no new word of Brett Heap's,
+  gives the main worktree's row, where the ladder classes it `merged-removable`
+  or `merged-current`, "The main worktree is never removed by project clean."
+  in place of its class's (its `specs/project-clean/spec.md:207-215` and
+  :308-320 at `54e869b`; W141 MEDIUM-1), which waits on his ratification of #19
+  and which O22 puts to him for the overview (C-72; FR-028); words the
+  directories whose `<dir>/.git` the `contains-submodule` gate `lstat`s as
+  those holding an index entry "directly or below it, other than the
+  worktree's own top level" (its
+  `specs/project-clean-review-safety/spec.md:9-12` and :113-116 and
+  `specs/project-clean/spec.md:853-854` there; W141 LOW-3), a
+  rewording that changes no meaning of this spec; makes all of a row's nested
+  `lstat`s one filesystem call under one budget, `min(5 s, work remaining)`, a
+  call past it failing closed (its `specs/project-clean/spec.md:855-857` and
+  `design.md:604-614` there; W139 LOW-1), new rule text for a check that the
+  overview never runs (FR-032); and has design D7 say that Q2 (1)'s and Q9
+  (b)'s widenings of `registration-mismatch` are `project clean`'s
+  classifications, `project status`, `doctor` and `update` reporting such a
+  row's evidence as the baseline does, feature 004 classifying them only in
+  `clean`'s plan (its `design.md:591-598` there; R-409), design text that names
+  no feature 004 head and settles neither of C-72's two holds. Its round (t) at
+  `54e869b` (21:25:56Z), on his "yes, recommended for M1 and M3" (R-413),
+  records M1 (a) and M3 (a) (its `proposal.md:3382-3428`), M3 (a)'s
+  197-character next step with a new scenario, "A worktree whose path holds the
+  main worktree" (its `specs/project-clean/spec.md:112-130`), which moves the
+  project-clean cites after it, `specs/project-clean/spec.md:166` to :185 among
+  them; its `specs/project-command/spec.md` is byte-identical to `4512441`'s.
+  This commit keeps this spec's other cites of #19 at `4512441`, where the
+  texts it quotes stand byte-identical at `54e869b` (lane openRepoProject-4's
+  map of rounds (s) and (t)); the next spec commit re-pins them by that map.
+  Lane openRepoProject-5's round B25 re-based #27's blocks of change 1 on
+  `818311a` at `37c0c23` (2026-10-23T19:32:50Z), all eight of this spec's #27
+  pins byte-identical there (the lead's check at 19:39:36Z; lane
+  openRepoProject-3's W147), and its round B26, which follows #19's round (s),
+  has not landed, so this spec keeps #27 at `d95eea2`, and #29 keeps its block
+  of [E] on `c462d87` until change 1's archive, its task 2.4 re-basing it
+  then, as its round C23 record says; round (r)'s edits to [L], to `Clean can
+  explicitly retire verified worktrees` (LOW-1), to `Cleanup revalidates
+  destructive actions` and to [E] reach #27's classification, retire and
+  revalidation blocks and #29's block of [E], whose re-bases owe those edits
+  as well, and rounds (s) and (t)'s edits to [L] and the review-safety spec
+  reach them too. This
   spec keeps its reading of #19 at `2250830`, citing beside it at `4512441` the
   lines that stand there (FR-028; the A1 bullet), and its feature 004 pins as
   they stand; later plan revisions, each recorded in the plan's research.md (R1

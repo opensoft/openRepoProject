@@ -1527,6 +1527,23 @@ Lane: openRepoProject-4
   of 64). A1 stays cited at `e4a30fc`, and `clarify-questions.md` is unchanged.
   Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run by
   script on the edited spec.
+- 2026-10-23, a forty-eighth pass, commit 3at, by the lead's 3at decisions,
+  from `8c3b046` (plan revision 11 part 1), a subset under the usage budget.
+  C-72 records O22, the main worktree's recommendation from #19's round (s),
+  as open for Brett Heap's word, put to him at 22:39:41Z, (A) recommended, and
+  was spec.md:960-1133 at 3at, 174 lines, sha256 `3ac0bf25...`. FR-028 holds
+  O22 to his word and records M4's bearing on O18's 459 and 472. The round (r)
+  record drops "not on origin" and records rounds (s) and (t) to `54e869b`,
+  R-409 among them; the nested `.git` rewording changes no meaning here, and
+  round (s)'s one-call budget is for a check the overview never runs. B25 is
+  recorded as landed at `37c0c23`; #27 stays at `d95eea2`. idempotency.md's
+  CHK008 Result line has two leading spaces again (W151 LOW-1). Owed by the
+  next spec commit: the re-pin of every #19 cite to `54e869b` by the map; the
+  map's section 5 statements in the spec; W151's OBS (1) to (5) and W147's
+  open OBS (the "C-72 is now" passes, EC-028, unsupported-path-bytes, C-72's
+  O18 (A) and O21 reasons); and fold-map.md's sections. O19's outcome and
+  O21's case stay held. No checklist category changes, and the totals are
+  unchanged.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)

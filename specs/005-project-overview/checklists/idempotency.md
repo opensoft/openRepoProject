@@ -28,7 +28,7 @@ Lane: openRepoProject-4
 - [x] CHK007 Do repeated follow-up runs converge (a `target-cap` backlog drains by re-runs)? [Completeness, Spec FR-034, FR-035]
   - Result: pass.
 - [x] CHK008 Is zero mutation protected against Git's optional writes (index refresh, untracked cache, fsmonitor)? [Completeness, Spec FR-016]
-    - Result: pass. `GIT_OPTIONAL_LOCKS=0` and the status pins,
+  - Result: pass. `GIT_OPTIONAL_LOCKS=0` and the status pins,
     `core.untrackedCache=false` and `core.fsmonitor=false` among [E]'s five
     (FR-016; LQ-10, pending); #19's round (q) at `818311a` adds the fifth,
     `core.ignoreCase=false`, which bears on the dirty evidence rather than on
