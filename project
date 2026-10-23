@@ -710,11 +710,15 @@ TEXT = {
     "deferral_line":
         "  deferred-target-cap ({K}): this run removes up to 16; run again: project clean {ROOT} --all-safe --apply",
     # {REASONS}: the reasons of the 16 rows past the cap, each once, in gate
-    # order, joined by ", " (R-146, W21 L-f); the submodule clause is lane 3's
-    # W59 G-4, for #19's round (g3).
+    # order, joined by ", " (R-146, W21 L-f). Its closing clause defers to each
+    # group's own next step, since those rows hold what gates 9 to 12 found,
+    # which a removal the line named would delete (Brett Heap's Q5, "yes,
+    # recommended for Q1-Q9", lead R-380; wave 22's triage T5, sr-removal F6),
+    # where it had said "review those worktrees, then remove them yourself
+    # (--force for any that holds a submodule)" (lane 3's W59 G-4).
     "non_drain_line":
         "  these deferred rows will not drain while the 16 rows ahead of them are {REASONS}; "
-        "review those worktrees, then remove them yourself (--force for any that holds a submodule)",
+        "follow each group's next step for those worktrees",
     "residual_window_line":
         "Not protected: ignored files created, index flags set, operations started or worktree-only commits "
         "made after the last check, and any change after Git's own check.",
@@ -962,13 +966,19 @@ NEXT_STEPS = {
     # worktree that holds a submodule (#19's round (g) as the lead corrected
     # it, short for change 2's 200-character rule; lane 3's W52 F-7, R-248).
     # The parenthetical keeps the submodule's commits first (Brett Heap's Q4
-    # (c), "yes, recommended for Q1-Q9", lead R-380).
+    # (c), "yes, recommended for Q1-Q9", lead R-380). Gate 7 also precedes
+    # gates 9 to 12, which therefore did not run for such a row, so each step
+    # names the checks they would make, since a plain removal could delete a
+    # commit only its HEAD reflog holds or an assume-unchanged edit (Brett
+    # Heap's Q5, lead R-380; wave 22's triage T5, sr-classification M-2).
     "unstarted-branch":
-        "no commit was made on this branch here since it was created; review, then git worktree remove yourself "
-        "(--force if it holds a submodule, once its commits are kept)",
+        "no commit was made on this branch here since it was created; its later gates did not run, so check git "
+        "log -g HEAD, git ls-files -v and git status there, then git worktree remove yourself (--force if it holds "
+        "a submodule, once its commits are kept)",
     "reflog-unavailable":
-        "the branch's reflog is missing, expired or undecidable; review, then git worktree remove yourself "
-        "(--force if it holds a submodule, once its commits are kept)",
+        "the branch's reflog is missing, expired or undecidable; its later gates did not run, so check git log -g "
+        "HEAD, git ls-files -v and git status there, then git worktree remove yourself (--force if it holds a "
+        "submodule, once its commits are kept)",
     # W52 F-8, R-248; a submodule initialized in a linked worktree keeps its
     # repository under that worktree's administrative directory, `modules/`,
     # which --force deletes with any commit not pushed (Brett Heap's Q4 (c),

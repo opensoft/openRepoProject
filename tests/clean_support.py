@@ -613,8 +613,10 @@ TEXT_FIXTURES = {
     "ignored_suffix": ": {N} ignored; first: {SAMPLE}",
     "ignored_suffix_truncated": ": at least {N} ignored; first: {SAMPLE}",
     "deferral_line": "  deferred-target-cap ({K}): this run removes up to 16; run again: project clean {ROOT} --all-safe --apply",
-    # The submodule clause: lane 3's W59 G-4, for #19's round (g3).
-    "non_drain_line": "  these deferred rows will not drain while the 16 rows ahead of them are {REASONS}; review those worktrees, then remove them yourself (--force for any that holds a submodule)",
+    # The closing clause defers to each group's next step: Brett Heap's Q5, "yes, recommended for
+    # Q1-Q9" (lead R-380), copied exactly from #19's round (q) at 818311a, design.md D18; it had
+    # been lane 3's W59 G-4 submodule clause.
+    "non_drain_line": "  these deferred rows will not drain while the 16 rows ahead of them are {REASONS}; follow each group's next step for those worktrees",
     "residual_window_line": "Not protected: ignored files created, index flags set, operations started or worktree-only commits made after the last check, and any change after Git's own check.",
     "empty_line": "No eligible worktrees",
     # D18: the question, the wait, the result.
@@ -754,10 +756,11 @@ NEXT_STEP_FIXTURES = {
     # (#19 at 4f1c0e0, design.md:1198-1199) and F-9 (lane 3's W59 G-5, for
     # #19's round (g3)); R-248.
     # Gate 7's parentheticals and contains-submodule's step keep the submodule's commits first:
-    # Brett Heap's Q4 (c), "yes, recommended for Q1-Q9" (lead R-380), copied exactly from #19's
-    # round (q) at 818311a, design.md D18.
-    "unstarted-branch": "no commit was made on this branch here since it was created; review, then git worktree remove yourself (--force if it holds a submodule, once its commits are kept)",
-    "reflog-unavailable": "the branch's reflog is missing, expired or undecidable; review, then git worktree remove yourself (--force if it holds a submodule, once its commits are kept)",
+    # Brett Heap's Q4 (c), "yes, recommended for Q1-Q9" (lead R-380); gate 7's steps name the
+    # checks of the gates that did not run: his Q5 (R-380). Both copied exactly from #19's round
+    # (q) at 818311a, design.md D18.
+    "unstarted-branch": "no commit was made on this branch here since it was created; its later gates did not run, so check git log -g HEAD, git ls-files -v and git status there, then git worktree remove yourself (--force if it holds a submodule, once its commits are kept)",
+    "reflog-unavailable": "the branch's reflog is missing, expired or undecidable; its later gates did not run, so check git log -g HEAD, git ls-files -v and git status there, then git worktree remove yourself (--force if it holds a submodule, once its commits are kept)",
     "contains-submodule": "push or otherwise keep each submodule's commits first, since --force deletes its repository with this worktree's git directory, then git worktree remove --force yourself",
     "hidden-local-state": "review, then remove the worktree yourself",
     "operation-in-progress": "a git am, merge, notes merge, cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish or abort it (a squash merge that holds an autostash ends with git commit, --allow-empty where nothing is staged, or with git merge --quit, which keeps the edit in the stash list), or, where --abort fails for a marker with nothing in progress, its --quit, or, where Git leaves such a marker in place, delete it by hand from that worktree's git directory, then run again",

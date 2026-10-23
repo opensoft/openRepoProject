@@ -635,6 +635,52 @@ class ReflogTests(clean_support.CleanCase):
         self.assertEqual((selected, excluded[str(tree)]), ([str(control)], "unstarted-branch"))
         self.assertEqual([entry["branch"] for entry in document["excluded"] if entry["path"] == str(tree)], ["y"])
 
+    def test_clean_gate_7_s_step_names_the_checks_of_the_gates_that_did_not_run(self):
+        # Brett Heap's Q5, "yes, recommended for Q1-Q9" (lead R-380; lane 2's
+        # wave 22 triage T5, sr-classification M-2). Gate 7 precedes gates 9
+        # to 12, which do not run for a row it excludes, so its step names
+        # their checks: a detached commit that only the HEAD reflog holds,
+        # and an assume-unchanged edit, each in a worktree whose branch has
+        # no commit of its own, both unstarted-branch. "Review, then git
+        # worktree remove yourself", followed literally, deleted either; the
+        # checks the step now names show each.
+        root = self.repo()
+        self.bare_remote()
+        self.merged_worktree("001-control")
+        held = self.unstarted_worktree("lane-held")
+        hidden = self.unstarted_worktree("lane-hidden")
+        self.git(held, "checkout", "-q", "--detach")
+        (held / "y.txt").write_text("detached work, only copy\n")
+        detached = self.commit(held, "detached Y")
+        self.git(held, "checkout", "-q", "lane-held")
+        self.git(hidden, "update-index", "--assume-unchanged", "work-001-control")
+        (hidden / "work-001-control").write_text("an edit Git is told to ignore\n")
+        step = STEPS["unstarted-branch"]
+        self.assertEqual(step, "no commit was made on this branch here since it was created; its later gates did "
+                               "not run, so check git log -g HEAD, git ls-files -v and git status there, then git "
+                               "worktree remove yourself (--force if it holds a submodule, once its commits are kept)")
+        self.assertEqual(STEPS["reflog-unavailable"],
+                         "the branch's reflog is missing, expired or undecidable; " + step.split("; ", 1)[1])
+        excluded, _, _ = self.preview(root)
+        self.assertEqual({path: excluded[path] for path in (str(held), str(hidden))},
+                         {str(held): "unstarted-branch", str(hidden): "unstarted-branch"})
+        result = self.run_cli("clean", root, "--all-safe")
+        self.assert_status(result, 0)
+        self.assertIn(TEXT["excluded_group"].format(REASON="unstarted-branch", K=2, NEXT_STEP=step),
+                      result.stdout.splitlines())
+        for tree in (held, hidden):
+            with self.subTest(tree=tree.name):
+                self.assert_single_refused(root, tree, "unstarted-branch")
+        # The checks, as the step names them: git log -g HEAD shows the
+        # detached commit, and git ls-files -v the flagged entry (h), which
+        # git status does not show.
+        self.assertIn(detached, self.git(held, "log", "-g", "HEAD", "--format=%H").split())
+        self.assertIn("h work-001-control", self.git(hidden, "ls-files", "-v").splitlines())
+        self.assertEqual(self.git(hidden, "status", "--porcelain"), "")
+        self.assertEqual((held / "y.txt").exists(), False)
+        self.assertEqual(self.git(held, "cat-file", "-t", detached).strip(), "commit")
+        self.assertEqual((hidden / "work-001-control").read_text(), "an edit Git is told to ignore\n")
+
     def test_clean_a_fast_forward_merged_branch_at_the_target_s_tip_stays_eligible(self):
         root = self.repo()
         self.bare_remote()
