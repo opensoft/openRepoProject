@@ -1085,8 +1085,12 @@ order:
 - `Retired BRANCH (was SHA); restore: git -C ROOT branch BRANCH SHA`, or, for
   a name that `git branch` refuses to create, one that begins with `-` or that
   equals `HEAD`, `Retired BRANCH (was SHA); restore: git -C ROOT update-ref
-  refs/heads/BRANCH SHA ''`; each followed, for every local branch BRANCH2
-  that the run did not retire and whose configured upstream the plan's ref
+  refs/heads/BRANCH SHA ''`, a form only defensive for `HEAD`: every status
+  probe of a repository that holds `refs/heads/HEAD` exits 0 and warns
+  `refname 'HEAD' is ambiguous.`, which makes every row of it
+  `inspection-error`, so that no run retires such a branch; each followed,
+  for every local branch BRANCH2 that the run did not retire and whose
+  configured upstream the plan's ref
   listing gives as `refs/heads/BRANCH`, by `Note: BRANCH2 tracks BRANCH as its
   upstream, which now reads gone; no commit is lost`, BRANCH2 printed in prose
   as BRANCH is;
@@ -1920,11 +1924,11 @@ N; branches kept: `; and then the residual-window line.
   out in its worktree by `git symbolic-ref`, the result prints `Retired -f (was
   <sha>); restore: git -C '<root>' update-ref refs/heads/-f <sha> ''`, which
   run by a POSIX shell recreates the ref, and with the refusing test `git` the
-  retry it prints passes `--branch=-f`; and for one written by hand as
-  `refs/heads/HEAD` the same way, a name that `git branch HEAD <sha>` refuses
-  to create, the result prints `Retired HEAD (was <sha>); restore: git -C
-  '<root>' update-ref refs/heads/HEAD <sha> ''`, which run by a POSIX shell
-  recreates the ref
+  retry it prints passes `--branch=-f`; and where one is instead written by
+  hand as `refs/heads/HEAD` the same way, a name that `git branch HEAD <sha>`
+  refuses to create, every status probe of the repository exits 0 and warns
+  `refname 'HEAD' is ambiguous.`, every row is `inspection-error`, and the run
+  removes no worktree and prints no `Retired HEAD` line
 - **AND** for an eligible branch whose name is `topic`, U+202E and `x`, a name
   Git accepts that holds a code point to escape, the result prints `Retired
   $'topic\u202ex' (was <sha>); restore: git -C '<root>' branch $'topic\u202ex'
