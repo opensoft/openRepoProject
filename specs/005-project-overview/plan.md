@@ -6,7 +6,7 @@ Lane: openRepoProject-4
 **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `specs/005-project-overview/spec.md`
-at `54dc025` (its commit 3ah; its 72 clarifications, Brett Heap's answers
+at `98b95db` (its commit 3ai; its 72 clarifications, Brett Heap's answers
 of 2026-10-21 folded in and his word on the held items in C-72), with its
 17 checklists and `clarify-questions.md`.
 
@@ -91,16 +91,20 @@ commit after PR #19's ratification, he reviewing the final text before #34
 merges; until then the ratified text stands. D5's clause 2, chosen with O4 (a)
 only through O6's text at `7af798a`, reverses ratified D5's "remedy kept whole"
 for one case and is before him for his direct word; until he answers, it rests
-on that text. A1's own ordering rule, the four LQ items', reaches only O5 and
-O10; O1, O2, O4, O6 and O7 rest on his word for change 2; the open O3 and O8,
-O11's part 2 and, should he take (C), O9 wait on his word for change 2 too, and
-O11's part 1 is a text re-alignment on a lane finding for his review (C-72 at
-`54dc025`). The six open ones are built as ratified, but O11's part 1, built
-now as the plan's reading of a conflict in ratified A1 (R9). An answer, or a
-change in his review of the final text, lands as a change to that place and its
-tests alone, with one exception: O11's part 1 (B) would also fail, and so
-re-word, the scenario "A separate git directory" of change 2 and of this spec
-(R20).
+on that text. C-72 at `98b95db` (spec.md:977-985) gives the order: "A1's
+ordering rule (its `proposal.md:1278-1284`) is the four LQ items' and reaches
+O10 (LQ-15's extension) and O5 (item 9, owed under it); O1, O2, O4, O6 and O7
+(items 2, 6, 8 and 10) rest on his word for change 2 and on #19's rounds, and
+reach A1 in the same re-alignment commit, which follows #19's ratification, he
+reviewing the final text before #34 merges; the open O3 and O8 (items 7 and
+10), O11's part 2 (item 11) and, should he take (C) (the overview follows
+feature 004, the plan's R20 O9 (C)), O9 wait on his word for change 2 too, and
+O11's part 1 is a text re-alignment on a lane finding for his review." The six
+open ones are built as ratified, but O11's part 1, built now as the plan's
+reading of a conflict in ratified A1 (R9). An answer, or a change in his review
+of the final text, lands as a change to that place and its tests alone, with
+one exception: O11's part 1 (B) would also fail, and so re-word, the scenario
+"A separate git directory" of change 2 and of this spec (R20).
 
 ### Gates on the three 004-touching changes
 
@@ -146,7 +150,8 @@ feature 005 merges, and slice 1's pull request quotes the checks of (a) to
   `specs/004-project-clean-all-safe/NAME:N`. Revision 1 moved every cite
   from `4b4c36b`, revision 3 from `0a82a62` and revision 4 from `211e43d`;
   a later head is re-cited before tasks are written, and `main` after PR
-  #33 lands (research.md R1).
+  #33 lands (research.md R1). Its later head `f3724fc` changes documents
+  only, `project` and the tests unchanged since `d6bac50`.
 - `A1:N`, `A1 design.md:N`: change 2's `specs/project-overview/spec.md`
   and `design.md` at `e4a30fc` (branch
   `change/amend-project-overview-clarify-answers`).
@@ -167,9 +172,9 @@ feature 005 merges, and slice 1's pull request quotes the checks of (a) to
   (n) words. Earlier revisions read it at `00205d73`, `10890e2c`,
   `8ce4e9fb`, `811b9cef` and `c5840a66` (research.md R20).
 - Lane openRepoProject-3's W96 read of this plan at `a80f10b`, with its
-  delta reads at `aeb0bb2`, `6fb619c`, `664461f` and `06b16e1`: revisions 2
-  to 5 take each of its findings (research.md, "Revision 2" to "Revision
-  5").
+  delta reads at `aeb0bb2`, `6fb619c`, `664461f`, `06b16e1` and `464c361`:
+  revisions 2 to 6 take each of its findings (research.md, "Revision 2" to
+  "Revision 6").
 
 ## Technical Context
 
