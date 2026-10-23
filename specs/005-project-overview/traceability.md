@@ -73,6 +73,12 @@ Test modules under `tests/`, with `overview_support.py`:
 | `test_overview_units.py` | deciders, keep-filter, composer, counts |
 | `test_overview_factoring.py` | condition (c); `start_child`, `conclude` |
 
+`overview_support.py`: fixtures, isolation, snapshot, audit hook, the probe
+shim, the seam helpers (`OVERVIEW_FS`), the pty runner
+(`run_with_stderr_tty`) and the tests' own transcription of the contract
+(research.md R18). `tests/compare_clean_base.py`, not collected, is gate
+(b)'s script (quickstart.md).
+
 ## The 004-touching changes (research.md R3)
 
 Lane openRepoProject-2's five conditions, each a gate on slice 1 and on
@@ -101,12 +107,15 @@ changes"); lane 2 or lane openRepoProject-3 reads the diff before feature
 - FR-002, FR-003: discovery; R10; data model "Candidate".
 - FR-004: collect (no Git child for a candidate without `.git`).
 - FR-005: discovery; R10 (PN-9); contract "Row and scan errors".
-- FR-006: collect; R5; data model "Repository".
+- FR-006: collect; R5; data model "Repository"; research.md O4 (a) and
+  O13 (chosen; D5's clause 2 chosen by name).
 - FR-007: collect; R9, R17 (PN-18); research.md O5 (chosen), O11 (chosen:
-  part 1 built now, part 2 with A1's re-alignment).
+  part 1 built now as the plan's reading of a conflict in ratified A1, a
+  text re-alignment on a lane finding; part 2 with A1's re-alignment).
 - FR-008, FR-009: collect, findings; R5, R9; contract "Other findings",
-  "Git children"; research.md O4 (a), O7 and O13 (chosen), O11 (chosen:
-  part 1 built now, part 2 with A1's re-alignment).
+  "Git children"; data model "Worktree row" (O16 (a), chosen, built now);
+  research.md O4 (a), O7, O13 and O14 (chosen), O11 (chosen: part 1 built
+  now as the plan's reading, part 2 with A1's re-alignment).
 - FR-010: collect; data model "Repository".
 - FR-011, FR-012: loop; R4, R9; data model "Child outcome to row error".
 - FR-013: loop; R7 (PN-10).
@@ -129,8 +138,8 @@ changes"); lane 2 or lane openRepoProject-3 reads the diff before feature
 - FR-029, FR-030: render; data model "Exit statuses"; contract "Human
   report".
 - FR-031 to FR-035: findings; R12; data model "Gates"; contract
-  "Remedies", "Composer"; research.md O1, O2, O4, O6 and O15 (chosen; D5's
-  clause 2 chosen by name).
+  "Remedies", "Composer"; research.md O1, O2, O4, O6, O7, O11 and O15
+  (chosen; D5's clause 2 chosen by name).
 - FR-036 to FR-038: render; R11, R15 (PN-6, PN-8); contract "JSON".
 - FR-039: render, dispatcher; R15 (PN-2); contract "Exit-2 outputs".
 - FR-040: R3 (the ban), R18 (the wrapper's allow-list), R19.
@@ -213,13 +222,150 @@ are not family holders; FR-007's twins (EC-031), its identity re-read before a
 status probe, its extension read, effective-work-tree probe and `commondir`
 check, and a wrapper log with no `rev-parse` child in a linked worktree where
 the extension reads false; FR-010; FR-020's `estimated`; FR-021's `refused` and
-`undecodable-output`; FR-022's 200-character bound, with the composer's length
-tables (R12; R20's "Lengths"); O11 part 2's `core.worktree` read that prints
-and exits 1 (R18); FR-033's reflogs of 65,535 and 65,536 bytes; FR-037's
-orders, ties by rank (PN-8) and the repository-level finding first; FR-039's
-`refused` and `os-error`; EC-033's branch named `HEAD` (PN-17); the empty
-`--root` (PN-13); a root listing that fails partway (PN-9); and the overview's
-own readings of R9.
+`undecodable-output`; FR-022's 200-character bound (a unit test over the error
+table with the longest STRERROR the platform gives, asserting at most 200) and
+the composer's length tables (R12; R20's "Lengths"); O11 part 2's
+`core.worktree` read that prints and exits 1 (R18); FR-033's reflogs of 65,535
+and 65,536 bytes; FR-037's orders, ties by rank (PN-8) and the
+repository-level finding first; FR-039's `refused` and `os-error`; EC-033's
+branch named `HEAD` (PN-17); the empty `--root` (PN-13); a root listing that
+fails partway (PN-9); the overview's own readings of R9; FR-049's
+device-and-inode dedupe of roots and candidates and the canonically first
+spelling, through an injected file-status call (`test_overview_discovery.py`);
+FR-001's cut canonicalisation (C-67; US6 s6's second clause: the root's
+`path` the given path made absolute and unresolved, sorted among canonical
+paths, never deduplicated, counted toward the 32 roots; scenario 23's second
+arm); scenario 13's two listing orders (US6 s1); scenario 24's hold of each
+Git child in the hung checkout (R18's shim); and these, each named as
+proposed (the plan's rule is `test_overview_<subject>`):
+
+- FR-032's residual:
+  `test_overview_the_two_residual_gates_keep_the_all_safe_suggestion`
+  (gates): a `merged-removable`
+  worktree with an operation-in-progress marker, one with a commit only on
+  its worktree, one with a submodule and one with hidden local state each
+  keep `--all-safe` with no gate; the wrapper log holds no `rev-list`, and
+  the armed hook's list no `open` of a `logs/HEAD` and no `os.scandir` or
+  `os.listdir` of an administrative directory (R18).
+- FR-044, C-69 and EC-035, a signal while the report is written:
+  `test_overview_a_signal_while_the_report_is_written` (exits): standard
+  output a pipe nobody reads (shrunk with `fcntl.F_SETPIPE_SZ` on Linux,
+  else a document over 64 KiB), SIGTERM once the run has outlived its last
+  child by 1 s: status 143, `Cancelled.`, and standard output a strict
+  prefix of the full document.
+- FR-044, a signal recorded while rendering:
+  `test_overview_a_signal_recorded_while_rendering_prints_nothing` (exits):
+  `render_report()` delivers SIGTERM in-process: empty standard output,
+  status 143.
+- FR-039's failed write: `test_overview_a_failed_write_to_standard_output`
+  (exits): descriptor 1 closed in the child, as feature 004's
+  `test_clean_the_plain_report_in_json_with_standard_output_closed` closes
+  it (`tests/test_clean_guard.py:373-397`): exit 2, no traceback, standard
+  output empty, `line.write-failed` on standard error (R15).
+- FR-026, the working directory's realpath failing:
+  `test_overview_the_working_directory_s_realpath_fails` (classifier): the
+  seam's `realpath` raising for the working directory, `PWD` absolute: the
+  first scan error `os-error`, OPERATION `realpath`, `path` the `PWD`
+  value; every `current` null; a clean, merged, published row
+  `inspection-error` with no row error and gate `inspection-incomplete`;
+  the other rows classified as usual (R5; O9 (A)).
+- FR-043, a relative `GIT_CONFIG_GLOBAL` or `GIT_CONFIG_SYSTEM`:
+  `test_overview_a_relative_configuration_path_each_variable` (exits),
+  feature 004's cases copied (`tests/test_clean_resolution.py:1177-1248`):
+  the wrapper log empty, `git --version` included (O10 (A)).
+- FR-012's half-way rows: part of scenario 18's test: one repository with
+  two rows, the first row's status probe held past the deadline; the second
+  keeps the registry, extension, refs and merged evidence and gets
+  `deadline-exceeded` (R4).
+- FR-025's cut manifest read:
+  `test_overview_a_cut_manifest_read_gives_no_merge_target` (isolation): a
+  slow seam `read` for one manifest: `probe-timeout`, `merge_target` null,
+  no `no-merge-target` finding, no fallback to `origin/HEAD`, `main` or
+  `master`, and no ladder.
+- US1 s8: `test_overview_a_root_that_is_itself_a_project` (discovery):
+  `--root` naming one project's own directory gives that candidate its row.
+- US2 s4: `test_overview_row_and_scan_errors_under_attention` (attention):
+  a row error and a scan error under `--attention`, both shown under
+  `repair`, neither counted as a finding.
+- Scenario 44's "pasted into bash under a UTF-8 locale": part of its test,
+  human form, on Linux: the printed `next` words run through `bash -c`
+  under `LC_ALL=C.UTF-8` and the root compared; skipped with the reason
+  where bash is older than 4.2 or the locale is missing.
+
+## Held items, chosen: their tests
+
+The first build asserts A1 as ratified; the commit that A1's re-alignment
+lands with flips, in one commit, the assertions named here (C-72; plan.md,
+Summary). Per item: its behaviour test (module), its fixture or seam, and
+what flips.
+
+- O1 (A): scenarios 42's and 43's tests (gates), the five reflog fixtures;
+  flips: the message and the human `next` end "...yourself" to
+  "...yourself (--force if it holds a submodule)", and the composer's rows,
+  `unstarted-branch` cut to 59 of 67 and `reflog-unavailable` exactly 200.
+- O2 (A):
+  `test_overview_a_reflog_read_cut_by_the_deadline_is_deadline_exceeded`
+  (units): the decider with the cut's limit as input; flips: the gate
+  `inspection-incomplete` to `deadline-exceeded` with `re-run with --root
+  <repository parent>`, a budget cut staying `inspection-incomplete`.
+- O3: `test_overview_the_identity_re_read_is_counted_in_estimated` (units),
+  a line-feed directory (scenario 44's) and a submodule checkout (scenario
+  10's); flips: `estimated` gains +3 per such candidate, so that it equals
+  `performed` in an uncut run but for R14's listed divergences.
+- O4 (a) with (c) and (d):
+  `test_overview_a_redirected_main_worktree_gets_no_clean_suggestion`
+  (gates): a main worktree its own `core.worktree` redirects, in both
+  layouts (R20's two tests), a bare entry whose path plus `/.git` is the
+  common directory, and a main-worktree probe that exits nonzero (the
+  shim's fail action); flips: the ratified suggestion to `suggested_command`
+  null with `target-not-repository-root` and the redirect remedy (152
+  characters), and `estimated` +1 per repository in the ordinary layout
+  whose present main worktree is no candidate.
+- D5's clause 2: the composer's stale-and-redirect row (units); flips: D5's
+  rule alone to the recommendation left out and the remedy cut to 200.
+- O5:
+  `test_overview_a_linked_worktree_path_holding_a_line_feed_under_the_extension`
+  (identity) and a unit of `work_tree_output()`; flips: output not exactly
+  one line disagreeing to
+  the output less its final line feed read as one path.
+- O6 and O7: scenarios 7's and 11's tests and
+  `test_overview_the_stale_warning_while_a_sibling_row_is_unreadable`
+  (attention), a sibling row with `present: null` (`chmod 000` on its
+  parent under `not_root`, and its injected `PermissionError` twin); flips:
+  the plain stale text to T6 (160 characters), the `main-worktree-missing`
+  remedy to 152 characters, and the composer's clause 1 rows.
+- O8 (A): `test_overview_a_locked_stale_row` (attention), a locked worktree
+  whose directory was deleted, once beside an unreadable sibling; flips:
+  the one stale text to "Review, unlock it, then prune stale worktree
+  metadata manually." (173 characters with the warning).
+- O9 (A) and O10 (A): the FR-026 and FR-043 tests above; nothing flips.
+- O11 part 1, built now: scenario 9's test and a unit of
+  `core_worktree_value()` (`git init --separate-git-dir`, the key unset);
+  nothing flips.
+- O11 part 2 (A): `test_overview_a_core_worktree_read_that_fails_otherwise`
+  (identity), the shim's fail action (a line on standard error, exit 1) and
+  a second case cut by a hold; flips: no gate code to
+  `target-not-repository-root` with the 79-character remedy, the row error
+  `probe-failed`, `repository.root` null and no `unsupported-layout`
+  finding staying.
+- O12 (A), built now: the parity tests name a failed ref listing, and a
+  unit asserts every class null after it; nothing flips.
+- O13 (A):
+  `test_overview_the_core_worktree_read_runs_in_the_common_directory`
+  (identity): a `git init --separate-git-dir` repository with
+  `extensions.worktreeConfig` true reached through a linked candidate whose
+  own `config.worktree` sets `core.worktree`; flips: the wrapper log's
+  `config --get core.worktree` from `-C` the candidate to `-C` the common
+  directory, and the suggestion `project clean` refuses to the one it reads.
+- O14 (A), built now: a test named after the limit (a linked worktree of a
+  submodule's module directory as the only candidate) asserts the built
+  behaviour, so that a later detection would flip it (R9).
+- O15 (A), built now: the composer's rows at an escaped parent of 176, 177,
+  255 and 4,096 characters and one of 30 escaped control characters (units;
+  R18); nothing flips.
+- O16 (a), built now: scenario 12's test, "A bare repository with a linked
+  worktree", asserts the bare row's `branch`, `head` and
+  `merged_into_target` null; nothing flips.
 
 ## Success criteria
 
@@ -230,7 +376,10 @@ own readings of R9.
   directory whose realpath fails (O9 (A)) and a failed ref listing (O12
   (A)), and, if #24's realization merges first, a cache-only worktree
   (C-71).
-- SC-004: `test_overview_gates.py` (argument vectors only).
+- SC-004: `test_overview_gates.py`: the argument vectors, and in every gate
+  fixture a helper, `assert_preview_agrees(root, document)`, that runs the
+  preview each ungated `--all-safe` suggestion names and asserts every such
+  worktree selected or excluded only as SC-004 lists (scenarios 34 and 37).
 - SC-005, SC-006: `test_overview_bounds.py`; the hand timing in
   [quickstart.md](quickstart.md).
 - SC-007: `test_overview_bounds.py`, concurrency 1 and 4.

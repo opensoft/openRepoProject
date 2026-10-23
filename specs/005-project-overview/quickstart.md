@@ -44,27 +44,33 @@ git diff --stat "$B" HEAD -- tests/test_clean_*.py \
     tests/test_status_doctor_update.py tests/test_project.py \
     tests/clean_support.py tests/launch_project.py     # expect no output
 python3 -m unittest discover -s tests -v
-# (d) every other subcommand's help unchanged; the top-level help gains
-# one line only
+# (d) every other subcommand's help unchanged; the top-level help changes
+# in three hunks only
 mkdir "$F/base" && git show "${B}:project" > "$F/base/project" \
     && chmod +x "$F/base/project"       # same name, so usage lines match
 for sub in new benches status doctor update clean; do
     diff <("$F/base/project" "$sub" --help) <(./project "$sub" --help) \
         || echo "DIFFERS: $sub"                       # expect no output
 done
-diff <("$F/base/project" --help) <(./project --help)
-# expect only the subcommand list's new name and the overview's help line
+diff <(COLUMNS=80 "$F/base/project" --help) <(COLUMNS=80 ./project --help)
+# expect exactly three hunks: the usage line, now wrapped to two lines,
+# the {...} choices line, and the overview's help row
 ```
 
 (c) is a unit test of the split: `Invocation("clean")` keeps `work_end` 50 s
 and `reserve_end` 60 s after its start under the real table, and feature
 004's timing tests pass unedited.
 
-(b), the side-by-side run: one script builds each fixture at a fixed path
-with fixed `GIT_AUTHOR_DATE` and `GIT_COMMITTER_DATE`, so that object names
-agree between builds, and runs the same commands against
-`$F/base/project` and `./project`, the counting wrapper first on `PATH`;
-an `--apply` command runs on a fresh build for each. Fixtures: a merged
+(b), the side-by-side run: one script, `tests/compare_clean_base.py` (a
+slice 1 deliverable; discovery does not collect it), run by hand as
+`PROJECT_BASE="$F/base/project" python3 tests/compare_clean_base.py`. It
+builds each fixture with `tests/clean_support.py`'s builders at one fixed
+path, with fixed `GIT_AUTHOR_DATE` and `GIT_COMMITTER_DATE`, so that paths
+and object names agree between builds, runs the same commands against
+`$PROJECT_BASE` and `./project`, the counting wrapper first on `PATH`,
+then moves the fixture aside with `mv` and builds the next at the same
+path; an `--apply` command runs on a fresh build for each. It exits 0 only
+when every comparison below is identical. Fixtures: a merged
 worktree; a dirty one; an unstarted branch; 17 merged worktrees (the
 target cap); 257 registered rows (the report cap); a failed status probe
 and a held one (fake Gits); a reflog read and a status probe cut by the
@@ -93,14 +99,22 @@ python3 -m unittest discover -s tests -v \
 
 ## Set up a fixture (bash)
 
-Every path is under a fresh scratch directory; `HOME` and `PROJECTS_DIR`
-point into it, so no real projects directory is read.
+Every path is under a fresh scratch directory; `HOME`, `PROJECTS_DIR` and
+`WORKBENCHES_ROOT` point into it, so no real projects directory or
+workBenches checkout is read, and fake owner tools first on `PATH` log any
+call (feature 004's hand-run rule, R-202).
 
 ```bash
 P="$PWD/project"                      # the feature's script
 F=$(mktemp -d)
 export HOME="$F/home" PROJECTS_DIR="$F/root"
-mkdir -p "$HOME" "$PROJECTS_DIR"
+export WORKBENCHES_ROOT="$F/wb"
+mkdir -p "$HOME" "$PROJECTS_DIR" "$WORKBENCHES_ROOT" "$F/bin"
+for t in gh setup-openspeckit openspec onp docker; do   # log, exit 97
+    printf '#!/bin/sh\necho %s >> "%s"\nexit 97\n' "$t" \
+        "$F/owner-tools.log" > "$F/bin/$t" && chmod +x "$F/bin/$t"
+done
+export PATH="$F/bin:$PATH"
 g() { git -c user.name=t -c user.email=t@example.invalid \
           -c init.defaultBranch=main "$@"; }
 g init -q --bare "$F/origin.git"
@@ -130,7 +144,9 @@ snap() { find "$F" -path "$F/home" -prune -o \
 snap > "$F.before"
 ```
 
-After every run below, `snap | diff "$F.before" -` prints nothing.
+After every run below, `snap | diff "$F.before" -` prints nothing and
+`test ! -s "$F/owner-tools.log"` holds. `snap` uses GNU `find -printf` and
+`sha256sum`, so it is a Linux recipe.
 
 ## User Story 1: every local project in one report
 
@@ -259,8 +275,9 @@ caps' worst case at 48.3 s of the 60 s deadline.
 ```bash
 git diff --stat origin/main...HEAD
 # Expect only: project; tests/test_overview_*.py; tests/overview_support.py;
-# README.md; AGENTS.md (FR-051, only if T123 lands); .github/workflows/
-# tests.yml (FR-050, one -k prefix); specs/005-project-overview/.
+# tests/compare_clean_base.py; README.md; AGENTS.md (FR-051, only if T123
+# lands); .github/workflows/tests.yml (FR-050, one -k prefix);
+# specs/005-project-overview/.
 git diff origin/main...HEAD -- project | grep '^+' | LC_ALL=C grep -nP \
     '[^\x00-\x7F]'                       # expect no output
 /usr/bin/openspec validate --all --strict   # 1.6.0 or later

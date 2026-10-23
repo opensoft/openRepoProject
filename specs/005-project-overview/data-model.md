@@ -123,8 +123,9 @@ Exceptions (A1's collector table): the extension read's exit 1 with nothing
 on either stream is `false` with no error; the work-tree probe's failure or
 unusable output makes the registration disagree, with no error. And, as the
 plan's reading of a conflict in ratified A1 (research.md R9; R20's O11,
-part 1): the `core.worktree` read's exit 1 with nothing on either stream
-is the key unset, with no error, so the root falls through to the
+part 1; a departure from DI:535): the `core.worktree` read's exit 1 with
+nothing on either stream is the key unset, with no error, so the root falls
+through to the
 candidate's toplevel (`config_key_unset`, `project:2749`); any other
 failure of that read keeps the table's row error and leaves `root` null.
 
@@ -141,12 +142,16 @@ failure of that read keeps the table's row error and leaves `root` null.
 Keyed by the `(dev, ino)` of the no-follow `lstat` of `common_dir`.
 
 - `identity`: `{root, common_dir, dev, ino}` and the two flags; `root` by
-  FR-008 and FR-009
+  FR-008 and FR-009. The main worktree itself is a candidate when a
+  candidate is a spelling of the first registry record's directory (the
+  same `(dev, ino)`; A1 design.md:455-458), and the root is then that
+  candidate's identity toplevel (A1:139-141)
 - `rank`: the rank of the first candidate that reached it
 - `records`: the registry listing (`WorktreeListParser`)
 - `extension`: `true`, `false`, or `true` with an error (research.md R9)
 - `refs`: the keep-filter's records: local heads, `origin/HEAD`, the upstreams
-  the heads name
+  the heads name; kept as the list for `resolve_merge_target` and passed to
+  `row_evidence` as `{refname: record}`, as `project:3510` builds it
 - `remote_copy`: one flag per candidate name known before the listing (A1
   design D9); when the merge target comes from `origin/HEAD`, its remote
   copy is the symref's own target, listed by construction, so the flag is
@@ -164,7 +169,11 @@ Keyed by the `(dev, ino)` of the no-follow `lstat` of `common_dir`.
 gitfile checkout, a gitfile checkout whose `core.worktree` read failed
 other than as unset (R20's O11, parts 1 and 2, chosen), a gitfile checkout
 whose read `core.worktree` value has no strict realpath (`os-error`,
-OPERATION `realpath`, or the task's cut; research.md R9), and a missing main
+OPERATION `realpath`, or the task's cut; research.md R9), a first registry
+record whose `lstat` or realpath fails other than with `ENOENT` or
+`ENOTDIR`, or is cut, where the first candidate is a linked worktree
+(`main_worktree_decision`'s `unreadable`, `project:2880-2881`: the row's own
+error records it, with no suggestion and no gate code), and a missing main
 worktree (FR-008, FR-009); and, once A1's re-alignment lands, for a main
 worktree that O4 (a)'s detector finds redirected (R20's O4 (a), chosen;
 "Gates", below).
@@ -252,8 +261,34 @@ finish (FR-033).
 
 For the checkout at the row's `path`, from evidence already held: `branch`,
 `head`, `dirty`, `upstream`, `ahead`, `behind` and `tracking_freshness`,
-the constant `local refs only; no fetch`. No probe of its own; null when
-the row has no Git.
+the constant `local refs only; no fetch`. No probe of its own. `git` is
+null exactly when `worktrees` is null (a candidate without `.git`, FR-004;
+a family holder with no Git toplevel, FR-003; an error row whose
+collection ended before the registry, FR-005, A1:407); otherwise it is an
+object whose fields are null where the checkout at `path` established
+nothing (no registry row for `path`, a failed or cut probe), with the null
+rules of that worktree row's fields, and whose `tracking_freshness` is
+never null (C-13, C-32).
+
+### Project row (FR-036; C-40; DI:743-758)
+
+- `name`: string, the manifest's `name`, else the directory name
+- `path`, `path_valid_utf8`: string and boolean, never null; `path` is
+  `repository.root` for a Git row (the candidate when `root` is null), the
+  holder for a family holder, else the candidate; the flag speaks for that
+  path alone (A1 design.md:606-618), not by the packet's any-of rule
+- `kind`: `single`, `project-manifest` or `family-holder`; null when the
+  marker checks failed
+- `repository`: object or null; `root` null for a bare main entry, a
+  submodule checkout, an unnamed gitfile checkout, a missing main worktree
+  and the other cases under "Repository" above
+- `merge_target`: object or null ("Repository")
+- `git`: object or null (above)
+- `worktrees`: array or null, main first, then by path bytes
+- `findings`: array, never null
+- `suggested_command`: argument vector or null ("Suggestion")
+- `status`: `error` exactly when `errors` is non-empty, else `ok`
+- `errors`: array, never null, in step order
 
 ### Finding (FR-027 to FR-035, FR-041)
 
@@ -314,8 +349,8 @@ fails replaces the housekeeping finding with its own, the class unchanged:
   - Fails when: `unstarted-branch` or `reflog-unavailable`
   - Finding: `merged-removable` kept, read-only, gate code set
 
-Repository and run gates, each withholding or limiting the suggestions of
-every worktree of the repository (FR-031, FR-034):
+Repository, run and row gates, in FR-035's order after the row gates above,
+each withholding or limiting the suggestions it names (FR-031, FR-034):
 
 - `target-not-repository-root`
   - Applies when: `repository.root` null for a bare repository; CHOSEN, once
@@ -341,7 +376,9 @@ every worktree of the repository (FR-031, FR-034):
   - Applies when: a row left unclassified by the 512-row cap
   - Effect: `--all-safe` withheld
 - `deadline-exceeded`
-  - Applies when: a row left unclassified by the deadline
+  - Applies when: a row left unclassified by the deadline; CHOSEN (O2 (A)),
+    once A1's re-alignment lands, also a row whose reflog read the deadline
+    cut, in place of `inspection-incomplete`
   - Effect: `--all-safe` withheld
 - `unstarted-branch`, `reflog-unavailable`
   - Applies when: the row's reflog decides so
@@ -351,16 +388,23 @@ every worktree of the repository (FR-031, FR-034):
     (16)
   - Effect: each keeps it, limited
 
-A root left null by `unsupported-layout`, by `main-worktree-missing` or by a
-failed `core.worktree` read carries no gate code; for the last, the gate code
-`target-not-repository-root`, with a remedy row of its own, "core.worktree
-could not be read; repair the repository's config, then run again", is O11's
-part 2 (A), chosen, built once A1's re-alignment lands. A gate is recorded
-only on a finding whose own suggestion it
+A root left null by `unsupported-layout` or by `main-worktree-missing`
+carries no gate code. A root left null by a failed `core.worktree` read
+(O11, chosen) carries none until A1's re-alignment lands; then every clean
+suggestion is withheld with `target-not-repository-root` and the remedy of
+its own row, `remedy.target-not-repository-root`'s "core.worktree could not
+be read; repair the repository's config, then run again" (79 characters),
+in place of the bare row's. A gate is recorded only on a finding whose own
+suggestion it
 changed: a `dirty` finding in an `inspection-incomplete` repository keeps its
-read-only suggestion and a null `suggestion_gate` (A1 design D5). The items O1,
-O2, O4 and O11's part 2 that Brett Heap's word chose (C-72; research.md R20)
-each change one row of these tables once A1's re-alignment lands.
+read-only suggestion and a null `suggestion_gate` (A1 design D5). A
+worktree path that is not valid UTF-8 changes no suggestion but its own
+`merged-removable` row's, the row gate replacing that finding; every other
+finding of that worktree keeps its table suggestion and a null
+`suggestion_gate`, since the command names only the root (A1:776-779; A1
+design.md:289-293, :617-618). The items O1, O2, O4 and O11's part 2 that
+Brett Heap's word chose (C-72; research.md R20) each change one row of
+these tables once A1's re-alignment lands.
 
 O4 (a), CHOSEN, once A1's re-alignment lands (research.md R20): where the
 main worktree's toplevel, from its own candidate's identity probe or else
@@ -388,7 +432,9 @@ else the read-only form when any does, else null.
 
 `{code, message, path?, path_valid_utf8?}`, plus `limit` and `omitted:
 {count, exactness}` on `scan-limit` errors and on the one
-`deadline-exceeded` scan error that counts the candidates not started.
+`deadline-exceeded` scan error that counts the candidates not started;
+`exactness` is `exact`, `lower-bound` or `unknown`, `count` null under
+`unknown`, as for the entry cap (A1:253-257).
 Row errors sit in the project row's `errors` in step order, a worktree's
 error naming the worktree in `path`; scan errors in `scan_errors` in A1
 design D6's order.
@@ -396,8 +442,9 @@ design D6's order.
 ### Envelope and summary (FR-036, FR-037; C-40)
 
 The envelope's eleven fields and `summary`'s five are listed in the
-contract. `completeness` is `incomplete` exactly when `scan_errors` is
-non-empty or a row has status `error`; a row's status is `error` exactly
+contract; `relationships` is `[]` (FR-003). `completeness` is `incomplete`
+exactly when `scan_errors` is non-empty or a row has status `error`; a
+row's status is `error` exactly
 when its `errors` is non-empty. `summary` counts the whole collection,
 whatever `--attention` shows.
 

@@ -51,8 +51,11 @@ No other option, variable or file changes a limit or a time (FR-047).
 - `help.json`: "Print one JSON document"
 - `help.strict`: "Warnings also make the exit status 1"
 
-`--root` takes `metavar="D"`. Adding the subcommand adds one line to
-`project --help`; no other subcommand's output changes (FR-047).
+`--root` takes `metavar="D"`. Adding the subcommand changes `project
+--help` in three places, with `COLUMNS=80`: its usage line, rewrapped to
+two lines, its `{...}` choices line and one new help row; a bad choice's
+usage line changes the same way, and no other subcommand's output changes
+(FR-047).
 
 ## Argument checks (before any Git child)
 
@@ -110,7 +113,11 @@ No other option, variable or file changes a limit or a time (FR-047).
 | any other exception there | error object, `internal-error` | `REFUSED:` |
 | failed write to standard output | `line.write-failed` on stderr | the same |
 
-The error object is exactly `{"error": MESSAGE, "code": CODE}`.
+The error object is exactly `{"error": MESSAGE, "code": CODE}`. MESSAGE for
+`refused` and `os-error` is the exception's message as feature 004's
+`main()` prints it (`project:7913-7919`), escaped by [P] for the mode; for
+`internal-error`, `internal error (CLASS)`; for `git-too-old`,
+`git-unavailable` and `relative-config-path`, their `refusal.*` texts.
 `relative-config-path` with exit 2 is ratified ("ratify 34"), and LQ-15's
 extension keeps its two names (O10 (A), chosen), landing with PR #19's
 ratification of LQ-15's commits.
@@ -137,7 +144,9 @@ feed (PN-6), every key always present, in these orders:
   `common_dir_valid_utf8`;
 - `merge_target`: `name`, `source`, `sha`;
 - `git`: `branch`, `head`, `dirty`, `upstream`, `ahead`, `behind`,
-  `tracking_freshness` (always "local refs only; no fetch");
+  `tracking_freshness` (always "local refs only; no fetch"); `git` is null
+  exactly when `worktrees` is null, and otherwise an object whose
+  `tracking_freshness` is never null (data model, "The `git` object");
 - worktree row: `path`, `path_valid_utf8`, `dev`, `ino`, `admin_id`,
   `present`, `locked`, `prunable`, `current`, `branch`, `head`, `upstream`,
   `upstream_oid`, `ahead`, `behind`, `remote_present`,
@@ -158,7 +167,19 @@ feed (PN-6), every key always present, in these orders:
   is involved, then `limit` and `omitted` (`count`, `exactness`) on a
   `scan-limit` error and on the one `deadline-exceeded` scan error that
   counts the candidates not started (`limit:
-  "invocation_timeout_seconds"`).
+  "invocation_timeout_seconds"`); `exactness` is `exact`, `lower-bound` or
+  `unknown`, and `count` is null under `unknown` (A1:253-257).
+
+`relationships` is always `[]` in version 1 (FR-003; A1:692).
+
+Escapes and flags, as FR-038 and FR-045 state them (A1:733-750; A1 design
+D11): a path in the human report is printed in `$'...'` form when it holds
+a code point of general category Cc, Cf, Zl or Zp or an undecodable byte,
+each such code point as `\uXXXX`, or `\UXXXXXXXX` above U+FFFF; every other
+string from the filesystem, a manifest or Git follows the path rule; the
+JSON is written with `ensure_ascii=True`; and each `*_valid_utf8` flag
+speaks for its own path alone and is null only beside a null path (A1
+design.md:606-618).
 
 Arrays: `roots` by canonical bytes; `projects` by the bytes of `path`, a
 tie by rank (PN-8); `worktrees` main first, then by path bytes; `findings`
@@ -178,7 +199,8 @@ For each shown row, in the JSON's order:
 - when the row has a suggested command or a gate decided it: two spaces,
   `next` left-justified in 14 columns, the command (POSIX shell quoting, or
   the `$'...'` form for a path [P] marks) or `none`, then two spaces and
-  `(withheld: REMEDY)` or `(limited: REMEDY)`.
+  `(withheld: REMEDY)` or `(limited: REMEDY)`, the parenthetical only when a
+  gate withheld or limited the command (A1:927-931).
 
 Then one line per scan error, `line.incomplete-path` or `line.incomplete`;
 the all-absent line when every root is `absent`; and always the summary
@@ -227,7 +249,8 @@ is started.
   on either stream is the key unset, with no error (O11, part 1, the
   plan's reading of a conflict in ratified A1; research.md R9); any other
   failure records the row error and leaves the root null, with no
-  suggestion and no gate code. A value read names the root only through
+  suggestion and no gate code (O11's part 1 a departure from DI:535, as
+  the extension read's exception is). A value read names the root only through
   its strict realpath, a relative value joined to `common_dir`; where that
   fails, the row records `os-error` with OPERATION `realpath` (or the
   task's cut) and the root stays null, as for a failed read (research.md
@@ -258,9 +281,14 @@ is started.
   layout the main worktree's toplevel, from its own candidate's identity
   probe where it is a Git candidate and else from this child, is compared,
   realpath-equal, with the first registry record's canonical path, a
-  nonzero exit of either counting as a redirect. In the gitfile layout no
-  child runs: one bounded filesystem task reads the `.git` of the directory
-  `core.worktree` names, which must be a file naming `common_dir` itself.
+  nonzero exit of either counting as a redirect. Its standard output, less
+  the one line feed Git ends it with, is one path, as the identity probe's
+  one-option re-reads read theirs; empty output, or output not ending in a
+  line feed, names no toplevel and counts as that nonzero exit; the
+  toplevel's strict realpath is taken in one bounded task. In the gitfile
+  layout no child runs: one bounded filesystem task reads the `.git` of the
+  directory `core.worktree` names, which must be a file naming `common_dir`
+  itself.
 
 ## The attention table (FR-027; A1:491-514)
 
@@ -294,7 +322,11 @@ gate.
 | `merge-target-conflict` | informational | info | manifest | none |
 
 The six default-branch findings (FR-041) carry no suggestion whatever this
-table says, and none sets the row's `suggested_command`.
+table says, and none sets the row's `suggested_command`. A worktree path
+that is not valid UTF-8 changes no suggestion but its own
+`merged-removable` row's; every other finding of that worktree keeps its
+suggestion here and a null `suggestion_gate` (A1:776-779; the data model's
+"Gates").
 
 ## Messages
 
@@ -319,7 +351,10 @@ period), which happens once A1's re-alignment lands:
 
 - clause 1, CHOSEN (O6 (A)): the warning is kept whole and the
   recommendation before it is cut instead; D5's "remedy kept whole"
-  stands;
+  stands; where the recommendation cannot keep `...` and the warning and
+  the remedy both fit (a remedy of 85 to 89 characters, which only the
+  report-cap remedy at 10^12 rows or more would be), the recommendation is
+  left out;
 - clause 2, CHOSEN by name on 2026-10-23, first taken through O6's text at
   `7af798a` (O4 (a), with O6 (A); research.md R20): where the warning and the
   remedy cannot both fit, which only the redirect remedy reaches (through O4
@@ -351,11 +386,15 @@ config`, `git for-each-ref`, `git status`), a filesystem call (`lstat`,
   a Git child's nonzero exit, except in three cases that record no error:
   the extension read's exit 1 with nothing printed (`false`), the work-tree
   probe's failure (the registration disagrees) and, as the plan's reading
-  of a conflict in ratified A1 (research.md R9; O11, part 1), the
-  `core.worktree` read's exit 1 with nothing printed (the key unset); the
+  of a conflict in ratified A1 (research.md R9; O11, part 1; a departure
+  from DI:535), the `core.worktree` read's exit 1 with nothing printed (the
+  key unset); the
   `main-toplevel` child's nonzero exit (O4 (a), CHOSEN) is no exception: it
   records `probe-failed` and counts as a redirect
-- `error.probe-timeout`: "OPERATION timed out after S s"
+- `error.probe-timeout`: "OPERATION timed out after S s", S the budget
+  in `%g` form, as feature 004's `probe_error` writes it (`project:2665`)
+- `error.empty-root` (argparse's usage error; "Argument checks"): "an
+  empty path names no directory"
 - `error.deadline-exceeded`: "OPERATION stopped at the invocation deadline"
 - `error.scan-limit`: "LIMIT cap of M reached"
 - `error.root-unreadable`: "root is unreadable (CAUSE)", CAUSE one of "no
@@ -529,5 +568,6 @@ from `limits` when the message is built.
   `HOME`, `XDG_CONFIG_HOME`, `GIT_CONFIG_GLOBAL`, `GIT_CONFIG_SYSTEM`, one
   line "NAME is set to a path that does not begin with /; make it absolute
   or unset it.", the lines joined by a line feed (feature 004's
-  `config_path_message`, `project:1017-1020`)
+  `config_path_message`, `project:1017-1020`); its two `GIT_CONFIG_*`
+  names CHOSEN (O10 (A))
 - `refusal.internal-error` (PN-2): "internal error (CLASS)"

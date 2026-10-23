@@ -83,7 +83,8 @@ Implementation slices, in dependency order; each leaves the suite green:
    section, one `-k test_overview_floor_` in the `git-floor` job, the
    `AGENTS.md` sentence if T123 has landed, the test names in
    [traceability.md](traceability.md), the hand runs of
-   [quickstart.md](quickstart.md), and the full-length timing.
+   [quickstart.md](quickstart.md), gate (b)'s script run again over the
+   final `project`, and the full-length timing.
 
 Each held item sits in its own row, decider, term or composer branch
 (research.md R20), and Brett Heap's words chose every one for change 2 (C-72).
@@ -102,7 +103,10 @@ re-alignment commit, which follows #19's ratification, he reviewing the final
 text before #34 merges, while O9 (A) and O10 (A) keep A1's text as ratified and
 O11's part 1 is a text re-alignment on a lane finding." O13 (A) reaches A1 in
 that commit too (C-72). A change in his review of the final text lands as a
-change to that place and its tests alone.
+change to that place and its tests alone, with one exception: a change to
+O11's part 1 would also re-word the scenario "A separate git directory" of
+change 2 and of this spec (research.md R20, O11). traceability.md lists
+each item's behaviour test and the assertions that flip.
 
 ### Gates on the three 004-touching changes
 
@@ -175,10 +179,12 @@ feature 005 merges, and slice 1's pull request quotes the checks of (a) to
   (n) words. Earlier revisions read it at `00205d73`, `10890e2c`,
   `8ce4e9fb`, `811b9cef` and `c5840a66` (research.md R20).
 - Lane openRepoProject-3's reads of this plan: W96's at `a80f10b`, with its
-  delta reads at `aeb0bb2`, `6fb619c`, `664461f`, `06b16e1` and `464c361`, and
-  W112's delta reads at `d500312` and `39f4ab6`; and the nine-reader review of
-  revision 7 at `39f4ab6`, with its triage; revisions 2 onward take each of
-  their findings (research.md, "Revision 2" onward).
+  delta reads at `aeb0bb2`, `6fb619c`, `664461f`, `06b16e1` and `464c361`,
+  W112's delta reads at `d500312` and `39f4ab6`, and W132's at `d0a7c07`;
+  revisions 2 onward take each of their findings (research.md, "Revision 2"
+  onward). Lane openRepoProject-4's own nine-reader review of revision 7 at
+  `39f4ab6`, with its triage: revision 8 takes its choices' marks and pins,
+  and revision 9 its FIX-PLAN items.
 
 ## Technical Context
 
@@ -197,7 +203,8 @@ added (FR-047).
 
 **Testing**: `python3 -m unittest discover -s tests -v`, over temporary
 fixtures, with feature 004's counting wrapper, fake Gits, death watch and
-launcher (`tests/clean_support.py`, `tests/launch_project.py`), and new
+launcher (`tests/clean_support.py`, `tests/launch_project.py`) and, in
+`overview_support.py`, a probe shim behind the counting wrapper, and new
 modules `tests/test_overview_*.py` with `tests/overview_support.py`
 (research.md R18). At `d6bac50` the suite holds 491 test methods; all
 pass unchanged after this feature (FR-049).
@@ -236,10 +243,10 @@ counts and the orders (FR-049).
 
 | Item | Budget |
 | --- | --- |
-| 512-row cap | 513 rows registered directly (`register_worktrees`) |
+| 512-row cap | 505, 10 and 5 rows in three repositories, registered |
 | 128-candidate cap | 129 directories holding `.project.json`, no Git |
 | 32-root and 4,096-entry caps | 33 roots; 4,097 entries in one root |
-| status bounds | 65 ignored files; 4,097 untracked files |
+| status bounds | 65 and 64 ignored files; 4,097 untracked files |
 | reflog bound | files of 65,535 and 65,536 bytes, written directly |
 | deadline | in-process, 6 s and 0.5 s (ratio 12); bound 10 s |
 | one test | under `run_cli`'s 20 s timeout |
@@ -248,7 +255,15 @@ counts and the orders (FR-049).
 
 Feature 004 measured 257 rows registered directly in 0.93 s against 24.0 s
 by `worktree add`, and 4,097 untracked files in 4.3 s
-(`specs/004-project-clean-all-safe/plan.md:259-260`).
+(`specs/004-project-clean-all-safe/plan.md:259-260`). The row-cap fixture
+is one root with three repositories registered directly
+(`register_worktrees`, prefixes `a-`, `b-`, `c-`), 520 rows in all, the
+second holding one real merged worktree among its first 7 rows; the cap
+falls inside the second, so 8 rows are past it, 3 in the second and 5 in
+the third (research.md R18). The other sizes are stand-ins, by choice, that
+reach the same bound with a smaller fixture: 129 candidates for scenario
+13's 130, 4,097 entries for scenario 14's 4,100, and 65 and 64 ignored
+files for scenario 21's 10,000 and exactly 64.
 
 **CI shape**: the `test` matrix runs the whole suite unchanged; feature
 004's `git-floor` job gains `-k test_overview_floor_` beside its own
@@ -308,7 +323,9 @@ project                      # new regions after feature 004's:
                              #   Invocation (one branch), run_bounded
                              #   (factored), parser(), main()
 tests/
-  overview_support.py        # fixtures, isolation, snapshot, audit hook
+  overview_support.py        # fixtures, isolation, snapshot, audit hook,
+                             #   probe shim, seams, pty runner
+  compare_clean_base.py      # gate (b)'s side-by-side run, by hand
   test_overview_*.py         # one module per requirement group
   clean_support.py           # feature 004's, reused unchanged
   launch_project.py          # feature 004's, reused unchanged
