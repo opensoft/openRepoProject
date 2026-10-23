@@ -422,14 +422,14 @@ In this order, the first that applies deciding:
    holds a `:`.
 2. `not-github`: a host other than exactly `github.com`, so `evilgithub.com`,
    `github.com.example.org` and `api.github.com` are refused.
-3. `malformed-remote`: `remote_repository_identity()` (`project:766-769`)
-   yields no identity, as for `https://github.com/acme` or a user other than
-   `git`. An explicit port is also refused here, before that function runs
-   and whatever identity it would give, as
-   `specs/project-overview/spec.md:389-390` lists an explicit port among this
-   reason's causes beside the identity rule (C-50): before a one-segment path
-   the function gives an identity, `22/widget` for
-   `ssh://git@github.com:22/widget` and `99999/widget` for
+3. `malformed-remote`: `remote_repository_identity()` (`project:766-769`) yields
+   no identity, as for `https://github.com/acme`, a user other than `git` or a
+   repository name that begins with `.`, such as `.github`, though GitHub allows
+   it. An explicit port is also refused here, before that function runs and
+   whatever identity it would give, as `specs/project-overview/spec.md:389-390`
+   lists an explicit port among this reason's causes beside the identity rule
+   (C-50): before a one-segment path the function gives an identity, `22/widget`
+   for `ssh://git@github.com:22/widget` and `99999/widget` for
    `ssh://git@github.com:99999/widget`, so a step 3 that left the port to it
    would ask GitHub about the wrong repository.
 
@@ -654,7 +654,7 @@ child and inspects no repository (`relative-config-path`); whether the
 subcommand then refuses or reports is left to its own requirement's rule. Change
 2's `Overview exits by completeness and severity`, as amendment A1 words it
 (ratified by Brett Heap; `add-project-overview/specs/project-overview/spec.md`
-:868-876 at `e4a30fc`), refuses the overview for the same two variables, with
+:868-876 at `e4a30fc`), refuses the overview for the same four variables, with
 that code and status 2. This change's own bases hold neither: its block of the
 evidence model is PR #19's text at `c462d87`, change 2 at `961c405` has no such
 refusal, and neither defines `relative-config-path`. So the spec keeps C-44's
@@ -762,22 +762,22 @@ per-directory rule fills D5 and is no change to the spec (C-35; its rationale
 reworded to what was observed, C-36, and its record of the twelve errors and of
 the shells completed, C-38).
 
-A lookup that fails, on the test of the three configuration variables above or
-on an error from a `PATH` directory, or that reaches its 5 s limit, as on an
-unreachable `PATH` directory, gives what one that finds none gives: every keyed
-row, whether or not its key is past the 64th, is `gh-unavailable`, and no child
-starts (C-25, C-26, C-44). [B]'s bounded-task rule would otherwise record
-`probe-timeout`; [B]'s added paragraph and [R]'s isolation clause record the
-lookup's failure or cut only in the rows' `remote`, never as a row or scan
-error (D10). A lookup that the deadline stops before its 5 s end leaves its
-rows as an expiry does (D7), `cancelled` within the cap and `request-cap` past
-it (C-28), just as [B] tells `deadline-exceeded` from `probe-timeout` and D7
-tells `aborted` from `timeout`. The README's next step for `gh-unavailable`
-names all three causes: install `gh`, check that `PATH`'s directories are
-reachable, or make a relative `GH_CONFIG_DIR`, `XDG_CONFIG_HOME` or `HOME`
-absolute, so that a person with a relative `HOME` does not go looking for `gh`
-on `PATH` (C-26, C-44); its next step for `gh-unauthenticated` is `gh auth
-login` alone.
+A lookup that fails, on the test of the three configuration variables above,
+made first even when the lookup falls due past the deadline (D1), or on an error
+from a `PATH` directory, or that reaches its 5 s limit, as on an unreachable
+`PATH` directory, gives what one that finds none gives: every keyed row, whether
+or not its key is past the 64th, is `gh-unavailable`, and no child starts (C-25,
+C-26, C-44). [B]'s bounded-task rule would otherwise record `probe-timeout`;
+[B]'s added paragraph and [R]'s isolation clause record the lookup's failure or
+cut only in the rows' `remote`, never as a row or scan error (D10). A lookup
+that the deadline stops before its 5 s end leaves its rows as an expiry does
+(D7), `cancelled` within the cap and `request-cap` past it (C-28), just as [B]
+tells `deadline-exceeded` from `probe-timeout` and D7 tells `aborted` from
+`timeout`. The README's next step for `gh-unavailable` names all three causes:
+install `gh`, check that `PATH`'s directories are reachable, or make a relative
+`GH_CONFIG_DIR`, `XDG_CONFIG_HOME` or `HOME` absolute, so that a person with a
+relative `HOME` does not go looking for `gh` on `PATH` (C-26, C-44); its next
+step for `gh-unauthenticated` is `gh auth login` alone.
 
 Rejected: REST `commits/{sha}/pulls` (an unknown commit is HTTP 422, an
 `unknown` under DI:1055-1056, and a further page shows only in a `Link`
@@ -1226,14 +1226,20 @@ reader of these fields, so remote evidence never reaches an eligibility gate, a
   Neither is a scenario, since the spec's "fails" speaks of the lookup as a
   whole.
 - The counting `git` wrapper of change 2's design (APO design.md, D13), which
-  can hold a chosen argv, gains one fixture control: for a chosen argv in a
-  chosen repository it exits with a given status and a fixed line on standard
-  error, without running Git, or, for a chosen argv, ignores SIGTERM and holds
-  past its budget. "A failed or held remote-target read stays unknown" uses it
-  to make the first remote-target read exit 128 in one repository and to hold
-  it past 10 s in another, and "The overview's remote-phase children" to hold
-  one past its budget while it ignores SIGTERM; this extends the test file
-  only, never change 2's text.
+  records each child's argv and `-C` directory and can hold a chosen argv
+  (APO design.md:627-628), gains one fixture control, and here each of its
+  controls, change 2's hold among them, acts for a chosen argv in a chosen
+  repository, the `-C` directory that the wrapper records: for such an argv
+  it exits with a given status and a fixed line on standard error, without
+  running Git, holds past its budget, or ignores SIGTERM and holds past its
+  budget. The argv alone would not tell two repositories apart when both
+  merge targets are `main`, as they can be in both scenarios that use these
+  controls, so no control is scoped by argv alone (reader RC's L1). "A failed
+  or held remote-target read stays unknown" uses it to make the first
+  remote-target read exit 128 in one repository and to hold it past 10 s in
+  another, and "The overview's remote-phase children" to hold one past its
+  budget, ignoring SIGTERM, in one repository while the other repository's
+  reads succeed; this extends the test file only, never change 2's text.
 - One fixture pins D2's strict decode (C-43, C-45) and needs no control of the
   wrapper above: a repository whose merge target's `branch.<target>.merge` is
   `refs/heads/` followed by the byte 0x80, set with `git config`, so that the
@@ -1486,13 +1492,20 @@ requests".
   a row or scan error, though a `gh` lies further on; the README's next step
   says to check that `PATH`'s directories are reachable (C-26).
 - [The `for-each-ref` atoms on the Git 2.36 floor] -> Checked on 2.43 here;
-  the realization checks them on 2.36 as change 1 checked its probes. Reading
-  the two keys with `git config --get` in their place, the fallback this entry
-  named, was rejected in C-48 (reader RC's M2, its option (b)): it costs one
-  more child per repository, changes the count that [B]'s added paragraph
-  states, and gives up Git's own reading of the upstream, by which a remote
-  whose fetch refspecs do not map the merge ref is `no-remote-target`, as the
-  spec now says, so it would need spec changes before the Speckit handoff.
+  the realization checks them on 2.36 as change 1 checked its probes. On CI
+  that check is feature 004's `git-floor` job
+  (`.github/workflows/tests.yml:25` on PR #33 at `d8724e2`), which runs on
+  Git 2.36.6 only the tests that
+  `-k test_clean_ -k test_status_ -k test_doctor_` selects (:91 there), so
+  this change's tests of these reads reach it only under a name that one of
+  those patterns matches or by a pattern of their own added to that list
+  (reader RE's RE-8). Reading the two keys with `git config --get` in their
+  place, the fallback this entry named, was rejected in C-48 (reader RC's M2,
+  its option (b)): it costs one more child per repository, changes the count
+  that [B]'s added paragraph states, and gives up Git's own reading of the
+  upstream, by which a remote whose fetch refspecs do not map the merge ref is
+  `no-remote-target`, as the spec now says, so it would need spec changes
+  before the Speckit handoff.
 - [A response's `url` in an unexpected form] -> The key is `api-error`; an
   unchecked string is never printed.
 - [Two clones of one repository with different merge targets share a key] ->
@@ -1513,9 +1526,11 @@ Nothing migrates: without `--remote` no output, flag or exit changes.
    from a `main` synced to `origin/main`, creates the one feature under the
    next free number, 006 or later; it is recorded once in `tasks.md` under
    "Speckit Handoff", and `/opsx:apply` runs only then.
-3. The realization PR merges with green checks on both CI jobs of the
-   `tests` workflow, `test (3.10)` and `test (3.12)` on `ubuntu-latest`
-   (Linux only since PR #32; L-12), and closes issue #25.
+3. The realization PR merges with green checks on every job that the `tests`
+   workflow then runs, and closes issue #25. At `origin/main` `15504f1` those
+   are `test (3.10)` and `test (3.12)` on `ubuntu-latest` (Linux only since
+   PR #32; L-12); feature 004 (PR #33 at `d8724e2`) adds a third, `git-floor`,
+   which runs on Git 2.36.6 (Risks; reader RE's RE-8).
 4. The change is archived after that merge, after change 2's archive, which
    itself follows change 1's archive and feature 005's merge, and after task
    2.4: PR #19's amendment landed or, if PR #19 closed, the block of [E]
