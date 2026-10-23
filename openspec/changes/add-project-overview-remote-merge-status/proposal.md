@@ -15,8 +15,8 @@ L2 to L5), with no spec edit, in `design.md` and `tasks.md`, C-47 also in Impact
 and Open Question 1; round C14's C-48, RC's other five findings, its spec edit
 committed on lane openRepoProject-4's YES of 2026-10-21, and C-49, lane
 openRepoProject-3's eight LOWs, both also in `design.md`, Impact and `tasks.md`;
-and rounds C15 to C22 (C-50 to C-68: W16, RF's M1, W22, W28, RH's M4, RI-6,
-W57-1, RH's L4, W53's cites, W61, W66), in `design.md` and `tasks.md`, C-58,
+and rounds C15 to C23 (C-50 to C-82: W16, RF's M1, W22, W28, RH's M4, RI-6,
+W57-1, RH's L4, W53, W61, W66, W118, RC2), in `design.md` and `tasks.md`, C-58,
 C-66, C-67 also in the spec, C-63, C-65 in Decisions; ratification by Brett Heap
 pending; nothing here is ratified. Governing issue: opensoft/openRepoProject#25,
 claimed by lane openRepoProject-5 (comment 6111242617); refs #6, the record of
@@ -42,7 +42,7 @@ executable. Change 1's evidence model, `Repository inspection requires Git 2.36
 and shares one evidence model` (CAS/cmd:90), is [E]. The lane's rulings are
 cited as L-1 to L-9 and C-1 to C-8 (2026-10-11), L-10 to L-15, B-14, C-9 and
 C-10 (2026-10-18), L-16, L-17 and C-11 to C-14 (2026-10-19), and F-3 and C-15 to
-C-68 (2026-10-20 to 2026-10-22, C-16 to C-22 being the council's verdicts).
+C-82 (2026-10-20 to 2026-10-23, C-16 to C-22 being the council's verdicts).
 `PR19/cmd` is draft PR #19's
 `openspec/changes/add-project-clean-all-safe/specs/project-command/spec.md` at
 `c462d87`.
@@ -388,22 +388,22 @@ scenarios (14, 2, 7 and 13), and one MODIFIED requirement in `project-command`,
   add`'s does (C-48); for `credential-bearing-remote`, take the credential out
   of the URL; for `malformed-remote`, use an https, ssh or scp-like URL, not
   `git://`, with an `owner/repository` on `github.com`, no user but `git` and no
-  port; and for `not-github`, nothing, as only `github.com` is queried, but use
+  port (a repository name that begins with `.`, such as `.github`, is refused
+  too); and for `not-github`, nothing, as only `github.com` is queried, but use
   `https://github.com/acme/widget.git` for `GitHub.com` or a URL with no `://`
   and no `:` before its first `/`, a local path to Git (C-18, C-47, C-49). They
   are advice, not a `suggested_command`. It also says a merge target tracking a
   fork asks about the fork, so every queried row is `not-found` (C-21).
-- **`tests/test_project.py`**: one test named after each scenario, offline,
-  with a fake `gh` written into the fake bin directory (`fake_bin`,
-  tests:148; `write_fake`, tests:172) that answers from a fixture table and
-  records each argv, environment and working directory, and with networking
-  disabled for the `project` process as change 2's design does (APO
-  design.md, D13); no test runs a real `gh` or reaches the network (C-8). The
-  tests run with `python3 -m unittest discover -s tests -v`, and CI runs
-  `python -m unittest discover -s tests -v` (`.github/workflows/tests.yml:17`)
-  on Linux only since PR #32: the `tests` workflow's two jobs, `test (3.10)`
-  and `test (3.12)`, on `ubuntu-latest` (`.github/workflows/tests.yml` at
-  main `15504f1`; L-12).
+- **`tests/test_project.py`**: one test named after each scenario, offline, with
+  a fake `gh` written into the fake bin directory (`fake_bin`, tests:148;
+  `write_fake`, tests:172) that answers from a fixture table and records each
+  argv, environment and working directory, and with networking disabled for the
+  `project` process as change 2's design does (APO design.md, D13); no test runs
+  a real `gh` or reaches the network (C-8). The tests run with `python3 -m
+  unittest discover -s tests -v`, and CI runs `python -m unittest discover -s
+  tests -v` (`.github/workflows/tests.yml:17`) on Linux only since PR #32: the
+  `tests` workflow's two jobs, `test (3.10)` and `test (3.12)`, on
+  `ubuntu-latest` (`.github/workflows/tests.yml` at main `15504f1`; L-12).
 - **Speckit handoff**: exactly one feature, created by `/speckit.specify`
   after ratification, after feature 005 lands and after change 2 is
   archived, under the next free number, 006 or later, from a local `main`
@@ -657,7 +657,8 @@ merged into this branch), and **C-9** and **C-10** below. From the addendum of
 written on PR #19's text, and this change archives after PR #19's amendment of
 change 1 lands), **L-17** (change 1's evidence model, which this change and
 `add-project-clean-branch-retirement` both modify: whichever archives second
-re-bases its block on the other's archived block, and each block is held until
+re-bases its block on the other's archived block (as lane openRepoProject-1's
+#37 does by analogy for overview blocks it shares), and each block is held until
 lane openRepoProject-2 has checked its diff, which it did for this change's
 block on 2026-10-19, with one fix), and **C-11** to **C-14** below. From the
 rulings and council verdicts of 2026-10-20: **F-3** (the lead's live check that
@@ -680,11 +681,11 @@ C-48's spec edits committed on lane openRepoProject-4's YES (C5-C14).
 Packet open decisions taken, each citing the text that leaves it open:
 
 - **Scope, C-1** (DI:72-75 calls `project overview --remote` a possible later
-  interface; DI:1483-1485, OV:357-358 and HO:47-50 leave the remote integration
-  to its own decision, and nothing says whether `clean` or doctor gets it):
-  `project overview --remote` only. Rejected: `09af8c8`'s queries from plain
-  `clean` and `doctor`, against CAS/pc:5-9 and change 1's OQ-22 (CAS
-  proposal.md:844-847).
+  interface; DI:1483-1485, OV:357-358 (since ratified, DI:1806-1808 and OV:514
+  at `15504f1`) and HO:47-50 leave the remote integration to its own decision,
+  and nothing says whether `clean` or doctor gets it): `project overview
+  --remote` only. Rejected: `09af8c8`'s queries from plain `clean` and `doctor`,
+  against CAS/pc:5-9 and change 1's OQ-22 (CAS proposal.md:844-847).
 - **The remote-tracking comparison, C-2** (not addressed by the packet): Out
   of Scope, recommended as its own change.
 - **The remote target, C-3** (DI:1039-1042 asks for "a validated canonical
@@ -710,17 +711,16 @@ Packet open decisions taken, each citing the text that leaves it open:
   are `cancelled` or `aborted` (C-28).
 - **The two blocks, C-7** (APO/ov:710 forbids every network connection, and no
   change 2 requirement has room for remote evidence): MODIFIED "Overview is
-  local and read-only" with the opt-in carve-out and nothing else loosened,
-  and ADDED "Overview reports remote merge evidence on request". Lane
-  openRepoProject-4, the owner of change 2 and feature 005, read the two
-  headers and that MODIFIED block's difference from change 2's text and agreed
-  them on three edits (2026-10-11), applied before the delta file was
-  committed: its own wording of the carve-out, with the credential clause
-  split; the `gh` requests counted in the `remote` object's `requests`, never
-  in `probes` (its edit (b), whose other half, the remote-target reads kept
-  out of the envelope's `probes`, its fourth option has since replaced:
-  C-9); and `gh`'s update-notifier and prompt switches set and asserted from
-  the fake `gh`'s recorded environment.
+  local and read-only" with the opt-in carve-out and nothing else loosened, and
+  ADDED "Overview reports remote merge evidence on request". Lane
+  openRepoProject-4, the owner of change 2 and feature 005, read the two headers
+  and that MODIFIED block's difference from change 2's text and agreed them on
+  three edits (2026-10-11), applied before the delta file was committed: its own
+  wording of the carve-out, with the credential clause split; the `gh` requests
+  counted in the `remote` object's `requests`, never in `probes` (its edit (b),
+  whose other half, the remote-target reads kept out of the envelope's `probes`,
+  its fourth option has since replaced: C-9); and `gh`'s update-notifier and
+  prompt switches set and asserted from the fake `gh`'s recorded environment.
 - **Tests, C-8**: offline, with a fake `gh` on `PATH`.
 - **The probe count, C-9** (lane openRepoProject-4's fourth option,
   2026-10-11, in place of the remote-target half of its edit (b);
@@ -2581,3 +2581,259 @@ for placeholders found none.
 | Report only, with no edit: PR #19's round (h), accepted at `b3228bb` (Brett Heap's ruling R-263 of 15:24Z: F-1 prune-then-delete, F-2 yes, O-1 deadline-exceeded), which carries the ceiling's two recovery texts (PR #19's `specs/project-clean/spec.md` at `b3228bb`, :321-331, :500-504 and :1158-1162), gate 7's budget-cut sentence (:713-718) and F-2's locked-worktree text (:170-172 and :211-212) | report | C-68: this change carries or restates none of the three, and no line is edited. A search of the five files for the texts' words found no line; the three places that come near them are `specs/project-command/spec.md:107-108` (the carried Termination sentence, "A removal child SHALL instead be waited for, and SHALL NOT be signalled before its 300 s ceiling", which names the ceiling and not the recovery text), `specs/project-overview/spec.md:71-75` (change 2's own sentence on a cut reflog read, which is not gate 7's) and `:6` (the read-only guarantee's "locked or unlocked"). The paragraphs above quote the three texts and give the search. Round (h)'s change to the `project-command` spec (:314 and :317) lies in a scenario that this change's block does not carry (the block has PR #19's nine scenarios as at `c462d87`, and its own tenth) | none |
 | The `@codex review` request on `8276945`, round C21's head, of 15:36:19Z (comment 6344720178), and the lead's late read of 15:52:41Z | no finding | Codex's usage-limit reply came at 15:36:31Z, so Codex did not review round C21, and there is no Codex finding to apply; the late read finds CI, all six test jobs, and SonarCloud passing on #29 at `bbe8d53`, this round's first commit. Nothing to apply | none |
 | The record: Status, the citation key, and tasks 1.1, 1.3 and 1.5, in place | ruling | C-68's record: Status says "rounds C15 to C22" and "C-50 to C-68" and names W66, within its 22 lines (its clause "C-58, C-66, C-67 also in the spec, C-63, C-65 in Decisions" is as it was, C-68 being in `design.md` alone); the citation key reads "C-15 to C-68"; `tasks.md` 1.1 lists C-45 to C-68, 1.3 gains a round C22 clause (this round recording itself, as C-56 orders) and "Re-read and Codex Findings (round C22)" in its verified-by list, and 1.5 names round C22; 1.4 is not edited, since no spec edit is committed; the tasks file is 45 lines still | Status; citation key; `tasks.md` 1.1, 1.3, 1.5 |
+
+### Re-read and Codex Findings (round C23)
+
+Round C23 (2026-10-23, on team-01h and, after the lane's swap, on team-01i)
+applies C-69 to C-77 and C-79 to C-82 on the lead's brief for the round
+(`brief-round-C23.md`, with its Update for C-79 and its Update 2 for C-80;
+`rulings-2026-10-20.md`, the bullets "C-75" to "C-82"). It takes lane
+openRepoProject-3's W118 and W124 on this change at `a529310`
+(`currency-29-a529310-findings.md`, received by the lead at 12:18:42Z and
+attached as brett-wip `52baa3d91`: 0 HIGH, 2 MEDIUM and 2 LOW, nothing that
+departs, and no spec to change), the one LOW for this change in its W117 and
+W124 read of the drafts composed by an archive dry run
+(`compose-archive-findings.md`), its W119 note on lane openRepoProject-1's #37
+at `d92cdc5` (`fidelity-37-d92cdc5-findings.md`, F6), reader RC's L1 and reader
+RC2's three findings (`review-1023/RC-findings.md`, RC2's part 2 read from
+12:52Z to 13:13Z: 0 HIGH, 0 MEDIUM and 4 LOW in the whole file, none needing a
+spec edit), reader RE's RE-8 (MEDIUM, carried; `review-1023/RE-findings.md`),
+lane openRepoProject-3's O16 note (C-80) and the record lines that C-69 to C-72
+queued for this change's next round. It also names PR #19's current head in task
+1.3 (C-77, as C-82 moved it).
+
+Lane openRepoProject-4, asked at 13:14:43Z, answered at 13:17:26Z that its
+pinned ranges in this change stay untouched until #34 merges, as in round C19,
+since amendment A1's text can still change before then and feature 005's plan
+revision 8 was being written against this change at `a529310`. So the round ran
+in one stage under C-79: no edit goes inside a pin, MEDIUM-1's facts are stated
+in this section alone, and MEDIUM-2, W117's sentence for tasks 2.3 and 2.4 and
+the naming of #37 at :578-579, each inside a pin, wait for the round after #34
+merges. The writer stopped at the lead's CHECKPOINT of 14:13:07Z before any
+edit, with an empty diff, and resumed at 14:35:05Z on C-81, the lead's answers
+to its four questions (the pin set, the fits, RC2-1's place and RE-8's last
+sentence), and on C-82. No `@codex review` was requested on `a529310` (round
+C22's posting, comment 6345161763, made none), so no Codex finding is applied
+here.
+
+The round edits `design.md` (`7e58f4f`, committed first: six places) and, in its
+last commit, this file (Status, the citation key, Impact's README bullet, L-17's
+entry in the Decisions, the Scope, C-1 bullet, two bullets re-wrapped word for
+word, and this section) and `tasks.md` (1.1, 1.3, 1.5 and 3.3, in place, 45
+lines still). It edits no spec: `specs/project-overview/spec.md` is still sha256
+`d42139fb5e6c26952e30aa953173cfcc5efb01f01f82e1f496e34bad6d77d306` with its 36
+scenarios and `specs/project-command/spec.md` still
+`208c06c36656194d2560614c44251cf404786cce90c54c9d8f6a0d6a5f2b601d` with its 10,
+so that the count stays 46, and `git diff a529310` on both is empty.
+
+The design edits, by `git diff a529310 7e58f4f`, before D7. D3's step 3
+(:425-434) names, among the remotes for which `remote_repository_identity()`
+yields no identity, "a repository name that begins with `.`, such as `.github`,
+though GitHub allows it" (RC2-2): the identity rule's repository part must begin
+with a letter or a digit (`project:759-769` at `961c405`), and the writer found
+that it yields none for `https://github.com/acme/.github.git`,
+`git@github.com:acme/.github.git` or `ssh://git@github.com/acme/.github`, so
+that such a row reads `malformed-remote` and fails closed; the step keeps its 10
+lines, re-wrapped from :425. D5's paragraph "Two texts that land before this
+change" (:646-670) says at :657 that amendment A1 refuses the overview "for the
+same four variables", not "two" (W118's LOW-2, applied with change under C-81):
+A1's paragraph (`add-project-overview/specs/project-overview/spec.md` :868-876
+at `e4a30fc`) applies its test to `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM` as
+well as to `HOME` and `XDG_CONFIG_HOME`, and W118's wording, "for `HOME` and
+`XDG_CONFIG_HOME`, and by the same test for those two", takes the paragraph to
+26 lines at 80 columns and so would move D7, a pin. D5's paragraph on a lookup
+that fails (:765-780) says that the lookup's test of the three configuration
+variables is "made first even when the lookup falls due past the deadline (D1)"
+(RC2-1, in D5 under C-81), so that a refused value gives `gh-unavailable`, which
+the spec's precedence (:445-449) sets above `cancelled`, and a lookup that
+passes the test and that the deadline then stops leaves its rows as the
+paragraph's later sentence says; the paragraph keeps its 16 lines. RC2's
+optional D11 case for this order is not added. These three keep their
+paragraphs' line counts, so lines 1 to 1236 keep their numbers.
+
+The design edits after D7. D11's bullet on the counting `git` wrapper
+(:1228-1236, now :1228-1242) says that the wrapper records each child's argv and
+`-C` directory and can hold a chosen argv (APO design.md:627-628), and that each
+of its controls, change 2's hold among them, acts for a chosen argv in a chosen
+repository, the `-C` directory it records, since the argv alone would not tell
+two repositories apart when both merge targets are `main`, as they can be in
+both scenarios that use the controls (reader RC's L1, which RC2 confirmed).
+Risks' entry on the `for-each-ref` atoms on the Git 2.36 floor (:1488-1495, now
+:1494-1508) says that on CI the check is feature 004's `git-floor` job
+(`.github/workflows/tests.yml:25` on PR #33 at `d8724e2`), which runs on Git
+2.36.6 only the tests that `-k test_clean_ -k test_status_ -k test_doctor_`
+selects (:91 there), so that this change's tests of those reads reach it only
+under a name that one of the patterns matches or by a pattern of their own added
+to the list (RE-8's last sentence, C-81). The Migration Plan's step 3
+(:1516-1518, now :1529-1533) says that the realization PR merges with green
+checks on every job that the `tests` workflow then runs: `test (3.10)` and `test
+(3.12)` at `origin/main` `15504f1`, and a third, `git-floor`, on Git 2.36.6,
+that feature 004 adds (PR #33 at `d8724e2`; RE-8). `design.md` goes from 1560 to
+1575 lines, `a529310`'s :1237-1487 now at :1243-1493, :1496-1515 at :1509-1528
+and :1519-1560 at :1534-1575; D5's residual :574-601 (sha256 `da48e5684e354a9d`
+at its first 16 digits) and D7 :954-989 (`8a03ba68b8166c74`) are `cmp`-identical
+to `a529310`.
+
+This file's edits. Status (:5-26, its 22 lines kept) says "rounds C15 to C23"
+and "C-50 to C-82" and adds W118 and RC2 to its list of sources, "W53's cites"
+becoming "W53" to hold the count; its clause "C-58, C-66, C-67 also in the spec,
+C-63, C-65 in Decisions" is as it was, the paragraph having no room to add
+C-75's edits of Impact and the Decisions, which this section and its rows name.
+The citation key (:45) reads "C-15 to C-82 (2026-10-20 to 2026-10-23, C-16 to
+C-22 being the council's verdicts)". Impact's README bullet (:377-395, now
+:377-396) adds after the `malformed-remote` step's "no user but `git` and no
+port" the words "(a repository name that begins with `.`, such as `.github`, is
+refused too)" (RC2-2), and the tests bullet after it (:396-406, now :397-406)
+re-wraps, its words unchanged, to give the line back, so that line 407 onward
+keeps its number; the spec's :389-392 is not reworded. In the Decisions
+paragraph on the addendum of 2026-10-19 (:645-678, now :645-679), L-17's entry
+says that whichever change archives second re-bases its block on the other's
+archived block "(as lane openRepoProject-1's #37 does by analogy for overview
+blocks it shares)" (W119's F6, C-81), the entry being about change 1's evidence
+model, which #37 does not touch. The Scope, C-1 bullet (:682-687, now :683-688)
+adds "(since ratified, DI:1806-1808 and OV:514 at `15504f1`)" after its cites
+DI:1483-1485 and OV:357-358 (W118's LOW-1, as W124 widened it). The C-7 bullet
+(:711-723, now :712-723) re-wraps word for word to give L-17's line back. So
+`a529310`'s lines 679 to 722 are one line lower, a shift that C-81 accepted and
+that no pin falls in, and from line 724 to line 2583 every line keeps its
+number, this section following line 2583.
+
+Lane openRepoProject-1's #37 at `d92cdc5` cites this file at :73-76, :82-91,
+:121-126, :545-550, :578-579, :658-662 and :738-741, and this change's spec at
+:282-287, :349, :431, :546-557 and :587. Each holds at this head: every one of
+those lines is byte for byte as at `a529310` but for L-17's entry, whose rule
+("whichever archives second re-bases its block on the other's archived block")
+is still at :659-660 and which now ends at :663, one line longer by the note.
+The spec keeps "`relationships`, always `[]`" (:242). The naming of #37 beside
+the rule at :578-579, in "Dependencies and Sequencing", a pin, is deferred to
+the round after #34 merges.
+
+MEDIUM-1, stated here alone under C-79 and in lane openRepoProject-4's words:
+Q16 is answered B: Brett Heap's "yes, recommended for Q1-Q17" of 2026-10-21,
+recorded as spec 005's C-70, carried by A1 D1. A1 is ratified ("ratify 34"),
+and #34 is not yet merged. This is a ruling, not pending. The cites: spec 005's
+C-70 is `specs/005-project-overview/spec.md:914` at `7f4ab94`, and at the same
+line at `d0a7c07`, its revision 8; A1's design D1 says at :116-117 at `e4a30fc`
+that "each child is started with SIGINT, SIGTERM and SIGHUP unblocked, then
+entered in the in-flight registry"; `e4a30fc`'s message reads "A1: ratified by
+Brett Heap ('ratify 34')"; and `e4a30fc` is not an ancestor of main `15504f1`.
+The live sentences that say otherwise, :559-570 of this file ("feature 005's
+pending Q16", in "Dependencies and Sequencing") and `design.md:978-981`
+("blocked, as a Git child does", in D7), stay as they are until the round
+after #34 merges, both being in lane openRepoProject-4's pins; task 2.3's
+re-read, which they name, still picks the change up.
+
+PR #19's currency (C-77, C-82). The heads, read with `git ls-remote origin` at
+the start of the round, were `e0b1671` for PR #19's branch, `d8724e2` for
+feature 004 (PR #33), `e4a30fc` for amendment A1 (PR #34, open), `7f4ab94` for
+feature 005's branch, `d92cdc5` for #37, `15504f1` for main and `a529310` for
+this change's. At the resume a second read gave `818311a` for PR #19, accepted
+there as its round (q) by lane openRepoProject-2 (its R-389), and `d0a7c07` for
+feature 005, the others as before. Round (p) at `e0b1671` changed only
+`project-clean` among PR #19's spec deltas: its `project-command` spec is 363
+lines at `88d0d36` and at `e0b1671`, the same bytes (sha256 `c4bf4bcafeeb434e`
+at its first 16 digits), and the block of [E] there is `:108-363`, 256 lines.
+Round (q) at `818311a` changes all three spec deltas, `project-command` among
+them: that spec is 394 lines (sha256 `148e3ce4c77c397f`), with Q1's status pin
+(`@@ -161,5 +161,9 @@`), Q8's rule for a probe that exits 0 with a warning on
+standard error (at :265-271), T9's new "Stale entries:" paragraph (:299-309) and
+four hunks among the scenarios, and no hunk in the Termination (:273-284) or
+Budgets (:286-292) paragraphs, where this change's two added sentences sit; the
+block of [E] is `:108-394`, 287 lines. The cite `PR19/cmd` at `f0bf538`,
+:116-129 (`design.md:650`) holds there, the 14 lines being byte for byte the
+same at `818311a`. This change's block of [E] stays on PR #19's text at
+`c462d87`, and its alignment stays queued for archive time, where task 2.4
+re-reads and re-bases it; no place in the live text states PR #19's current
+head, so none moves, and task 1.3's round C23 clause records `e0b1671` and
+`818311a`.
+
+C-69 to C-72's record lines, each by a search of the five files of this change
+before this section was added. C-69: this change carries or restates none of
+round (i)'s three forms of the ceiling's recovery text at `e0c91bb` (PR #19's
+`specs/project-clean/spec.md` :326-335: "inspect, then `git worktree remove
+--force <path>` by hand", "inspect, then `git worktree prune` and delete
+`<path>` by hand" and "inspect `<path>` by hand; its `.git` could not be read,
+so do not run `git worktree prune` until it can"), nor round (p)'s F-1 (b)
+sentence: "could not be read", "until it can", "do not run", "git gc" and
+"no-prune" find no line, and "worktree prune", "worktree remove", "inspect,
+then", "inspect, unlock" and "delete `<path>`" find lines only in the round C22
+section (:2500-2517), its quotation of round (h)'s texts, which C-69 keeps as
+history. C-70: `git diff e14ada0 173d83c` on PR #19's `project-command` spec is
+empty (0 bytes), and round (k)'s two clauses ("whatever the rescan finds of the
+registry entry" and "read as one path") find no line here. C-71: W87's line,
+that the round C22 report quotes the old reason and "two forms" where `173d83c`
+has three with (c) taking precedence, is recorded by this paragraph; the C22
+report stays as history at `b3228bb`, and nothing that this change carries needs
+an edit. C-72: the live text holds none of D18's remedies at `ccc52b9` and no
+reach of its locked note: no `git worktree prune` advice and no "locked note"
+are found, and the near words are `specs/project-overview/spec.md:6` (the
+read-only guarantee, "no worktree created, pruned, repaired, locked or
+unlocked"), :317 and :323 (an `unsupported-path-bytes` repair finding, no
+remedy) and :590 (an upstream "deleted on the remote and pruned locally" in a
+scenario's WHEN).
+
+The O16 check (C-80). Brett Heap chose spec 005's O16 (a) at 13:30:30Z (lane
+openRepoProject-3's RULED `01bfa74af`; 005's C-68, FR-008): a bare repository's
+main row has `branch`, `head` and `merged_into_target` null. `git grep -n
+merged_into_target a529310` in this change gives nine lines: `design.md:515` and
+:516, this file's :79, :907, :961 and :1151, and the spec's :257, :361 and :602.
+Each agrees with O16 (a), and none is edited. D4's query set
+(`design.md:515-516`, one sentence) asks for a `branch` that is not `"detached"`
+and differs from the merge target, a known `head` and a `merged_into_target`
+that is `false`, "a null `merged_into_target` ... is not `false`", so such a row
+fails two of the three tests and is never queried. :79 ("Which rows are
+explained", `merged_into_target` false), :907 (the query-set decision) and :961
+(a sixth state rejected) say the same, and :1151 is the QA-19 row of the
+alignment table, a record. The spec's :257 lists `merged_into_target` among a
+worktree's fields and never says that `branch` is non-null; :361 is the Query
+set's "its `head` is known and its `merged_into_target` is `false`, a null one
+not being false"; and :602, an AND of "One request per exact head", lists rows
+with a null `merged_into_target` that have no `remote` key; the three spec lines
+lie in lane openRepoProject-4's pins, and none needed an edit. A bare
+repository's main row is thus never queried and never has a `remote` key. Task
+1.3's round C23 clause adds a tenth line with the name, a record.
+
+The writer checked these on 2026-10-23, in a scratch directory outside this
+tree, reading the findings files where the lead's record names them and
+PR #19's, PR #33's, A1's, feature 005's and #37's files with `git show` at each
+head named above. Lane openRepoProject-4's pin set, as C-81 confirms it, is the
+union of lane openRepoProject-3's eleven ranges (W124's `pins.py`: lines
+334-345, 367-370, 430-438 and 1252-1417 of this file, "Dependencies and
+Sequencing" and "Open Questions" whole, `tasks.md` 20-23, `design.md` 574-601
+and 954-989, and the spec's 1-419 and 645-651) and the wider ranges that lane
+openRepoProject-4 records in spec 005 at `7f4ab94` (the spec's 1-623 and
+625-661, this file's 423-424 and `tasks.md` 20-24); every range is
+`cmp`-identical to `a529310` at its own lines, "Dependencies and Sequencing"
+(181 lines, :417-597, sha256 `c4d7a1797d240880`) and "Open Questions" (39 lines,
+:1065-1103, `ca53d0f392adc7e5`) included, and `tasks.md` 20-23 is still sha256
+`2e177de7a91d644759bb5e12177696c749be9d9e90a763ce9899e238e7c0e2c0`. The carry
+check of every MODIFIED block against its source is as in rounds C19 to C22,
+since both spec files are byte for byte as at `a529310`. Validation, run before
+each of the round's commits and again at its head (a commit cannot hold its own
+sha; the head is in the round's report): `/usr/bin/openspec validate
+add-project-overview-remote-merge-status --strict` reports the change valid with
+its two INFO lines, `/usr/bin/openspec validate --all --strict` passes 8 of 8,
+and `/usr/bin/openspec status --change add-project-overview-remote-merge-status
+--json` shows every artifact done. The added text holds no non-ASCII character,
+bidi control, host path or literal backslash-u, and a grep of the three files
+for placeholders found none.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| Lane openRepoProject-3's W118 and W124 on this change at `a529310` (`currency-29-a529310-findings.md`, received by the lead at 12:18:42Z, brett-wip `52baa3d91`; against PR #19 `88d0d36`, A1 `e4a30fc`, spec 005 `39f4ab6` and main `15504f1`) | 0 HIGH, 2 MEDIUM, 2 LOW | C-75, C-79 and C-81: nothing departs and no spec needs to change; the 68 cites, Results, Isolation and the human report against spec 005's FR-042, FR-044 and FR-045 and A1's [X] and [H], valid 8 of 8 and lane openRepoProject-4's eleven pins hold. Its four findings are the next four rows; its task 1.3 clause for PR #19 at `88d0d36` is taken by the currency row, at the head that C-77 and C-82 name | none |
+| W118's MEDIUM-1 (Q16 is answered B, spec 005's C-70, carried by A1 D1; :559-570 of this file, "pending", and `design.md:978-981`, "blocked, as a Git child does", are stale) | MEDIUM | C-79: deferred to the round after #34 merges, both sentences lying in lane openRepoProject-4's pins (:417-597 and D7 :954-989), which stay untouched at its request of 13:17:26Z. The facts are stated in this section alone, in lane openRepoProject-4's words: "Q16 is answered B: Brett Heap's 'yes, recommended for Q1-Q17' of 2026-10-21, recorded as spec 005's C-70, carried by A1 D1. A1 is ratified ('ratify 34'), and #34 is not yet merged." A ruling, not pending (spec 005 `spec.md:914` at `7f4ab94` and `d0a7c07`; A1 design D1 :116-117 at `e4a30fc`; `e4a30fc` not an ancestor of `15504f1`) | none (this section) |
+| W118's MEDIUM-2 (A1 changes this change's three MODIFIED overview blocks, +7/-0, +29/-18 and +25/-6 by W124's count of requirement text over `961c405..e4a30fc`, no scenario line differing, and task 2.3 still re-bases on them) | MEDIUM | C-79: deferred to the round after #34 merges. Task 2.3 (`tasks.md:22`) and the re-base note in "Dependencies and Sequencing" lie in the pins; the overview blocks stay on change 2's text at `961c405` until #34 lands, and 2.3's re-read and second diff then show A1's text as the archived block's own | none |
+| W118's LOW-2 (`design.md:655-657`: A1 refuses for `HOME` and `XDG_CONFIG_HOME` and, by the same test, `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`, not "the same two variables") | LOW | C-81: applied with change, "the same four variables" at :657 in `7e58f4f`, one word in one line; W118's wording, "for `HOME` and `XDG_CONFIG_HOME`, and by the same test for those two", takes the 25-line paragraph (:646-670) to 26 lines and would move D7 | `design.md` D5 (:657) |
+| W118's LOW-1, as W124 corrected and widened it (the packet cites hold at `da33d92`, but main's packet moved 25 cited ranges and changed 11; the Scope, C-1 bullet's DI:1483-1485 and OV:357-358 now read ratified decisions, DI:1806-1808 and OV:514 at `15504f1`) | LOW | C-75: applied, "(since ratified, DI:1806-1808 and OV:514 at `15504f1`)" after the two cites, the bullet keeping its 6 lines; every packet cite stays pinned at `da33d92`, where it holds | Decisions, "Scope, C-1" (:683-688) |
+| Lane openRepoProject-3's W117 and W124 on the drafts composed by an archive dry run (`compose-archive-findings.md`): its LOW-1, that tasks 2.3 and 2.4 lack "a check that alone proves nothing, since a re-base that keeps every scenario but drops sentences validates and archives" | LOW | C-79: deferred to the round after #34 merges, tasks 2.3 and 2.4 being `tasks.md:22-23`, inside the pins (lines 20-24 keep their bytes). The archive dry run's other results (the order PR #19, overview, #27 archiving with exit 0; this change refused on its `project-command` block, as declared) ask nothing of this change | none |
+| W119's F6 on lane openRepoProject-1's #37 at `d92cdc5` (`fidelity-37-d92cdc5-findings.md`: #37 takes this change's re-base rule, :578-579 and :658-662, "by analogy"; this change keeps "`relationships`, always `[]`", spec :242; name #37 in the rule) | note | C-75 and C-81: applied at L-17's entry (:658-663), with the one-line shift of `a529310`'s :679-722 that the C-7 bullet's re-wrap ends; deferred at :578-579, inside "Dependencies and Sequencing". #37's cites of this file and its spec all hold, :658-662 now running to :663; the spec's :242 is unchanged | Decisions, L-17 (:660-661); "The two blocks, C-7" re-wrapped (:712-723) |
+| Reader RC's L1, confirmed by RC2 (D11's new control scopes the exit to one repository but not the hold, while two scenarios need the hold in one repository only) | LOW | C-75: applied to the design in `7e58f4f`: each control of the wrapper, change 2's hold among them, acts for a chosen argv in a chosen repository, the `-C` directory the wrapper records (APO design.md:627-628); design only, no spec edit | `design.md` D11 (:1228-1242) |
+| RC2-1 (a lookup of `gh` that falls due after the deadline, in a run with a relative `GH_CONFIG_DIR`, could give `gh-unavailable` or `cancelled`; the order is unstated) | LOW | C-81: applied to D5 in `7e58f4f`: the test of the three configuration variables is made first even when the lookup falls due past the deadline (D1), so a refused value gives `gh-unavailable`, which spec :445-449 sets above `cancelled`; the paragraph keeps its 16 lines (:765-780). RC2's optional D11 case is not added | `design.md` D5 (:765-780) |
+| RC2-2 (D3's identity rule refuses repository names that GitHub allows, such as `.github`, as `malformed-remote`, and the README's step cannot help those rows) | LOW | C-75: applied to D3's step 3 in `7e58f4f` (10 lines kept) and to Impact's README bullet (one line, given back by re-wrapping the tests bullet word for word, C-81); the spec's :389-392 is not reworded. Reproduced with `project:759-769` at `961c405`: no identity for `acme/.github` in its https, scp-like and ssh forms | `design.md` D3 (:425-434); Impact, `README.md` bullet (:391-392), the `tests/test_project.py` bullet re-wrapped (:397-406) |
+| RC2-3 (three of C-75's queued edits fall in lane openRepoProject-4's pins: :559-570, `design.md:978-981` and `tasks.md:22-23`) | LOW | C-78 and C-79: routing for the brief, answered by C-79's one stage, in which no edit goes inside a pin and those three are the deferred rows above. RC2's two notes for C23 (W118's cite of the expiry scenario, which is spec :645-650, and that Risks could say the atoms were checked on 2.36.6) are record only and not applied (C-81) | none |
+| Reader RE's RE-8, carried (feature 004's `tests` workflow has three jobs, `git-floor` among them, but `tasks.md:30` and `design.md:1516-1517` say two; the floor's `-k` list selects `test_clean_`, `test_status_` and `test_doctor_` only) | MEDIUM | C-76 and C-81: applied, checked at PR #33's `d8724e2` (`tests.yml:25`, `git-floor`, `GIT_FLOOR_VERSION` 2.36.6 at :29, and the `-k` list at :91): task 3.3 and the Migration Plan's step 3 name every job of the workflow at the realization's merge, and Risks says which of this change's tests the floor runs. Impact's tests bullet, whose "two jobs" are named at main `15504f1`, where they are true, is re-wrapped only | `tasks.md` 3.3; `design.md` Risks (:1494-1508) and Migration Plan step 3 (:1529-1533) |
+| Lane openRepoProject-3's O16 note (C-80: Brett Heap's O16 (a) of 13:30:30Z, a bare repository's main row has `branch`, `head` and `merged_into_target` null; 005's C-68, FR-008) | ruling | C-80: checked, and every site agrees, so none is edited: `design.md:515-516` (D4's query set: such a row fails the known-`head` and `false` tests), this file's :79, :907 and :961 (the query set and the rejected sixth state) and :1151 (QA-19, a record), and the spec's :257 ([J]'s fields, never saying `branch` is non-null), :361 (the Query set) and :602 (an AND listing rows with a null `merged_into_target` and no `remote` key), the spec's three in the pins. Such a row is never queried and never has a `remote` key | none |
+| PR #19's currency (C-77, as C-82 moved it): `e0b1671`, round (p), at the round's start, and `818311a`, round (q), accepted by lane openRepoProject-2 (R-389), at its resume | ruling | Applied in task 1.3's round C23 clause, and no other place edited: round (p) changed only `project-clean` among PR #19's spec deltas (`project-command` the same bytes as at `88d0d36`, `c4bf4bca...`, [E] at `:108-363`, 256 lines); round (q) changes `project-command` (394 lines, `148e3ce4...`, [E] at `:108-394`, 287 lines: Q1's status pin, Q8's warned-probe rule, T9's "Stale entries:" paragraph and four scenario hunks, none in the Termination or Budgets paragraph). This change's block of [E] stays on `c462d87`, its alignment queued for archive time (task 2.4); `PR19/cmd` at `f0bf538`, :116-129 holds at `818311a`; no live place states PR #19's head | `tasks.md` 1.3 |
+| C-69, C-70, C-71 and C-72's record lines (round (i)'s three forms of the ceiling's recovery text; round (k)'s empty `project-command` diff; W87's line on the round C22 report; D18's remedies and the locked note's reach at `ccc52b9`) | record | Recorded by the paragraph above, each by a search of the five files: this change carries or restates none of round (i)'s three forms nor round (p)'s F-1 (b), the words being found only in the round C22 section's quotation (:2500-2517), history; `git diff e14ada0 173d83c` on `project-command` is empty and round (k)'s clauses find no line; the C22 report stays as history at `b3228bb`; and the live text holds no prune remedy and no locked note. Nothing to apply | none |
+| Lane openRepoProject-3's W71 on rounds C21 and C22 (`a6080a7..a529310`, `confirm-c21c22-findings.md`, brett-wip `a6e7b303e`, received by the lead at 16:41:21Z on 2026-10-22) and the lead's late read | 0 HIGH, 0 MEDIUM, 0 LOW | Recorded: CLEAN, nothing departs, C20-1 to C20-4 applied, lane openRepoProject-4's eleven pins `cmp`-equal, and CI's six test jobs and SonarCloud passing at `a529310` (16:41Z); its four observations ask for no edit (OBS-1, the C22 section's 15:52:41Z beside the register's 15:52:40Z, both holding; OBS-2, the round C20 quotation kept as history; OBS-3, "now" in task 1.3's clauses read as "at that round", this round adding its own; OBS-4, the lead's "left to"). Nothing to apply | none |
+| The record: Status, the citation key, and tasks 1.1, 1.3 and 1.5, in place | ruling | C-75's record: Status says "rounds C15 to C23" and "C-50 to C-82" and names W118 and RC2, within its 22 lines; the citation key reads "C-15 to C-82"; `tasks.md` 1.1 lists C-45 to C-82, 1.3 gains a round C23 clause (this round recording itself, as C-56 orders) and "Re-read and Codex Findings (round C23)" in its verified-by list, and 1.5 names round C23; 1.4 is not edited, since no spec edit is committed; the tasks file is 45 lines still, its lines 20-24 byte for byte as at `a529310` | Status; citation key; `tasks.md` 1.1, 1.3, 1.5 |
