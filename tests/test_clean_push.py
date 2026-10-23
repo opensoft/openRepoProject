@@ -685,6 +685,40 @@ class PushTests(clean_support.CleanCase):
                 self.assertEqual(self.refs(root), before, "the branch is kept")
         self.assertTrue((tree / "work-001-merged").is_file(), "the linked worktree is kept")
 
+    def test_clean_a_branch_named_detached_is_held_by_its_own_worktree_and_by_no_detached_row(self):
+        # T10 (lane 3's cls L-2 and ev L-1; lane 2's wave 22 triage): a row's
+        # `branch` is the text `detached` for a detached HEAD, which a branch of
+        # that name also carries. The holders check read the text, so an unrelated
+        # detached worktree held the branch `detached` and its deletion was
+        # refused; it reads the registry record's flag now, and a worktree that
+        # really holds the branch still does.
+        root = self.repo()
+        self.bare_remote()
+        self.git(root, "update-ref", "refs/heads/detached", "main")  # merged: the merge target's tip
+        headless = self.base / "headless-tree"
+        self.git(root, "worktree", "add", "-q", "--detach", headless)
+        held = self.base / "held-tree"
+        self.git(root, "worktree", "add", "-q", held, "detached")
+        env, log = self.counting()
+        argv = ("clean", root, "--apply", "--action", "delete-branch", "--branch", "detached", "--yes")
+        with self.subTest("a worktree on the branch holds it, a detached one beside it"):
+            before = self.refs(root)
+            result = self.run_cli(*argv, env=env)
+            self.assert_status(result, 2)
+            self.assertEqual((result.stdout, result.stderr), (
+                "", "REFUSED: Remove the linked worktree first; branch deletion is a separate action.\n"))
+            self.assertEqual(deletions(clean_support.child_log(log)), [], "no git branch -d")
+            self.assertEqual(self.refs(root), before, "the branch is kept")
+        self.git(root, "worktree", "remove", held)
+        with self.subTest("only a detached worktree: it holds no branch"):
+            clean_support.reset_child_log(log)
+            result = self.run_cli(*argv, env=env)
+            self.assert_status(result, 0)
+            [child] = deletions(clean_support.child_log(log))
+            self.assertEqual(words(child), ["-C", str(root), "branch", "-d", "--", "detached"])
+            self.assertEqual(self.git(root, "for-each-ref", "refs/heads/detached"), "", "the branch is deleted")
+            self.assertTrue(headless.is_dir(), "the detached worktree is kept")
+
     def test_clean_a_branch_the_main_worktree_holds_is_deleted_after_either_remedy(self):
         # Lane 3's W52 F-5 and lane 5's RI-4 (R-248): the baseline's "Remove the
         # linked worktree first" named, for a branch the main worktree holds, a

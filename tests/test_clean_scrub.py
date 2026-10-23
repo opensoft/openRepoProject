@@ -219,6 +219,21 @@ class PinnedStatusTests(clean_support.CleanCase):
         self.assertEqual(after.document["selected"], [])
         self.assertIn((str(tree), "dirty"), [(entry["path"], entry["reason"]) for entry in after.document["excluded"]])
 
+        # Row 116's THEN (pc:342-344; lane 3's W115 LOW-2): `--all-safe --apply --yes` leaves the
+        # worktree and the edit in place. The apply plans afresh with the same pins, so it selects
+        # nothing and removes nothing; without them it would remove the worktree and lose the edit.
+        applied = self.run_json("clean", root, "--all-safe", "--apply", "--yes", "--json")
+        self.assert_status(applied, 0)
+        self.assertEqual((applied.document["selected"], applied.document["operations"]),
+                         ([], {"estimated": 0, "performed": 0}), "a plan with no target, and no removal run")
+        self.assertTrue(tree.is_dir(), "the worktree is kept")
+        self.assertEqual(tracked.read_text(), "edit", "the edit is kept")
+        self.assertEqual(tracked.stat().st_mtime_ns, old, "the file is untouched")
+        self.assertIn(f"worktree {tree}\n", self.git(root, "worktree", "list", "--porcelain"))
+        human = self.run_cli("clean", root, "--all-safe", "--apply", "--yes")
+        self.assert_status(human, 0)
+        self.assertTrue(tree.is_dir() and tracked.read_text() == "edit")
+
 
 # The env-dumping git, inline (lead ruling R-99 (d) 2). First on PATH, an sh
 # script that execs this Python, which appends one JSON line per child, its

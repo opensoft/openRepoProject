@@ -749,7 +749,8 @@ TEXT = {
         "so do not run git worktree prune, git worktree remove or git gc until it can.",
     # D18's note for a locked worktree's row, which `git worktree remove
     # --force` refuses (#19 at 4f1c0e0; lane 3's W52 F-2, R-248). It replaces
-    # ratified text, so it waits on Brett Heap's word, in a commit of its own.
+    # ratified text; Brett Heap ruled it on 2026-10-22, "F-2: yes" (the lead's
+    # R-263; traceability.md:253-255), and it is in its own commit, 64ad453.
     "partial_removal_note_locked":
         "Probable partial removal: inspect, unlock it, then git worktree remove --force {PATH} by hand.",
     # D18: the gate refusal and the remedies of the plan-blocking refusals.
@@ -964,7 +965,10 @@ NEXT_STEPS = {
     # The contract's next steps for the three reasons D18 gives none (T052;
     # lead rulings R-57 H1, R-58 (b) and R-62 (b)).
     "main-worktree": "never removed by project clean",
-    "unsupported-path-bytes": "rename the path to valid UTF-8",
+    # A plain mv leaves the registry entry stale, so the step names the two
+    # moves that mend it (lane 3's W120 L-1; lane 2's wave 22 triage T14).
+    "unsupported-path-bytes":
+        "move it to a valid UTF-8 path with git worktree move, or mv it and then git worktree repair NEWPATH",
     "not-requested": "name it with --worktree to plan its removal",
 }
 # endregion contracts
@@ -2389,15 +2393,21 @@ def classify(row, merge_target):
     `merged-current` when current, if it is merged into the target, and
     `remote-gone` otherwise. `review-required` stays a defensive rung that no
     row of the evidence model reaches, and so does the second
-    `inspection-error` rung, for an unknown ignored-file count."""
+    `inspection-error` rung, for an unknown ignored-file count.
+
+    A detached HEAD is the row's `detached` flag, a literal row's key or a
+    WorktreeRow's attribute (False where neither is set), never the text
+    `detached` of its `branch`: a branch may be named `detached`, and a merge
+    target of that name must not protect every detached row (T10)."""
     present = row.get("present")
     if present is None or row.get("errors") or (present and row.get("dirty") is None):
         return "inspection-error", RECOMMENDATIONS["inspection-error"]
-    branch = row.get("branch", "detached")
+    branch = row.get("branch")
+    detached = row.get("detached", getattr(row, "detached", False))
     merged = row.get("merged_into_target")
     if not present:
         name = "stale-worktree"
-    elif branch == merge_target:
+    elif not detached and branch == merge_target:
         name = "protected-default"
     elif row.get("dirty") is None:
         name = "inspection-error"
@@ -2407,7 +2417,7 @@ def classify(row, merge_target):
         return "inspection-error", SECOND_RECOMMENDATIONS["inspection-error"]
     elif row.get("ignored_files"):
         name = "ignored-local-files"
-    elif branch == "detached":
+    elif detached:
         name = "detached"
     elif not row.get("upstream"):
         name = "unpublished"
@@ -2543,7 +2553,13 @@ def resolve_merge_target(refs, declared):
     heads = {ref["refname"]: ref["objectname"] for ref in refs}
 
     def head(name):
-        return heads.get(b"refs/heads/" + name.encode("utf-8", "surrogateescape")) if name else None
+        if not name:
+            return None
+        try:
+            raw = name.encode("utf-8", "surrogateescape")
+        except UnicodeEncodeError:  # a lone surrogate no ref holds (a manifest's "\ud800"): no local branch (T7)
+            return None
+        return heads.get(b"refs/heads/" + raw)
 
     candidates = []
     if isinstance(declared, str):
@@ -2611,12 +2627,16 @@ class WorktreeRow(dict):
     `admin_id` (D7), None until established; `registered`, the two-way
     registration (None when it was not read); `upstream_oid`, the upstream's
     object, None when it is gone or none is configured; `status`, the combined
-    probe's result, None when it did not run or failed; and `unprobed`, the
+    probe's result, None when it did not run or failed; `detached`, whether the
+    registry record has no branch (`record["branch"] is None`), which the text
+    `detached` in the `branch` field cannot tell from a branch named
+    `detached` (T10; lane 2's wave 22 triage); and `unprobed`, the
     marker that a read not finished within its filesystem budget sets (T066;
     analyze M6), never serialized and unset here."""
 
     raw_path = None
     main = False
+    detached = False
     dev = ino = admin_id = None
     registered = None
     upstream_oid = None
@@ -2682,21 +2702,28 @@ def probe_error(outcome, operation, budget):
 
 def os_error(operation, exc):
     """The `os-error` row error {code, message} of the OSError exc that a
-    filesystem call raised; operation is OPERATION: lstat, realpath or read."""
+    filesystem call raised; operation is OPERATION: lstat, realpath or read.
+    exc may also be the ValueError that a path holding a NUL byte raises, which
+    has no `strerror`: its own text then stands (T7; lane 2's wave 22 triage,
+    sr-evidence M-2)."""
     return {"code": "os-error",
-            "message": TEXT["row_error_os_error"].format(OPERATION=operation, STRERROR=exc.strerror or str(exc))}
+            "message": TEXT["row_error_os_error"].format(
+                OPERATION=operation, STRERROR=getattr(exc, "strerror", None) or str(exc))}
 
 
 def _fs(operation, fn, *args):
     """fn(*args) through fs_call() (D6): its value. An OSError raises
-    EvidenceError with an `os-error` and the error number; a call past its
-    budget raises EvidenceError with `probe-timeout` or `deadline-exceeded`.
-    operation is OPERATION: lstat, realpath or read."""
+    EvidenceError with an `os-error` and the error number; so does a ValueError,
+    which a path holding a NUL byte raises (a `.git` file or a `commondir` file
+    that a worktree's own content makes so), with no error number (T7; sr-evidence
+    M-2), so that the row is `inspection-error` and never a traceback; a call
+    past its budget raises EvidenceError with `probe-timeout` or
+    `deadline-exceeded`. operation is OPERATION: lstat, realpath or read."""
     budget, _ = current_invocation().child_budget("probe")
     try:
         value = fs_call(fn, *args)
-    except OSError as exc:
-        raise EvidenceError(os_error(operation, exc), exc.errno) from None
+    except (OSError, ValueError) as exc:
+        raise EvidenceError(os_error(operation, exc), getattr(exc, "errno", None)) from None
     if isinstance(value, DriverOutcome):
         raise EvidenceError(probe_error(value, operation, budget))
     return value
@@ -2706,11 +2733,13 @@ def _direct(operation, fn, *args):
     """fn(*args) called at once, as _fs() calls it but with no fs_call() of
     its own: for reads that already run together inside one fs_call() (its
     one thread and one budget; _identity_now()). An OSError raises
-    EvidenceError with its `os-error` for operation and its error number."""
+    EvidenceError with its `os-error` for operation and its error number, and
+    a ValueError (a NUL byte in a path) with its `os-error` and no number, as
+    _fs() does (T7)."""
     try:
         return fn(*args)
-    except OSError as exc:
-        raise EvidenceError(os_error(operation, exc), exc.errno) from None
+    except (OSError, ValueError) as exc:
+        raise EvidenceError(os_error(operation, exc), getattr(exc, "errno", None)) from None
 
 
 def _lstat(path):
@@ -3317,7 +3346,8 @@ def row_evidence(record, raw, main, read, refs, merged, target):
     current = None if active is None or tree is None else (
         active == tree or tree == b"/" or active.startswith(tree + b"/"))
     branch_ref = record["branch"]
-    branch = "detached" if branch_ref is None else _evidence_text(branch_ref.removeprefix(b"refs/heads/"))
+    detached = row.detached = branch_ref is None  # not the text `detached`: a branch may be so named (T10)
+    branch = "detached" if detached else _evidence_text(branch_ref.removeprefix(b"refs/heads/"))
     upstream = remote_present = ahead = behind = merged_into_target = None
     ref = refs.get(branch_ref) if present and branch_ref is not None else None
     if ref is not None:
@@ -3340,7 +3370,7 @@ def row_evidence(record, raw, main, read, refs, merged, target):
         "ignored_files_truncated": None if status is None else status["ignored_files_truncated"],
         "ignored_samples": None if status is None else [
             dict(zip(("path", "path_valid_utf8"), json_path(sample))) for sample in status["ignored_samples"]],
-        "path_valid_utf8": valid, "errors": errors,
+        "path_valid_utf8": valid, "errors": errors, "detached": detached,
     }
     values["classification"], values["recommendation"] = classify(values, target)
     if main and values["classification"] in ("merged-removable", "merged-current"):
@@ -3504,10 +3534,14 @@ def worktree_rows(repo, run, records=None):
     branch named HEAD (HEAD_BRANCH_REF) taking none: its `upstream`,
     `remote_present`, `ahead` and `behind` stay null and its row carries a
     `probe-failed` error for `git for-each-ref`, so it is inspection-error
-    (lead ruling R-61 (b)); `merged_into_target` from row 7; then classify()
-    and partial_removal_note(). Each failed outcome or call becomes an entry
-    of the row's `errors`. A value not established is null, and a stale or
-    unreadable row carries no branch evidence, as the baseline gave none.
+    (lead ruling R-61 (b)); `merged_into_target` from row 7, where row 7
+    failed with row 6 read, each present row on a branch carrying row 7's
+    error as it carries row 6's, so it is inspection-error and never
+    `review-required` (pcl:178-179; W121 MEDIUM-2, lead ruling R-374); then
+    classify() and partial_removal_note(). Each failed outcome or call becomes
+    an entry of the row's `errors`. A value not established is null, and a
+    stale or unreadable row carries no branch evidence, as the baseline gave
+    none.
 
     The reader of row_evidence(): the working directory's realpath once;
     per row _read_row(); shared_identities() over those reads; then per row,
@@ -3524,6 +3558,14 @@ def worktree_rows(repo, run, records=None):
     # evidence is established, so each present row on a branch carries the
     # failed probe's error and is inspection-error (plan review F3).
     unlisted = [] if repo["refs"] is not None else (list(repo["errors"]) or [unparseable_error("for-each-ref")])
+    # No merged set (row 7 failed, with row 6's listing read and the merge
+    # target named): no row's merge state is established, so each present row
+    # on a branch carries row 7's error and is inspection-error, never the
+    # defensive `review-required` that no value of the evidence model reaches
+    # (pcl:178-179; lane 3's W121 MEDIUM-2, lead ruling R-374), as `status`
+    # already reads the same failure.
+    unmerged = ([] if repo["refs"] is None or repo["merge_target"] is None or repo["merged"] is not None
+                else (list(repo["errors"]) or [unparseable_error("for-each-ref")]))
     redirectable = repo.get("worktree_config") is not False  # row 4c true, or not read (LQ-11)
     shared = shared_paths(registry)
     entries = _registry_entries(registry, records)
@@ -3557,8 +3599,8 @@ def worktree_rows(repo, run, records=None):
             # With no work time left no probe starts, and the row keeps that probe's
             # own deadline-exceeded, as the work deadline's rows always have (T099).
             _read_status(read, raw, run)
-        if unlisted and read["present"] is True and record["branch"] is not None:
-            read["errors"].extend(dict(error) for error in unlisted)
+        if (unlisted or unmerged) and read["present"] is True and record["branch"] is not None:
+            read["errors"].extend(dict(error) for error in (unlisted or unmerged))
         rows.append(row_evidence(record, raw, index == 0, read, refs, repo["merged"], target))
     return rows
 # endregion evidence
@@ -5845,7 +5887,10 @@ def narrowed_ref_patterns(plan, declared=None):
     names = [plan.merge_target["name"].encode("utf-8", "surrogateescape")] if plan.merge_target else []
     for value in (evidence.get("declared"), declared):
         if isinstance(value, str):
-            names.append(value.removeprefix("origin/").encode("utf-8", "surrogateescape"))
+            try:
+                names.append(value.removeprefix("origin/").encode("utf-8", "surrogateescape"))
+            except UnicodeEncodeError:
+                pass  # a lone surrogate names no ref, as resolve_merge_target()'s head() reads it (T7)
     origin_head = planned.get(ORIGIN_HEAD_REF)
     if origin_head is not None and (origin_head["symref"] or b"").startswith(ORIGIN_REFS):
         names.append(origin_head["symref"][len(ORIGIN_REFS):])
@@ -7051,7 +7096,8 @@ def push_or_delete(repo, run):
     else:
         if branch == target:
             raise Refused("The default branch is protected and cannot be deleted.")
-        holders = [row for row in rows if row.get("present") and row.get("branch") == branch]
+        holders = [row for row in rows
+                   if row.get("present") and row.get("branch") == branch and not row.detached]  # T10
         if any(not row.main for row in holders):
             raise Refused("Remove the linked worktree first; branch deletion is a separate action.")
         if holders:  # the main worktree alone holds it, which Git never removes (W52 F-5, RI-4)

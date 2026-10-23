@@ -254,6 +254,14 @@ class BoundsTests(clean_support.CleanCase):
                               document["notes"], codes(document), document["limits"]["worktree_rows"]),
                              ("report", "complete", None, {"count": 0, "exactness": "exact"}, [note], [], 256))
             self.assertEqual(len(document["worktrees"]), 200)
+            # pcl:36-38 (lane 3's W121 LOW-5): above 128 the gates still run for every inspected
+            # row, so `excluded` lists each row a gate excludes: the main worktree, and the 199
+            # registered rows, none of which has an upstream.
+            excluded = {entry["path"]: (entry["classification"], entry["reason"]) for entry in document["excluded"]}
+            self.assertEqual(len(document["excluded"]), 200)
+            self.assertEqual(excluded.pop(str(root)), ("protected-default", "main-worktree"))
+            self.assertEqual(sorted(excluded), sorted(str(self.base / f"r{number:03d}") for number in range(199)))
+            self.assertEqual(set(excluded.values()), {("unpublished", "unpublished")})
             human = self.run_cli("clean", root)
             self.assert_status(human, 0)
             self.assertEqual(human.stdout.splitlines()[2:5], [f"Freshness: {FRESHNESS}",
@@ -265,6 +273,17 @@ class BoundsTests(clean_support.CleanCase):
             self.assert_status(batch, 1)
             self.assertEqual((batch.document["completeness"], codes(batch.document), batch.document["omitted"]),
                              ("incomplete", ["inspect-cap"], {"count": 72, "exactness": "exact"}))
+            # pcl:39-43 (W121 LOW-5): `--apply --expect-plan` above 128 is refused for the cap, before
+            # the digest is compared and consumed: the report's own digest and a wrong one alike
+            # give `inspect-cap` alone, never `plan-digest-mismatch`, with exit 2.
+            for label, digest in (("the report's digest", document["plan_digest"]), ("a wrong digest", "0" * 64)):
+                applied = self.run_json("clean", root, "--all-safe", "--apply", "--yes", "--expect-plan", digest,
+                                        "--json")
+                with self.subTest(label):
+                    self.assert_status(applied, 2)
+                    self.assertEqual((applied.document["completeness"], codes(applied.document),
+                                      applied.document["operations"]), ("incomplete", ["inspect-cap"],
+                                                                        {"estimated": 0, "performed": 0}))
         self.register_worktrees(57, "s")
         with self.subTest(rows=257):
             result = self.run_json("clean", root, "--json")

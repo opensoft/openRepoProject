@@ -756,7 +756,7 @@ NEXT_STEP_FIXTURES = {
     # The contract's next steps for the three reasons D18 gives none
     # (contracts/project-clean.md :160-168; lead rulings R-57 H1 and R-62 (b)).
     "main-worktree": "never removed by project clean",
-    "unsupported-path-bytes": "rename the path to valid UTF-8",
+    "unsupported-path-bytes": "move it to a valid UTF-8 path with git worktree move, or mv it and then git worktree repair NEWPATH",
     "not-requested": "name it with --worktree to plan its removal",
 }
 

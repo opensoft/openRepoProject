@@ -268,7 +268,13 @@ class PathsTests(clean_support.CleanCase):
             self.assert_status(human, 0)
             group = TEXT["excluded_group"].format(REASON="unsupported-path-bytes", K=1,
                                                   NEXT_STEP=STEPS["unsupported-path-bytes"])
-            self.assertEqual(group, "  unsupported-path-bytes (1): rename the path to valid UTF-8")
+            self.assertEqual(group, "  unsupported-path-bytes (1): move it to a valid UTF-8 path with git worktree "
+                                    "move, or mv it and then git worktree repair NEWPATH")
+            # T14 (lane 3's W120 L-1): a plain mv leaves the registry entry stale, so the step names
+            # the two moves that mend it; git worktree move refuses a worktree that holds a submodule.
+            self.assertIn("git worktree move", project.NEXT_STEPS["unsupported-path-bytes"])
+            self.assertIn("git worktree repair NEWPATH", project.NEXT_STEPS["unsupported-path-bytes"])
+            self.assertIn(group, human.stdout.splitlines())
             expected = [f"Cleanup plan for {root}", TEXT["merge_target_line"].format(NAME="main", SOURCE="main"),
                         f"Freshness: {FRESHNESS}", TEXT["selected_heading"].format(N=4)]
             expected += [TEXT["selected_row"].format(PATH=form, BRANCH=branch) for _raw, branch, form, _ in eligible]
