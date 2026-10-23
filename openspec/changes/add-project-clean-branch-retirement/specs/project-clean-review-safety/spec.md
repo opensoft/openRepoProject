@@ -96,8 +96,15 @@ repository found replaced by the rescan after a removal SHALL make that target
   child starts
 - **THEN** Git's own check refuses the deletion with exit status 1, the branch
   survives at the new commit, the target's `branch_retirement` is `retained`
-  with `git-refused`, later targets are `not-attempted`, no commit is lost, and
-  the exit status is 2
+  with `git-refused`, its `observed_sha` the planned SHA and its
+  `post_check_sha` the new commit, later targets are `not-attempted`, no
+  commit is lost, and the exit status is 2
+- **AND** the result prints `Kept <branch> (git-refused); now at <new commit>;
+  its reflog is not proven merged into <merge target>; inspect it and git -C
+  <root> reflog show refs/heads/<branch> before retrying: project clean <root>
+  --apply --action delete-branch --branch <branch>`, whose inspection shows
+  the new commit in the reflog, and never the hint for a worktree that holds
+  the branch
 - **AND** the confirmation and the result each state this requirement's
   residual-window line, which under the flag also names a branch changed
   after its last check, after every other clause that line names and before
