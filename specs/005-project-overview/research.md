@@ -27,7 +27,7 @@ only he can still decide:
   answer (decision 2);
 - Revision 2: where each finding of lane openRepoProject-3's W96 read is
   taken;
-- Revisions 3 to 6: where each input of those revisions is taken.
+- Revisions 3 to 7: where each input of those revisions is taken.
 
 Each entry gives a Decision, its Rationale and the Alternatives considered.
 Citations, as [plan.md](plan.md) "Citations" defines them: `project:N` is
@@ -933,8 +933,8 @@ Spec 005 records it as C-72 (at `4072608`, in the wording followed here at
 `98b95db`). His "recommended" chose only where this entry or the lane's A1
 re-alignment draft stated a recommendation, so five items are CHOSEN for
 change 2: O1 (A), O2 (A), O4 (a) with its sub-items (c) and (d) and D5's
-clause 2 case, O6 (A) and O7. For the rest, this entry quotes C-72 at
-`98b95db` (spec.md:966-985) as it stands:
+clause 2 case, O6 (A) and O7. For D5's clause 2 and the rest, this entry
+quotes C-72 at `98b95db` (spec.md:966-985) as it stands:
 
 > D5's clause 2, item 8's case, was taken through O6's recommended text in R20
 > at `7af798a`, which carried it; lane openRepoProject-3 asked, on W105's
@@ -1425,3 +1425,33 @@ Made from `98b95db` (spec commit 3ai), on the lead's message for revision
 - **Pins, unchanged**: feature 004 stays at `d6bac50`, its later head
   `f3724fc` named as documents only (R1; plan.md's Citations); PR #19 stays
   at `88d0d36` and PR #27 at `288fc34`.
+- **Bookkeeping** (added in revision 7, on W112's R6-OBS-3): the spec pins in
+  plan.md's Input and R1's Finding move to `98b95db`, from `54dc025` and
+  `7b37557`; plan.md's Citations add W96's delta read at `464c361`; plan.md's
+  Citations and the index at the head of this file count the revisions to 6.
+
+## Revision 7: W112's read of revision 6
+
+Made from `84513fd` (spec commit 3aj), on the lead's message for revision 7, a
+small revision. Each input, and where it is taken:
+
+- **R6-LOW-1** (lane openRepoProject-3's W112 at `d500312`): R20's lead-in to
+  its quote of C-72 now reads "For D5's clause 2 and the rest", since the five
+  CHOSEN items before it name D5's clause 2 case and the quote opens with that
+  clause's own qualifier.
+- **R6-OBS-2**: traceability.md's FR-007 line names O11 (part 1 built now, part
+  2 open) beside O5, as R20's O11 entry and C-72 list FR-007 among O11's sites.
+- **R6-OBS-3**: the Revision 6 record gains a "Bookkeeping" bullet for its four
+  hunks that only its header and title declared, and this record has one of its
+  own, so every hunk of each is declared.
+- **R6-OBS-1, the spec side**: from its commit 3aj the spec no longer lists
+  plan revisions by sha and points to these "Revision" sections instead (the
+  lead's decision), so a plan revision calls for no spec commit. The plan's
+  cites of the spec stay pinned by sha, at `98b95db`, and no plan revision
+  needs to name a later spec commit.
+- **Pins, unchanged**: feature 004 at `d6bac50`, its later head `f3724fc`
+  documents only; PR #19 at `88d0d36` and PR #27 at `288fc34`.
+- **Bookkeeping**: plan.md's Citations bullet on lane openRepoProject-3's reads
+  names W96 and W112 as its readers and adds W112's delta read at `d500312`;
+  plan.md's Citations and the index at the head of this file count the
+  revisions to 7.

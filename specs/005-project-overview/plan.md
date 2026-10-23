@@ -171,10 +171,10 @@ feature 005 merges, and slice 1's pull request quotes the checks of (a) to
   (2,928 lines; research.md R9, R12, R20), its warnings in PR #19's round
   (n) words. Earlier revisions read it at `00205d73`, `10890e2c`,
   `8ce4e9fb`, `811b9cef` and `c5840a66` (research.md R20).
-- Lane openRepoProject-3's W96 read of this plan at `a80f10b`, with its
-  delta reads at `aeb0bb2`, `6fb619c`, `664461f`, `06b16e1` and `464c361`:
-  revisions 2 to 6 take each of its findings (research.md, "Revision 2" to
-  "Revision 6").
+- Lane openRepoProject-3's reads of this plan: W96's at `a80f10b`, with its
+  delta reads at `aeb0bb2`, `6fb619c`, `664461f`, `06b16e1` and `464c361`, and
+  W112's delta read at `d500312`; revisions 2 to 7 take each of their findings
+  (research.md, "Revision 2" to "Revision 7").
 
 ## Technical Context
 

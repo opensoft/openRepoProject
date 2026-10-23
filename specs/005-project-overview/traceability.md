@@ -102,7 +102,8 @@ changes"); lane 2 or lane openRepoProject-3 reads the diff before feature
 - FR-004: collect (no Git child for a candidate without `.git`).
 - FR-005: discovery; R10 (PN-9); contract "Row and scan errors".
 - FR-006: collect; R5; data model "Repository".
-- FR-007: collect; R9, R17 (PN-18); research.md O5 (open).
+- FR-007: collect; R9, R17 (PN-18); research.md O5 (open), O11 (part 1 built
+  now, part 2 open).
 - FR-008, FR-009: collect, findings; R5, R9; contract "Other findings",
   "Git children"; research.md O4 (a) and O7 (chosen), O11 (part 1 built
   now, part 2 open).
