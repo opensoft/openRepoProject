@@ -13,10 +13,10 @@ duplicate them.
   on change 1's text at `961c405` and PR #19's at `c462d87` (`d66d02c`),
   `design.md` D7 also stating its fit at PR #19's `6f2cb54`, `a664799`,
   `9267303` and `f0bf538` (rounds A9 to A12, rulings A-37 to A-42) and on its
-  measured basis at `662be89`, unchanged at `88d0d36` and at its current head
-  `818311a` (rounds A16 to A25, rulings A-47, A-57, A-62, A-64, A-67, A-71,
-  A-75, A-78, A-84, A-86 and A-106), the joint fit with the cache change also at
-  that change's own 3.7 s
+  measured basis at `662be89`, unchanged at `88d0d36`, at `818311a` and at its
+  current head `4512441` (rounds A16 to A26, rulings A-47, A-57, A-62, A-64,
+  A-67, A-71, A-75, A-78, A-84, A-86, A-106 and A-110), the joint fit with the
+  cache change also at that change's own 3.7 s
   (round A13, ruling A-44),
   `design.md` D8 giving a holder that is the main worktree its own next step
   (round A14, ruling A-45), its restatements of PR #19's moving facts worded
@@ -30,7 +30,9 @@ duplicate them.
   and a worktree that holds a target's branch named for removal only where the
   plan read it and would remove it, its own work and a detach being named
   otherwise, R-324's no-prune clause first for one whose path could not be
-  read (round A24, rulings A-98 and A-103);
+  read (round A24, rulings A-98 and A-103), and a flagged `--apply` without
+  `--yes` on a standard input that is not a terminal refusing as the removal
+  apply it is, with `confirmation-required` (round A26, ruling A-109);
   verified by its Capabilities section accounting for every canonical
   requirement of `project-clean` and `project-clean-review-safety` and every
   requirement change 1 adds to them.
@@ -209,7 +211,15 @@ duplicate them.
   block's difference), with A-104 and A-105 recorded, by `89331c2` (the spec
   delta, RE2-1), `b54016f` (the design) and the commit that edits the
   proposal's body, records the round's table and updates this task; verified
-  by "Re-read and Codex Findings (round A25)" in `proposal.md`.
+  by "Re-read and Codex Findings (round A25)" in `proposal.md`. Round A26, on
+  `76cb3ef`, applied the lane's ruling A-110 (lane openRepoProject-3's W131
+  confirm read of rounds A24 and A25, 0 HIGH, 1 MEDIUM and 4 LOW, under
+  A-108; its W133's Q9 (c) note, under A-109; and PR #19's round (r) at
+  `4512441`, accepted under lane openRepoProject-2's R-396: the currency and
+  A-50's note re-run), with A-107 recorded, by `d28329a` (the spec delta,
+  LOW-3 and Q9 (c)), `07e8bc1` (the design) and the commit that edits the
+  proposal's body, records the round's table and updates this task; verified
+  by "Re-read and Codex Findings (round A26)" in `proposal.md`.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md`
   modifies five requirements and adds one (72 scenarios: 43 carried unchanged
   from change 1 and PR #19, 6, 14, 10, 5 and 8 by block, and 29 added, the
@@ -261,23 +271,28 @@ duplicate them.
   one of those scenarios that print it, under rulings A-98, A-100 and A-103,
   and round A25 adding no scenario, editing the `Retired` line's sentence of
   the ADDED requirement and one AND of "A branch name in a printed command is
-  quoted for the shell", under ruling A-106),
+  quoted for the shell", under ruling A-106, and round A26 adding no
+  scenario, editing that sentence and that AND again, and adding one sentence
+  to the ADDED requirement and one AND to "A single target with the flag
+  equals a one-item batch", under ruling A-110),
   `specs/project-clean-review-safety/spec.md` modifies one (4 scenarios: 3
   carried, 1 added, whose THEN round A24 edits and to which it adds an AND),
   and `specs/project-command/spec.md` modifies one on
   PR #19's text (9 scenarios carried, none added; agreed by lane
   openRepoProject-2 on 2026-10-19 and committed in `16051d1`, ruling A-20; at
-  PR #19's `818311a` its source block differs in its text, by Q1's pin, Q8's
-  warned-probe rule and T9's "Stale entries:" paragraph, and in ten of its
+  PR #19's `4512441`, as at `818311a`, its source block differs in its text,
+  by Q1's pin, Q8's warned-probe rule, which round (r) qualifies to Git's
+  default `core.warnAmbiguousRefs`, and T9's "Stale entries:" paragraph, whose
+  plain text PR #19's owed round (s) may still change, and in ten of its
   sixteen scenarios, which 2.2's re-read takes, this block's text staying
-  `c462d87`'s, ruling A-106),
+  `c462d87`'s, rulings A-106 and A-110),
   every scenario of
   each modified requirement's source text kept byte for byte; `design.md`
   holds D1 to D10 (`8341954`, `d0b33ce`, and the commit titled 'Settle which
   later targets carry branch-retention-stop'), revised by the alignment fix
-  round (1.2), the council round (1.3) and rounds A3 to A25; verified
+  round (1.2), the council round (1.3) and rounds A3 to A26; verified
   by `grep -c '^#### Scenario:'` on each spec file and by a scenario-carry
-  script run after the council round and again after rounds A3 to A25
+  script run after the council round and again after rounds A3 to A26
   over all seven MODIFIED blocks, every source scenario present byte for byte
   and in order.
 - [x] 1.5 Validation passes: `/usr/bin/openspec validate
@@ -286,7 +301,7 @@ duplicate them.
   `/usr/bin/openspec status --change add-project-clean-branch-retirement
   --json` shows every artifact done; verified by running the three on this
   branch after 1.4, after the alignment fix round, after the council round
-  and after rounds A3 to A25
+  and after rounds A3 to A26
   (build 1.13.1, which notes only as INFO that archive would refuse the
   MODIFIED blocks whose base still sits in change 1).
 - [ ] 1.6 Ratified by Brett Heap's word on the pull request, quoted with its
