@@ -22,6 +22,17 @@ e48de37 on 2026-10-21 from about 09:15Z to 09:36Z, matched every run
   - the HOME refusals (R-202, R-205);
   - the push fix, Q9 B's trace names, Brett Heap's rulings LQ-10 to LQ-15,
     and the fix lanes.
+
+Note, 2026-10-23 (lead ruling R-360): the walk recorded here is at `project`
+e69f6ef. Since then `project` has changed (`git diff --shortstat e69f6ef
+d6bac50 -- project`: 1 file changed, 669 insertions(+), 114 deletions(-)):
+R-284's note; T1 to T8, the no-prune texts (R-319, R-321); the closed-stdout
+refusal (R-322); W90's fix (R-329, R-335); rows 4b and 4c (R-332, R-336); and
+R-324's texts (R-343). The hand runs are therefore owed again at feature 004's
+landing head. As T132 and R-50 require, the lead walks them through tmux, or
+Brett Heap does; no subagent dispatches them. The record of the earlier walk
+above and below is unchanged.
+
 - Terminal: a tmux pane (a pseudo-terminal) in the py-bench container,
   window `openRepoProject-2-pyBench:handruns`. Pane 0 ran the commands;
   pane 1 was the second shell for User Story 4. bash ran with history

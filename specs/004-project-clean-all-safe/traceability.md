@@ -366,3 +366,8 @@ literal in `test_clean_the_stop_block`, the deadline case of
 `test_clean_the_estimate_counts_an_identity_probe_read_one_option_per_child`
 and the cases of `test_clean_a_work_tree_probe_that_decides_nothing_at_revalidation`
 (T083) change with them.
+
+Doc round 24 (the lead's R-360; lane 3's W102 and W108): T030's spy clause is
+row 4b's subtest alone, T128's bound is for an idle `py-bench` and records the
+measured times, and `hand-runs.md` records that the hand runs are owed again
+at the landing head. No test name changes.
