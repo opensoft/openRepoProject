@@ -22,8 +22,12 @@ Lane: openRepoProject-4
   - Result: pass.
 - [x] CHK004 Is the parity contract with `project clean` stated, for classification and the merge target? [Completeness, Spec FR-026, SC-003]
   - Result: pass; FR-007's twin fill keeps it for two spellings of one worktree
-    (EC-031), and one parity case, a failed ref listing, waits for a fix in
-    feature 004 (Dependencies).
+    (EC-031), and the parity tests name two lasting differences on Brett Heap's
+    words of 2026-10-23 (C-72; FR-026, SC-003): a working directory whose
+    realpath cannot be established (O9 (A)), and a failed ref listing, where
+    feature 004's fix, merged as `91552e3`, makes each present row on a branch
+    `inspection-error` while the overview keeps A1's null class (O12 (A);
+    Dependencies).
 - [x] CHK005 Is the handoff contract stated: a suggestion resolves Git-first to the row's repository and merge target? [Completeness, Spec US4 s2]
   - Result: pass.
 - [x] CHK006 Is the MODIFIED `project-review-safety` requirement's scope stated (the overview only), with every other command's behaviour kept? [Completeness, Spec FR-023, SC-014]
@@ -149,7 +153,8 @@ revisions 6, 7, 8, 9 and 10 at `d644517`, `0394be4`, `177eadf`, `4261ff8` and
 to (n) at `9267303`, `f0bf538`, `662be89`, `4f1c0e0`, `3dcd2d8`, `6bf9f77`,
 `b3228bb`, `e0c91bb`, `e14ada0`, `173d83c`, `ccc52b9`, `20084cd` and `2250830`
 and after lane openRepoProject-3's W39 LOW-4, their categories unchanged, and
-CHK013 after the plan word of 2026-10-22, its category unchanged too. 26 items:
+CHK013 after the plan word of 2026-10-22, its category unchanged too, and
+CHK004 after Brett Heap's words on O9 and O12, unchanged too. 26 items:
 24 pass, 0 fixed in the spec, 0 open, 2 plan notes, 0 new questions. An open
 item waits on the question or residual its result names; a plan note is for the
 plan, not the spec; a new question is asked in `clarify-questions.md`.

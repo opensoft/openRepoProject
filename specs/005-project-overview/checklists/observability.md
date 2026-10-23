@@ -24,12 +24,12 @@ Lane: openRepoProject-4
     `e4a30fc` adds to it, ratified (FR-020). Since PR #19's round (h) at
     `b3228bb` (RI-3), `project clean`'s `estimated` counts the extra
     identity-probe children for a root or common directory whose path holds a
-    line feed; FR-020 and EC-032 keep the overview's count as A1 gives it, A1's
-    item 7 staying open for Brett Heap's direct word (O3; C-72). Since PR #19's
-    round (i) at `e0c91bb`, D6 repeats the identity probe on any count of lines
-    but two, a submodule checkout's three included, so that `performed` exceeds
-    `estimated` for a submodule candidate too; EC-032 holds it with the
-    line-feed case.
+    line feed; FR-020 and EC-032 keep the overview's count as A1 gives it until
+    A1's item 7, chosen for change 2 by Brett Heap's word of 2026-10-23, lands
+    (O3; C-72). Since PR #19's round (i) at `e0c91bb`, D6 repeats the identity
+    probe on any count of lines but two, a submodule checkout's three included,
+    so that `performed` exceeds `estimated` for a submodule candidate too;
+    EC-032 holds it with the line-feed case.
 - [ ] CHK004 Is it specified whether `probes.estimated` counts a worktree row that never takes a status probe, such as a git-directory record? [Clarity, Gap, Spec FR-020]
   - Result: plan note PN-12, narrowed on 2026-10-21 by C-68: a bare
     repository's main worktree row adds none (FR-020); the other rows that take
@@ -100,7 +100,8 @@ openRepoProject-3's W7 read of A1, theirs too, and again after A1's revisions
 3, 5, 6, 7, 8, 9 and 10, at `367223a`, `3ee860c`, `d644517`, `0394be4`,
 `177eadf`, `4261ff8` and `c193f7b`, and after its ratification at `e4a30fc`,
 and CHK003 after PR #19's rounds (h) at `b3228bb` and (i) at `e0c91bb` and
-after C-72. 18 items: 17 pass, 0 fixed in the spec, 0 open, 1 plan notes, 0 new
+after C-72, and again after Brett Heap's word on O3, its category unchanged.
+18 items: 17 pass, 0 fixed in the spec, 0 open, 1 plan notes, 0 new
 questions. An open item waits on the question or residual its result names; a
 plan note is for the plan, not the spec; a new question is asked in
 `clarify-questions.md`.

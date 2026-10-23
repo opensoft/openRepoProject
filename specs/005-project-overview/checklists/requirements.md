@@ -1263,6 +1263,46 @@ Lane: openRepoProject-4
   `e4a30fc` (64 of 64). A1 stays cited at `e4a30fc`, and `clarify-questions.md`
   is unchanged. Re-validation: 16 of 16 items pass, with the checks of
   iteration 2 re-run by script on the edited spec.
+- 2026-10-23, a fortieth pass, by the lead's commit 3al decisions. Brett Heap's
+  word typed in lane openRepoProject-3's pane at 2026-10-23T13:30:30Z, "yes,
+  recommended for O12-O16" (that lane's RULED line at 13:32:29Z; NOTED by lane
+  openRepoProject-4 at 13:35:04Z), is recorded in C-72: O12 (A), O13 (A), O14
+  (A), O15 (A) and O16 (a) are chosen, each as the lane recommended it, so that
+  every held item of feature 005, O1 to O16 and D5's clause 2, is chosen, and
+  C-72's "Where applied" also names SC-003 and the Key Entities. The held notes
+  now state the chosen behaviour: FR-026 and the Dependencies' parity record
+  (O12, the parity tests naming the case as a lasting difference, which
+  settles lane openRepoProject-3's W127 LOW-3), FR-006, FR-009 and User Story 8
+  (O13, landing with A1's re-alignment, as O3 and O5 do), User Story 8, FR-006
+  and EC-012 (O14, a known limit), FR-035 (O15), and C-40, C-68 and FR-008
+  (O16). W127's LOW-1: the round (n) record now says "the functions of
+  `project` that the overview reuses", none of the four top-level names that
+  `d8724e2` changes being one of them, and names the `TEXT` rows that this spec
+  cites, each unchanged, `TEXT` gaining one row. LOW-2: the LQ-11 bullet's
+  record of the collector table's two exceptions gains the A1 bullet's clause
+  on the third, the `core.worktree` read's unset exit 1, which departs from
+  DI:535 the same way, so that the thirty-ninth pass's two collector-table
+  sites both state it; every site that S5-16 reached names DI:535, as lane
+  openRepoProject-3's ledger 4 (W125) asks. The owed gaps are closed: SC-003
+  names the two lasting differences, O9's and O12's; the Key Entities'
+  null-root list names the redirected main worktree (O4 (a)) and the failed
+  `core.worktree` read (O11, part 2 (A)); and the results of observability.md's
+  CHK003 (O3), discovery-identity.md's CHK016 (O5) and integration.md's CHK004
+  (O9 and O12) state the chosen items, their categories unchanged, each file's
+  Evaluation recording the re-read. #24 at its draft PR #27's head `d95eea2`,
+  after round B24, which edits only its two ADDED requirements among its deltas
+  (its B-117): the eight ranges byte-identical to their text at `288fc34` by
+  `cmp` (proposal :803-806, :834-837, :937-949 and :967-968; design
+  :1199-1202, :1278-1281 and :1938-1944; task 3.2 at :198-213), the
+  `project-overview` block the same blob, `a40458cb`. #19's round (p) at
+  `e0b1671` is not recorded, the map of this spec's cites at that head not
+  being complete when this pass was made; #19 stays at `2250830`, #29 at
+  `a529310` and feature 004 at `d8724e2`, and no pin moves. No checklist
+  category changes, and the totals below were recounted by script.
+  Traceability is checked against A1's ratified deltas at `e4a30fc` (64 of 64).
+  A1 stays cited at `e4a30fc`, and `clarify-questions.md` is unchanged.
+  Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run by
+  script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -1387,4 +1427,4 @@ to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
 passes of that day, and after the thirteenth to thirty-fourth passes on
-2026-10-22 and the thirty-fifth to thirty-ninth on 2026-10-23.
+2026-10-22 and the thirty-fifth to fortieth on 2026-10-23.

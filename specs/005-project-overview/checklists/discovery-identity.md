@@ -125,8 +125,8 @@ Lane: openRepoProject-4
     one line", as A1 gives it, so that such a worktree, where
     `extensions.worktreeConfig` is true, reads `registration-mismatch` in the
     overview while `project clean` selects it where it is otherwise eligible,
-    and A1's re-alignment, its item 9, stays open for Brett Heap's direct word
-    (O5; C-72; FR-007).
+    and A1's re-alignment, its item 9, round (j)'s reading, chosen for change 2
+    by Brett Heap's word of 2026-10-23, has not landed (O5; C-72; FR-007).
 
 ## Requirement Consistency
 
@@ -197,7 +197,8 @@ read of A1 revision 3, and after A1's revisions 5, 6, 7 and 8 at `3ee860c`,
 `e14ada0` and lane openRepoProject-3's W88 read, and CHK025 after its round (m)
 at `20084cd`, and CHK016 and CHK025 after C-72 and its round (n) at `2250830`,
 and CHK009 after lane openRepoProject-3's W105 read of `7b37557` (O11), its
-result still pass. 29 items: 27 pass, 1 fixed in the spec, 0 open, 1 plan
+result still pass, and CHK016 after Brett Heap's word on O5, its category
+unchanged. 29 items: 27 pass, 1 fixed in the spec, 0 open, 1 plan
 notes, 0 new questions. An open item waits on the question or residual its
 result names; a plan note is for the plan, not the spec; a new question is
 asked in `clarify-questions.md`.
