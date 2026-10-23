@@ -128,7 +128,8 @@ changes"); lane 2 or lane openRepoProject-3 reads the diff before feature
 - FR-029, FR-030: render; data model "Exit statuses"; contract "Human
   report".
 - FR-031 to FR-035: findings; R12; data model "Gates"; contract
-  "Remedies", "Composer"; research.md O1, O2, O4, O6 (chosen).
+  "Remedies", "Composer"; research.md O1, O2, O4, O6 (chosen; D5's clause
+  2 before him for his direct word).
 - FR-036 to FR-038: render; R11, R15 (PN-6, PN-8); contract "JSON".
 - FR-039: render, dispatcher; R15 (PN-2); contract "Exit-2 outputs".
 - FR-040: R3 (the ban), R18 (the wrapper's allow-list), R19.

@@ -19,7 +19,7 @@ the text above it is the one built until A1's re-alignment lands at PR
 his direct word: the text above it is the one built until his word, the
 text after it the other answer, the lane's recommendation. Each item of
 R20 changes only its own rows. Every warning is in the words of PR #19's
-round (n) (`2250830`; R-343, his "R-324: yes").
+round (n) (`2250830`, unchanged at `88d0d36`; R-343, his "R-324: yes").
 
 ## Invocation
 
@@ -66,7 +66,7 @@ No other option, variable or file changes a limit or a time (FR-047).
 1. Parse the arguments (above); the invocation's deadline is set as it is
    entered (60 s, no reserve).
 2. The configuration-path test of [E] (feature 004's
-   `relative_config_paths`, `project:963`): a variable that fails it
+   `relative_config_paths`, `project:977`): a variable that fails it
    refuses with `relative-config-path`, exit 2, before any Git child.
 3. The version check, once (`git --version`): `git-too-old` or
    `git-unavailable`, exit 2, and no other Git child.
@@ -216,7 +216,9 @@ the four status pins (kind `status`). No other argument vector is started.
   failure records the row error and leaves the root null, with no
   suggestion and no gate code.
   - OPEN (O11, part 2): the findings that would suggest a clean command
-    carry `suggestion_gate: target-not-repository-root`.
+    carry `suggestion_gate: target-not-repository-root`, with the bare
+    repository's remedy, "run project clean from the main worktree root"
+    (`remedy.target-not-repository-root`).
 - `extension`: `config --file COMMON_DIR/config --type=bool --get
   extensions.worktreeConfig`, per repository.
 - `refs`: `for-each-ref --format=REF_FORMAT refs/heads refs/remotes`, read
@@ -282,11 +284,12 @@ its period), which happens once A1's re-alignment lands:
 - clause 1, CHOSEN (O6 (A)): the warning is kept whole and the
   recommendation before it is cut instead; D5's "remedy kept whole"
   stands;
-- clause 2, CHOSEN (O4 (a), with O6 (A)): where the warning and the remedy
+- clause 2, chosen through O6's text at `7af798a`, for his direct word
+  (O4 (a), with O6 (A); research.md R20): where the warning and the remedy
   cannot both fit, which only the redirect remedy reaches (through O4
   (a)'s new row and through sub-item (c)'s row), the recommendation is
   left out and the remedy cut with `...`, reversing D5's "remedy kept
-  whole" for that one case.
+  whole" for that one case; until he answers, it rests on that text.
 
 Every length these rules give is in research.md R20, "Lengths".
 
@@ -320,7 +323,7 @@ config`, `git for-each-ref`, `git status`), a filesystem call (`lstat`,
 - `error.root-unreadable`: "root is unreadable (CAUSE)", CAUSE one of "no
   such directory", "not a directory", STRERROR
 
-### Findings from the ladder (FR-028; [L], `project:2328-2348`)
+### Findings from the ladder (FR-028; [L], `project:2342-2362`)
 
 The class's recommendation, verbatim:
 
@@ -335,7 +338,7 @@ The class's recommendation, verbatim:
     unlock it, then prune stale worktree metadata manually; a row's path
     could not be read, so do not run git worktree prune, git worktree
     remove or git gc until it can." (#19's T7, `#19
-    design.md:1347-1367`)
+    design.md:1349-1369`)
 - `finding.inspection-error`: "Preserve this worktree; Git could not
   establish its clean state."; its second rung: "Preserve this worktree;
   Git could not establish its ignored-file state."
@@ -395,7 +398,7 @@ The class's recommendation, verbatim:
     main worktree by hand; a row's path could not be read, so do not run
     git worktree prune, git worktree remove or git gc until it can"
 - `finding.main-worktree`: "The main worktree is never removed by project
-  clean." (feature 004's text, `project:864`)
+  clean." (feature 004's text, `project:876`)
 - `finding.locked-worktree`: "This worktree is locked; unlock it before
   project clean can remove it."
 - `finding.registration-mismatch`: "Git's registration of this worktree
@@ -407,11 +410,11 @@ The class's recommendation, verbatim:
   common directory is not valid UTF-8, so no clean command can name it;
   rename the path to valid UTF-8."
 - `finding.no-merge-target`: "Cannot determine the default branch from the
-  manifest, origin/HEAD, main, or master." (feature 004's, `project:883`),
+  manifest, origin/HEAD, main, or master." (feature 004's, `project:897`),
   where change 1's `resolve_merge_target` refuses `no-merge-target`
 - `finding.merge-target-conflict`: "The manifest names NAME and origin/HEAD
   names OTHER; NAME is the merge target." (feature 004's,
-  `project:842-843`), where that resolver's `notes` holds the conflict;
+  `project:854-855`), where that resolver's `notes` holds the conflict;
   NAME and OTHER are escaped for the output's mode (FR-038)
 
 ### Remedies (FR-035; A1:620-631)
@@ -471,10 +474,10 @@ from `limits` when the message is built.
   Git 2.36 or later."
 - `refusal.git-unavailable`: "Git is unavailable (DETAIL); overview needs
   Git 2.36 or later.", DETAIL one of "not found", "exit N", "timed out",
-  "unparseable version" (feature 004's details, `project:812-815`)
+  "unparseable version" (feature 004's details, `project:824-827`)
 - `refusal.relative-config-path`: per failing variable, in the order
   `HOME`, `XDG_CONFIG_HOME`, `GIT_CONFIG_GLOBAL`, `GIT_CONFIG_SYSTEM`, one
   line "NAME is set to a path that does not begin with /; make it absolute
   or unset it.", the lines joined by a line feed (feature 004's
-  `config_path_message`, `project:1003-1006`)
+  `config_path_message`, `project:1017-1020`)
 - `refusal.internal-error` (PN-2): "internal error (CLASS)"

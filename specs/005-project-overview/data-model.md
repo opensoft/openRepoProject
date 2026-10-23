@@ -7,14 +7,14 @@ keeps no state beyond the invocation (FR-040); these are the values one run
 reads, derives and reports. The JSON shapes and key orders are in
 [contracts/project-overview.md](contracts/project-overview.md); exact human
 text is A1's design D3, D4, D5 and D10 and the contract's message table.
-`project:N` is feature 004's `project` at `211e43d` ([plan.md](plan.md),
+`project:N` is feature 004's `project` at `d6bac50` ([plan.md](plan.md),
 "Citations").
 
 ## Entities
 
 ### Invocation (FR-011, FR-043, FR-044)
 
-Feature 004's `Invocation` (`project:1323-1438`), entered by `main()` for
+Feature 004's `Invocation` (`project:1337-1452`), entered by `main()` for
 command `overview`, with one added branch: its deadline is set when it is
 made, after the arguments parse and before any root is listed, at the start
 plus `TIMING["invocation_deadline"]` (60 s), with no reserve. It carries:
@@ -95,7 +95,7 @@ One generator per candidate, resumed with each step's result.
 ARGS`, of kind `probe` or `status`; `parser` one of feature 004's
 incremental parsers, the keep-filter (`KeptRefParser`) or `RawOutput`.
 `FsStep(fn, args)`: one filesystem task. A result carries the
-`DriverOutcome` (`project:1659-1693`) or the task's value, its `OSError`,
+`DriverOutcome` (`project:1673-1707`) or the task's value, its `OSError`,
 or its cut, and the wall-clock time it completed (research.md R13).
 
 ### Child outcome to row error (FR-011, FR-012, FR-022)
@@ -123,7 +123,7 @@ unusable output makes the registration disagree, with no error. And, as the
 plan's reading of a conflict in ratified A1 (research.md R9; R20's O11,
 part 1): the `core.worktree` read's exit 1 with nothing on either stream
 is the key unset, with no error, so the root falls through to the
-candidate's toplevel (`config_key_unset`, `project:2735`); any other
+candidate's toplevel (`config_key_unset`, `project:2749`); any other
 failure of that read keeps the table's row error and leaves `root` null.
 
 ### Filesystem task (FR-013; research.md R7)
@@ -150,7 +150,7 @@ Keyed by the `(dev, ino)` of the no-follow `lstat` of `common_dir`.
   copy is the symref's own target, listed by construction, so the flag is
   set (D9, `A1 design.md:526-528`)
 - `merge_target`: `{name, source, sha}` from change 1's
-  `resolve_merge_target` (`project:2503`) over `refs` and the manifest's
+  `resolve_merge_target` (`project:2517`) over `refs` and the manifest's
   `tracking_branch`, less its `notes`; or null (FR-024, FR-025)
 - `merged`: the merged set at `merge_target.sha` (`MergedSetParser`), or null
 - `errors`: the project row's errors, in step order
@@ -311,14 +311,14 @@ every worktree of the repository (FR-031, FR-034):
     (16)
   - Effect: each keeps it, limited
 
-A root left null by `unsupported-layout`, by `main-worktree-missing` or by
-a failed `core.worktree` read carries no gate code; for the last, the
-gate code `target-not-repository-root` is O11's part 2, open. A gate is
-recorded only on a finding whose own suggestion it changed: a `dirty`
-finding in an `inspection-incomplete` repository keeps its read-only
-suggestion and a null `suggestion_gate` (A1 design D5). The items O1, O2
-and O4 that Brett Heap's word chose (C-72; research.md R20) each change
-one row of these tables once A1's re-alignment lands.
+A root left null by `unsupported-layout`, by `main-worktree-missing` or by a
+failed `core.worktree` read carries no gate code; for the last, the gate code
+`target-not-repository-root`, with the bare row's remedy, is O11's part 2,
+open. A gate is recorded only on a finding whose own suggestion it changed: a
+`dirty` finding in an `inspection-incomplete` repository keeps its read-only
+suggestion and a null `suggestion_gate` (A1 design D5). The items O1, O2 and O4
+that Brett Heap's word chose (C-72; research.md R20) each change one row of
+these tables once A1's re-alignment lands.
 
 ### Suggestion (FR-031)
 
