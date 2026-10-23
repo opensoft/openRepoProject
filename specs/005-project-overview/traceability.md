@@ -102,11 +102,11 @@ changes"); lane 2 or lane openRepoProject-3 reads the diff before feature
 - FR-004: collect (no Git child for a candidate without `.git`).
 - FR-005: discovery; R10 (PN-9); contract "Row and scan errors".
 - FR-006: collect; R5; data model "Repository".
-- FR-007: collect; R9, R17 (PN-18); research.md O5 (open), O11 (part 1 built
-  now, part 2 open).
+- FR-007: collect; R9, R17 (PN-18); research.md O5 (chosen), O11 (chosen:
+  part 1 built now, part 2 with A1's re-alignment).
 - FR-008, FR-009: collect, findings; R5, R9; contract "Other findings",
-  "Git children"; research.md O4 (a) and O7 (chosen), O11 (part 1 built
-  now, part 2 open).
+  "Git children"; research.md O4 (a), O7 and O13 (chosen), O11 (chosen:
+  part 1 built now, part 2 with A1's re-alignment).
 - FR-010: collect; data model "Repository".
 - FR-011, FR-012: loop; R4, R9; data model "Child outcome to row error".
 - FR-013: loop; R7 (PN-10).
@@ -115,28 +115,28 @@ changes"); lane 2 or lane openRepoProject-3 reads the diff before feature
 - FR-016: runner reuse; R3; contract "Git children".
 - FR-017, FR-018: discovery, loop; R6; data model "Root", "Worktree row".
 - FR-019: loop; R6; the concurrency-1 and concurrency-4 runs.
-- FR-020: render; R14 (PN-12); research.md O3 (open), O4 (chosen).
+- FR-020: render; R14 (PN-12); research.md O3 and O4 (chosen).
 - FR-021, FR-022: collect; R5; contract "Row and scan errors".
 - FR-023: collect (manifest reader); `test_overview_yaml.py`.
 - FR-024, FR-025: collect (change 1's `resolve_merge_target`, reused,
   over the kept records); R3; data model "Repository"; contract "Other
   findings".
 - FR-026: collect (`row_evidence`, `classify`); R3, R18; research.md O9
-  (open).
+  and O12 (chosen).
 - FR-027: contract "The attention table".
 - FR-028: findings; R12 (PN-1); contract "Findings from the ladder";
-  research.md O6 (chosen), O8 (open).
+  research.md O6 and O8 (chosen).
 - FR-029, FR-030: render; data model "Exit statuses"; contract "Human
   report".
 - FR-031 to FR-035: findings; R12; data model "Gates"; contract
-  "Remedies", "Composer"; research.md O1, O2, O4, O6 (chosen; D5's clause
-  2 before him for his direct word).
+  "Remedies", "Composer"; research.md O1, O2, O4, O6 and O15 (chosen; D5's
+  clause 2 chosen by name).
 - FR-036 to FR-038: render; R11, R15 (PN-6, PN-8); contract "JSON".
 - FR-039: render, dispatcher; R15 (PN-2); contract "Exit-2 outputs".
 - FR-040: R3 (the ban), R18 (the wrapper's allow-list), R19.
 - FR-041: findings; contract "Default-branch findings".
 - FR-042 to FR-044: dispatcher, loop, render; R4, R15; data model "States
-  of a run"; research.md O10 (open).
+  of a run"; research.md O10 (chosen).
 - FR-045, FR-046: render; R16 (PN-3, PN-5); contract "Human report",
   "Fixed lines".
 - FR-047: R3 (one subcommand; no new limit, variable, file or dependency).
@@ -194,7 +194,7 @@ Requirement 10, default branch: 51 A default branch pushed without an
 upstream; 52 A repository with no remote; 53 A dirty default branch ahead
 of its upstream; 54 A failed status probe on the default branch.
 
-Requirement 11, exits (R4, R15; open O10): 55 Git too old; 56 Git
+Requirement 11, exits (R4, R15; chosen O10): 55 Git too old; 56 Git
 unavailable; 57 SIGTERM or SIGHUP during collection; 58 SIGINT during
 collection; 64 A relative configuration path (A1's).
 

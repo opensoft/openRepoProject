@@ -15,11 +15,11 @@ one space. Placeholders are in capitals (`PATH`, `N`, `M`, `CAUSE`), each
 replaced by an escaped value ([P]; FR-038). A row marked **CHOSEN** is an
 item of research.md R20 that Brett Heap's word chose for change 2 (C-72):
 the text above it is the one built until A1's re-alignment lands at PR
-#34, the text after it the one built then. A row marked **OPEN** waits on
-his direct word: the text above it is the one built until his word, the
-text after it the other answer, the lane's recommendation. Each item of
+#34, the text after it the one built then. Every item of R20 is chosen, and
+none is open; O11's part 1, O15 (A) and O16 (a) are built now. Each item of
 R20 changes only its own rows. Every warning is in the words of PR #19's
-round (n) (`2250830`, unchanged at `88d0d36`; R-343, his "R-324: yes").
+round (n) (`2250830`, unchanged at `88d0d36` and `e0b1671`; R-343, his
+"R-324: yes").
 
 ## Invocation
 
@@ -107,9 +107,9 @@ No other option, variable or file changes a limit or a time (FR-047).
 | failed write to standard output | `line.write-failed` on stderr | the same |
 
 The error object is exactly `{"error": MESSAGE, "code": CODE}`.
-`relative-config-path` with exit 2 is ratified ("ratify 34"); only the two
-names of LQ-15's extension stay open with PR #19 (O10, OPEN; the lane
-recommends keeping them).
+`relative-config-path` with exit 2 is ratified ("ratify 34"), and LQ-15's
+extension keeps its two names (O10 (A), chosen), landing with PR #19's
+ratification of LQ-15's commits.
 
 ## JSON (FR-036 to FR-039)
 
@@ -215,7 +215,7 @@ the four status pins (kind `status`). No other argument vector is started.
   plan's reading of a conflict in ratified A1; research.md R9); any other
   failure records the row error and leaves the root null, with no
   suggestion and no gate code.
-  - OPEN (O11, part 2): the findings that would suggest a clean command
+  - CHOSEN (O11, part 2 (A)): the findings that would suggest a clean command
     carry `suggested_command: null` and `suggestion_gate:
     target-not-repository-root`, with the remedy of its own row,
     "core.worktree could not be read; repair the repository's config, then
@@ -278,19 +278,19 @@ edits only its own entries.
 whose suggestion a gate withheld or limited: own text, `; `, remedy, at most
 200 characters; when both do not fit, the own text is cut and ends `...`, the
 remedy whole. Every other finding's message is its own text alone. Two clauses,
-the second before him for his direct word, apply only with `warning` given (a
+both chosen, the second by name, apply only with `warning` given (a
 `stale-worktree` message that carries O6's warning, 109 characters with its
 period), which happens once A1's re-alignment lands:
 
 - clause 1, CHOSEN (O6 (A)): the warning is kept whole and the
   recommendation before it is cut instead; D5's "remedy kept whole"
   stands;
-- clause 2, chosen through O6's text at `7af798a`, for his direct word
-  (O4 (a), with O6 (A); research.md R20): where the warning and the remedy
-  cannot both fit, which only the redirect remedy reaches (through O4
+- clause 2, CHOSEN by name on 2026-10-23, first taken through O6's text at
+  `7af798a` (O4 (a), with O6 (A); research.md R20): where the warning and the
+  remedy cannot both fit, which only the redirect remedy reaches (through O4
   (a)'s new row and through sub-item (c)'s row), the recommendation is
   left out and the remedy cut with `...`, reversing D5's "remedy kept
-  whole" for that one case; until he answers, it rests on that text.
+  whole" for that one case.
 
 Every length these rules give is in research.md R20, "Lengths".
 
@@ -334,12 +334,12 @@ The class's recommendation, verbatim:
     `present: null`: "Review and prune stale worktree metadata manually;
     a row's path could not be read, so do not run git worktree prune, git
     worktree remove or git gc until it can."
-  - OPEN (O8): for a locked row, feature 004's "Review, unlock it, then
+  - CHOSEN (O8 (A)): for a locked row, feature 004's "Review, unlock it, then
     prune stale worktree metadata manually.", and under O6's test "Review,
     unlock it, then prune stale worktree metadata manually; a row's path
     could not be read, so do not run git worktree prune, git worktree
     remove or git gc until it can." (#19's T7, `#19
-    design.md:1349-1369`)
+    design.md:1360-1380`)
 - `finding.inspection-error`: "Preserve this worktree; Git could not
   establish its clean state."; its second rung: "Preserve this worktree;
   Git could not establish its ignored-file state."
@@ -431,11 +431,11 @@ from `limits` when the message is built.
     or core.bare redirects the main worktree; unset both in the
     repository's config, or in the main worktree's config.worktree, then
     run again"
-  - OPEN (O11, part 2 (A)), for a gitfile checkout whose `core.worktree`
+  - CHOSEN (O11, part 2 (A)), for a gitfile checkout whose `core.worktree`
     read failed other than as unset: "core.worktree could not be read;
     repair the repository's config, then run again" (79 characters), a row
-    of its own after the bare row and O4 (a)'s; the plan builds (B), no
-    gate code and so no remedy, until his word
+    of its own after the bare row and O4 (a)'s; until A1's re-alignment
+    lands, no gate code and so no remedy
 - `remedy.unsupported-path-bytes`: "rename the path to valid UTF-8"
 - `remedy.inspection-incomplete`: "repair the inspection-error rows, or
   re-run for the rows left unprobed, first"

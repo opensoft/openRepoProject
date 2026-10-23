@@ -6,8 +6,8 @@ Lane: openRepoProject-4
 **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `specs/005-project-overview/spec.md`
-at `98b95db` (its commit 3ai; its 72 clarifications, Brett Heap's answers
-of 2026-10-21 folded in and his word on the held items in C-72), with its
+at `7f4ab94` (its commit 3al; its 72 clarifications, Brett Heap's answers
+of 2026-10-21 folded in and his words on the held items in C-72), with its
 17 checklists and `clarify-questions.md`.
 
 **Technical design**: `openspec/changes/add-project-overview/` as amendment
@@ -19,17 +19,18 @@ requirement with 2 scenarios in `project-review-safety`) and
 change governs; where the spec settles a reading of the change, the spec
 does. This plan decides only what they leave to the implementation
 ([research.md](research.md), R1 to R19), records Brett Heap's word on the
-held items and isolates what only he can still decide (R20: O1, O2, O4,
-O6 and O7 chosen, D5's clause 2 among them before him for his direct
-word; O3, O5 and O8 to O11 open).
+held items and keeps each in its own place (R20: every one chosen, O1 to
+O16 and D5's clause 2).
 
 **Authority**: Brett Heap, 2026-10-22T19:46:57Z: "lane 4 plans 005 now".
 That word moves C-56's order (the plan after feature 004's merge) for this
 plan step only, as C-21's moved the specify step, and spec commit 3ae
 records it in C-56; it gives no word for tasks or implementation
 (research.md R1, R2). Brett Heap, 2026-10-22T21:24:03Z: "yes, recommended
-for O1-O10", recorded in C-72, chooses options for change 2 and is no word
-for the tasks or the implementation either (R20).
+for O1-O10", and 2026-10-23, "yes, recommended for O3, O5, O8-O11 and D5
+clause 2" (12:19:11Z) and "yes, recommended for O12-O16" (13:30:30Z), recorded
+in C-72, choose options for change 2 and are no word for the tasks or the
+implementation either (R20).
 
 ## Summary
 
@@ -85,26 +86,23 @@ Implementation slices, in dependency order; each leaves the suite green:
    [quickstart.md](quickstart.md), and the full-length timing.
 
 Each held item sits in its own row, decider, term or composer branch
-(research.md R20). The five that Brett Heap's word chose for change 2 (C-72)
-are built in their chosen form once A1's re-alignment lands at PR #34, in one
-commit after PR #19's ratification, he reviewing the final text before #34
-merges; until then the ratified text stands. D5's clause 2, chosen with O4 (a)
-only through O6's text at `7af798a`, reverses ratified D5's "remedy kept whole"
-for one case and is before him for his direct word; until he answers, it rests
-on that text. C-72 at `98b95db` (spec.md:977-985) gives the order: "A1's
-ordering rule (its `proposal.md:1278-1284`) is the four LQ items' and reaches
-O10 (LQ-15's extension) and O5 (item 9, owed under it); O1, O2, O4, O6 and O7
-(items 2, 6, 8 and 10) rest on his word for change 2 and on #19's rounds, and
-reach A1 in the same re-alignment commit, which follows #19's ratification, he
-reviewing the final text before #34 merges; the open O3 and O8 (items 7 and
-10), O11's part 2 (item 11) and, should he take (C) (the overview follows
-feature 004, the plan's R20 O9 (C)), O9 wait on his word for change 2 too, and
-O11's part 1 is a text re-alignment on a lane finding for his review." The six
-open ones are built as ratified, but O11's part 1, built now as the plan's
-reading of a conflict in ratified A1 (R9). An answer, or a change in his review
-of the final text, lands as a change to that place and its tests alone, with
-one exception: O11's part 1 (B) would also fail, and so re-word, the scenario
-"A separate git directory" of change 2 and of this spec (R20).
+(research.md R20), and Brett Heap's words chose every one for change 2 (C-72).
+O11's part 1 is built now, as the plan's reading of a conflict in ratified A1
+(R9); O9 (A), O10 (A), O12 (A) and O14 (A) keep A1's behaviour as ratified;
+O15 (A) and O16 (a) are built now, as the spec builds them; and the rest, D5's
+clause 2 among them, now chosen by name, are built in their chosen form once
+A1's re-alignment lands at PR #34, in one commit after PR #19's ratification,
+he reviewing the final text before #34 merges; until then the ratified text
+stands. C-72 at `7f4ab94` (spec.md:998-1006) gives the order: "A1's ordering
+rule (its `proposal.md:1278-1284`) is the four LQ items' and reaches O10
+(LQ-15's extension) and O5 (item 9, owed under it); the other chosen items
+that change A1's text, its items 2, 6, 7, 8, 10 and 11, rest on his word for
+change 2 and on #19's rounds; and items 2 and 6 to 11 reach A1 in the same
+re-alignment commit, which follows #19's ratification, he reviewing the final
+text before #34 merges, while O9 (A) and O10 (A) keep A1's text as ratified and
+O11's part 1 is a text re-alignment on a lane finding." O13 (A) reaches A1 in
+that commit too (C-72). A change in his review of the final text lands as a
+change to that place and its tests alone.
 
 ### Gates on the three 004-touching changes
 
@@ -151,17 +149,22 @@ feature 005 merges, and slice 1's pull request quotes the checks of (a) to
   from `4b4c36b`, revision 3 from `0a82a62` and revision 4 from `211e43d`;
   a later head is re-cited before tasks are written, and `main` after PR
   #33 lands (research.md R1). Its later head `f3724fc` changes documents
-  only, `project` and the tests unchanged since `d6bac50`.
+  only, `project` and the tests unchanged since `d6bac50`, and its head
+  `d8724e2` (R-365) changes no definition the overview reuses but `TEXT`,
+  which gains one row (research.md R1).
 - `A1:N`, `A1 design.md:N`: change 2's `specs/project-overview/spec.md`
   and `design.md` at `e4a30fc` (branch
   `change/amend-project-overview-clarify-answers`).
 - `PCM:N`, `PCL:N`, `#19 design.md:N`: change 1's
   `specs/project-command/spec.md`, `specs/project-clean/spec.md` and
-  `design.md` at `88d0d36` (branch `change/amend-clean-all-safe-push-pins`,
-  PR #19, round (o), R-349), whose specs equal its round (n)'s, `2250830`,
-  accepted as lane openRepoProject-2's R-345; moved from `ccc52b9` in
-  revision 1, from `20084cd` in revision 3 and from `2250830` in revision
-  4. The implementation re-pins at #19's ratified head.
+  `design.md` at `e0b1671` (branch `change/amend-clean-all-safe-push-pins`,
+  PR #19, round (p), R-365 and R-377), whose `project-command` and
+  review-safety specs equal its round (n)'s, `2250830`, accepted as lane
+  openRepoProject-2's R-345, and whose `project-clean` spec gains F-1's (b)
+  text beside an unread row (PCL:354-361, :540-547, :1217-1225) and a
+  rewording at :378-380; moved from `ccc52b9` in revision 1, from `20084cd`
+  in revision 3, from `2250830` in revision 4 and from `88d0d36` in revision
+  8. The implementation re-pins at #19's ratified head.
 - POD, PRSD, CMD, CLN, DI, BA and the labels [E], [L], [G], [R] and [P]:
   as [spec.md](spec.md) defines them.
 - The lane's A1 re-alignment draft, held for Brett Heap's review and the
@@ -173,8 +176,9 @@ feature 005 merges, and slice 1's pull request quotes the checks of (a) to
   `8ce4e9fb`, `811b9cef` and `c5840a66` (research.md R20).
 - Lane openRepoProject-3's reads of this plan: W96's at `a80f10b`, with its
   delta reads at `aeb0bb2`, `6fb619c`, `664461f`, `06b16e1` and `464c361`, and
-  W112's delta read at `d500312`; revisions 2 to 7 take each of their findings
-  (research.md, "Revision 2" to "Revision 7").
+  W112's delta reads at `d500312` and `39f4ab6`; and the nine-reader review of
+  revision 7 at `39f4ab6`, with its triage; revisions 2 onward take each of
+  their findings (research.md, "Revision 2" onward).
 
 ## Technical Context
 
@@ -251,9 +255,9 @@ by `worktree add`, and 4,097 untracked files in 4.3 s
 prefixes, its one change (FR-050; A1's Impact).
 
 No NEEDS CLARIFICATION remains: the change, A1 and the spec decide every
-behaviour but what research.md R1 to R19 settles, and the held items are
-planned each in its place, the chosen ones landing with A1's re-alignment
-and the open ones as ratified (R20).
+behaviour but what research.md R1 to R19 settles, and the held items, every
+one chosen, are planned each in its place, most landing with A1's
+re-alignment (R20).
 
 ## Constitution Check
 
@@ -359,39 +363,34 @@ suggestions lead to `project clean`.
   OPENSPEC-SPECKIT-GLOBAL protocol block), and `.specify/scripts` has no
   agent-context script; none is added.
 
-### Brett Heap's word on the held items, and what stays open
+### Brett Heap's words on the held items
 
-His "yes, recommended for O1-O10" (2026-10-22T21:24:03Z; C-72) chose,
-for change 2, where R20 or the lane's A1 draft stated a recommendation;
-each is built once A1's re-alignment lands at PR #34 (research.md R20):
+His "yes, recommended for O1-O10" (2026-10-22T21:24:03Z), "yes, recommended
+for O3, O5, O8-O11 and D5 clause 2" (2026-10-23T12:19:11Z) and "yes,
+recommended for O12-O16" (2026-10-23T13:30:30Z), all in C-72, chose every
+held item for change 2, each as the lane recommended it (research.md R20):
 
-- O1 (A): item 2, the reflog remedies' submodule clause.
-- O2 (A): item 6, `deadline-exceeded` at the reflog gate, as R-263 ruled
-  it for `project clean` ("O-1: deadline-exceeded").
-- O4 (a): item 8, the redirected main worktree, with its sub-items (c)
-  and (d) and D5's clause 2 case beside the redirect remedy; clause 2 is
-  chosen only through O6's text at `7af798a`, reverses ratified D5's
-  "remedy kept whole" for that case, and is before him for his direct
-  word (lane openRepoProject-3's W105, OBS-1).
-- O6 (A): item 10 part 1, the stale warning and the composer's clause 1.
-- O7: item 10 part 2, the `main-worktree-missing` remedy's warning.
+- built once A1's re-alignment lands at PR #34: O1 (A), the reflog
+  remedies' submodule clause; O2 (A), `deadline-exceeded` at the reflog
+  gate ("O-1: deadline-exceeded", R-263); O3, the identity re-reads in
+  `probes.estimated`; O4 (a), the redirected main worktree, with its
+  sub-items (c) and (d); D5's clause 2, by name; O5, PR #19 round (j)'s
+  reading of the work-tree probe; O6 (A), the stale warning and the
+  composer's clause 1; O7, the `main-worktree-missing` remedy's warning;
+  O8 (A), feature 004's locked text with the warning; O11's part 2 (A),
+  `target-not-repository-root` with the remedy "core.worktree could not be
+  read; repair the repository's config, then run again"; and O13 (A), the
+  `core.worktree` read in the shared git directory;
+- built now: O11's part 1, A1's failure table excepting the unset key, as
+  the plan's reading; O15 (A), the remedy kept whole past 200 characters;
+  and O16 (a), a bare main row's null `branch`, `head` and
+  `merged_into_target`;
+- A1's behaviour kept as ratified: O9 (A), parity leaving out a working
+  directory whose realpath fails; O10 (A), LQ-15's extension kept; O12 (A),
+  a failed ref listing's null class; and O14 (A), a known limit.
 
-Open for his direct word, each with the lane's recommendation:
+Still before him:
 
-- O3: item 7, the identity re-read in `probes.estimated` (take).
-- O5: item 9, the work-tree probe's output (PR #19 round (j)'s reading).
-- O8: T7's locked form for a locked stale row ((A), feature 004's locked
-  text with the warning).
-- O9: M1, parity when the working directory's realpath fails ((A)).
-- O10: LQ-15's extension to `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`;
-  the code and its exit are ratified, only the two names are open ((A),
-  keep).
-- O11: the `core.worktree` read's exit 1, added after his word: part 1,
-  A1's failure table excepting the unset key, built now as the plan's
-  reading; part 2, the gate code `target-not-repository-root` with a remedy
-  row of its own, "core.worktree could not be read; repair the repository's
-  config, then run again", for any other failure, built as (B), no gate
-  code, until his word ((A) for both).
 - The base: `main` after PR #33 (recommended, C-56), or stacked on feature
   004's branch (his word needed; R2).
 - His word on the tasks, then on the implementation.

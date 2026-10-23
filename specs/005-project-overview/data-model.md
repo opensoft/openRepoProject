@@ -158,8 +158,8 @@ Keyed by the `(dev, ino)` of the no-follow `lstat` of `common_dir`.
 
 `root` is null for a bare repository, a submodule checkout, an unnamed
 gitfile checkout, a gitfile checkout whose `core.worktree` read failed
-other than as unset (R20's O11, part 2), and a missing main worktree
-(FR-008, FR-009).
+other than as unset (R20's O11, parts 1 and 2, chosen), and a missing main
+worktree (FR-008, FR-009).
 
 ### Worktree row (FR-006, FR-007, FR-018, FR-026)
 
@@ -315,11 +315,12 @@ A root left null by `unsupported-layout`, by `main-worktree-missing` or by a
 failed `core.worktree` read carries no gate code; for the last, the gate code
 `target-not-repository-root`, with a remedy row of its own, "core.worktree
 could not be read; repair the repository's config, then run again", is O11's
-part 2, open. A gate is recorded only on a finding whose own suggestion it
+part 2 (A), chosen, built once A1's re-alignment lands. A gate is recorded
+only on a finding whose own suggestion it
 changed: a `dirty` finding in an `inspection-incomplete` repository keeps its
 read-only suggestion and a null `suggestion_gate` (A1 design D5). The items O1,
-O2 and O4 that Brett Heap's word chose (C-72; research.md R20) each change one
-row of these tables once A1's re-alignment lands.
+O2, O4 and O11's part 2 that Brett Heap's word chose (C-72; research.md R20)
+each change one row of these tables once A1's re-alignment lands.
 
 ### Suggestion (FR-031)
 
