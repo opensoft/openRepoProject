@@ -494,28 +494,34 @@ the check before the hand-off of its first removal, never `refused` with
 `cache-changed` and never `deadline-exceeded`, and the exit status SHALL be the
 signal's.
 
-After its first removal, a removal that fails, a read that runs out of its
-budget, a removal whose wait the removal ceiling ends, or the removal floor
-reached at a hand-off SHALL end the stage. A stage that has handed over its
-first removal SHALL end `disposed` or `partial`, never `refused`, except that a
-stage every one of whose handed-over removals returned without removing its
-entry SHALL end `refused` with `cache-changed`, nothing deleted, as a removal
-refused for a sticky directory or a filesystem made read-only after the plan,
-which the plan's access check cannot see, ends it. Otherwise the entries
-already removed SHALL
-stay removed, recorded as permanent partial cache completion. The stage SHALL
-then rescan every listed cache: it SHALL open the chain to the cache's parent
-as its removals do, checking every identity, and `lstat` the cache's name
-relative to that parent without following a symbolic link; a chain that does
-not open, or whose identity differs, SHALL leave that cache `removed: null`;
-the rescan SHALL run as a reconciliation probe, each call on a thread of its
-own, never on the stage's worker, and getting `min(5 s, reserve remaining)`,
-and its first call past its budget SHALL leave that cache and every later one
-`removed: null`. The stage SHALL record each listed cache as removed, remaining
-or not established, and end `partial` with `cache-partial`; the person SHALL be
-told to re-run for a fresh plan, which lists the caches that remain. A stage
-that ends `refused` or `partial` SHALL be followed by no worktree removal and no
-branch change for that target.
+After its first removal, a removal that fails, a read that outlives its 5 s
+per-call budget, a chain reopened for the removals whose identity differs from
+the plan's, a removal whose wait the removal ceiling ends, or the removal floor
+SHALL end the stage. The removal floor SHALL end it when it is reached at a
+hand-off, and when it stops a read: a read that cannot start because no more
+than the floor remains, or that outlives the shorter budget that the deadline
+set, `work remaining less the removal floor`, SHALL end the stage as the floor
+reached at a hand-off does, and SHALL NOT be reported as a change of state. A
+stage that has handed over its first removal SHALL end `disposed` or `partial`,
+never `refused`, except that a stage every one of whose handed-over removals
+returned without removing its entry SHALL end `refused` with `cache-changed`,
+nothing deleted, as a removal refused for a sticky directory or a filesystem
+made read-only after the plan, which the plan's access check cannot see, ends
+it. Otherwise the entries already removed SHALL stay removed, recorded as
+permanent partial cache completion. The stage SHALL then rescan every listed
+cache that its own removals did not remove: it SHALL open the chain to the
+cache's parent as its removals do, checking every identity, and `lstat` the
+cache's name relative to that parent without following a symbolic link; a chain
+that does not open, or whose identity differs, SHALL leave that cache
+`removed: null`; the rescan SHALL run as a reconciliation probe, each call on a
+thread of its own, never on the stage's worker, and getting
+`min(5 s, reserve remaining)`, and its first call past its budget SHALL leave
+that cache and every later one that it rescans `removed: null`. The stage SHALL
+record each listed cache as removed, remaining or not established, and end
+`partial` with `cache-partial`; the person SHALL be told to re-run for a fresh
+plan, which lists the caches that remain. A stage that ends `refused` or
+`partial` SHALL be followed by no worktree removal and no branch change for
+that target.
 
 Once per invocation, before any cache enumeration, `project clean` SHALL check
 that the running platform provides `O_NOFOLLOW`, `O_DIRECTORY`, and the
@@ -536,10 +542,14 @@ The stage's guarantee SHALL be that it removes an entry only if, at its
 whole-list preflight, the entry had the allowlisted shape, its listed cache held
 exactly the number of entries that the confirmed plan recorded, and its
 directory and every directory above it, up to the worktree root, carried the
-identity that the confirmed plan recorded. The revalidation that the narrow
-guarantee names for a target whose plan lists caches, and the residual window
-it leaves, SHALL be as "Cleanup states a narrow guarantee and its residual
-window" states.
+identity that the confirmed plan recorded, and, at its removal, the chain to it
+carried those identities again. The revalidation that the narrow guarantee
+names for a target whose plan lists caches, and the residual window it leaves,
+SHALL be as "Cleanup states a narrow guarantee and its residual window" states,
+and that window SHALL also hold an entry put during the stage, after its
+preflight, at a name that the preflight fixed, a file or symbolic link at a
+file's name or an empty directory at a directory's name, which the stage
+removes in the planned entry's place, outside its guarantee.
 
 #### Scenario: A symlink named like a cache is never disposable
 

@@ -1072,23 +1072,26 @@ core.checkStat=default`, its own pin `-c status.showStash=false`, so that a
 repository's stash never puts a `# stash` header before its records, the
 protocol pins, the scrubbed environment and
 `GIT_OPTIONAL_LOCKS=0` that every read-only Git child carries, under the
-per-child budget and counted in `probes`; then a walk that takes the records in
-canonical order, opens each directory it records once, from the worktree root
-down, relative to its parent's descriptor and without following a symbolic
-link, enumerates each listed or nested cache directory by a descriptor-relative
-streaming enumeration that yields one entry at a time, and `lstat`s each entry
-it takes, each directory open, bounded enumeration and `lstat` one filesystem
-call under the per-call budget, and stops at the row's 513th recorded cache
-object, closing the enumeration in hand as soon as that cap decides. No
-enumeration SHALL hold a whole directory's listing, so that a row's walk holds
-at most 513 entries whatever a directory holds. The walk SHALL also
-check, for each
-directory that a cache stage would change (each listed cache directory, each
-nested `__pycache__` directory and the parent of each listed path), that the
-running user may remove entries from it: one descriptor-relative access check
-with effective ids, following no symbolic link, a filesystem call under the
-per-call budget. The child SHALL stop at its 513th record, so that 512 records
-(`limits.cache_entries`) is its bound.
+per-child budget and counted in `probes`; then a walk that opens the worktree
+root by the row's recorded path with `O_DIRECTORY` and `O_NOFOLLOW` and
+requires the opened directory's device and inode to equal those of the row's
+recorded worktree identity, a refused open or another identity being a failed
+call of the walk, takes the records in canonical order, opens each directory it
+records once, from the worktree root down, relative to its parent's descriptor
+and without following a symbolic link, enumerates each listed or nested cache
+directory by a descriptor-relative streaming enumeration that yields one entry
+at a time, and `lstat`s each entry it takes, each directory open, bounded
+enumeration and `lstat` one filesystem call under the per-call budget, and
+stops at the row's 513th recorded cache object, closing the enumeration in hand
+as soon as that cap decides. No enumeration SHALL hold a whole directory's
+listing, so that a row's walk holds at most 513 entries whatever a directory
+holds. The walk SHALL also check, for each directory that a cache stage would
+change (each listed cache directory, each nested `__pycache__` directory and
+the parent of each listed path), that the running user may remove entries from
+it: one descriptor-relative access check with effective ids, following no
+symbolic link, a filesystem call under the per-call budget. The child SHALL
+stop at its 513th record, so that 512 records (`limits.cache_entries`) is its
+bound.
 
 A row SHALL stay at the `ignored-local-files` rung, with `cache_disposal.reason`
 naming why, when its ignored paths are not all proven listed caches within the
@@ -1111,7 +1114,8 @@ caps, or when its cache stage could not remove them:
   an ignored one or an ignored record whose path, its trailing `/`
   disregarded, begins with `/` or holds an empty, `.` or `..` component, or
   read no ignored record, or a filesystem call of its walk failed or timed
-  out, an open that the walk's no-follow rule refused at plan time included;
+  out, an open that the walk's no-follow rule refused at plan time and a
+  worktree root that the walk opened with another identity included;
 - `cache-unwritable`: every ignored path being a listed cache within the
   per-worktree caps, a directory that its cache stage would change failed the
   access check;
@@ -1270,9 +1274,11 @@ the target's revalidation refused it,
 or the run stopped, was interrupted or reached the deadline, before its stage
 started or before the hand-off of its first removal; `paths` SHALL list each
 listed cache as `{path, path_valid_utf8, kind, removed}`, `removed` being true
-when the stage removed it or its rescan found it absent, false when it remains,
-and null when that is not established or when a removal of it is still
-outstanding, whatever its rescan finds; `entries` SHALL be the planned count and
+when the stage's own removal of it returned having removed it, false when it
+remains, and null when that is not established, as when it is absent though the
+stage did not remove it, its own removal having found it absent or another
+writer having removed it, or when a removal of it is still outstanding,
+whatever its rescan finds; `entries` SHALL be the planned count and
 `entries_removed` the number of removals that returned having removed their
 entry. `operations.performed` SHALL count each such removal once, and a removal
 still outstanding SHALL count in neither.
@@ -1294,20 +1300,25 @@ target whose cache stage ended `refused` or `partial` SHALL print, before its
 stop block, one line naming that target and saying that nothing was deleted,
 only when no entry was removed and no removal is outstanding and, for a stage
 that ended before its first removal, no signal had been received by then, or
-else how many of its cache paths were removed, which remain and which a removal
-still outstanding may still remove, naming the work deadline as the cause, and
-not a change of state, when the deadline ended the stage, with the command that
-shows a fresh plan for the rest. A run that stops after a target's cache stage
-ended `disposed`, before its removal child was spawned or at that target when
-its removal then ended `failed`, SHALL print
-`Cache disposal at PATH: removed N cache paths; the worktree was not removed.`
-before its stop block, and one that stops at such a target that ended
-`unknown` SHALL print there `Cache disposal at PATH: removed N cache paths;
-the worktree's removal is not proven.`, so that the person reads how many
-cache paths were deleted before the stop block names the target's reason and
-the next step. A run that stops at a target whose cache stage the
-removal floor or the work deadline stopped in a read before its first removal,
-no signal having been received by then, SHALL print
+else how many of its cache paths its own removals removed, which remain, which
+a removal still outstanding may still remove and which are not established,
+naming the work deadline as the cause, and not a change of state, when the
+deadline ended the stage, with the command that shows a fresh plan for the
+rest. A run that stops after a target's cache stage ended `disposed`, before
+its removal child was spawned or at that target when its removal then ended
+`failed` with `git-refused` or `spawn-error`, SHALL print `Cache disposal at
+PATH: removed N cache paths; the worktree was not removed.` before its stop
+block; one that stops at such a target that ended `failed` with `git-failed`,
+whose removal child may have deleted part of the worktree and its registration
+before it failed, SHALL print there `Cache disposal at PATH: removed N cache
+paths; Git's removal of the worktree failed and may have deleted part of it and
+its registration; inspect PATH by hand.`; and one that stops at such a target
+that ended `unknown` SHALL print there `Cache disposal at PATH: removed N cache
+paths; the worktree's removal is not proven.`, so that the person reads how
+many cache paths were deleted, and what Git may have done, before the stop
+block names the target's reason and the next step. A run that stops at a target
+whose cache stage the removal floor or the work deadline stopped in a read
+before its first removal, no signal having been received by then, SHALL print
 `Cache disposal at PATH not attempted (deadline-exceeded); nothing was deleted.`
 before its stop block, naming the deadline and not a change of state. The
 residual-window line SHALL be the one that "Cleanup states a narrow guarantee
@@ -1341,6 +1352,16 @@ and its residual window" states.
   entries are gone and its worktree remains, the exit status is 128, and
   before the stop block the human result reads `Cache disposal at PATH:
   removed 2 cache paths; the worktree was not removed.`
+- **AND** on a copy that also holds a tracked directory `z` without write
+  permission, the run not root's, Git's removal unregisters the worktree, fails
+  to delete its directory and exits 255: the target is `failed` with
+  `git-failed` and `exit_status: 255`, its reconciliation shows
+  `registry_entry_present: false` and `path_present: true`, its `notes` is
+  `["orphaned-directory"]`, its four cache entries are gone, the exit status is
+  255, and before the stop block the human result reads `Cache disposal at
+  PATH: removed 2 cache paths; Git's removal of the worktree failed and may
+  have deleted part of it and its registration; inspect PATH by hand.`, never
+  that the worktree was not removed
 
 #### Scenario: Caches beside a blocking ignored file
 
@@ -1544,6 +1565,12 @@ and its residual window" states.
   ended the stage after removing 1 of 2 cache paths, names the one that
   remains and gives the command for a fresh plan, and does not say that the
   worktree's state changed
+- **AND** when the two caches lie in different directories and the hook
+  instead holds, after the first cache's removal, an open of the chain that
+  the removals open again for the second cache, until the budget that the
+  deadline sets, `work remaining less the removal floor`, is spent, the same
+  holds, the later target being `not-attempted` with `deadline-exceeded`,
+  never `batch-stopped`, and the exit status 1, never 2
 
 #### Scenario: A signal during a cache stage
 
