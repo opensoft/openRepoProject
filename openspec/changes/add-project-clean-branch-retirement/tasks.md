@@ -25,7 +25,11 @@ duplicate them.
   (round A17, ruling A-60), the lines of the plan's keeps saying that only this
   run's plan proved the branch's reflog (round A18, ruling A-63), and so every
   other such line but `branch-changed`'s (round A19, ruling A-68), each such
-  line printed as a literal in at least one scenario (round A21, ruling A-80);
+  line printed as a literal in at least one scenario (round A21, ruling A-80),
+  and a worktree that holds a target's branch named for removal only where the
+  plan read it and would remove it, its own work and a detach being named
+  otherwise, R-324's no-prune clause first for one whose path could not be
+  read (round A24, rulings A-98 and A-103);
   verified by its Capabilities section accounting for every canonical
   requirement of `project-clean` and `project-clean-review-safety` and every
   requirement change 1 adds to them.
@@ -186,10 +190,21 @@ duplicate them.
   LOW) and A-88 (W104's verdict and the lead's facts), by `cb07033` (the design)
   and the commit that edits the proposal's body, records the round's table and
   updates this task; verified by "Re-read and Codex Findings (round A23)" in
+  `proposal.md`. Round A24, on `46dcf3c`, applied the lane's rulings A-98 (the
+  review wave of 2026-10-23: its reader RA2's HIGH L3, MEDIUM L1 and L2 and LOW
+  L4 to L7, N1 and N2, with the reader RD's L1, the reader RE's RE23-2,
+  RE23-4, RE2-2 and RE-4 and lane openRepoProject-3's W120 L-2), as A-100
+  splits the rounds, A-91 (lane openRepoProject-3's W109 confirm read of round
+  A23, 0 HIGH, 0 MEDIUM and 2 LOW), A-101 (round (p)'s F-1 (b), not taken) and
+  A-103 (the writer's five decisions), by `88ff731` (the spec deltas),
+  `1273cdc` (the design), `a4b6669` and `6d65517` (the spec delta and the
+  design under A-103), `e65fff8` (the design's Context map) and the commit
+  that edits the proposal's body, records the round's table and updates this
+  task; verified by "Re-read and Codex Findings (round A24)" in
   `proposal.md`.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md`
-  modifies five requirements and adds one (68 scenarios: 43 carried unchanged
-  from change 1 and PR #19, 6, 14, 10, 5 and 8 by block, and 25 added, the
+  modifies five requirements and adds one (72 scenarios: 43 carried unchanged
+  from change 1 and PR #19, 6, 14, 10, 5 and 8 by block, and 29 added, the
   24th in round A3 and the 25th in round A4, round A5 adding ANDs only, round
   A6 editing no spec file, round A7 adding no scenario and editing WHENs and
   ANDs (ruling A-35, lane openRepoProject-3's confirm read, F5), round A8
@@ -231,18 +246,23 @@ duplicate them.
   `interrupted`, `internal-error` and `removal-ceiling`, under ruling A-80
   (round A22 words the count as edits, under ruling A-82), and round A22 editing
   no spec file, under rulings A-82 to A-84, and round A23 editing no spec file,
-  under rulings A-86 to A-88),
+  under rulings A-86 to A-88, and round A24 adding four scenarios, the 26th to
+  the 29th, editing the ADDED requirement's `branch_retirement` fields, its
+  summary, `Unconfirmed` and `Kept` lines and the literals of nine ADDED
+  scenarios, and then the main-worktree holder's template and the two ANDs of
+  one of those scenarios that print it, under rulings A-98, A-100 and A-103),
   `specs/project-clean-review-safety/spec.md` modifies one (4 scenarios: 3
-  carried, 1 added), and `specs/project-command/spec.md` modifies one on
+  carried, 1 added, whose THEN round A24 edits and to which it adds an AND),
+  and `specs/project-command/spec.md` modifies one on
   PR #19's text (9 scenarios carried, none added; agreed by lane
   openRepoProject-2 on 2026-10-19 and committed in `16051d1`, ruling A-20),
   every scenario of
   each modified requirement's source text kept byte for byte; `design.md`
   holds D1 to D10 (`8341954`, `d0b33ce`, and the commit titled 'Settle which
   later targets carry branch-retention-stop'), revised by the alignment fix
-  round (1.2), the council round (1.3) and rounds A3 to A23; verified
+  round (1.2), the council round (1.3) and rounds A3 to A24; verified
   by `grep -c '^#### Scenario:'` on each spec file and by a scenario-carry
-  script run after the council round and again after rounds A3 to A23
+  script run after the council round and again after rounds A3 to A24
   over all seven MODIFIED blocks, every source scenario present byte for byte
   and in order.
 - [x] 1.5 Validation passes: `/usr/bin/openspec validate
@@ -251,7 +271,7 @@ duplicate them.
   `/usr/bin/openspec status --change add-project-clean-branch-retirement
   --json` shows every artifact done; verified by running the three on this
   branch after 1.4, after the alignment fix round, after the council round
-  and after rounds A3 to A23
+  and after rounds A3 to A24
   (build 1.13.1, which notes only as INFO that archive would refuse the
   MODIFIED blocks whose base still sits in change 1).
 - [ ] 1.6 Ratified by Brett Heap's word on the pull request, quoted with its
@@ -277,8 +297,12 @@ duplicate them.
   target" and "Cleanup states a narrow guarantee and its residual window" are
   canonical and the seam this change attaches to is on `main`; and "Clean
   reports local worktree state", written on change 1's text at `961c405` and
-  shared with no other open change, is re-read against change 1's archived
-  text and re-copied from it with this change's one clause, so that no
+  modified by no open change but PR #19, the amendment of change 1, which adds
+  to it, beyond round (l)'s AND, its `relative-config-path` paragraph, its
+  scenario "A relative configuration path" and a changed "The plain report
+  exits by completeness" (the reader RD's L1 of 2026-10-23; ruling A-100), is
+  re-read against change 1's archived text, that amendment included, and
+  re-copied from it with this change's one clause, so that no
   amendment of change 1 is reverted by this change's archive (lane
   openRepoProject-5's reader RD, its M4; ruling A-33); a re-copy that changes
   this change's words returns the block to Brett Heap before the handoff
