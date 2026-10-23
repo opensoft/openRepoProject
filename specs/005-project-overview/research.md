@@ -285,7 +285,11 @@ repository: the plan step ran no `project` and no owner tool (R18).
     `_direct` (`:2693`), `presence_from_lstat` (`:2713`), `gitdir_line`
     (`:2793`), `main_worktree_decision` (`:2853`),
     `registration_verdict` (`:2941`), `verify_registration` with
-    `fs=_direct` (`:2978`), `status_warned` (`:3012`),
+    `fs=_direct` (`:2978`), with `EvidenceError` (`:2615`) and the private
+    readers it reaches, `_read_head` (`:2732`), `_realpath` (`:2737`),
+    `_gitfile` (`:2803`), `_admin_gitdir` (`:2822`) and `_admin_commondir`
+    (`:2836`), called only inside `verify_registration` with `fs=_direct`,
+    `status_warned` (`:3012`),
     `WORK_TREE_PROBE` (`:3051`), `shared_paths` (`:3221`),
     `shared_identities` (`:3231`), `row_evidence` (`:3263`),
     `config_key_unset` (`:2749-2761`), the unset test of the extension
@@ -372,8 +376,9 @@ repository: the plan step ran no `project` and no owner tool (R18).
   and the message composer (R12), the envelope, the human report and the
   writer (R15, R16), and the overview's tables of messages, attention codes
   and remedies (the contract).
-- **Not reused**: `run_bounded`'s loop, `fs_call` (`:1896`), `_fs`,
-  `_lstat` and `_realpath` (`:2678-2738`), `identity_probe` (`:2764`),
+- **Not reused**: `run_bounded`'s loop, `fs_call` (`:1896`), `_fs` and
+  `_lstat` (`:2678-2711`; `_realpath` is never called directly, only inside
+  `verify_registration`, above), `identity_probe` (`:2764`),
   `worktree_config` (`:3054`), `effective_work_tree` (`:3078`),
   `inspect_repository` (`:3109`), `_read_row`, `_identity_unchanged`,
   `_read_status` and `worktree_rows` (`:3345-3551`), `read_reflog`
@@ -470,14 +475,20 @@ repository: the plan step ran no `project` and no owner tool (R18).
   `6fb619c`)".
 - **Alternatives considered**: threads per repository and `asyncio`
   (rejected by D1); polling the workers on the tick alone, rejected because
-  a 0.1 s tick would add latency to every one of up to 2,465 tasks (R7).
+  a 0.1 s tick would add latency to every one of up to R + 2,561 tasks, R
+  the roots given (R7).
 
 ## R5. Collectors, the boundary and step order (FR-021)
 
 - **Decision**: each candidate's collector is a generator. It yields
   requests, `GitStep(argv, directory, parser, kind)` or `FsStep(fn, args)`,
   and is resumed with a `StepResult` (the `DriverOutcome`, or a task's value,
-  its `OSError`, or its cut). Its steps are FR-021's, in order: the marker
+  its `OSError` or `EvidenceError`, or its cut). A row task that calls
+  `verify_registration(..., fs=_direct)` may end in an `EvidenceError`
+  (`:2615`), an `Exception` that is not an `OSError`: the task's function
+  catches it and returns its `.error` and `.errno` as the row's error, as
+  `_read_row` does (`:3372-3373`), so that it never reaches the boundary.
+  Its steps are FR-021's, in order: the marker
   checks (done by its root's task, R10), the identity probe and, on any
   line count but two, the one-option re-reads (`IDENTITY_OPTIONS`,
   `:2577`; EC-032); for the first candidate of a repository, that
@@ -490,7 +501,21 @@ repository: the plan step ran no `project` and no owner tool (R18).
   extension is taken as true), its re-verification and its status probe,
   then classification
   (`row_evidence`, then `classify` through it), the reflog gate's reads and
-  the findings. The boundary is one `try`/`except Exception` around each
+  the findings. The main row of a bare repository (C-68), of a submodule
+  checkout and of an unnamed gitfile checkout (A1 design D3, items 1 to 3)
+  takes only its `lstat` task: no registration read, no twin decision, no
+  probe and no `row_evidence`, its status fields and `classification` null,
+  no class finding and no row gate; a bare entry's `branch`, `head` and
+  `merged_into_target` are null too (O16 (a), chosen, built now; C-68,
+  FR-008). Feature 004 builds no such row (`:3525-3530`), and through its
+  deciders a bare row would be `detached` (`:3307-3308`) with a registration
+  that disagrees (`:2998-2999`). When the working directory's realpath failed
+  or was cut, a row that `classify` gives `merged-removable` or
+  `merged-current` is `inspection-error` instead, with the class's finding
+  and no row error, the one `realpath` scan error recording the cause
+  (FR-026; A1:444-451): the ratified rule, which R20's O9 (A) keeps and its
+  (C) would have widened to every present row. The boundary is one
+  `try`/`except Exception` around each
   resume: an exception becomes that candidate's row error by the collector
   table (`internal-error`, message `internal error (CLASS)`), the generator
   is closed, evidence already held stays and every other field stays null.
@@ -528,13 +553,23 @@ repository: the plan step ran no `project` and no owner tool (R18).
   running child has the same known `common_dir`; filesystem tasks take no
   slot. Ready requests start lowest rank first (D6's throughput choice).
   Phase 1 (identity and repository-wide steps, the extension read among
-  them) may start for any candidate at once. A repository's phase 2 (its
-  rows' tasks and probes) starts only when (1) every candidate earlier in
-  canonical order has completed or failed its identity step, (2) every
-  repository earlier in canonical order has finished phase 1, and (3) for a
+  them) may start for any candidate within the cap once discovery has
+  ended: every root task has finished or been cut, and the candidates are
+  sorted, deduplicated (the first spelling winning), capped at 128 and
+  ranked, since the caps apply after canonical sorting (FR-003, FR-017;
+  A1:249-250) and D6 dispatches in canonical order (`A1 design.md:402`), so
+  that `probes.performed` of an uncut run never depends on which root
+  finished first; the cost is at most one 5 s wait. A repository's phase 2
+  (its rows' tasks and probes) starts only when (1) every candidate earlier
+  in canonical order has completed or failed its identity step, (2) every
+  repository earlier in canonical order has finished phase 1, (3) for a
   repository whose first registry record equals its `common_dir` and whose
   checkout no candidate has named, every candidate's identity step has
-  completed or failed (D3's third wait). At that point the 512-row cap
+  completed or failed (D3's third wait), and (4), CHOSEN (O4 (a)) and built
+  once A1's re-alignment lands, for a repository in the ordinary layout
+  whose main worktree is a Git candidate, that candidate's identity probe
+  has completed or failed, since O4 (a)'s detector reads its toplevel (the
+  draft at `558b0c29`, :1424-1427; R20). At that point the 512-row cap
   selects its rows by rank and row order (FR-018). Within phase 2, a
   repository's first worktree probe waits until each of its rows within
   the cap has finished its first-read task, so the twins are decided from
@@ -553,12 +588,22 @@ repository: the plan step ran no `project` and no owner tool (R18).
   pipe; the loop waits for it until `min(TIMING["probe_budget"], deadline -
   now)` from its start, then records the cut (`probe-timeout`, or
   `deadline-exceeded` where the deadline was the smaller) and never reads
-  its result. No pool: an abandoned thread stays blocked and is never
-  joined (EC-001). The tasks are FR-013's, each one thread:
+  its result, but for a root's snapshot. No pool: an abandoned thread stays
+  blocked and is never joined (EC-001). The tasks are FR-013's, each one
+  thread:
   - one per root: canonicalisation, the dedupe `stat`, one `os.scandir`
     pass and, per entry directory, the marker checks and the holder `stat`
     (A1 design D2), the worker checking the root's cancel flag between
-    entries and appending finished entries under a lock;
+    entries and appending finished entries under a lock. At the root's cut
+    the loop sets the cancel flag and, under the same lock, takes a snapshot
+    of the finished entries: they stay candidates and `entries` counts them,
+    and nothing appended later is read (`A1 design.md:146-153`). A cut
+    before canonicalisation ends gives no entries, `entries` null and C-67's
+    path;
+  - one per Git candidate's identity step: the strict realpath and the
+    no-follow `lstat` of the `common_dir` its probe reported, whose `(dev,
+    ino)` keys the repository (A1:80-83), and the strict realpath of its
+    toplevel;
   - one per manifest read (stat, then a read of at most 1 MiB of a regular
     file, `fstat` again on the open file, FR-014), parse included;
   - one per worktree row within the cap: its `lstat`, strict realpath and
@@ -571,15 +616,25 @@ repository: the plan step ran no `project` and no owner tool (R18).
   - one per linked row whose work-tree probe ran: the strict realpath of
     the toplevel it printed, compared with the row's;
   - one per reflog read (at most 64 KiB, `reflog_path`, `:5073`);
-  - one at start for the working directory's realpath (FR-026).
+  - one at start for the working directory's realpath (FR-026);
+  - CHOSEN (O4 (a)), built once A1's re-alignment lands: one per repository
+    for its detector (R20), in the gitfile layout where `core.worktree` is
+    set the read of the `.git` of the directory it names, and in the
+    ordinary layout where the main worktree is no Git candidate the strict
+    realpath of the toplevel its `main-toplevel` child printed.
 - **The bound (PN-10)**: abandoned workers are bounded by the tasks a run
-  can start, since no task starts after the deadline: 32 roots, 1 working
-  directory, at most 3 per candidate (manifest, D3's reads, missing-main
-  `lstat`; 128 candidates) and at most 4 per worktree row
+  can start, since no task starts after the deadline: one per root given,
+  R, each canonicalised before the 32-root cap applies (C-67), 1 working
+  directory, at most 4 per candidate (identity step, manifest, D3's reads,
+  missing-main `lstat`; 128 candidates) and at most 4 per worktree row
   within the cap (first read, re-verification, toplevel realpath, reflog;
-  512 rows): 32 + 1 + 384 + 2,048 = 2,465 threads at the very most, in
-  practice the few whose call is stuck in the kernel. Without the
-  re-verification, which D8's list predates, the same sum is 1,953. The
+  512 rows): R + 1 + 512 + 2,048 = R + 2,561 threads at the very most, in
+  practice the few whose call is stuck in the kernel. Nothing caps R: the
+  32-root cap of FR-017 applies after every root given is canonicalised
+  (FR-001; C-67), so the bound is a formula in R, 2,593 at 32 roots given.
+  Without the re-verification, which D8's list predates, the same sum is
+  R + 2,049 (2,081 at 32 roots). Once A1's re-alignment lands, O4 (a)'s
+  detector adds at most 1 per repository (at most 128), R + 2,689. The
   plan adds no further cap: a cap on abandoned threads would need a new
   limit and a new code, outside schema 1's closed sets (FR-022, FR-047).
 - **Rationale**: A1's design D2 and D8; one thread per task keeps a stuck
@@ -681,7 +736,9 @@ no Git and a later ruling edits one function:
 - **Realpaths**: the overview's tasks use `os.path.realpath(...,
   strict=True)`, so `ENOENT` and `ENOTDIR` can be told from other errors
   as FR-007 and FR-026 need; feature 004's `_realpath` (`:2737`) is not
-  strict, and never raises.
+  strict, and never raises. The realpaths inside the registration verdict
+  stay feature 004's non-strict ones, through `verify_registration` with
+  `fs=_direct` (R3), so that the verdict equals `project clean`'s (FR-026).
 - **An abandoned child**: feature 004's `conclude()` path maps an abandoned
   handle to `timeout` (`:1882-1883`), as [E] has it (PCM:263-269); FR-011
   makes an abandoned child that the deadline cut `deadline-exceeded`. The
@@ -805,9 +862,12 @@ no Git and a later ruling edits one function:
   re-verification stops keeps its estimate, so `performed` is then lower.
   Item 7's term (+3 per Git candidate whose identity probe prints other
   than two lines) is R20's O3, chosen, and comes once A1's re-alignment
-  lands; item 8's term (+1 per repository
-  whose main worktree is no Git candidate, for its `main-toplevel` child)
-  comes with O4 (a), chosen (R20).
+  lands; item 8's term, 1 per repository in the ordinary layout whose
+  present main worktree is no Git candidate, for the child that tests it
+  for a redirect (the draft at `558b0c29`, :1522-1525), none for sub-item
+  (c), whose data the registry already holds (:1434-1437), comes with O4
+  (a), chosen, and is off until A1's re-alignment lands, as the detector is
+  (R20).
 - **Rationale**: FR-020 counts the children a run expects; a row that takes
   no status probe is expected to start none.
 
@@ -1124,12 +1184,24 @@ revision 1 items 1 to 10 at `00205d73ba38...` (2,295 lines). Items 1, 3, 4 and
   main-worktree probe that exits nonzero (sub-item (d)) count as a redirect
   too: they apply under the option and are no further options (the draft at
   `558b0c29`, :1309-1311, as at `8ce4e9fb`; lane openRepoProject-3's W96,
-  R2-LOW-2). Design: one detector, comparing the main worktree's toplevel with
-  the first registry record's canonical path; one remedy row, "core.worktree or
-  core.bare redirects the main worktree; unset both in the repository's config,
-  or in the main worktree's config.worktree, then run again" (152 characters);
-  +1 in `estimated` per repository whose main worktree is no Git candidate
-  (R14); and the composer's clause 2: where a `stale-worktree` message carries
+  R2-LOW-2). Design: two tests, as the draft's item 8 (a) words them (at
+  `558b0c29`, :1424-1433 and :1503-1515). In the ordinary layout, the main
+  worktree's toplevel, from its own candidate's identity probe where it is a
+  Git candidate, a failed probe included, else from the counted
+  `main-toplevel` child, is compared, realpath-equal, with the first registry
+  record's canonical path; a nonzero exit of that probe or child counts as a
+  redirect (sub-item (d)), and that repository's phase 2 waits for the main
+  worktree candidate's identity probe (R6's fourth wait; :1426-1427). In the
+  gitfile layout, one bounded filesystem task reads the `.git` of the
+  directory `core.worktree` names, which must be a file naming `common_dir`
+  itself, with no Git child (R7). The `core.bare` variant of a failed main
+  probe is D3's case 2 with sub-item (c), not this detector. One remedy row,
+  "core.worktree or core.bare redirects the main worktree; unset both in the
+  repository's config, or in the main worktree's config.worktree, then run
+  again" (152 characters); in `estimated`, 1 per repository in the ordinary
+  layout whose present main worktree is no Git candidate, for the child that
+  tests it, and none for sub-item (c), whose data the registry holds (R14);
+  and the composer's clause 2: where a `stale-worktree` message carries
   O6's warning (109 characters with its period) beside this remedy, the two
   cannot both be kept within 200 characters (109 + 2 + 152 = 263), which
   happens through (a)'s new row and through sub-item (c)'s row, which carries
@@ -1142,8 +1214,9 @@ revision 1 items 1 to 10 at `00205d73ba38...` (2,295 lines). Items 1, 3, 4 and
   the remedy whole, the prune advice with no warning. Clause 2, taken first
   through O6's text at `7af798a`, is chosen by name in his word of 2026-10-23
   (C-72), and a change in his review edits that one branch. Until then: A1's
-  ratified behaviour, a suggestion that `project clean` will refuse, the
-  detector off.
+  ratified behaviour in both layouts, a suggestion that `project clean` will
+  refuse, or, where `core.worktree` names another repository's checkout, one
+  that resolves that repository (A1:130-131, :148-149); the detector off.
 - **O6. Item 10 part 1, the stale warning**. CHOSEN (A): the overview's
   stale message carries the warning while a row's path cannot be read,
   keeping the warning whole and shortening the advice to fit 200
@@ -1210,10 +1283,11 @@ re-alignment lands.
   marks every present row so. Should (A) the overview keep its ratified
   rule and the parity tests leave this case out, (B) feature 004 follow
   the overview, or (C) the overview follow feature 004 (an amendment of
-  change 2)?" CHOSEN: (A). Design: (A) none, the parity
-  tests naming the case (R18); (B) none in the overview, and the case
-  returns to the parity tests; (C) one branch of the classification step,
-  every present row `inspection-error`.
+  change 2)?" CHOSEN: (A). Design: (A) none beyond the ratified rule's own
+  step, which R5 builds (a merged row `inspection-error`, with no row
+  error), the parity tests naming the case (R18); (B) none in the overview,
+  and the case returns to the parity tests; (C) that step widened to every
+  present row.
 - **O10. LQ-15's extension** (FR-043; EC-036). "You ratified
   `relative-config-path` with exit 2 in 'ratify 34'. One point stays open
   with #19: lane 2's extension of the test to `GIT_CONFIG_GLOBAL` and
@@ -1644,3 +1718,52 @@ follow in revision 9. Each input, and where it is taken:
   this plan reads "revisions 2 onward" and adds W112's read at `39f4ab6` and
   the nine-reader review; the Revision 3 and Revision 4 PR #19 bullets of R1
   carry the `e0b1671` lines of their changed cites.
+
+## Revision 9: the review of revision 7, its triage, and W112's OBS
+
+Made from `d0a7c07` (plan revision 8, on spec commit 3al, `7f4ab94`), on
+the lead's decisions for revision 8, whose section 8 answers the first
+writer's conflicts C1 to C5, and on revision 8's list of what it left. It
+takes the FIX-PLAN items of the triage of the nine-reader review of
+revision 7 at `39f4ab6` (its files TA, TB, TC and TD, by the reviewers'
+IDs) and lane openRepoProject-3's W112 OBS, in three parts. The spec stays
+at `7f4ab94` and PR #19 at `e0b1671`. Every chosen item is designed as
+chosen and built when C-72 says (C1): O11's part 1, O15 (A) and O16 (a)
+now, the rest once A1's re-alignment lands. Each input, and where it is
+taken:
+
+Part 1, the five HIGH items and the MEDIUM items that share their text:
+
+- **R1-1**, `EvidenceError`: R3 lists it and the private readers that
+  `verify_registration` reaches with `fs=_direct`, and no longer lists
+  `_realpath` as not reused; R5 maps a row task's `EvidenceError` to the
+  row's error, as `_read_row` does; R9 keeps the registration's realpaths
+  non-strict; the data model's step result and filesystem task name it.
+- **R1-6**, FR-026's step: R5 builds the ratified rule, a merged row
+  `inspection-error` with no row error when the working directory's
+  realpath failed (TB refuting the row error); the data model's
+  `classification`; O9's design line.
+- **R1-7**, the rows that take only their `lstat`: R5 and the data model's
+  worktree row, a submodule checkout's main row added; with **O16 (a)**,
+  built now (TC's R7-5), a bare row's `branch`, `head` and
+  `merged_into_target` null in R5, the data model and the contract's JSON.
+- **R2-1 (a)**, O4 (a)'s two tests: O4's design, the contract's
+  `main-toplevel` child, the data model's `target-not-repository-root` row,
+  marked CHOSEN, and R7's task. With it: **R2-1 (b)**'s plan half, O4's
+  "Until then" in both layouts; **R2-3**, the main worktree candidate's own
+  probe as the input and R6's fourth wait, marked CHOSEN; **R4-5**, the
+  draft's words for item 8's term in R14 and O4; and **R7-6**, the data
+  model's O4 (a) paragraph and root-null list and the contract's
+  `probe-failed` entry.
+- **R3-1**, the discovery barrier: R6's phase 1 starts once discovery has
+  ended, and the data model's `listing` state; with **R3-3**, a cut root's
+  snapshot in R7 and in that state.
+- **R3-11 with R4-6** (the lead's C2 and C3): R7 gains the identity step's
+  task, and its bound is a formula, R + 2,561, R the roots given, which
+  nothing caps: 2,593 at 32 roots, 2,081 there without the
+  re-verification, as R4-6 measured, and R + 2,689 with O4 (a)'s task. R4's
+  Alternatives and plan.md's Risks drop "2,465" with it.
+- **The draft's lines**: R6, R14 and O4 cite the draft at `558b0c29`, the
+  plan's pin. The triage read it at `ea6b79d7`, which differs from
+  `558b0c29` only at its lines 2667-2674 (`diff`), so its cites hold at
+  both.

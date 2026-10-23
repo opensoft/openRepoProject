@@ -138,7 +138,9 @@ feed (PN-6), every key always present, in these orders:
   `present`, `locked`, `prunable`, `current`, `branch`, `head`, `upstream`,
   `upstream_oid`, `ahead`, `behind`, `remote_present`,
   `merged_into_target`, `dirty`, `ignored_files`,
-  `ignored_files_truncated`, `ignored_samples`, `classification`;
+  `ignored_files_truncated`, `ignored_samples`, `classification` (a bare
+  repository's main row has `branch`, `head` and `merged_into_target` null,
+  O16 (a), built now; C-68);
 - `ignored_samples` entry: `path` (relative to its worktree),
   `path_valid_utf8`;
 - finding: `code`, `category`, `severity`, `checkout`, `evidence_source`,
@@ -231,7 +233,14 @@ the four status pins (kind `status`). No other argument vector is started.
 - `status`: `status --porcelain=v1 -z --untracked-files=normal
   --ignored=matching`, in each row FR-007's last case reaches.
 - CHOSEN (O4 (a)): `main-toplevel`, `rev-parse --path-format=absolute
-  --show-toplevel` in the main worktree where it is no Git candidate.
+  --show-toplevel` in the main worktree where it is no Git candidate. It
+  serves the first of O4 (a)'s two tests (research.md R20): in the ordinary
+  layout the main worktree's toplevel, from its own candidate's identity
+  probe where it is a Git candidate and else from this child, is compared,
+  realpath-equal, with the first registry record's canonical path, a
+  nonzero exit of either counting as a redirect. In the gitfile layout no
+  child runs: one bounded filesystem task reads the `.git` of the directory
+  `core.worktree` names, which must be a file naming `common_dir` itself.
 
 ## The attention table (FR-027; A1:491-514)
 
@@ -317,7 +326,9 @@ config`, `git for-each-ref`, `git status`), a filesystem call (`lstat`,
   the extension read's exit 1 with nothing printed (`false`), the work-tree
   probe's failure (the registration disagrees) and, as the plan's reading
   of a conflict in ratified A1 (research.md R9; O11, part 1), the
-  `core.worktree` read's exit 1 with nothing printed (the key unset)
+  `core.worktree` read's exit 1 with nothing printed (the key unset); the
+  `main-toplevel` child's nonzero exit (O4 (a), CHOSEN) is no exception: it
+  records `probe-failed` and counts as a redirect
 - `error.probe-timeout`: "OPERATION timed out after S s"
 - `error.deadline-exceeded`: "OPERATION stopped at the invocation deadline"
 - `error.scan-limit`: "LIMIT cap of M reached"

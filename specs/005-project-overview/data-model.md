@@ -95,8 +95,10 @@ One generator per candidate, resumed with each step's result.
 ARGS`, of kind `probe` or `status`; `parser` one of feature 004's
 incremental parsers, the keep-filter (`KeptRefParser`) or `RawOutput`.
 `FsStep(fn, args)`: one filesystem task. A result carries the
-`DriverOutcome` (`project:1673-1707`) or the task's value, its `OSError`,
-or its cut, and the wall-clock time it completed (research.md R13).
+`DriverOutcome` (`project:1673-1707`) or the task's value, its `OSError` or
+`EvidenceError` (`project:2615`, from a row task's registration reads, taken
+as the row's error; research.md R5), or its cut, and the wall-clock time it
+completed (research.md R13).
 
 ### Child outcome to row error (FR-011, FR-012, FR-022)
 
@@ -130,7 +132,7 @@ failure of that read keeps the table's row error and leaves `root` null.
 
 - `running`: to `done` when its thread posts; to `cut` at `min(5 s, deadline -
   now)`
-- `done`: final: its value or its `OSError` is read
+- `done`: final: its value, or its `OSError` or `EvidenceError`, is read
 - `cut`: final: `probe-timeout`, or `deadline-exceeded` where the deadline was
   the limit; its thread is abandoned and never read
 
@@ -159,12 +161,18 @@ Keyed by the `(dev, ino)` of the no-follow `lstat` of `common_dir`.
 `root` is null for a bare repository, a submodule checkout, an unnamed
 gitfile checkout, a gitfile checkout whose `core.worktree` read failed
 other than as unset (R20's O11, parts 1 and 2, chosen), and a missing main
-worktree (FR-008, FR-009).
+worktree (FR-008, FR-009); and, once A1's re-alignment lands, for a main
+worktree that O4 (a)'s detector finds redirected (R20's O4 (a), chosen;
+"Gates", below).
 
 ### Worktree row (FR-006, FR-007, FR-018, FR-026)
 
-One per registry entry, the main worktree included; a bare main entry and
-an unnamed git-directory record are rows with no status probe (C-68).
+One per registry entry, the main worktree included; a bare main entry, an
+unnamed git-directory record and a submodule checkout's main row are rows
+with no status probe (C-68; A1 design D3, items 1 to 3), each taking only
+its `lstat` task: no registration read, no twin decision and no
+`row_evidence`, its status fields and `classification` null (research.md
+R5).
 
 - `path`, `path_valid_utf8`
   - Source: the registry record (the main worktree's realpath where the first
@@ -188,23 +196,27 @@ an unnamed git-directory record are rows with no status probe (C-68).
   - Null when: `present` null; the working directory's realpath failed
 - `branch`
   - Source: the registry record; `"detached"` for a detached head
-  - Null when: a bare entry
+  - Null when: a bare entry (O16 (a), chosen, built now: C-68 and FR-008,
+    departing from C-40's packet rule that `branch` is never null)
 - `head`
   - Source: the registry record
-  - Null when: a bare entry
+  - Null when: a bare entry (O16 (a))
 - `upstream`, `upstream_oid`, `ahead`, `behind`, `remote_present`
   - Source: the kept ref records
   - Null when: none configured; `refs/heads/HEAD` (EC-033); listing failed
 - `merged_into_target`
   - Source: the merged set
-  - Null when: no target; listing failed
+  - Null when: no target; listing failed; a bare entry (O16 (a))
 - `dirty`, `ignored_files`, `ignored_files_truncated`, `ignored_samples`
   - Source: the status probe (`StatusParser`)
   - Null when: no probe ran or it failed; past the cap
 - `classification`
   - Source: [L]'s ladder through `row_evidence` and `classify`
   - Null when: past the cap; registry, ref listing or merged set failed; no
-    target; but `inspection-error` set directly by FR-007
+    target; but `inspection-error` set directly by FR-007, and by FR-026 for
+    a row the ladder would make `merged-removable` or `merged-current` when
+    the working directory's realpath failed, with no row error (research.md
+    R5)
 
 Internal: the first read (`dev`, `ino`, realpath, registration, admin id),
 kept as the row's identity after re-verification (FR-007); `registered`;
@@ -281,7 +293,10 @@ Repository and run gates, each withholding or limiting the suggestions of
 every worktree of the repository (FR-031, FR-034):
 
 - `target-not-repository-root`
-  - Applies when: `repository.root` null for a bare repository
+  - Applies when: `repository.root` null for a bare repository; CHOSEN, once
+    A1's re-alignment lands: a redirected main worktree (O4 (a), with its
+    sub-items (c) and (d); below), and a gitfile checkout whose
+    `core.worktree` read failed other than as unset (O11, part 2 (A))
   - Effect: every clean suggestion withheld
 - `unsupported-path-bytes`
   - Applies when: root or common directory not valid UTF-8
@@ -322,6 +337,21 @@ read-only suggestion and a null `suggestion_gate` (A1 design D5). The items O1,
 O2, O4 and O11's part 2 that Brett Heap's word chose (C-72; research.md R20)
 each change one row of these tables once A1's re-alignment lands.
 
+O4 (a), CHOSEN, once A1's re-alignment lands (research.md R20): where the
+main worktree's toplevel, from its own candidate's identity probe or else
+from one `main-toplevel` child, is not the first registry record's canonical
+path (the ordinary layout), where the directory `core.worktree` names holds
+no `.git` file naming `common_dir` itself (the gitfile layout), where a bare
+entry's path joined with `/.git` is `common_dir` (sub-item (c)), or where
+that probe or child exits nonzero (sub-item (d)), `repository.root` is null,
+every clean suggestion is withheld with `target-not-repository-root` and
+the redirect remedy, and the main worktree row keeps the record's path,
+`present` from `lstat`, null status fields and classification, and takes no
+status probe. A nonzero `main-toplevel` exit records `probe-failed`
+(A1:369; no exception lists it) and counts as a redirect; a cut one decides
+nothing. `probes.estimated` takes 1 per repository in the ordinary layout
+whose present main worktree is no Git candidate (research.md R14).
+
 ### Suggestion (FR-031)
 
 `["project", "clean", "<root>", "--all-safe"]` or `["project", "clean",
@@ -353,7 +383,10 @@ whatever `--attention` shows.
   `version`
 - `version`: too old or unavailable: exit 2; else `notice`
 - `notice`: `Scanning N roots...` when standard error is a terminal; `listing`
-- `listing`: root tasks; then `collecting` (candidates start as roots finish)
+- `listing`: every root task, run at once; once each has finished or been
+  cut, a cut root keeping the snapshot of the entries it had read
+  (research.md R7), the candidates are sorted, deduplicated (the first
+  spelling wins), capped at 128 and ranked; then `collecting`
 - `collecting`: phase 1 and phase 2 per repository (research.md R6); deadline:
   terminate every child, stop starting; then `settling`
 - `settling`: every child reaped or abandoned; then `rendering`

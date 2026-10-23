@@ -353,9 +353,11 @@ suggestions lead to `project clean`.
   root null where feature 004 refuses the run (O11); strict realpaths, an
   abandoned child the deadline cut, the deadline text and
   `tracking_freshness`. Each is the overview's own decider, tested alone.
-- **Threads**: at most 2,465 tasks a run, each its own daemon thread, the
-  stuck ones never joined (R7); a filesystem call stuck in the kernel can
-  hold process exit (EC-001), which the README states.
+- **Threads**: at most R + 2,561 tasks a run, R the roots given, which
+  nothing caps (2,593 at 32 roots), and R + 2,689 once O4 (a) lands, each
+  its own daemon thread, the stuck ones never joined (R7); a filesystem
+  call stuck in the kernel can hold process exit (EC-001), which the README
+  states.
 - **Hostile repositories**: R19's threat model; filter drivers a
   repository's own configuration defines stay a residual (EC-022).
 - The agent-context step of the plan workflow is not run: this repository's
