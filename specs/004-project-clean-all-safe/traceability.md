@@ -146,7 +146,7 @@ column names the test methods that cover the scenario.
 | project-clean-review-safety (PR #19 draft) | Cleanup preserves all local work not proven disposable | The main worktree inside a linked worktree | US2 | `test_clean_the_main_worktree_inside_a_linked_worktree` |
 | project-clean (PR #19 draft) | Clean can explicitly retire verified worktrees | Two worktree paths that differ only in case | US2 | `test_clean_two_worktree_paths_that_differ_only_in_case` |
 | project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | A case-variant untracked file | US9 | `test_status_a_case_variant_untracked_file` |
-| project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | A stale entry beside a worktree whose path cannot be read | US9 | none named after it at `da5502d` (a gap; below) |
+| project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | A stale entry beside a worktree whose path cannot be read | US9 | none named after it at `703b58c` (a gap; below) |
 
 T126's writer fills the Tests cells from the merged tests (lead ruling R-32b).
 
@@ -157,7 +157,7 @@ the others from `main`'s deltas.
 
 A test goes in a row only when its name begins with its scenario's title, as
 rule 1 and T126 require (lead ruling R-98 (a) 2). Four of PR #19's scenarios
-have no test so named at `da5502d`, though tests cover them; each is a gap, not
+have no test so named at `703b58c`, though tests cover them; each is a gap, not
 a missing check (lead ruling R-166):
 
 - "Branch deletion refuses a branch it may not delete" (round (a)): by
@@ -478,5 +478,39 @@ on `recommendation_stale_locked`, `remedy_inspection_incomplete`,
 steps of `registration-mismatch` and `inspection-error`, the new
 `unsupported-path-bytes` step, and `partial_removal_note_prune` in its new
 form, `partial_removal_note_prune_unread` being removed. No test name changes
-beyond the two replaced ones. Round (q)'s five scenarios have rows above; the
-head sentence reads `da5502d`.
+beyond the two replaced ones. Round (q)'s five scenarios have rows above; its
+head sentence read `da5502d`.
+
+Doc round 26, Part C (the lead's R-393; Brett Heap's Q4, Q5, Q8 and Q9 (b),
+ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; the
+build's writers' `c6daebc`, `c28c9ea`, `70345ee`, `338edb0` and `703b58c` on
+`impl/004-q-build`, merged as `c81b948`). Q4:
+`test_clean_the_partial_removal_note_names_its_check_first` (T091), and the
+changed `test_clean_only_tracked_file_deletions`,
+`test_clean_a_locked_worktree_s_partial_removal_note_unlocks_it_first`,
+`test_clean_the_stop_block`,
+`test_clean_the_ceiling_s_partial_removal_note_follows_the_git_file_and_the_entry`
+and `test_clean_the_ceiling_s_second_note_names_no_prune_beside_any_row`
+(T091), `test_clean_a_removal_past_the_hard_ceiling`,
+`test_clean_the_ceiling_s_recovery_text_follows_the_git_file_and_the_entry` and
+`test_clean_the_ceiling_s_second_note_beside_an_unread_sibling_names_no_prune`
+(T089), with `test_clean_a_worktree_holding_a_submodule_is_never_offered`
+(T063, which has its row), which pins the new `contains-submodule` step. Q5:
+`test_clean_gate_7_s_step_names_the_checks_of_the_gates_that_did_not_run`
+(T060), and the changed
+`test_clean_twenty_rows_pass_every_gate_before_deferred_target_cap` and
+`test_clean_deferred_rows_that_will_not_drain_name_the_gates_after_the_cap`
+(T097). Q8: `test_clean_evidence_the_status_warning_rule_counts_every_line` and
+`test_clean_evidence_refs_heads_head_makes_every_row_inspection_error` (T030);
+the scenario "A git that floods standard error" now reads, in #19's round (q),
+that the row is `inspection-error` with `probe-failed`, which its row's
+`test_status_a_git_that_floods_standard_error` already pinned. Q9 (b):
+`test_clean_a_registered_path_that_is_a_symbolic_link` (T061), a requirement's
+clause that no scenario names. Q2 (2):
+`test_clean_revalidate_a_nested_git_lstat_that_fails_or_is_cut` (T045).
+`tests/clean_support.py`'s fixtures change with them (T011):
+`partial_removal_note`, `partial_removal_note_locked` and `non_drain_line` in
+their new forms, the new `partial_removal_note_ceiling`, and the new
+`unstarted-branch`, `reflog-unavailable` and `contains-submodule` next steps.
+No scenario is added and no test name changes; T127's verify exempts two more
+old spans of main's `design.md` D18 (T127). The head sentence reads `703b58c`.

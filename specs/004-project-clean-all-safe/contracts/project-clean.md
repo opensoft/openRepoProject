@@ -278,13 +278,13 @@ message}` objects, an `inspect-cap` note adding `rows`.
 | "D14 completeness line" | report: `Report: complete` or `Report: incomplete (CODES)` |
 | "D14 selection line" | report at 128 rows or fewer: `--all-safe would select N`; above: `--all-safe would be incomplete (inspect-cap)` |
 | "D18 preview layout" | `Selected (N):` with one `  remove PATH [BRANCH]` per row; `Excluded (M):` with one `  REASON (K): NEXT STEP` group per reason and `    PATH [BRANCH]` rows; an `ignored-local-files` row adds its count and first sample; an `inspection-error` row whose path could not be read (`present` null) is a group of its own, first under that reason, with `next_step_unread_row`, and where any row of the plan is unread the other `inspection-error` rows and the `registration-mismatch` rows take `next_step_inspection_error_unread` and `next_step_registration_mismatch_unread`, and the `stale-worktree` rows `recommendation_stale_worktree_unread` (`excluded_groups()`; "The unread forms" below) |
-| "D18 deferral line", "D18 non-drain line" | the `deferred-target-cap` group; under it, when a gate after the cap excludes all 16 rows the cap took, `  these deferred rows will not drain while the 16 rows ahead of them are REASONS; review those worktrees, then remove them yourself (--force for any that holds a submodule)`, REASONS their reasons, each once, in gate order, joined by `, `, so that it reads as before, bar its `--force` clause, when all 16 are `contains-submodule` (`AFTER_CAP_REASONS`; D18 at draft PR #19 `2e819ad`; lead ruling R-146, lane 3's W21 L-f; writer G's `310f97d`; the `--force` clause is lane 3's W59 G-4, #19's round (g3) at `6bf9f77`, lead ruling R-259, writer E's `02aa71d`) |
+| "D18 deferral line", "D18 non-drain line" | the `deferred-target-cap` group; under it, when a gate after the cap excludes all 16 rows the cap took, `  these deferred rows will not drain while the 16 rows ahead of them are REASONS; follow each group's next step for those worktrees`, REASONS their reasons, each once, in gate order, joined by `, ` (`AFTER_CAP_REASONS`; D18 at draft PR #19 `2e819ad`; lead ruling R-146, lane 3's W21 L-f; writer G's `310f97d`); its closing clause was `review those worktrees, then remove them yourself (--force for any that holds a submodule)` (lane 3's W59 G-4, #19's round (g3) at `6bf9f77`, lead ruling R-259, writer E's `02aa71d`), which sent the person past the next steps of the groups that those 16 rows are in, `worktree-only-commits`'s "keep it on a branch or tag" and `operation-in-progress`'s "finish or abort it" among them, so that Brett Heap's Q5 (ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; lane 2's wave 22 triage T5, sr-removal F6; writer's `c28c9ea`) defers to those steps, which the preview prints above the line |
 | "D18 next steps" | the next step for each reason |
 | "D18 residual-window line" | the confirmation and the result |
 | "D18 empty line" | `No eligible worktrees` |
 | "D18 question", "D18 wait line" | above; the wait line once, at the first signal or deadline during a removal (D9) |
 | "D18 success line", "D18 stop block" | the result; the stop block names the retained branches and the residual window |
-| "D18 partial-removal note" | in three places (lead ruling R-79 P-11): in the report, on the line right after the row's recommendation line, two spaces in; in the preview, right after the row of the `dirty` group, six spaces in; in the result, first, before the stop block, one line per `partially-removed` target in canonical order, its path in the command form, whose text follows the rescan: D18's `Probable partial removal: inspect, then git worktree remove --force PATH by hand.` (`partial_removal_note`) only where the rescan shows the target's registry entry and its `.git` file both present, `Probable partial removal: inspect PATH by hand; its .git could not be read, so do not run git worktree prune, git worktree remove or git gc until it can.` (`partial_removal_note_unread`) wherever the rescan made its `.git` lstat and it gave no value, since it failed for a reason other than the file's absence, as `EACCES` does for a worktree directory the process may not search, or was cut at its budget or abandoned by a second SIGINT, or wherever the rescan's lstat of the target's own path failed other than for absence (`path_present` null in the record, as where a directory above the target denies search), so that no `.git` read was made, whatever else the record shows, because `git worktree prune` deletes the admin directory of a live worktree whose `.git` Git cannot stat (#19's round (i) at `1a4785e`; lane 3's W73 M-1; lead ruling R-284, which Brett Heap ruled "R-284: yes", R-290; writer G's `6a32d10`, merged as `3bc1d68`; and, for the null path, lane 3's W90 M-1, lead ruling R-329, which applies Brett Heap's R-284 as ruled, with #19's ceiling scenario, "as when a directory above it denies search"; writer's `b96b335`, merged as `7149e08`; its warning also names `git worktree remove` and `git gc`, R-324, ruled by Brett Heap, "R-324: yes", lead R-343; #19's round (n) at `2250830`; writer's `e8dda2a`), and otherwise `Probable partial removal: inspect, then delete PATH and its administrative directory ADMIN by hand.` (`partial_removal_note_prune`; ADMIN is the target's own administrative directory, `<common_dir>/worktrees/<admin_id>`, in the command form, taken from the plan's repository identity and the target's row, both verified again at its revalidation, and `unknown` for a plain dict, which carries neither: `partial_removal_admin()`), the `.git` shown absent, or the entry gone or not established, since Git refuses `git worktree remove --force` once the `.git` file ("validation failed") or the registry entry ("is not a working tree") is gone; the note no longer names `git worktree prune`, which acts on the whole repository with an expiry of now and deletes the administrative directory, and with it the HEAD reflog, of every unlocked entry whose path is missing, a worktree moved or on a drive not mounted among them, so it names the target's own directory alone, and it is the same in every mode and beside any row of the plan, `partial_removal_text(target)` taking the target and no plan (Brett Heap's Q3 (a), ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; lane 2's wave 22 triage T3, sr-removal F2; writer's `da5502d`, on `impl/004-q-build`). That supersedes R-365's form of the note beside a row whose path could not be read at planning (`unread_paths(plan)` not empty: `present` null, a row the work deadline stopped included), `Probable partial removal: inspect, then delete PATH by hand; a row's path could not be read, so do not run git worktree prune, git worktree remove or git gc until it can.` (`partial_removal_note_prune_unread`; lane 3's W52 F-1 (b) beside an unread row; lead ruling R-365, ruled by Brett Heap on 2026-10-23, "Yes, warn (Recommended)"; writer's `7a20789`, merged as `d8724e2`), which `print_result()` chose by passing `bool(unread_paths(plan))` to `partial_removal_text(target, plan_unread)`: that key and its selection are gone from `project`, and R-365's record stands as superseded. `partial_removal_note` and `partial_removal_note_unread` never changed, since `git worktree remove --force PATH` acts on PATH alone and the second already advises no prune; the rescan reads the `.git` by one `lstat`, no Git child, only where it shows the entry and the path both present (a path it could not look at leaves the `.git` unread), and keeps the read, and whether it was made (`git_file_read`), on the target and in no record, so that the JSON result is unchanged, and a report's or a preview's note keeps its own text, since its `.git` file and entry are present (lane 3's W52 F-1; Brett Heap's ruling "F-1: prune-then-delete" of 2026-10-22, lead ruling R-263, which amends ratified text, the `project-clean` delta's `spec.md:253-256` and `:922-926` at `0050f3e`; #19 at `b3228bb`; writer G's `3eb2e9c`, merged as `7164d7f`); a locked row's note, in the report and the preview, is `Probable partial removal: inspect, unlock it, then git worktree remove --force PATH by hand.` (`partial_removal_note_locked`), since `git worktree remove --force` refuses a locked worktree, and the result never takes it, since a locked row is excluded at gate 4 and is never a target (lane 3's W52 F-2; #19 at `4f1c0e0`; lead ruling R-248); it replaces ratified text (`spec.md:135-138` at `0050f3e`), and Brett Heap ruled it on 2026-10-22, "F-2: yes" (lead ruling R-263), in its own commit, `64ad453`, which stays (lead ruling R-259) |
+| "D18 partial-removal note" | in three places (lead ruling R-79 P-11): in the report, on the line right after the row's recommendation line, two spaces in; in the preview, right after the row of the `dirty` group, six spaces in; in the result, first, before the stop block, one line per `partially-removed` target in canonical order, its path in the command form, whose text follows the rescan: D18's `Probable partial removal: inspect, then git worktree remove --force PATH by hand.` (`partial_removal_note_ceiling`, with no check first, since the target was clean at its revalidation: Brett Heap's Q4, ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; writer's `c6daebc`) only where the rescan shows the target's registry entry and its `.git` file both present, `Probable partial removal: inspect PATH by hand; its .git could not be read, so do not run git worktree prune, git worktree remove or git gc until it can.` (`partial_removal_note_unread`) wherever the rescan made its `.git` lstat and it gave no value, since it failed for a reason other than the file's absence, as `EACCES` does for a worktree directory the process may not search, or was cut at its budget or abandoned by a second SIGINT, or wherever the rescan's lstat of the target's own path failed other than for absence (`path_present` null in the record, as where a directory above the target denies search), so that no `.git` read was made, whatever else the record shows, because `git worktree prune` deletes the admin directory of a live worktree whose `.git` Git cannot stat (#19's round (i) at `1a4785e`; lane 3's W73 M-1; lead ruling R-284, which Brett Heap ruled "R-284: yes", R-290; writer G's `6a32d10`, merged as `3bc1d68`; and, for the null path, lane 3's W90 M-1, lead ruling R-329, which applies Brett Heap's R-284 as ruled, with #19's ceiling scenario, "as when a directory above it denies search"; writer's `b96b335`, merged as `7149e08`; its warning also names `git worktree remove` and `git gc`, R-324, ruled by Brett Heap, "R-324: yes", lead R-343; #19's round (n) at `2250830`; writer's `e8dda2a`), and otherwise `Probable partial removal: inspect, then delete PATH and its administrative directory ADMIN by hand.` (`partial_removal_note_prune`; ADMIN is the target's own administrative directory, `<common_dir>/worktrees/<admin_id>`, in the command form, taken from the plan's repository identity and the target's row, both verified again at its revalidation, and `unknown` for a plain dict, which carries neither: `partial_removal_admin()`), the `.git` shown absent, or the entry gone or not established, since Git refuses `git worktree remove --force` once the `.git` file ("validation failed") or the registry entry ("is not a working tree") is gone; the note no longer names `git worktree prune`, which acts on the whole repository with an expiry of now and deletes the administrative directory, and with it the HEAD reflog, of every unlocked entry whose path is missing, a worktree moved or on a drive not mounted among them, so it names the target's own directory alone, and it is the same in every mode and beside any row of the plan, `partial_removal_text(target)` taking the target and no plan (Brett Heap's Q3 (a), ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; lane 2's wave 22 triage T3, sr-removal F2; writer's `da5502d`, on `impl/004-q-build`). That supersedes R-365's form of the note beside a row whose path could not be read at planning (`unread_paths(plan)` not empty: `present` null, a row the work deadline stopped included), `Probable partial removal: inspect, then delete PATH by hand; a row's path could not be read, so do not run git worktree prune, git worktree remove or git gc until it can.` (`partial_removal_note_prune_unread`; lane 3's W52 F-1 (b) beside an unread row; lead ruling R-365, ruled by Brett Heap on 2026-10-23, "Yes, warn (Recommended)"; writer's `7a20789`, merged as `d8724e2`), which `print_result()` chose by passing `bool(unread_paths(plan))` to `partial_removal_text(target, plan_unread)`: that key and its selection are gone from `project`, and R-365's record stands as superseded. `partial_removal_note_ceiling`, which has the text that `partial_removal_note` had, and `partial_removal_note_unread` never changed, since `git worktree remove --force PATH` acts on PATH alone and the second already advises no prune; the rescan reads the `.git` by one `lstat`, no Git child, only where it shows the entry and the path both present (a path it could not look at leaves the `.git` unread), and keeps the read, and whether it was made (`git_file_read`), on the target and in no record, so that the JSON result is unchanged, and a report's or a preview's note is `partial_removal_note`, which names its check first (the end of this row), since its `.git` file and entry are present (lane 3's W52 F-1; Brett Heap's ruling "F-1: prune-then-delete" of 2026-10-22, lead ruling R-263, which amends ratified text, the `project-clean` delta's `spec.md:253-256` and `:922-926` at `0050f3e`; #19 at `b3228bb`; writer G's `3eb2e9c`, merged as `7164d7f`); a locked row's note, in the report and the preview, is `Probable partial removal: check that git -C PATH status --short --ignored lists only deleted files, unlock it, then git worktree remove --force PATH by hand.` (`partial_removal_note_locked`; it was `Probable partial removal: inspect, unlock it, then git worktree remove --force PATH by hand.` until Q4), since `git worktree remove --force` refuses a locked worktree, and the result never takes it, since a locked row is excluded at gate 4 and is never a target (lane 3's W52 F-2; #19 at `4f1c0e0`; lead ruling R-248); it replaces ratified text (`spec.md:135-138` at `0050f3e`), and Brett Heap ruled it on 2026-10-22, "F-2: yes" (lead ruling R-263), in its own commit, `64ad453`, which stays (lead ruling R-259); Brett Heap's Q4 (a) and (b) (ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; lane 2's wave 22 triage T4, sr-removal F3 and F4; writer's `c6daebc`) name the check in the note of a report or preview row, which D4 judges on the status records read: `Probable partial removal: check that git -C PATH status --short --ignored lists only deleted files, then git worktree remove --force PATH by hand.` (`partial_removal_note`, PATH twice, each in the command form), so that a stream stopped at its record bound, past which an untracked or modified file can lie, and an ignored record, which leaves the flag alone, are shown to the person before `--force` could delete them; every detection rule stands, which keeps the scenario "project killed during a deletion" of a large target, and the result's own note, `partial_removal_note_ceiling`, keeps its text |
 | "D18 refusal messages", "D18 remedies" | `target-excluded` (the current-worktree and class messages kept), gates, and the plan-blocking remedies |
 
 Lines D18 leaves open are fixed here before tasks: the `Report:` and
@@ -369,10 +369,11 @@ prints wherever any row that the refusal counts is excluded as
 the exclusion reason and nothing else: a linked worktree that `core.worktree`
 or `core.bare` redirects, which is `inspection-error`, but also a broken admin
 registration or a path that two registry entries share, which no redirect
-causes, as #19's wording requires, or, since Q2 (1) (R-380), a linked worktree
-whose path is, or holds, the common directory, the main worktree or another
-row's path. The rows the refusal counts are those that
-make the plan `inspection-incomplete`, an `inspection-error` or unprobed row
+causes, as #19's wording requires, or, since Q2 (1) and Q9 (b) (R-380), a
+linked worktree whose path is, or holds, the common directory, the main
+worktree or another row's path, or whose registered path is a symbolic link.
+The rows the refusal counts are those that make the plan
+`inspection-incomplete`, an `inspection-error` or unprobed row
 that the work deadline did not stop (`deadline_stopped()`; such a row is
 `deadline-exceeded`'s and is never counted for the variant), in every mode that
 counts every row (the report, the `--all-safe` preview and apply, push and
@@ -643,16 +644,35 @@ and `64ad453`, merged into 004 as `d764c26`, bring `project` to lane 3's
 W52 (F-2 to F-10) and W59 (G-4 and G-5), and their strings equal draft PR
 #19's at `6bf9f77`, round (g3), for F-2, F-3, F-5, F-7, F-8, F-9 (G-5) and
 G-4 (lead rulings R-248 and R-259). Beyond the texts quoted above,
-`NEXT_STEPS` now has, for gate 7's two reasons, a clause that Git needs
-where the worktree holds a submodule (F-7): `unstarted-branch` is `no
-commit was made on this branch here since it was created; review, then git
-worktree remove yourself (--force if it holds a submodule)` and
+`NEXT_STEPS` had, for gate 7's two reasons, a clause that Git needs where the
+worktree holds a submodule (F-7): `unstarted-branch` was `no commit was made on
+this branch here since it was created; review, then git worktree remove
+yourself (--force if it holds a submodule)` and `reflog-unavailable` was `the
+branch's reflog is missing, expired or undecidable; review, then git worktree
+remove yourself (--force if it holds a submodule)`; and, for gate 9, which a
+plain removal of a worktree that holds a submodule would fail,
+`contains-submodule` was `review, then git worktree remove --force yourself`
+(F-8). Brett Heap's Q4 (c) and Q5 (ruled on 2026-10-23T13:30:27Z, "yes,
+recommended for Q1-Q9"; lead R-380; lane 2's wave 22 triage T4 and T5,
+sr-removal F5, sr-classification M-2 and M-3; writers' `c6daebc` and `c28c9ea`)
+change all three. A submodule initialized in a linked worktree keeps its
+repository in `<admin>/modules/<name>`, which `--force` deletes with its
+unpushed commits, so `contains-submodule` is `push or otherwise keep each
+submodule's commits first, since --force deletes its repository with this
+worktree's git directory, then git worktree remove --force yourself`, and gate
+7's two parentheticals read `(--force if it holds a submodule, once its commits
+are kept)`. Gate 7 also precedes gates 9 to 12, which therefore did not run for
+a row it excludes, though a plain removal could delete a commit that only its
+HEAD reflog holds or an assume-unchanged edit, so its two steps name the checks
+those gates would have made: `unstarted-branch` is `no commit was made on this
+branch here since it was created; its later gates did not run, so check git log
+-g HEAD, git ls-files -v and git status there, then git worktree remove
+yourself (--force if it holds a submodule, once its commits are kept)` and
 `reflog-unavailable` is `the branch's reflog is missing, expired or
-undecidable; review, then git worktree remove yourself (--force if it holds
-a submodule)`; and, for gate 9, which a plain removal of a worktree that
-holds a submodule would fail, `contains-submodule` is `review, then git
-worktree remove --force yourself` (F-8). Two report recommendations are
-004's own texts, which #19 at `4f1c0e0` does not carry (F-6 and F-10): the
+undecidable; its later gates did not run, so check git log -g HEAD, git
+ls-files -v and git status there, then git worktree remove yourself (--force if
+it holds a submodule, once its commits are kept)`. Two report recommendations
+are 004's own texts, which #19 at `4f1c0e0` does not carry (F-6 and F-10): the
 main worktree's row, where the ladder says `merged-removable` or
 `merged-current`, reads `The main worktree is never removed by project
 clean.` (`recommendation_main_worktree`), since no removal of it can
@@ -1033,10 +1053,22 @@ error holds a line other than Git's advice lines (`hint:` alone or `hint:
 TEXT`), or a byte past the 4 KiB the runner keeps: it is `probe-failed` with
 DETAIL `unparseable output` (`git status failed: unparseable output`), the row
 `inspection-error` with `dirty` null, and at revalidation a `state-changed`
-difference (`status_warned()`; lane 3's US2 M-1; lead ruling R-116). Git
-prints nothing there on a clean run, and it translates its `warning:` and
-`error:` prefixes under a localized catalogue, so the rule reads no prefix
-but the advice one; no DETAIL form is added.
+difference (`status_warned()`; lane 3's US2 M-1; lead ruling R-116). Git prints
+nothing there on a clean run, and it translates its `warning:` and `error:`
+prefixes under a localized catalogue, so the rule reads no prefix but the
+advice one; no DETAIL form is added. A blank line is such a line, and only the
+empty text after the last line end is none: the rule skipped a blank line until
+Brett Heap's Q8 (ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9";
+lead R-380; lane 2's wave 22 triage T9, lane 3's W115 MEDIUM-1; writer's
+`70345ee`), which states it in #19's `project-command` delta at round (q),
+`818311a`, with its consequence that a repository holding `refs/heads/HEAD`,
+for which Git warns `refname 'HEAD' is ambiguous.` in every status probe, has
+every row `inspection-error`, and which words the scenario "A git that floods
+standard error" so that the probe completes with no `probe-timeout`, the
+standard error kept is capped, and the row is `inspection-error` with
+`probe-failed`. Git exits 0 when it cannot read a directory and leaves what it
+could not read out of its records, so a row whose untracked directory is
+unreadable no longer reads clean.
 
 A linked row whose path encloses another repository path is
 `registration-mismatch` (Brett Heap's Q2 (1), ruled on 2026-10-23T13:30:27Z,
@@ -1056,6 +1088,23 @@ incomplete with `inspection-incomplete`, exit 1 for a preview and 2 under
 `--apply`, in batch and in single mode, and nothing is removed. A path that
 only shares a prefix is not enclosed, and the main worktree's own row is never
 one, gate 1 keeping it.
+
+A linked row whose registered path is a symbolic link
+is `registration-mismatch` too (Brett Heap's Q9 (b), ruled on
+2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; lane 2's wave
+22 triage T12, sr-removal F7; writer's `338edb0`). A worktree moved by hand,
+with a link left at its registered path, agrees with its registration through
+the link and its status prints nothing, but `git worktree remove` empties the
+link's target, fails to remove the link, exits 255 and still deletes the
+administrative directory; the result is `failed`, `git-failed`, with
+`orphaned-directory` in the JSON alone. `_read_row()` already makes the `lstat`
+of the registered path, and where it shows a symbolic link for a linked row it
+reads the registration as disagreeing (`registered` false, no admin id), so the
+row is `registration-mismatch`, unprobed and `inspection-error`, as a shared
+path is: the plan is incomplete with `inspection-incomplete`, exit 1 for a
+preview, which still selects a clean worktree beside it, and 2 under `--apply`,
+in batch and in single mode, with nothing removed and the link's target keeping
+its files. The main worktree's row is never read so.
 
 Gate 9 also looks for a `.git` inside a tracked directory (Q2 (2), the same
 ruling and triage item; writer's `5eeaedd`). Git's directory walk recurses into

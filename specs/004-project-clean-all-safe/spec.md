@@ -952,6 +952,22 @@ written".
   instead of it, judged on the records read when the stream stopped at its
   bound, and changing no classification, ladder rung or gate. Traces: "Clean
   classifies preservation and cleanup actions"; design D4.
+  Note, 2026-10-23: the recovery text names its check first, `Probable partial
+  removal: check that git -C PATH status --short --ignored lists only deleted
+  files, then git worktree remove --force PATH by hand.`, and, for a locked
+  row, `Probable partial removal: check that git -C PATH status --short
+  --ignored lists only deleted files, unlock it, then git worktree remove
+  --force PATH by hand.`, in the report and the preview (Brett Heap's Q4 (a)
+  and (b), ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead
+  R-380; lane 2's wave 22 triage T4, sr-removal F3 and F4; writer's `c6daebc`).
+  The note is still judged on the records read, so that a stream stopped at its
+  bound is judged on them and an ignored record leaves the flag alone, but an
+  untracked or modified file can lie past the 4,096 records, and an ignored
+  work file is no deletion, so that the person is shown, before `--force`, what
+  the note could not know. The ceiling's own note, where the rescan shows the
+  entry and the `.git` file both present, keeps `inspect` and no check, since
+  its target was clean at its revalidation (`partial_removal_note_ceiling`).
+  The requirement's text stands as written.
 - **FR-010**: A push MUST stay a confirmed, non-force push of a named
   non-default branch to its configured upstream, or one that establishes its
   explicitly named upstream when none exists, preserving the delegated exit
@@ -1077,6 +1093,15 @@ written".
   `worktree-only-commits`, his ruling LQ-13 (draft PR #19; lead rulings R-102
   and R-124). Traces: "Clean previews and applies a batch of eligible worktree
   removals in one repository"; design D10, D12, D21 and D22.
+  Note, 2026-10-23: gate 7 precedes gates 9 to 12, which do not run for a row
+  it excludes, so the next steps of `unstarted-branch` and `reflog-unavailable`
+  read `its later gates did not run, so check git log -g HEAD, git ls-files -v
+  and git status there` before the removal, with `(--force if it holds a
+  submodule, once its commits are kept)` (Brett Heap's Q5 and Q4 (c), ruled on
+  2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; lane 2's wave
+  22 triage T5, sr-classification M-2; writers' `c28c9ea` and `c6daebc`): a
+  plain removal of such a row could delete a commit that only its HEAD reflog
+  holds or an assume-unchanged edit. The gate order stands as written.
 - **FR-021**: The `unstarted-branch` gate MUST read the branch's reflog,
   `logs/refs/heads/<branch>` in the common directory, for every row it checks,
   in every mode, from the filesystem (at most 64 KiB, counted in the filesystem
@@ -1267,6 +1292,23 @@ written".
   worktree move, or mv it and then git worktree repair NEWPATH`, a plain `mv`
   having left the registry entry stale (T14; lane 3's W120 L-1; lead R-373 and
   R-385, writer's `e702a65`). The requirement's text stands as written.
+  Note, 2026-10-23: three more texts changed (Brett Heap's Q4 (c) and Q5, ruled
+  on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; lane 2's
+  wave 22 triage T4 and T5; sr-removal F5 and F6, sr-classification M-2 and
+  M-3; writers' `c6daebc` and `c28c9ea`). The next step of `contains-submodule`
+  is `push or otherwise keep each submodule's commits first, since --force
+  deletes its repository with this worktree's git directory, then git worktree
+  remove --force yourself`, since a submodule initialized in a linked worktree
+  keeps its repository under that worktree's administrative directory,
+  `modules/`, which `--force` deletes with any commit not pushed; the next
+  steps of `unstarted-branch` and `reflog-unavailable` are the ones that
+  FR-020's note gives; and the non-drain line is `these deferred rows will not
+  drain while the 16 rows ahead of them are REASONS; follow each group's next
+  step for those worktrees`, in place of `review those worktrees, then remove
+  them yourself (--force for any that holds a submodule)`, which sent the
+  person past the next steps of the groups those 16 rows are in, "keep it on a
+  branch or tag" and "finish or abort it" among them. The requirement's text
+  stands as written.
 - **FR-029**: Each `project clean` invocation MUST set one monotonic deadline
   60 s after it starts and hold back a 10 s reconciliation reserve, so that
   work stops 50 s after start, both moving later by the time spent blocked at
@@ -1314,6 +1356,9 @@ written".
   R-146, lane 3's W21 L-f). A plan MUST NOT be refused for having more than 16
   such rows, and `project clean` MUST NOT raise `target-cap`. Traces: "Clean
   bounds its Git work and reports omitted work"; design D12.
+  Note, 2026-10-23: the line names no removal; it defers to each group's own
+  next step (FR-028's note; Brett Heap's Q5, ruled on 2026-10-23T13:30:27Z,
+  "yes, recommended for Q1-Q9"; lead R-380; writer's `c28c9ea`).
 - **FR-033**: Plans and apply results MUST report `probes` and `operations` as
   `{estimated, performed}`, every Git child counted once, `probes` for each Git
   child other than a removal child and `operations` for each removal child;
@@ -1681,6 +1726,15 @@ written".
   leave it, that worktree read clean and its removal deleted the whole
   repository; now the plan is incomplete and nothing is removed. The
   requirement's text stands as written.
+  Note, 2026-10-23: a linked row whose registered path is a symbolic link is
+  `registration-mismatch` too, unprobed and `inspection-error` (`_read_row()`,
+  from the `lstat` it makes already; Brett Heap's Q9 (b), ruled on
+  2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; lane 2's wave
+  22 triage T12, sr-removal F7; writer's `338edb0`). Its registration agrees
+  through the link and its status prints nothing, but `git worktree remove`
+  empties the link's target, fails to remove the link and still deletes the
+  administrative directory; now the plan is incomplete and nothing is removed.
+  The requirement's text stands as written.
 - **FR-056**: Once per common directory, the model MUST run the identity
   probe, the registry listing, row 4c's read of `extensions.worktreeConfig`
   from the common directory's own `config` (LQ-11, draft PR #19), one ref
@@ -1707,6 +1761,21 @@ written".
   `probe-timeout` or `deadline-exceeded`, and make the row
   `inspection-error`. Traces: "Repository inspection requires Git 2.36 and
   shares one evidence model"; design D2.
+  Note, 2026-10-23: a status probe that exits 0 having written to standard
+  error any line other than Git's advice lines (`hint:` alone or `hint: TEXT`),
+  a blank line included, or more than the 4 KiB kept, is `probe-failed`, since
+  Git exits 0 when it cannot read a directory and leaves what it could not read
+  out of its records, and a repository holding `refs/heads/HEAD`, for which Git
+  warns `refname 'HEAD' is ambiguous.` in every status probe, has every row
+  `inspection-error` (Brett Heap's Q8, ruled on 2026-10-23T13:30:27Z, "yes,
+  recommended for Q1-Q9"; lead R-380; lane 2's wave 22 triage T9, lane 3's W115
+  MEDIUM-1; #19's round (q) at `818311a`, `project-command`; writer's
+  `70345ee`). Until then 004's contract alone declared the rule (lead R-116),
+  and it skipped a blank line. The acceptance scenario of User Story 9 that
+  reads that the first fake Git "completes with no `probe-timeout` and its
+  standard error kept capped" reads, as #19's scenario now does, that the row
+  is also `inspection-error` with `probe-failed`. The requirement's text stands
+  as written.
 - **FR-058**: Each Git child's standard output MUST be read as it streams,
   and its standard error drained at the same time and capped. A child stopped
   at its bound, past its budget or by a signal MUST receive SIGTERM to its

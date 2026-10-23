@@ -602,6 +602,15 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   `unsupported-path-bytes` text, `move it to a valid UTF-8 path with git
   worktree move, or mv it and then git worktree repair NEWPATH` (lane 3's W120
   L-1; lead R-373 and R-385, writer's `e702a65`). The same test pins each.
+  Brett Heap's Q4 (a) to (c) and Q5 (ruled on 2026-10-23T13:30:27Z, "yes,
+  recommended for Q1-Q9"; lead R-380; lane 2's wave 22 triage T4 and T5;
+  writers' `c6daebc` and `c28c9ea`) change the tables once more: `TEXT_FIXTURES`
+  gives `partial_removal_note` and `partial_removal_note_locked` their check
+  first, gains `partial_removal_note_ceiling`, which has
+  `partial_removal_note`'s former text, and takes the new `non_drain_line`,
+  `follow each group's next step for those worktrees`; `NEXT_STEP_FIXTURES`
+  takes the new `unstarted-branch`, `reflog-unavailable` and
+  `contains-submodule` texts. The same test pins each.
   — files: `tests/clean_support.py`
   — verify: `python3 -c "import sys;sys.path.insert(0,'tests');import clean_support as c;M=[n for n in sys.argv[1:] if not (hasattr(c,n) or hasattr(c.CleanCase,n))];[print('missing:',m) for m in M];sys.exit(1 if M or not sys.argv[1:] else 0)" install_counting_git child_log install_fake_git path_without_git && python3 -m unittest discover -s tests -p 'test_clean_harness.py' && python3 -c "import sys;sys.path.insert(0,'tests');import clean_support as c;M=[k for k in sys.argv[1:] if k not in c.FAKE_KINDS];[print('absent kind:',m) for m in M];sys.exit(1 if M or not sys.argv[1:] else 0)" status-slow-again-in ls-files-stuck-again-in`
 
@@ -1189,8 +1198,25 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   exits 128; P is refused `state-changed`, nothing is removed, the run exits 2,
   and Q, the second target, is `not-attempted` with `batch-stopped`; the
   work-tree probe ran in P and Q at planning and in P at revalidation).
+  Brett Heap's Q8 (ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9";
+  lead R-380; lane 2's wave 22 triage T9; lane 3's W115 MEDIUM-1; writer's
+  `70345ee`) adds two tests of the status-probe rule that
+  `test_clean_evidence_a_status_probe_that_warns_establishes_nothing` pins:
+  `test_clean_evidence_the_status_warning_rule_counts_every_line` (in process,
+  `status_warned()` over literal outcomes: nothing, advice lines, advice with no
+  last line end and the 4 KiB kept all advice are not warned; a blank line
+  alone, between advice lines and last, a line of spaces, `hint:a` with no
+  space, Git's `refname 'HEAD' is ambiguous.` warning twice, and one byte past
+  the 4 KiB kept are) and
+  `test_clean_evidence_refs_heads_head_makes_every_row_inspection_error` (a
+  repository holding `refs/heads/HEAD` and a merged worktree: Git itself exits 0
+  and warns `refname 'HEAD' is ambiguous.` in the main worktree and in the
+  merged one; every row is `inspection-error` with one `probe-failed` error and
+  `dirty` null, the report is incomplete with `inspection-incomplete` and
+  selects nothing, and `--all-safe --apply --yes` and a named removal exit 2
+  with nothing removed).
   — files: `tests/test_clean_evidence.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_evidence.py 'test_status_a_git_that_floods_standard_error' 'test_status_a_git_that_ignores_sigterm' 'test_status_five_thousand_ignored_records' 'test_status_user_status_configuration' 'test_status_a_caller_s_git_environment_is_ignored' 'test_status_the_sixteenth_scrubbed_name_on_git_2_36' 'test_status_a_lazy_fetch_in_a_partial_clone_is_refused_locally' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_evidence.py 'test_clean_a_linked_worktree_whose_work_tree_is_redirected' 'test_clean_a_linked_worktree_whose_work_tree_is_redirected_after_the_plan' 'test_clean_a_commondir_that_names_another_repository' 'test_clean_evidence_verifies_each_identity_immediately_before_its_status_probe' 'test_clean_evidence_a_status_probe_that_warns_establishes_nothing' 'test_clean_evidence_a_failed_ref_listing_establishes_no_branch_evidence' 'test_clean_effective_work_tree_reads_its_output_as_one_path' 'test_clean_a_work_tree_probe_whose_output_is_empty_or_ends_in_no_line_feed' 'test_clean_a_redirected_linked_worktree_whose_path_holds_a_line_feed' 'test_clean_row_4c_reads_an_exit_1_by_what_it_printed' 'test_clean_row_4c_reads_a_real_repository_s_keys' 'test_clean_a_row_4c_exit_1_that_printed_gives_each_linked_row_its_work_tree_probe' 'test_clean_a_row_4c_exit_1_that_printed_adds_its_probes_to_the_estimate' 'test_clean_row_4b_reads_an_exit_1_by_what_it_printed' 'test_clean_a_row_4b_exit_1_that_printed_leaves_the_main_worktree_unreadable' 'test_clean_row_4b_reads_a_real_repository_s_unset_core_worktree_as_unset' 'test_clean_a_nul_byte_in_a_worktree_s_git_file_or_commondir_makes_its_row_inspection_error' 'test_clean_a_tracking_branch_no_ref_can_hold_names_no_local_branch' 'test_clean_a_manifest_name_with_a_lone_surrogate_is_no_candidate_and_no_ref_pattern' 'test_clean_a_work_tree_probe_that_exits_128_at_revalidation_on_real_git'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_evidence.py 'test_status_a_git_that_floods_standard_error' 'test_status_a_git_that_ignores_sigterm' 'test_status_five_thousand_ignored_records' 'test_status_user_status_configuration' 'test_status_a_caller_s_git_environment_is_ignored' 'test_status_the_sixteenth_scrubbed_name_on_git_2_36' 'test_status_a_lazy_fetch_in_a_partial_clone_is_refused_locally' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_evidence.py 'test_clean_a_linked_worktree_whose_work_tree_is_redirected' 'test_clean_a_linked_worktree_whose_work_tree_is_redirected_after_the_plan' 'test_clean_a_commondir_that_names_another_repository' 'test_clean_evidence_verifies_each_identity_immediately_before_its_status_probe' 'test_clean_evidence_a_status_probe_that_warns_establishes_nothing' 'test_clean_evidence_a_failed_ref_listing_establishes_no_branch_evidence' 'test_clean_effective_work_tree_reads_its_output_as_one_path' 'test_clean_a_work_tree_probe_whose_output_is_empty_or_ends_in_no_line_feed' 'test_clean_a_redirected_linked_worktree_whose_path_holds_a_line_feed' 'test_clean_row_4c_reads_an_exit_1_by_what_it_printed' 'test_clean_row_4c_reads_a_real_repository_s_keys' 'test_clean_a_row_4c_exit_1_that_printed_gives_each_linked_row_its_work_tree_probe' 'test_clean_a_row_4c_exit_1_that_printed_adds_its_probes_to_the_estimate' 'test_clean_row_4b_reads_an_exit_1_by_what_it_printed' 'test_clean_a_row_4b_exit_1_that_printed_leaves_the_main_worktree_unreadable' 'test_clean_row_4b_reads_a_real_repository_s_unset_core_worktree_as_unset' 'test_clean_a_nul_byte_in_a_worktree_s_git_file_or_commondir_makes_its_row_inspection_error' 'test_clean_a_tracking_branch_no_ref_can_hold_names_no_local_branch' 'test_clean_a_manifest_name_with_a_lone_surrogate_is_no_candidate_and_no_ref_pattern' 'test_clean_a_work_tree_probe_that_exits_128_at_revalidation_on_real_git' 'test_clean_evidence_the_status_warning_rule_counts_every_line' 'test_clean_evidence_refs_heads_head_makes_every_row_inspection_error'`
 - [x] T031 [P] [O] Add to region `evidence` of `project`: `identity_probe()` (row
   3, repeated one option per child when a value holds a line feed);
   `main_worktree(identity, records, run)`, which builds D8's whole order (M6)
@@ -1302,6 +1328,13 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   another registry entry's raw path or another built row's realpath, so that
   `worktree_rows()` gives it the shared-path `registration-mismatch` before any
   status probe (`_encloses()` compares bytes: equal, or a prefix and a slash).
+  Brett Heap's Q8 and Q9 (b) (ruled on 2026-10-23T13:30:27Z, "yes, recommended
+  for Q1-Q9"; lead R-380; writers' `70345ee` and `338edb0`) change two more
+  reads of this region: `status_warned()` counts a blank line as a line,
+  dropping only the empty text after the last line end, and `_read_row()` reads
+  a linked row's registration as disagreeing (`registered` false, no admin id),
+  with no `verify_registration()` read, where the `lstat` it makes already shows
+  the registered path to be a symbolic link (T061).
   — files: `project`, `tests/clean_support.py`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'evidence:identity_probe' 'evidence:main_worktree' 'evidence:config_key_unset' 'evidence:inspect_repository' 'evidence:verify_registration' 'evidence:status_probe' 'evidence:worktree_rows' 'evidence~def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root=True)' 'evidence~def worktree_rows(repo, run, records=None)' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' -k '*.test_clean_evidence_parity_with_the_baseline_reader' -k '*.test_clean_evidence_a_bare_repository_s_registry_listing_runs_where_the_argument_resolves' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table' && python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'evidence:status_warned' 'evidence:worktree_config' 'evidence:effective_work_tree' 'evidence:_admin_commondir' 'evidence:_identity_unchanged' 'evidence~"main_path"' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' && python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'evidence:enclosing_rows' 'evidence:_encloses'`
 - [x] T032 [P] [O] Add to region `evidence`: `classify()` (pure, with its one
@@ -1659,8 +1692,15 @@ L-8).
   being removed). Brett Heap's Q1 (same ruling; writer's `9d5c2fb`) adds `-c
   core.ignoreCase=false` to the removal child's pins, which `REMOVAL_PINS` of
   this file lists, six status pins where its comment said five (T013, T082).
+  Brett Heap's Q2 (2) (same ruling; writer's `703b58c`) adds
+  `test_clean_revalidate_a_nested_git_lstat_that_fails_or_is_cut` (in process,
+  `nested_git_entry()`'s one `fs_call()` at step 7 made to raise
+  `PermissionError`, then to be cut at its budget, then to be cut by the work
+  deadline: `revalidate()` gives `state-changed`, `state-changed` and
+  `deadline-exceeded`, the call made once with the worktree's path and its one
+  directory, and the target stays).
   — files: `tests/test_clean_apply.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_apply.py 'test_clean_apply_exit_table' 'test_clean_result_document_keys' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_apply.py 'test_clean_revalidate_records_a_refused_path_after_the_work_deadline' 'test_clean_revalidate_refuses_a_repository_nested_after_the_plan'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_apply.py 'test_clean_apply_exit_table' 'test_clean_result_document_keys' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_apply.py 'test_clean_revalidate_records_a_refused_path_after_the_work_deadline' 'test_clean_revalidate_refuses_a_repository_nested_after_the_plan' 'test_clean_revalidate_a_nested_git_lstat_that_fails_or_is_cut'`
 - [x] T046 [P] [US1] [O] Rewrite
   `test_clean_revalidates_a_worktree_after_confirmation` in
   `tests/test_project.py` (`:1020-1040`; with T009's loader line, the only
@@ -2051,6 +2091,17 @@ L-8).
   R-385, writer's `e702a65`) changes `NEXT_STEPS`'s `unsupported-path-bytes`
   text to "move it to a valid UTF-8 path with git worktree move, or mv it and
   then git worktree repair NEWPATH".
+  Brett Heap's Q4 (c) and Q5 (same ruling; writers' `c6daebc` and `c28c9ea`)
+  change three `NEXT_STEPS` texts and the `non_drain_line`: `contains-submodule`
+  is `push or otherwise keep each submodule's commits first, since --force
+  deletes its repository with this worktree's git directory, then git worktree
+  remove --force yourself`; `unstarted-branch` and `reflog-unavailable` name the
+  checks of the gates that did not run (`no commit was made on this branch here
+  since it was created; its later gates did not run, so check git log -g HEAD,
+  git ls-files -v and git status there, then git worktree remove yourself
+  (--force if it holds a submodule, once its commits are kept)`); and the
+  non-drain line ends `follow each group's next step for those worktrees`.
+  `UNREAD_NEXT_STEPS` is unchanged.
   — files: `project`, `tests/clean_support.py`, `tests/test_clean_batch.py`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'preview~human_path' 'preview~selected_heading' 'preview~excluded_group' 'preview:excluded_groups' 'preview:UNREAD_NEXT_STEPS' 'contracts~"main-worktree":' 'contracts~"unsupported-path-bytes":' 'contracts~"not-requested":' && python3 project clean --help >/dev/null && python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_batch.py 'test_clean_a_reader_that_closes_standard_output' 'test_clean_the_preview_says_what_keeps_each_row_single_mode' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' -k '*.test_clean_a_reader_that_closes_standard_output' -k '*.test_clean_the_preview_says_what_keeps_each_row_single_mode'`
 - [x] T053 [P] [US1] [O] Fill `check_plan(plan, run)` in region `dispatcher`, in
@@ -2379,8 +2430,22 @@ carrying the reason the gate order gives.
   eligible"; "A branch reset to the merge target's tip stays unstarted"; "A
   branch fetched at the merge target's tip stays unstarted"; "A branch whose
   reflog is missing, empty or expired".
+  Brett Heap's Q5 (same ruling; lane 2's wave 22 triage T5, sr-classification
+  M-2; writer's `c28c9ea`) adds
+  `test_clean_gate_7_s_step_names_the_checks_of_the_gates_that_did_not_run` (a
+  control worktree and two worktrees excluded as `unstarted-branch`, one holding
+  a detached commit that only its HEAD reflog holds and one an assume-unchanged
+  edit, which gates 9 to 12 would have caught: the group's next step is `no
+  commit was made on this branch here since it was created; its later gates did
+  not run, so check git log -g HEAD, git ls-files -v and git status there, then
+  git worktree remove yourself (--force if it holds a submodule, once its
+  commits are kept)`, `reflog-unavailable`'s is the same after its own first
+  clause, and `--worktree` on each refuses with `target-excluded`; the checks
+  the step names show each, `git log -g HEAD` the detached commit and `git
+  ls-files -v` the flagged entry, which `git status` does not, and nothing is
+  removed).
   — files: `tests/test_clean_reflog.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_reflog.py 'test_clean_a_published_branch_with_no_commit_of_its_own' 'test_clean_a_fast_forward_merged_branch_at_the_target_s_tip_stays_eligible' 'test_clean_a_branch_reset_to_the_merge_target_s_tip_stays_unstarted' 'test_clean_a_branch_fetched_at_the_merge_target_s_tip_stays_unstarted' 'test_clean_a_branch_whose_reflog_is_missing_empty_or_expired'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_reflog.py 'test_clean_a_published_branch_with_no_commit_of_its_own' 'test_clean_a_fast_forward_merged_branch_at_the_target_s_tip_stays_eligible' 'test_clean_a_branch_reset_to_the_merge_target_s_tip_stays_unstarted' 'test_clean_a_branch_fetched_at_the_merge_target_s_tip_stays_unstarted' 'test_clean_a_branch_whose_reflog_is_missing_empty_or_expired' 'test_clean_gate_7_s_step_names_the_checks_of_the_gates_that_did_not_run'`
 - [x] T061 [P] [US2] [S] Add to `tests/test_clean_gates.py`:
   `test_clean_every_protected_classifier` (linked worktrees that are stale,
   detached, dirty, holding ignored files, unpublished, remote-gone, diverged,
@@ -2512,8 +2577,19 @@ carrying the reason the gate order gives.
   `/r/ab`, is not; an absent row is never one, and an entry the call builds no
   row for is compared by its raw path alone).
   Scenario, PR #19's round (q): "The main worktree inside a linked worktree".
+  Brett Heap's Q9 (b) (same ruling; lane 2's wave 22 triage T12, sr-removal F7;
+  writer's `338edb0`) adds
+  `test_clean_a_registered_path_that_is_a_symbolic_link` (a merged, pushed
+  worktree moved by hand to another directory with a symbolic link left at its
+  registered path, beside a control worktree: Git keeps the registered path and
+  the worktree's status prints nothing; the row is `registration-mismatch`,
+  `inspection-error` with `dirty` null, the preview exits 1 with
+  `inspection-incomplete` and selects the control alone, `--all-safe --apply
+  --yes` and a single removal naming the link exit 2 with
+  `inspection-incomplete`, no `worktree remove` is run, and the link, the
+  administrative directory, the control and the link's target's files remain).
   — files: `tests/test_clean_gates.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_every_protected_classifier' 'test_clean_every_protected_classifier_incomplete_copy' 'test_clean_a_redirected_worktree_s_incomplete_plan_names_the_unset' 'test_clean_a_redirected_row_the_deadline_stopped_is_not_counted_for_the_variant' 'test_clean_a_named_removal_s_repository_wide_refusal_beside_a_redirected_target' 'test_clean_an_unread_row_s_next_step_and_remedy_name_no_prune' 'test_clean_an_unread_row_beside_a_readable_inspection_error_row' 'test_clean_an_unread_row_beside_a_redirected_row' 'test_clean_a_stale_row_beside_an_unread_row_warns_against_prune' 'test_clean_the_main_worktree_inside_a_linked_worktree' 'test_clean_enclosing_rows_decides_on_literal_values'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_every_protected_classifier' 'test_clean_every_protected_classifier_incomplete_copy' 'test_clean_a_redirected_worktree_s_incomplete_plan_names_the_unset' 'test_clean_a_redirected_row_the_deadline_stopped_is_not_counted_for_the_variant' 'test_clean_a_named_removal_s_repository_wide_refusal_beside_a_redirected_target' 'test_clean_an_unread_row_s_next_step_and_remedy_name_no_prune' 'test_clean_an_unread_row_beside_a_readable_inspection_error_row' 'test_clean_an_unread_row_beside_a_redirected_row' 'test_clean_a_stale_row_beside_an_unread_row_warns_against_prune' 'test_clean_the_main_worktree_inside_a_linked_worktree' 'test_clean_enclosing_rows_decides_on_literal_values' 'test_clean_a_registered_path_that_is_a_symbolic_link'`
 - [x] T062 [P] [US2] [O] Add to `tests/test_clean_gates.py`:
   `test_clean_hidden_local_state` (two otherwise eligible worktrees, one
   holding an edit to a file flagged assume-unchanged and one a file flagged
@@ -2621,6 +2697,17 @@ carrying the reason the gate order gives.
   removed, and each run makes the one call, holding the worktree's path and its
   one directory). The parser's `directories` are T014's.
   Scenario, PR #19's round (q): "A repository nested in a tracked directory".
+  Brett Heap's Q4 (c) (same ruling; lane 2's wave 22 triage T4, sr-removal F5
+  and sr-classification M-3; writer's `c6daebc`) extends
+  `test_clean_a_worktree_holding_a_submodule_is_never_offered`: it pins the new
+  `contains-submodule` step, `push or otherwise keep each submodule's commits
+  first, since --force deletes its repository with this worktree's git
+  directory, then git worktree remove --force yourself`, and why it says so: the
+  submodule's repository is under the worktree's administrative directory, in
+  `modules/sub`, a commit made in it and not pushed exists there alone, and once
+  that commit is pushed elsewhere `git worktree remove --force` deletes the
+  repository with the worktree while the pushed commit remains at its
+  destination.
   — files: `tests/test_clean_gates.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_submodules' 'test_clean_a_worktree_holding_a_submodule_is_never_offered' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_an_operation_in_progress' 'test_clean_an_operation_in_progress_admin_directory_that_cannot_be_listed' 'test_clean_operation_in_progress_markers' 'test_clean_operation_in_progress_markers_from_real_operations' 'test_clean_a_squash_merge_that_holds_an_autostash' 'test_clean_operation_in_progress_listing_that_fails' 'test_clean_submodules_beside_hidden_local_state' 'test_clean_submodules_beside_hidden_local_state_with_a_modules_entry' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_a_commit_held_only_by_the_worktree' 'test_clean_worktree_only_commits_reads_and_children_that_fail' 'test_clean_worktree_only_commits_decided_by_the_read' 'test_clean_operation_in_progress_comes_after_the_index_gates' 'test_clean_operation_in_progress_never_reaches_a_row_past_the_cap' 'test_clean_operation_in_progress_a_marker_git_leaves_is_deleted_by_hand' 'test_clean_a_repository_nested_in_a_tracked_directory' 'test_clean_a_nested_git_lstat_that_fails'`
 - [x] T064 [P] [US2] [S] Add to `tests/test_clean_gates.py`:
@@ -3505,6 +3592,10 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
   work deadline `deadline-exceeded`; no Git child is added.
   `test_clean_revalidate_refuses_a_repository_nested_after_the_plan` (T045) pins
   it.
+  Step 7's nested `.git` lstats have two tests,
+  `test_clean_revalidate_refuses_a_repository_nested_after_the_plan` and
+  `test_clean_revalidate_a_nested_git_lstat_that_fails_or_is_cut` (T045; the
+  second is the writer's `703b58c`).
   — files: `project`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply:narrowed_ref_patterns' && python3 project clean --help >/dev/null && python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply:as_candidate' 'apply:reserve_budget' 'apply~operation_check(' 'apply~effective_work_tree(' 'apply~worktree_only_check(' 'apply~revalidation_children(plan)' 'apply~R-208'`
 - [x] T085 [US4] [O] In `rescan()` and `decide_stage()` (region `apply`; D7,
@@ -3723,18 +3814,19 @@ lead ruling R-83).
   kill part way through `git worktree remove` leaves it, and `unregister`,
   which first renames its admin directory out of the registry; the first
   target is `unknown` with `removal-ceiling`, and the human result prints
-  `partial_removal_note`, the `--force` form, where its `.git` file and
-  registry entry both remain (`hang`), and `partial_removal_note_prune` where
-  the `.git` file is gone (`unlink-git`) or the entry is (`unregister`, the
-  target also `orphaned-directory`); the Git first on PATH then answers each
-  note as it says: `git worktree remove --force` accepted, or refused with exit
-  128 ("validation failed", "is not a working tree") and the note followed (Q3
-  (a), below); the JSON result keeps its stage, reason, notes and
-  reconciliation). #19's round (i) at `1a4785e` adds a mode (lane 3's W73 M-1;
-  lead ruling R-284, ruled by Brett Heap, "R-284: yes", R-290; writer G's
-  `6a32d10`, merged as `3bc1d68`): `unsearchable`, which first takes the search
-  permission from the worktree's directory, so that the rescan shows the entry
-  and the path present while its lstat of the `.git` fails with `EACCES`, and
+  `partial_removal_note`, since Q4 `partial_removal_note_ceiling`, the `--force`
+  form, where its `.git` file and registry entry both remain (`hang`), and
+  `partial_removal_note_prune` where the `.git` file is gone (`unlink-git`) or
+  the entry is (`unregister`, the target also `orphaned-directory`); the Git
+  first on PATH then answers each note as it says: `git worktree remove --force`
+  accepted, or refused with exit 128 ("validation failed", "is not a working
+  tree") and the note followed (Q3 (a), below); the JSON result keeps its stage,
+  reason, notes and reconciliation). #19's round (i) at `1a4785e` adds a mode
+  (lane 3's W73 M-1; lead ruling R-284, ruled by Brett Heap, "R-284: yes",
+  R-290; writer G's `6a32d10`, merged as `3bc1d68`): `unsearchable`, which first
+  takes the search permission from the worktree's directory, so that the rescan
+  shows the entry and the path present while its lstat of the `.git` fails with
+  `EACCES`, and
   `test_clean_the_ceiling_s_recovery_text_where_the_git_file_cannot_be_read`
   (`not_root`; the first target `unknown` with `removal-ceiling` and
   `partially-removed`, its reconciliation the entry and the path present, and
@@ -3790,8 +3882,20 @@ lead ruling R-83).
   its three modes, each with the sibling unread and readable, expect
   `partial_removal_note_prune` with ADMIN in `unlink-git` and `unregister`
   either way, never a text that names `git worktree prune`, and
-  `partial_removal_note` in `hang`; TEXT has no
+  `partial_removal_note_ceiling` in `hang`; TEXT has no
   `partial_removal_note_prune_unread` key.
+  Brett Heap's Q4 (a) and (b) (ruled on 2026-10-23T13:30:27Z, "yes, recommended
+  for Q1-Q9"; lead R-380; lane 2's wave 22 triage T4; writer's `c6daebc`) name a
+  check in the report row's note, T091, and keep the ceiling's first note as it
+  was, with no check, since its target was clean at its revalidation: the key is
+  `partial_removal_note_ceiling`, `Probable partial removal: inspect, then git
+  worktree remove --force PATH by hand.`, which `partial_removal_text()`
+  returns, in place of `partial_removal_note`.
+  `test_clean_a_removal_past_the_hard_ceiling`,
+  `test_clean_the_ceiling_s_recovery_text_follows_the_git_file_and_the_entry`
+  and
+  `test_clean_the_ceiling_s_second_note_beside_an_unread_sibling_names_no_prune`
+  expect the new key, and nothing else in them changes.
   — files: `tests/test_clean_result.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_result.py 'test_clean_a_removal_past_the_hard_ceiling' 'test_clean_unreadable_path_after_removal' 'test_clean_exception_after_the_apply_phase_begins' 'test_clean_the_ceiling_s_recovery_text_follows_the_git_file_and_the_entry' 'test_clean_the_ceiling_s_recovery_text_where_the_git_file_cannot_be_read' 'test_clean_the_ceiling_s_second_note_beside_an_unread_sibling_names_no_prune'`
 - [x] T090 [P] [US5] [S] Add `test_clean_stage_and_reason_table` to
@@ -3828,7 +3932,8 @@ lead ruling R-83).
   (tracked files deleted by hand in a registered worktree whose `.git` file is
   intact: classified `dirty` with the dirty advice, the line `Probable partial
   removal: inspect, then git worktree remove --force PATH by hand.` beside it,
-  and `notes: ["partially-removed"]` in the JSON row; one deleted tracked file
+  which Q4 (below) words with its check first, and `notes:
+  ["partially-removed"]` in the JSON row; one deleted tracked file
   and one untracked file: no note); and
   `test_clean_project_killed_during_a_deletion` (a worktree of about 8,000
   tracked files built once in `setUpClass`; launcher; `project` and its removal
@@ -3852,34 +3957,35 @@ lead ruling R-83).
   unlock` followed by `worktree remove --force`). It replaces ratified text;
   Brett Heap ruled it on 2026-10-22, "F-2: yes" (lead ruling R-263), and it
   is in its own commit, `64ad453`, which stays.
-  `test_clean_only_tracked_file_deletions` is unchanged.
-  Brett Heap's F-1 folds in here (lane 3's W52 F-1; writer G's `3eb2e9c`,
-  merged as `7164d7f`; lead ruling R-263): the ceiling literal of
+  `test_clean_only_tracked_file_deletions` was unchanged then; Q4 (below)
+  changes its note. Brett Heap's F-1 folds in here (lane 3's W52 F-1; writer G's
+  `3eb2e9c`, merged as `7164d7f`; lead ruling R-263): the ceiling literal of
   `test_clean_the_stop_block` ("partially removed at the ceiling") now carries
-  its `.git` read, through the module's `with_git_file()`, true, and keeps
-  the `--force` note; and
+  its `.git` read, through the module's `with_git_file()`, true, and keeps the
+  `--force` note, `partial_removal_note_ceiling` since Q4; and
   `test_clean_the_ceiling_s_partial_removal_note_follows_the_git_file_and_the_entry`
   (twelve literal targets through `partial_removal_text()` and `print_result()`,
   built with the module's `with_git_file(target, present, read)`:
-  `partial_removal_note`, the `--force` form, only where the entry and the
-  `.git` file are both shown present, and `partial_removal_note_prune`,
-  `Probable partial removal: inspect, then git worktree prune and delete PATH by
-  hand.` until Q3 (a) (below), then "Probable partial removal: inspect, then
-  delete PATH and its administrative directory ADMIN by hand.", where the `.git`
-  file is gone or not reached, the entry is gone or not established, or the path
-  is gone; and, since #19's round (i) at `1a4785e` (lane 3's W73 M-1; lead
-  ruling R-284, ruled by Brett Heap, "R-284: yes", R-290; writer G's `6a32d10`),
-  `partial_removal_note_unread`, `Probable partial removal: inspect PATH by
-  hand; its .git could not be read, so do not run git worktree prune, git
-  worktree remove or git gc until it can.`, wherever the `.git` read was
-  made and gave no value, whatever the record shows of the entry, three of the
-  twelve, and, since lane 3's W90 M-1 (lead ruling R-329, applying R-284 as Brett
-  Heap ruled it; writer's `b96b335`, merged as `7149e08`), wherever the
-  reconciliation record's `path_present` is null, the lstat of the target's own
-  path having failed, so that no `.git` read was made, whatever the record shows
-  of the entry, the other three, the rows "the path lstat failed"; the note prints first and once; a target that is a plain dict, which
-  carries no `.git` read, takes the prune note; a report row's note is
-  `partial_removal_note()`'s and keeps its text).
+  `partial_removal_note`, since Q4 `partial_removal_note_ceiling`, the `--force`
+  form, only where the entry and the `.git` file are both shown present, and
+  `partial_removal_note_prune`, `Probable partial removal: inspect, then git
+  worktree prune and delete PATH by hand.` until Q3 (a) (below), then "Probable
+  partial removal: inspect, then delete PATH and its administrative directory
+  ADMIN by hand.", where the `.git` file is gone or not reached, the entry is
+  gone or not established, or the path is gone; and, since #19's round (i) at
+  `1a4785e` (lane 3's W73 M-1; lead ruling R-284, ruled by Brett Heap, "R-284:
+  yes", R-290; writer G's `6a32d10`), `partial_removal_note_unread`, `Probable
+  partial removal: inspect PATH by hand; its .git could not be read, so do not
+  run git worktree prune, git worktree remove or git gc until it can.`, wherever
+  the `.git` read was made and gave no value, whatever the record shows of the
+  entry, three of the twelve, and, since lane 3's W90 M-1 (lead ruling R-329,
+  applying R-284 as Brett Heap ruled it; writer's `b96b335`, merged as
+  `7149e08`), wherever the reconciliation record's `path_present` is null, the
+  lstat of the target's own path having failed, so that no `.git` read was made,
+  whatever the record shows of the entry, the other three, the rows "the path
+  lstat failed"; the note prints first and once; a target that is a plain dict,
+  which carries no `.git` read, takes the prune note; a report row's note is
+  `partial_removal_note()`'s and kept its text until Q4, below).
   R-324 (ruled by Brett Heap, "R-324: yes", lead R-343; #19's round (n)
   at `2250830`; writer's `e8dda2a`) has the unread note's warning also name
   `git worktree remove` and `git gc`, and this test's literal expects it.
@@ -3926,8 +4032,33 @@ lead ruling R-83).
   is empty, `partial_removal_text()` reads no row of the plan, TEXT and
   `project`'s TEXT have no `partial_removal_note_prune_unread` key, and neither
   the prune note nor the unread note holds `git worktree prune and`.
+  Brett Heap's Q4 (a) and (b) (ruled on 2026-10-23T13:30:27Z, "yes, recommended
+  for Q1-Q9"; lead R-380; lane 2's wave 22 triage T4, sr-removal F3 and F4;
+  writer's `c6daebc`) name the check in a report or preview row's note, and keep
+  the ceiling's first note, `partial_removal_note_ceiling`, as it was:
+  `partial_removal_note` is `Probable partial removal: check that git -C PATH
+  status --short --ignored lists only deleted files, then git worktree remove
+  --force PATH by hand.` and `partial_removal_note_locked` is `Probable partial
+  removal: check that git -C PATH status --short --ignored lists only deleted
+  files, unlock it, then git worktree remove --force PATH by hand.`
+  `test_clean_the_partial_removal_note_names_its_check_first` (two fixtures: (a)
+  4,100 tracked files deleted, then a modified tracked file and an untracked one
+  past the 4,096-record bound, the triage's SC5, and (b) one deleted tracked
+  file beside an ignored work file: each reads `dirty` with `notes:
+  ["partially-removed"]` and prints the note with its check under the dirty
+  advice; the check, as the note words it, lists ` M z-mod.txt` and `??
+  precious` beside the deletions in the first and `!! local.env` in the second,
+  so the person stops before `--force`; and `--all-safe --apply --yes` removes
+  neither worktree) is added, and `test_clean_only_tracked_file_deletions` and
+  `test_clean_a_locked_worktree_s_partial_removal_note_unlocks_it_first` expect
+  the new texts and check that `git -C PATH status --short --ignored` lists only
+  ` D ` lines in their worktrees. Every detection rule stands, and
+  `test_clean_the_stop_block`,
+  `test_clean_the_ceiling_s_partial_removal_note_follows_the_git_file_and_the_entry`
+  and `test_clean_the_ceiling_s_second_note_names_no_prune_beside_any_row` read
+  `partial_removal_note_ceiling` for the ceiling's first note.
   — files: `tests/test_clean_stop.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_stop.py 'test_clean_the_stop_block' 'test_clean_only_tracked_file_deletions' 'test_clean_project_killed_during_a_deletion' 'test_clean_a_locked_worktree_s_partial_removal_note_unlocks_it_first' 'test_clean_the_ceiling_s_partial_removal_note_follows_the_git_file_and_the_entry' 'test_clean_the_ceiling_s_second_note_names_no_prune_beside_any_row'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_stop.py 'test_clean_the_stop_block' 'test_clean_only_tracked_file_deletions' 'test_clean_project_killed_during_a_deletion' 'test_clean_a_locked_worktree_s_partial_removal_note_unlocks_it_first' 'test_clean_the_ceiling_s_partial_removal_note_follows_the_git_file_and_the_entry' 'test_clean_the_ceiling_s_second_note_names_no_prune_beside_any_row' 'test_clean_the_partial_removal_note_names_its_check_first'`
 
 ### Implementation for User Story 5
 
@@ -4052,9 +4183,13 @@ lead ruling R-83).
   `partial_removal_text(target)`, in region `result`: first
   `partial_removal_note_unread` where `git_file_read` (T085) is true and
   `git_file_present` is None, or where the record's `path_present` is null, whatever the record shows of the entry (W73
-  M-1, R-284; W90 M-1, R-329); otherwise `partial_removal_note` where the target's
-  reconciliation shows its registry entry present and its `git_file_present`
-  is true, and `partial_removal_note_prune` for the rest, its ADMIN
+  M-1, R-284; W90 M-1, R-329); otherwise `partial_removal_note_ceiling`
+  (`partial_removal_note` until Brett Heap's Q4, ruled on 2026-10-23T13:30:27Z,
+  "yes, recommended for Q1-Q9"; lead R-380; writer's `c6daebc`: the report row's
+  note names its check first, and the result's keeps `inspect`, its target
+  having been clean at its revalidation) where the target's reconciliation shows
+  its registry entry present and its `git_file_present` is true, and
+  `partial_removal_note_prune` for the rest, its ADMIN
   `partial_removal_admin(target)`, the target's own administrative directory
   `<common_dir>/worktrees/<admin_id>` in the command form, from the plan's
   repository identity and the target's row, and `unknown` for a target that
@@ -4188,6 +4323,18 @@ statuses, the child counts and the order of what was cut.
   every other worktree whose path is missing, one moved or on an unmounted drive
   included, so run git worktree prune --dry-run first and remount or repair any
   it lists that still exists".
+  Brett Heap's Q5 (ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9";
+  lead R-380; lane 2's wave 22 triage T5, sr-removal F6; writer's `c28c9ea`)
+  replaces W59 G-4's clause, `(--force for any that holds a submodule)`: the
+  line is `these deferred rows will not drain while the 16 rows ahead of them
+  are REASONS; follow each group's next step for those worktrees`.
+  `test_clean_twenty_rows_pass_every_gate_before_deferred_target_cap` expects it
+  for REASONS `contains-submodule`, and
+  `test_clean_deferred_rows_that_will_not_drain_name_the_gates_after_the_cap`
+  also pins that the line ends so, and that the three groups it names,
+  `hidden-local-state` (6), `operation-in-progress` (5) and
+  `worktree-only-commits` (5), print above it with their own steps, "keep it on
+  a branch or tag" and "finish or abort it" among them.
   — files: `tests/test_clean_bounds.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_bounds.py 'test_clean_row_cap_and_planning_failures' 'test_clean_row_cap_and_planning_failures_an_unreadable_realpath_in_single_mode' 'test_clean_twenty_rows_pass_every_gate_before_deferred_target_cap' 'test_clean_ignored_file_bound' 'test_clean_deferred_rows_that_will_not_drain_name_the_gates_after_the_cap'`
 - [x] T098 [US6] [O] Add to `tests/test_clean_bounds.py`:
@@ -4355,6 +4502,9 @@ statuses, the child counts and the order of what was cut.
   ruling R-259), the line ends `(--force for any that holds a submodule)`,
   because Git removes a worktree that holds a submodule only with `--force`,
   and "as before" means bar that clause (T097).
+  Brett Heap's Q5 (ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9";
+  lead R-380; writer's `c28c9ea`) replaces that clause: the line ends `follow
+  each group's next step for those worktrees` (T097).
   — files: `project`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'preview:preview_lines' 'preview~deferral_line' 'preview~non_drain_line' 'preview:AFTER_CAP_REASONS' 'contracts~{REASONS}' && python3 project clean --help >/dev/null`
 - [x] T101 [US6] [O] Finish report mode (D14, FR-003 to FR-005; regions `plan`,
@@ -5142,8 +5292,16 @@ verification.
   lead ruling R-259), the check prints `no literal:` for D18's old span and
   exits 1. The new line has its literal in `tests/clean_support.py`, and no
   span of `design.md` equals it, so it needs no entry.
+  Doc round 26, Part C: Brett Heap's Q5 (ruled on 2026-10-23T13:30:27Z, "yes,
+  recommended for Q1-Q9"; lead R-380; writer's `c28c9ea`) changes the two next
+  steps of gate 7, whose old texts main's `design.md` D18 still quotes, `no
+  commit was made on this branch here since it was created; review, then git
+  worktree remove yourself` and `the branch's reflog is missing, expired or
+  undecidable; review, then git worktree remove yourself`, so that the verify's
+  tuple `X` gains both, as it gained the old drain line in doc round 18; they
+  leave the check once #19's round (q) carries the new texts into D18.
   — files: `tests/test_clean_scrub.py`, `tests/test_clean_escaping.py`, `tests/test_clean_parsers.py`, `tests/test_clean_timing.py`
-  — verify: `python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table' && python3 -c "import glob,re,sys;d=open('openspec/changes/add-project-clean-all-safe/design.md').read();x=lambda a,b:d.split('### '+a+'.')[1].split('### '+b+'.')[0];s=x('D14','D15')+x('D18','D19');B,Q=chr(96),chr(34);S=[' '.join(v.split()) for v in re.findall(B+'([^'+B+']+)'+B,s)+re.findall(Q+'([^'+Q+']+)'+Q,s)];R={l[17:].strip() for f in glob.glob('openspec/changes/add-project-clean-all-safe/specs/*/spec.md') for l in open(f) if l.startswith('### Requirement: ')};X=('these deferred rows will not drain while the 16 rows ahead of them are contains-submodule; review those worktrees, then remove them yourself','Not protected: ignored files created or index flags set after the last check, and any change after Git'+chr(39)+'s own check.');S=[v for v in S if ' ' in v and not v.startswith(('Cleanup plan for','selected:','rev-parse ')) and v not in R and v not in X];t=open('tests/clean_support.py').read();W=r'\b(?:'+chr(124).join(('ROOT','PATH','BRANCH','NAME','SOURCE','NEXT STEP','SAMPLE','CLASS','REASON','REASONS','CODES','B1','B2','P1','P2','N','K','M'))+r')\b';M=[v for v in S if not all(f.strip() in t for f in re.split(W,v) if len(f.strip())>2)];[print('no literal:',v) for v in M];print(len(S),'D14 and D18 spans');sys.exit(1 if M or not S else 0)" && python3 -c "import ast,glob,os,sys;F=sorted(glob.glob('tests/test_clean_*.py'))+['tests/test_status_doctor_update.py'];W={f:list(ast.walk(ast.parse(open(f).read()))) for f in F if os.path.isfile(f)};I=lambda w:[n for n in w if isinstance(n,ast.Import) and any('clean_support' in a.name for a in n.names)]+[n for n in w if isinstance(n,ast.ImportFrom) and ('clean_support' in (n.module or '') or any(a.name=='clean_support' for a in n.names))];ok=lambda n:all(a.name=='clean_support' for a in n.names) if isinstance(n,ast.Import) else (n.module=='clean_support' and n.level==0);sp=lambda w:[n for n in w if isinstance(n,ast.Attribute) and n.attr in ('insert','append','extend') and isinstance(n.value,ast.Attribute) and n.value.attr=='path' and isinstance(n.value.value,ast.Name) and n.value.value.id=='sys']+[n for n in w if isinstance(n,(ast.Subscript,ast.Attribute)) and isinstance(n.ctx,ast.Store) and ast.unparse(n).startswith('sys.path')];X=[f for f in F if f not in W];B=[f for f in W if not I(W[f]) or not all(ok(n) for n in I(W[f])) or sp(W[f])];T=[f for f in ['tests/test_clean_timing.py'] if any(isinstance(n,ast.FunctionDef) and n.name=='timing_repo' for n in W.get(f,[]))];print('missing:',X,'off the one import idiom:',B,'timing_repo still defined in:',T);sys.exit(1 if X or B or T else 0)" && python3 -m unittest discover -s tests -p 'test_clean_timing.py' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' && python3 -m unittest discover -s tests -p 'test_clean_scrub.py' && python3 -m unittest discover -s tests -p 'test_clean_parsers.py' && python3 -m unittest discover -s tests -p 'test_clean_escaping.py' && python3 -m unittest discover -s tests -p 'test_clean_runner.py' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' && python3 -m unittest discover -s tests -p 'test_clean_guard.py' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' && python3 -m unittest discover -s tests -p 'test_clean_apply.py' && python3 -m unittest discover -s tests -p 'test_clean_reflog.py' && python3 -m unittest discover -s tests -p 'test_clean_gates.py' && python3 -m unittest discover -s tests -p 'test_clean_single.py' && python3 -m unittest discover -s tests -p 'test_clean_push.py' && python3 -m unittest discover -s tests -p 'test_clean_revalidation.py' && python3 -m unittest discover -s tests -p 'test_clean_result.py' && python3 -m unittest discover -s tests -p 'test_clean_stop.py' && python3 -m unittest discover -s tests -p 'test_clean_bounds.py' && python3 -m unittest discover -s tests -p 'test_clean_resolution.py' && python3 -m unittest discover -s tests -p 'test_clean_paths.py' && python3 -m unittest discover -s tests -p 'test_status_doctor_update.py'`
+  — verify: `python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table' && python3 -c "import glob,re,sys;d=open('openspec/changes/add-project-clean-all-safe/design.md').read();x=lambda a,b:d.split('### '+a+'.')[1].split('### '+b+'.')[0];s=x('D14','D15')+x('D18','D19');B,Q=chr(96),chr(34);S=[' '.join(v.split()) for v in re.findall(B+'([^'+B+']+)'+B,s)+re.findall(Q+'([^'+Q+']+)'+Q,s)];R={l[17:].strip() for f in glob.glob('openspec/changes/add-project-clean-all-safe/specs/*/spec.md') for l in open(f) if l.startswith('### Requirement: ')};X=('these deferred rows will not drain while the 16 rows ahead of them are contains-submodule; review those worktrees, then remove them yourself','no commit was made on this branch here since it was created; review, then git worktree remove yourself','the branch'+chr(39)+'s reflog is missing, expired or undecidable; review, then git worktree remove yourself','Not protected: ignored files created or index flags set after the last check, and any change after Git'+chr(39)+'s own check.');S=[v for v in S if ' ' in v and not v.startswith(('Cleanup plan for','selected:','rev-parse ')) and v not in R and v not in X];t=open('tests/clean_support.py').read();W=r'\b(?:'+chr(124).join(('ROOT','PATH','BRANCH','NAME','SOURCE','NEXT STEP','SAMPLE','CLASS','REASON','REASONS','CODES','B1','B2','P1','P2','N','K','M'))+r')\b';M=[v for v in S if not all(f.strip() in t for f in re.split(W,v) if len(f.strip())>2)];[print('no literal:',v) for v in M];print(len(S),'D14 and D18 spans');sys.exit(1 if M or not S else 0)" && python3 -c "import ast,glob,os,sys;F=sorted(glob.glob('tests/test_clean_*.py'))+['tests/test_status_doctor_update.py'];W={f:list(ast.walk(ast.parse(open(f).read()))) for f in F if os.path.isfile(f)};I=lambda w:[n for n in w if isinstance(n,ast.Import) and any('clean_support' in a.name for a in n.names)]+[n for n in w if isinstance(n,ast.ImportFrom) and ('clean_support' in (n.module or '') or any(a.name=='clean_support' for a in n.names))];ok=lambda n:all(a.name=='clean_support' for a in n.names) if isinstance(n,ast.Import) else (n.module=='clean_support' and n.level==0);sp=lambda w:[n for n in w if isinstance(n,ast.Attribute) and n.attr in ('insert','append','extend') and isinstance(n.value,ast.Attribute) and n.value.attr=='path' and isinstance(n.value.value,ast.Name) and n.value.value.id=='sys']+[n for n in w if isinstance(n,(ast.Subscript,ast.Attribute)) and isinstance(n.ctx,ast.Store) and ast.unparse(n).startswith('sys.path')];X=[f for f in F if f not in W];B=[f for f in W if not I(W[f]) or not all(ok(n) for n in I(W[f])) or sp(W[f])];T=[f for f in ['tests/test_clean_timing.py'] if any(isinstance(n,ast.FunctionDef) and n.name=='timing_repo' for n in W.get(f,[]))];print('missing:',X,'off the one import idiom:',B,'timing_repo still defined in:',T);sys.exit(1 if X or B or T else 0)" && python3 -m unittest discover -s tests -p 'test_clean_timing.py' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' && python3 -m unittest discover -s tests -p 'test_clean_scrub.py' && python3 -m unittest discover -s tests -p 'test_clean_parsers.py' && python3 -m unittest discover -s tests -p 'test_clean_escaping.py' && python3 -m unittest discover -s tests -p 'test_clean_runner.py' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' && python3 -m unittest discover -s tests -p 'test_clean_guard.py' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' && python3 -m unittest discover -s tests -p 'test_clean_apply.py' && python3 -m unittest discover -s tests -p 'test_clean_reflog.py' && python3 -m unittest discover -s tests -p 'test_clean_gates.py' && python3 -m unittest discover -s tests -p 'test_clean_single.py' && python3 -m unittest discover -s tests -p 'test_clean_push.py' && python3 -m unittest discover -s tests -p 'test_clean_revalidation.py' && python3 -m unittest discover -s tests -p 'test_clean_result.py' && python3 -m unittest discover -s tests -p 'test_clean_stop.py' && python3 -m unittest discover -s tests -p 'test_clean_bounds.py' && python3 -m unittest discover -s tests -p 'test_clean_resolution.py' && python3 -m unittest discover -s tests -p 'test_clean_paths.py' && python3 -m unittest discover -s tests -p 'test_status_doctor_update.py'`
 - [x] T128 [S] Run the whole suite in this worktree: `python3 -m unittest discover
   -s tests -v` passes; record the test count and the elapsed time, under 8
   minutes in an idle `py-bench` (R11); run it under Python 3.10 too where an

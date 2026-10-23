@@ -208,16 +208,21 @@ unparseable output` (lead rulings R-61 and R-64 (a); built by lane G's
 follow-up). Since a status probe whose standard error holds anything but
 Git's advice lines establishes nothing (contract, "Git children"), and Git
 warns `refname 'HEAD' is ambiguous.` in every worktree of such a repository,
-every row there is `inspection-error` too, failing closed (lead ruling
-R-116, which narrows R-61 (b)'s effect). Where row 6 gives no listing, because
-it or a probe before it failed, each present row on a branch carries that
-probe's row errors and is `inspection-error`, its upstream fields null, where
-every row once printed as `unpublished` (the plan review's F3; lead ruling
-R-101 (c)). Row 7 is read the same way (T19; lane 3's W121 MEDIUM-2; lead R-374
-and R-385, writer's `e702a65`): where row 6 gave its listing, a merge target is
-named and row 7 failed, no row's `merged_into_target` is established, so each
-present row on a branch carries row 7's errors and is `inspection-error`, never
-`review-required`; a detached row needs no merged set.
+every row there is `inspection-error` too, failing closed (lead ruling R-116,
+which narrows R-61 (b)'s effect), a rule that counts a blank line as such a
+line and the empty text after the last line end as none, and that #19's
+`project-command` delta states at round (q), `818311a`, with this consequence
+(Brett Heap's Q8, ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9";
+lead R-380; lane 2's wave 22 triage T9; writer's `70345ee`). Where row 6 gives
+no listing, because it or a probe before it failed, each present row on a
+branch carries that probe's row errors and is `inspection-error`, its upstream
+fields null, where every row once printed as `unpublished` (the plan review's
+F3; lead ruling R-101 (c)). Row 7 is read the same way (T19; lane 3's W121
+MEDIUM-2; lead R-374 and R-385, writer's `e702a65`): where row 6 gave its
+listing, a merge target is named and row 7 failed, no row's
+`merged_into_target` is established, so each present row on a branch carries
+row 7's errors and is `inspection-error`, never `review-required`; a detached
+row needs no merged set.
 
 A row whose `present` is null is unread: `path_unread(row)` is `row["present"]
 is None`, and `unread_paths(plan)` is the set of the raw paths of such rows of
@@ -296,8 +301,18 @@ The ladder is a pure function of the row (OQ-28). The partial-removal note is
 added after it by a separate function (D4): a present, registration-verified,
 `dirty` linked worktree whose status records read are all tracked-file
 deletions (`" D"`), judged on the records read when the stream stopped at its
-bound. It changes no class, rung or gate. The recommendation is the ladder's
-too, but in three cases `row_evidence()` replaces it after the ladder has run
+bound. It changes no class, rung or gate. Its text names its check first,
+`Probable partial removal: check that git -C PATH status --short --ignored
+lists only deleted files, then git worktree remove --force PATH by hand.`, and
+for a locked row `Probable partial removal: check that git -C PATH status
+--short --ignored lists only deleted files, unlock it, then git worktree remove
+--force PATH by hand.`, because a status stream stopped at its record bound
+leaves untracked and modified files unread, and an ignored record leaves the
+flag alone, so that `--force` could delete either (Brett Heap's Q4 (a) and (b),
+ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; lane
+2's wave 22 triage T4, sr-removal F3 and F4; writer's `c6daebc`); no detection
+rule changes. The recommendation is the ladder's too, but in three cases
+`row_evidence()` replaces it after the ladder has run
 (lane 3's W52 F-6 and F-10; writer E's `02aa71d`, merged as `d764c26`; lead
 ruling R-259): the main worktree's row, where the ladder says
 `merged-removable` or `merged-current`, takes `The main worktree is never
@@ -360,7 +375,7 @@ as `3bc1d68`):
 | --- | --- | --- |
 | 1 | `main-worktree` | the row is the main worktree |
 | 2 | `unsupported-path-bytes` | the path is not valid UTF-8 |
-| 3 | `registration-mismatch` | the two-way registration was read and disagrees (`registered is False`), its `commondir` and, where row 4c is not false, its effective work tree included (LQ-11); a row whose registration was never read, a `present: false` one among them, passes and is excluded at gate 5 by its class (lead ruling R-53 P-16); or the row's path is, or holds, the common directory, the main worktree or another row's path (`enclosing_rows()`; Brett Heap's Q2 (1), ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; writer's `5eeaedd`), the row then unprobed and `inspection-error`, as a shared path is |
+| 3 | `registration-mismatch` | the two-way registration was read and disagrees (`registered is False`), its `commondir` and, where row 4c is not false, its effective work tree included (LQ-11); a row whose registration was never read, a `present: false` one among them, passes and is excluded at gate 5 by its class (lead ruling R-53 P-16); or the row's path is, or holds, the common directory, the main worktree or another row's path (`enclosing_rows()`; Brett Heap's Q2 (1), ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; writer's `5eeaedd`), the row then unprobed and `inspection-error`, as a shared path is; or the row's registered path is a symbolic link (`_read_row()`, from its `lstat`; Brett Heap's Q9 (b), ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; lane 2's wave 22 triage T12, sr-removal F7; writer's `338edb0`), which reads its registration as disagreeing, the row again unprobed and `inspection-error` |
 | 4 | `locked-worktree` | `locked` is true |
 | 5 | the classification | the class is not `merged-removable` |
 | 6 | `not-requested` | single mode, an eligible row other than P |
@@ -617,7 +632,10 @@ search; #19's round (i) at `1a4785e`; lane 3's W73 M-1; lead ruling R-284,
 which Brett Heap ruled "R-284: yes", R-290; writer G's `6a32d10`, merged as
 `3bc1d68`; for the null path, lane 3's W90 M-1, lead ruling R-329, which
 applies Brett Heap's R-284 as ruled; writer's `b96b335`, merged as `7149e08`).
-Otherwise D18's `git worktree remove --force` form where
+Otherwise D18's `git worktree remove --force` form,
+`partial_removal_note_ceiling`, which has no check first, since the target was
+clean at its revalidation (Brett Heap's Q4, ruled on 2026-10-23T13:30:27Z,
+"yes, recommended for Q1-Q9"; lead R-380; writer's `c6daebc`), where
 `registry_entry_present` and `git_file_present` are both true, and `Probable
 partial removal: inspect, then delete PATH and its administrative directory
 ADMIN by hand.` (`partial_removal_note_prune`) for the rest, since Git refuses
@@ -642,16 +660,17 @@ worktree prune, git worktree remove or git gc until it can.`, which
 `partial_removal_text(target, plan_unread)` chose where
 `bool(unread_paths(plan))`, which `print_result()` passed, was true (`present`
 null, a deadline-stopped row included); that key and its selection are gone
-from `project`, and R-365's record stands as superseded. `partial_removal_note`
-and `partial_removal_note_unread` never changed, since `git worktree remove
---force PATH` acts on PATH alone and the second already advises no prune (lead
-R-365, ruled by Brett Heap on 2026-10-23, "Yes, warn (Recommended)"; writer's
-`7a20789`, merged as `d8724e2`). A report row's note is the baseline's and
-keeps its text, its `.git` file and entry being present (lane 3's W52 F-1;
-Brett Heap's ruling "F-1: prune-then-delete" of 2026-10-22, lead ruling R-263,
-which amends ratified text, the `project-clean` delta's `spec.md:253-256` and
-`:922-926` at `0050f3e`; #19 at `b3228bb`; writer G's `3eb2e9c`, merged as
-`7164d7f`).
+from `project`, and R-365's record stands as superseded.
+`partial_removal_note_ceiling`, which has the text that `partial_removal_note`
+had until Q4, and `partial_removal_note_unread` never changed, since `git
+worktree remove --force PATH` acts on PATH alone and the second already advises
+no prune (lead R-365, ruled by Brett Heap on 2026-10-23, "Yes, warn
+(Recommended)"; writer's `7a20789`, merged as `d8724e2`). A report row's note
+is `partial_removal_note`, whose check comes first (D4, above), its `.git` file
+and entry being present (lane 3's W52 F-1; Brett Heap's ruling "F-1:
+prune-then-delete" of 2026-10-22, lead ruling R-263, which amends ratified
+text, the `project-clean` delta's `spec.md:253-256` and `:922-926` at
+`0050f3e`; #19 at `b3228bb`; writer G's `3eb2e9c`, merged as `7164d7f`).
 
 ### Revalidation step and `probes_performed` (D7; FR-046, FR-047)
 

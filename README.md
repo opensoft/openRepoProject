@@ -207,14 +207,20 @@ before:
    `unstarted-branch`. A branch just created at the merge target counts as
    merged, and as published once it is pushed, so such a worktree used to look
    removable. It is now refused, exit 2, with the remedy `no commit was made on
-   this branch here since it was created; review, then git worktree remove
-   yourself (--force if it holds a submodule)`.
+   this branch here since it was created; its later gates did not run, so check
+   git log -g HEAD, git ls-files -v and git status there, then git worktree
+   remove yourself (--force if it holds a submodule, once its commits are
+   kept)`, which names the checks that the gates after gate 7, which did not
+   run for it, would have made: a commit that only the HEAD reflog holds, an
+   edit flagged assume-unchanged, and changes the status shows.
 4. `--worktree P` refuses a merged worktree whose branch reflog keeps no
    decisive entry as `reflog-unavailable`: the reflog is missing, expired (no
    activity for `gc.reflogExpire`, 90 days by default) or undecidable. The
-   remedy is `the branch's reflog is missing, expired or undecidable; review,
-   then git worktree remove yourself (--force if it holds a submodule)`, and a
-   batch withholds such a worktree too.
+   remedy is `the branch's reflog is missing, expired or undecidable; its later
+   gates did not run, so check git log -g HEAD, git ls-files -v and git status
+   there, then git worktree remove yourself (--force if it holds a submodule,
+   once its commits are kept)`, the same checks, and a batch withholds such a
+   worktree too.
 5. `--worktree P` removes a merged worktree whose upstream was deleted, and
    keeps its branch. A branch merged and then deleted on the remote used to be
    refused as `unpublished`; it is now `merged-removable` when it passes the
@@ -309,12 +315,13 @@ before the removal by hand; that holds for every registration mismatch, a
 linked worktree that `core.worktree` or `core.bare` redirects, one whose
 registration is broken, a path two entries share, or one whose path is, or
 holds, the repository's common directory, its main worktree or another
-worktree's path; both of those remedies end `; git worktree prune also deletes
-the entry, and so the HEAD reflog, of every other worktree whose path is
-missing, one moved or on an unmounted drive included, so run git worktree prune
---dry-run first and remount or repair any it lists that still exists`, because
-`git worktree prune` acts on the whole repository and deletes the registration,
-with the HEAD reflog, of every other worktree whose path is missing, one moved
+worktree's path, or one whose registered path is a symbolic link; both of those
+remedies end `; git worktree prune also deletes the entry, and so the HEAD
+reflog, of every other worktree whose path is missing, one moved or on an
+unmounted drive included, so run git worktree prune --dry-run first and remount
+or repair any it lists that still exists`, because `git worktree prune` acts on
+the whole repository and deletes the registration, with the HEAD reflog, of
+every other worktree whose path is missing, one moved
 or on a drive that is not mounted; for `inspect-cap`, `N rows exceed the row
 cap of M; remove worktrees explicitly, or prune stale entries by hand; if a
 worktree's path cannot be read, do not run git worktree prune, git worktree
@@ -403,10 +410,10 @@ carries its next step:
 | `ignored-local-files` | move or delete the ignored files by hand |
 | any other class, such as `pushed-unmerged` | the report's recommendation for that class |
 | `not-requested` | name it with --worktree to plan its removal |
-| `unstarted-branch` | no commit was made on this branch here since it was created; review, then git worktree remove yourself (--force if it holds a submodule) |
-| `reflog-unavailable` | the branch's reflog is missing, expired or undecidable; review, then git worktree remove yourself (--force if it holds a submodule) |
+| `unstarted-branch` | no commit was made on this branch here since it was created; its later gates did not run, so check git log -g HEAD, git ls-files -v and git status there, then git worktree remove yourself (--force if it holds a submodule, once its commits are kept) |
+| `reflog-unavailable` | the branch's reflog is missing, expired or undecidable; its later gates did not run, so check git log -g HEAD, git ls-files -v and git status there, then git worktree remove yourself (--force if it holds a submodule, once its commits are kept) |
 | `deferred-target-cap` | this run removes up to 16; run again: project clean ROOT --all-safe --apply |
-| `contains-submodule` | review, then git worktree remove --force yourself |
+| `contains-submodule` | push or otherwise keep each submodule's commits first, since --force deletes its repository with this worktree's git directory, then git worktree remove --force yourself |
 | `hidden-local-state` | review, then remove the worktree yourself |
 | `operation-in-progress` | a git am, merge, notes merge, cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish or abort it (a squash merge that holds an autostash ends with git commit, --allow-empty where nothing is staged, or with git merge --quit, which keeps the edit in the stash list), or, where --abort fails for a marker with nothing in progress, its --quit, or, where Git leaves such a marker in place, delete it by hand from that worktree's git directory, then run again |
 | `worktree-only-commits` | a commit is, or may be, held only by this worktree's HEAD reflog or refs/worktree; keep it on a branch or tag, or review, then git worktree remove yourself |
@@ -447,17 +454,19 @@ or repair any it lists that still exists.`.
 The first four reasons are facts about the row. `registration-mismatch` covers
 a worktree whose registration disagrees in either direction, a path that two
 entries share, a linked worktree that `core.worktree` or `core.bare` redirects,
-and one whose path is, or holds, the repository's common directory, its main
+one whose path is, or holds, the repository's common directory, its main
 worktree or another worktree's path, which a worktree does when the main
-worktree sits in one of its tracked directories; such a worktree is
-`inspection-error`, the plan is incomplete and nothing is removed. The next
-four are its classification, one gate, and only a `merged-removable` row passes
-it. `not-requested` applies to `--worktree P` only. `unstarted-branch` and
-`reflog-unavailable` come from the branch's reflog, read from the filesystem.
-A read that is not finished leaves the worktree listed as `reflog-unavailable`
-and the plan incomplete: with `inspection-incomplete` where the read's own
-time budget ran out, and with `deadline-exceeded`, which names no repair,
-where the run's deadline did.
+worktree sits in one of its tracked directories, and one whose registered path
+is a symbolic link, which a worktree moved by hand and replaced by a link
+leaves, since Git then empties the link's target and still deletes the
+registration; such a worktree is `inspection-error`, the plan is incomplete and
+nothing is removed. The next four are its classification, one gate, and only a
+`merged-removable` row passes it. `not-requested` applies to `--worktree P`
+only. `unstarted-branch` and `reflog-unavailable` come from the branch's
+reflog, read from the filesystem. A read that is not finished leaves the
+worktree listed as `reflog-unavailable` and the plan incomplete: with
+`inspection-incomplete` where the read's own time budget ran out, and with
+`deadline-exceeded`, which names no repair, where the run's deadline did.
 `contains-submodule` and `hidden-local-state` read the worktree's own index (a
 gitlink; an assume-unchanged or skip-worktree flag) and its administrative
 directory (a `modules` entry), and `contains-submodule` also looks, with one
@@ -494,9 +503,10 @@ until none are left; the preview digest covers only the selected worktrees, so a
 deferred one's change leaves a preview valid. When every one of the 16 worktrees
 ahead of the deferred ones is excluded by a gate after `deferred-target-cap`,
 the preview says `these deferred rows will not drain while the 16 rows ahead of
-them are REASONS; review those worktrees, then remove them yourself (--force
-for any that holds a submodule)`, REASONS naming their reasons, each once, in
-gate order, such as `contains-submodule, worktree-only-commits`.
+them are REASONS; follow each group's next step for those worktrees`, REASONS
+naming their reasons, each once, in gate order, such as `contains-submodule,
+worktree-only-commits`; each of those 16 rows is in a group above with its own
+next step, which a plain removal would have skipped.
 
 ### What is guaranteed
 
@@ -588,17 +598,25 @@ worktree remove or git gc until it can.`, because `git worktree prune` deletes
 the registration of a live worktree whose `.git` Git cannot stat. The rescan
 reads the `.git` file with one `lstat`, never a Git child, and only where it
 shows the entry and the path both present (a path it could not look at is a
-`.git` it could not read); the JSON result is the same in every case. The
-`--force` note is also the one under the `dirty` advice of a worktree whose
-tracked files are all deleted, which is how an interrupted removal looks and
-why the note says "probable". For a locked worktree, which `git worktree
-remove --force` refuses, the row's note in the report and the preview reads
-`Probable partial removal: inspect, unlock it, then git worktree remove
---force PATH by hand.` The forced removal, or the deletion by hand, is the
-person's own step, after looking, never `clean`'s. A target with the note
-`orphaned-directory` has lost its registry entry but its directory is still
-there. When Git had already deleted the worktree's `.git` file, the row is
-`registration-mismatch`: use `git worktree repair`, or `git worktree prune`
+`.git` it could not read); the JSON result is the same in every case. Under the
+`dirty` advice of a worktree whose tracked files are all deleted, which is how
+an interrupted removal looks and why the note says "probable", the report and
+the preview print the note with its check first, `Probable partial removal:
+check that git -C PATH status --short --ignored lists only deleted files, then
+git worktree remove --force PATH by hand.`, since the note is judged on the
+status records read, which stop at 4,096 and leave an ignored record's work
+alone, so that `--force` could delete an untracked or modified file past that
+bound, or an ignored work file; the check shows them. The result's own note,
+where the rescan shows the entry and the `.git` file both present, keeps
+`inspect` with no check, since its target was clean at its revalidation. For a
+locked worktree, which `git worktree remove --force` refuses, the row's note in
+the report and the preview reads `Probable partial removal: check that git -C
+PATH status --short --ignored lists only deleted files, unlock it, then git
+worktree remove --force PATH by hand.` The forced removal, or the deletion by
+hand, is the person's own step, after looking, never `clean`'s. A target with
+the note `orphaned-directory` has lost its registry entry but its directory is
+still there. When Git had already deleted the worktree's `.git` file, the row
+is `registration-mismatch`: use `git worktree repair`, or `git worktree prune`
 after its `--dry-run`, or remove the row by hand.
 
 ### Close sessions first
