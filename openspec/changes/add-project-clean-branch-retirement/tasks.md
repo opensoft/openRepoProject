@@ -1,0 +1,522 @@
+Lane: openRepoProject-5
+
+# Tasks
+
+This is the governance and handoff record only. The implementation tasks live
+in the one Speckit feature named under "Speckit Handoff"; OpenSpec does not
+duplicate them.
+
+## 1. Governance record
+
+- [x] 1.1 Proposal written: `proposal.md` adopts the packet's paired-retirement
+  contract (`BA:1339-1345`) under the lane's rulings L-1 to L-9 and A-1 to A-7,
+  on change 1's text at `961c405` and PR #19's at `c462d87` (`d66d02c`),
+  `design.md` D7 also stating its fit at PR #19's `6f2cb54`, `a664799`,
+  `9267303` and `f0bf538` (rounds A9 to A12, rulings A-37 to A-42) and on its
+  measured basis at `662be89`, unchanged at `88d0d36`, at `818311a`, at
+  `4512441` and at its current head `54e869b` (rounds A16 to A27, rulings A-47,
+  A-57, A-62, A-64, A-67, A-71, A-75, A-78, A-84, A-86, A-106, A-110 and A-119),
+  the joint fit with the
+  cache change also at that change's own 3.7 s
+  (round A13, ruling A-44),
+  `design.md` D8 giving a holder that is the main worktree its own next step
+  (round A14, ruling A-45), its restatements of PR #19's moving facts worded
+  relatively (round A15, ruling A-50), and every `Kept` line whose next step is
+  the retry for a branch the stage did not re-prove naming the reflog inspection
+  (round A16, rulings A-53 and A-55), after the line's own step where it has one
+  (round A17, ruling A-60), the lines of the plan's keeps saying that only this
+  run's plan proved the branch's reflog (round A18, ruling A-63), and so every
+  other such line but `branch-changed`'s (round A19, ruling A-68), each such
+  line printed as a literal in at least one scenario (round A21, ruling A-80),
+  and a worktree that holds a target's branch named for removal only where the
+  plan read it and would remove it, its own work and a detach being named
+  otherwise, R-324's no-prune clause first for one whose path could not be
+  read (round A24, rulings A-98 and A-103), and a flagged `--apply` without
+  `--yes` on a standard input that is not a terminal refusing as the removal
+  apply it is, with `confirmation-required` (round A26, ruling A-109);
+  verified by its Capabilities section accounting for every canonical
+  requirement of `project-clean` and `project-clean-review-safety` and every
+  requirement change 1 adds to them.
+- [x] 1.2 Alignment resolved: the stack-architect and qa-lead findings on
+  `e7f3e65` (SA-1 to SA-5, QA-1 to QA-4) are applied, MISMATCH and DRIFT at
+  once and qa-lead's GAP (QA-3) by its own scenario text, and the review's
+  GAPs for the lane are settled by the lane's rulings of 2026-10-18 (A-5
+  amended, L-10, A-9 to A-13), the two that need Brett Heap's word (A-9, A-10)
+  put to him as Open Questions; applied by `0f89873`, `8227772`, `7689028` and
+  the commit that ticks this task; verified by the table "Questions Resolved by
+  the Alignment Review" in `proposal.md`, one row per finding id with its
+  severity, the ruling and the section edited, and by the lane's alignment
+  comment on PR #26.
+- [x] 1.3 Council resolved: each product-advocate, systems-architect and
+  adversary-engineer concern on the aligned proposal at `874d1ad` (P-1 to P-4,
+  S-1 to S-4, AE-1 to AE-4) is VALID (applied to `proposal.md` and, where its
+  contract requires, the deltas and `design.md`), NOTED (S-4, recorded in
+  `clarifications.md`, which `design.md` D2 answers) or DISMISSED (none), under
+  the lane lead's verdicts of 2026-10-19 (A-16 to A-20, A-1, A-4 and A-5 as
+  amended, P-2, P-4), with lane openRepoProject-3's packet-fidelity findings on
+  `874d1ad` (H1, M1 to M6, L1 to L12) and council B's three refinements
+  (recorded in the lane's handoff at the register's `c3a9b3767`, line 50)
+  applied in the same round; applied by `79a71ec`, `909425b`, `f93073b`,
+  `6d237fe`, `36f3eef`, `15cf7ed`, `e012757`, `a5a95eb`, which ticks this
+  task, `785a45e` (A-16 as amended, recorded at
+  `lanes/log/openRepoProject-5.md:33`, and `branch_plan` on each selected
+  entry), `16051d1`, the project-command block lane openRepoProject-2 agreed
+  (ruling A-20), and `ca96701`, which records that agreement and lane 2's note
+  for feature 006; verified by "Council Verdicts" in `proposal.md`, one row per
+  council concern id and per lane 3 id, by `clarifications.md`, and by the
+  council comment on the pull request. Round A3, on `ca96701`, applied lane
+  openRepoProject-3's re-read of that head (ruling A-21, its M1, M4 and L4 of
+  review 26 among it), Codex's three findings on `785a45e` (A-22), B2's third
+  escalation (A-23) and the lead's note on #29's committed block, by
+  `3150af3` (the spec deltas), `a54c56e` (the design), `3e875e2` (the
+  proposal's body) and the commit that records the round's table and updates
+  this task; verified by "Re-read and Codex Findings (round A3)" in
+  `proposal.md`, one row per item. Round A4, on `abad010`, applied Codex's
+  finding on that head (ruling A-24: the reflog proved again before the branch
+  child), by `392cb30` (the spec deltas), `2351183` (the design), `a50468a`
+  (the proposal's body) and the commit that records the round's table and
+  updates this task; verified by "Re-read and Codex Findings (round A4)" in
+  `proposal.md`. Round A5, on `9ff8202`, applied lane openRepoProject-3's
+  delta read of that head (ruling A-26), the cache change's worst shapes at
+  `e1049b2` (A-25) and Codex's two findings on `9ff8202` (A-27, and A-28 as
+  amended), by `6d6d9f2` (the spec deltas), `e3b8819` (the design), `a6f9fc4`
+  (the proposal's body) and the commit that records the round's table and
+  updates this task; verified by "Re-read and Codex Findings (round A5)" in
+  `proposal.md`. Round A6, on `9b67e8c`, applied lane openRepoProject-3's
+  folded read of that head (ruling A-29: four LOW wording items, L1 to L4, and
+  one cross-PR note, N1, which needs no edit here), by `fab35e9` (the design),
+  `1651d53` (the proposal's body) and the commit that records the round's
+  table and updates this task; verified by "Re-read and Codex Findings (round
+  A6)" in `proposal.md`. Round A7, on `01b5dd8`, applied the lane's review
+  wave of 2026-10-21, its readers RA, RD and RE (rulings A-30 to A-34), by
+  `ad1faad` (the spec delta), `17307c5` (the design), `aa61817` (the
+  proposal's body) and the commit that records the round's table and updates
+  this task; verified by "Re-read and Codex Findings (round A7)" in
+  `proposal.md`. Round A8, on `48e8119`, applied lane openRepoProject-3's
+  confirm read of round A7, its F1 to F10 (ruling A-35), by `50f569a` (the
+  spec delta), `65149e3` (the design), `8c4b801` (the proposal's body) and
+  the commit that records the round's table and updates this task; verified
+  by "Re-read and Codex Findings (round A8)" in `proposal.md`. Round A9, on
+  `55375ce`, applied the lane's reader RF's final composition read, its M2,
+  L1, L2 and L3 and this change's share of its M1 (ruling A-37), and lane
+  openRepoProject-3's confirm read of round A8, its LOW-2 (ruling A-36), by
+  `e054a9f` (the spec delta), `0e0a674` (the design) and the commit that
+  edits the proposal's body, records the round's table and updates this
+  task; verified by "Re-read and Codex Findings (round A9)" in `proposal.md`.
+  Round A10, on `d5896fc`, applied lane openRepoProject-3's confirm read of
+  round A9, its LOW-2 to LOW-5, the follow-on at PR #19's `a664799`, the
+  re-read's alignment with PR #19's revalidation rule there and the
+  corrected main of the citation key (ruling A-38, with the lead's
+  refinement of it), by `ac8bb0d` (the spec delta), `8a6e94f` (the design)
+  and the commit that edits the proposal's body, records the round's table
+  and updates this task; verified by "Re-read and Codex Findings (round
+  A10)" in `proposal.md`. Round A11, on `4635bda`, applied lane
+  openRepoProject-3's confirm read of round A10, its MEDIUM-1 and LOW-1 to
+  LOW-5, with PR #19's rounds (c) and (d) at `2e819ad` and `9267303` (ruling
+  A-39, as A-40 amends it), by `67a8130` and `f0b6808` (the spec delta),
+  `69c85c7` and `298e202` (the design) and the commit that edits the
+  proposal's body, records the round's table and updates this task;
+  verified by "Re-read and Codex Findings (round A11)" in `proposal.md`.
+  Round A12, on `7eb0615`, applied lane openRepoProject-3's confirm read of
+  round A11, its MEDIUM-1, MEDIUM-2 and LOW-1 and its observations, with PR
+  #19's round (e) at `f0bf538` (rulings A-41 and A-42), by `042d826` (the
+  design) and the commit that edits the proposal's body, records the round's
+  table and updates this task, no spec file being edited; verified by
+  "Re-read and Codex Findings (round A12)" in `proposal.md`. Round A13, on
+  `a11bde8`, applied lane openRepoProject-2's answer on R-208 for this change
+  and lane openRepoProject-3's confirm read of round A12, its LOW-1 and LOW-2
+  and its observations (rulings A-43 and A-44), by `dba86c2` (the spec
+  deltas), `62ccd10` (the design) and the commit that edits the proposal's
+  body, records the round's table and updates this task; verified by "Re-read
+  and Codex Findings (round A13)" in `proposal.md`. Round A14, on `1bf217c`,
+  applied Codex's P2 on `1bf217c` and lane openRepoProject-3's confirm read of
+  round A13, its LOW-1, LOW-2 and LOW-4, with its LOW-3 kept (rulings A-45 and
+  A-46), by `a307cac` (the spec deltas), `901f691` (the design) and the commit
+  that edits the proposal's body, records the round's table and updates this
+  task; verified by "Re-read and Codex Findings (round A14)" in `proposal.md`.
+  Round A15, on `7b224c7`, applied Codex's P2 on `7b224c7`, reader RI's and
+  reader RH's findings on this change and lane openRepoProject-3's W54 confirm
+  read of round A14, 0 HIGH, 0 MEDIUM and 3 LOW, with its W52's F-4 (rulings
+  A-48 to A-52), by `8f3ed60` (the spec deltas), `87a3e85` and `75ea447` (the
+  design) and the commit that edits the proposal's body, records the round's
+  table and updates this task; verified by "Re-read and Codex Findings (round
+  A15)" in `proposal.md`. Round A16, on `36adbc0`, applied the lane's rulings
+  A-47 (reader RH's item 6, as PR #19's round (f) at `662be89` triggered it),
+  A-53, A-54 (lane openRepoProject-3's departure ledger), A-55 and A-56 (that
+  lane's W60 confirm read of round A15, 0 HIGH, 1 MEDIUM and 4 LOW) and A-57
+  (PR #19's head at its round (g3), `6bf9f77`), with the currency of PR #19
+  and main, by
+  `7f3c3da` and `131025b` (the spec deltas), `916e5a6`, `9d53a12`, `9d7c611`
+  and `fcc441e` (the design), `9f22b3a` (the proposal's body) and the commit
+  that records the round's table and updates this task; verified by
+  "Re-read and Codex Findings (round A16)" in `proposal.md`. Round A17, on
+  `1cc2d9c`, applied the lane's rulings A-59 (PR #19's round (h) at
+  `b3228bb`), A-60 and A-61 (lane openRepoProject-3's W69 confirm read of
+  round A16, 0 HIGH, 0 MEDIUM and 6 LOW) and A-62 (D14's line-feed case), by
+  `b15d418` (the spec delta), `722a0c4`, `670af25`, `d52bb22` and `7411520`
+  (the design) and the commit that edits the proposal's body, records the
+  round's table and updates this task; verified by "Re-read and Codex
+  Findings (round A17)" in `proposal.md`. Round A18, on `04db6ef`, applied the
+  lane's rulings A-63 (lane openRepoProject-3's W78 confirm read of round A17,
+  0 HIGH, 0 MEDIUM and 4 LOW) and A-64 (PR #19's round (i) at `e0c91bb`), by
+  `e1760c4` (the spec delta), `d70ab13` and `63a1594` (the design) and the
+  commit that edits the proposal's body, records the round's table and updates
+  this task; verified by "Re-read and Codex Findings (round A18)" in
+  `proposal.md`. Round A19, on `7a1bd84`, applied the lane's rulings A-66 (Brett
+  Heap's confirmation of R-284, R-290), A-67 (PR #19's round (j) at `e14ada0`),
+  A-68 (lane openRepoProject-3's W84 confirm read of round A18, 0 HIGH, 0 MEDIUM
+  and 3 LOW, on the lines for a branch the stage did not re-prove, reversing
+  A-65), A-69 (W84's three LOW), A-70 (round A18's record kept as history) and
+  A-71 (PR #19's round (k) at `173d83c`), by `5e2a450`, `794ecc9` and `53ae22a`
+  (the design), `dd1afb7` (the spec delta) and the commit that edits the
+  proposal's body, records the round's table and updates this task; verified by
+  "Re-read and Codex Findings (round A19)" in `proposal.md`. Round A20, on
+  `6c7c0f9`, applied the lane's rulings A-74 (lane openRepoProject-3's W89
+  confirm read of round A19, 0 HIGH, 0 MEDIUM and 2 LOW), A-75 and A-76
+  (PR #19's round (l) at `ccc52b9`), by `40ff418` (the design) and the commit
+  that edits the proposal's body, records the round's table and updates this
+  task; verified by "Re-read and Codex Findings (round A20)" in `proposal.md`.
+  Round A21, on `58609a5`, applied the lane's rulings A-77 (Brett Heap's
+  confirmation of round (l)'s texts), A-78 (PR #19's round (m) at `20084cd`),
+  A-79 (lane openRepoProject-3's W94 confirm read of round A20, 0 HIGH, 0 MEDIUM
+  and 2 LOW, its LOW-1 and its notes) and A-80 (W94's LOW-2), by `a4702e6` (the
+  spec delta), `2ca2be8` (the design) and the commit that edits the proposal's
+  body, records the round's table and updates this task; verified by "Re-read
+  and Codex Findings (round A21)" in `proposal.md`. Round A22, on `f21b20f`,
+  applied the lane's rulings A-82 (lane openRepoProject-3's W98 confirm read of
+  round A21, 0 HIGH, 0 MEDIUM and 2 LOW), A-83 (Brett Heap's "R-324: yes" in the
+  no-prune clauses this change quotes) and A-84 (PR #19's round (n) at
+  `2250830`), by `3cfdfc1` (the design) and the commit that edits the proposal's
+  body, records the round's table and updates this task; verified by "Re-read
+  and Codex Findings (round A22)" in `proposal.md`. Round A23, on `6df5866`,
+  applied the lane's rulings A-86 (PR #19's round (o) at `88d0d36`), A-87 (lane
+  openRepoProject-3's W104 confirm read of round A22, 0 HIGH, 0 MEDIUM and 2
+  LOW) and A-88 (W104's verdict and the lead's facts), by `cb07033` (the design)
+  and the commit that edits the proposal's body, records the round's table and
+  updates this task; verified by "Re-read and Codex Findings (round A23)" in
+  `proposal.md`. Round A24, on `46dcf3c`, applied the lane's rulings A-98 (the
+  review wave of 2026-10-23: its reader RA2's HIGH L3, MEDIUM L1 and L2 and LOW
+  L4 to L7, N1 and N2, with the reader RD's L1, the reader RE's RE23-2,
+  RE23-4, RE2-2 and RE-4 and lane openRepoProject-3's W120 L-2), as A-100
+  splits the rounds, A-91 (lane openRepoProject-3's W109 confirm read of round
+  A23, 0 HIGH, 0 MEDIUM and 2 LOW), A-101 (round (p)'s F-1 (b), not taken) and
+  A-103 (the writer's five decisions), by `88ff731` (the spec deltas),
+  `1273cdc` (the design), `a4b6669` and `6d65517` (the spec delta and the
+  design under A-103), `e65fff8` (the design's Context map) and the commit
+  that edits the proposal's body, records the round's table and updates this
+  task; verified by "Re-read and Codex Findings (round A24)" in
+  `proposal.md`. Round A25, on `aff9917`, applied the lane's ruling A-106 (PR
+  #19's round (q) at `818311a`, accepted under lane openRepoProject-2's R-389:
+  the currency, A-50's note re-run block by block, Q3 (a) under A-103 (3)'s
+  live-holder test, RE2-1 and N1 under Q8, RD2's M1 and the project-command
+  block's difference), with A-104 and A-105 recorded, by `89331c2` (the spec
+  delta, RE2-1), `b54016f` (the design) and the commit that edits the
+  proposal's body, records the round's table and updates this task; verified
+  by "Re-read and Codex Findings (round A25)" in `proposal.md`. Round A26, on
+  `76cb3ef`, applied the lane's ruling A-110 (lane openRepoProject-3's W131
+  confirm read of rounds A24 and A25, 0 HIGH, 1 MEDIUM and 4 LOW, under
+  A-108; its W133's Q9 (c) note, under A-109; and PR #19's round (r) at
+  `4512441`, accepted under lane openRepoProject-2's R-396: the currency and
+  A-50's note re-run), with A-107 recorded, by `d28329a` (the spec delta,
+  LOW-3 and Q9 (c)), `07e8bc1` (the design) and the commit that edits the
+  proposal's body, records the round's table and updates this task; verified
+  by "Re-read and Codex Findings (round A26)" in `proposal.md`. Round A27, on
+  `052fee0`, applied the lane's ruling A-119, with A-111 to A-118 (lane
+  openRepoProject-3's W138 confirm read of round A26, 0 HIGH, 0 MEDIUM, 0 LOW
+  and 5 OBS, its OBS-1 under A-112 and A-115; its W146 read of PR #19's round
+  (s), under A-117; and PR #19's rounds (s) at `dab8a64` and (t) at `54e869b`,
+  accepted under lane openRepoProject-2's R-412 and R-415, round (t) building
+  Brett Heap's "yes, recommended for M1 and M3", R-413: the currency, A-50's
+  note re-run and M1 and M3 named as ruled), by `e76ee75` (the spec delta,
+  OBS-1), `f6ba086` (the design) and the commit that edits the proposal's
+  body, records the round's table and updates this task; verified by
+  "Re-read and Codex Findings (round A27)" in `proposal.md`.
+- [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md`
+  modifies five requirements and adds one (72 scenarios: 43 carried unchanged
+  from change 1 and PR #19, 6, 14, 10, 5 and 8 by block, and 29 added, the
+  24th in round A3 and the 25th in round A4, round A5 adding ANDs only, round
+  A6 editing no spec file, round A7 adding no scenario and editing WHENs and
+  ANDs (ruling A-35, lane openRepoProject-3's confirm read, F5), round A8
+  editing no scenario, round A9 adding one AND, under ruling A-36, and
+  round A10 adding and editing no scenario, one sentence of the ADDED
+  requirement's step 2 edited under ruling A-38, and round A11 adding no
+  scenario, one phrase of the ADDED requirement's `state-changed` reason and
+  the words of one AND of an ADDED scenario edited under rulings A-39 and
+  A-40, round A12 editing no spec file, under rulings A-41 and A-42, and
+  round A13 adding no scenario, editing step 3 of the ADDED requirement, its
+  `state-changed` and `reflog-unmerged` reasons, its result line and the
+  result of one AND of an ADDED scenario, under rulings A-43 and A-44, and
+  round A14 adding no scenario, editing step 1 of the ADDED requirement, its
+  `Kept` next steps, one AND of an ADDED scenario, split in two, the literals
+  of three more ADDED scenarios' ANDs and one sentence of the review-safety
+  delta, under rulings A-45 and A-46, and round A15 adding no scenario,
+  editing one sentence of the bounds block, step 4 of the ADDED requirement,
+  its `state-changed` definition and `Kept` next steps, the literals of four
+  ADDED scenarios' ANDs, adding one AND to "The merge target moves before the
+  branch stage" and editing the last AND of one review-safety scenario, under
+  rulings A-48 to A-51, and round A16 adding no scenario, editing the
+  ADDED requirement's `Kept` next steps, one AND in each of three ADDED
+  scenarios, adding one AND to "The deadline before the branch stage", and
+  editing one sentence of the bounds block and the last AND of one
+  review-safety scenario, under rulings A-53, A-55 and A-56, and round A17
+  adding no scenario, editing the ADDED requirement's step 1 and its `Kept`
+  next steps and the literals of four ADDED scenarios, under rulings A-59 and
+  A-60, and round A18 adding no scenario, editing the ADDED requirement's
+  `Kept` next steps and the literals of two ADDED scenarios, three in all, under
+  ruling A-63 (round A19 corrects the count, which read three scenarios, under
+  ruling A-69), and round A19 adding no scenario, editing the ADDED
+  requirement's `Kept` next steps and the literals of four ADDED scenarios, five
+  in all (six and seven from round A21), under rulings A-68 and A-69, and round
+  A20 editing no spec file, under rulings A-74 to A-76, and round A21 adding no
+  scenario, adding to each of two ADDED scenarios, "A signal around the branch
+  child" and "A removal past the hard ceiling under the flag", an AND that
+  prints a `Kept` literal, so that rounds A19 and A21 have edited seven literals
+  in six ADDED scenarios, those of `state-changed`, `deadline-exceeded`,
+  `interrupted`, `internal-error` and `removal-ceiling`, under ruling A-80
+  (round A22 words the count as edits, under ruling A-82), and round A22 editing
+  no spec file, under rulings A-82 to A-84, and round A23 editing no spec file,
+  under rulings A-86 to A-88, and round A24 adding four scenarios, the 26th to
+  the 29th, editing the ADDED requirement's `branch_retirement` fields, its
+  summary, `Unconfirmed` and `Kept` lines and the literals of nine ADDED
+  scenarios, and then the main-worktree holder's template and the two ANDs of
+  one of those scenarios that print it, under rulings A-98, A-100 and A-103,
+  and round A25 adding no scenario, editing the `Retired` line's sentence of
+  the ADDED requirement and one AND of "A branch name in a printed command is
+  quoted for the shell", under ruling A-106, and round A26 adding no
+  scenario, editing that sentence and that AND again, and adding one sentence
+  to the ADDED requirement and one AND to "A single target with the flag
+  equals a one-item batch", under ruling A-110, and round A27 adding no
+  scenario, editing one reason clause of the ADDED requirement's
+  main-worktree holder line, under ruling A-119),
+  `specs/project-clean-review-safety/spec.md` modifies one (4 scenarios: 3
+  carried, 1 added, whose THEN round A24 edits and to which it adds an AND),
+  and `specs/project-command/spec.md` modifies one on
+  PR #19's text (9 scenarios carried, none added; agreed by lane
+  openRepoProject-2 on 2026-10-19 and committed in `16051d1`, ruling A-20; at
+  PR #19's `54e869b`, as at `4512441` and `818311a`, its source block differs
+  in its text, by Q1's pin, Q8's warned-probe rule, which round (r) qualifies
+  to Git's default `core.warnAmbiguousRefs`, and T9's "Stale entries:"
+  paragraph, which Brett Heap's M1 (a) keeps (R-413), PR #19's rounds (s) and
+  (t) changing no line of that delta, and in ten of its sixteen scenarios,
+  which 2.2's re-read takes, this block's text staying `c462d87`'s, rulings
+  A-106, A-110 and A-119),
+  every scenario of
+  each modified requirement's source text kept byte for byte; `design.md`
+  holds D1 to D10 (`8341954`, `d0b33ce`, and the commit titled 'Settle which
+  later targets carry branch-retention-stop'), revised by the alignment fix
+  round (1.2), the council round (1.3) and rounds A3 to A27; verified
+  by `grep -c '^#### Scenario:'` on each spec file and by a scenario-carry
+  script run after the council round and again after rounds A3 to A27
+  over all seven MODIFIED blocks, every source scenario present byte for byte
+  and in order.
+- [x] 1.5 Validation passes: `/usr/bin/openspec validate
+  add-project-clean-branch-retirement --strict` reports the change valid,
+  `/usr/bin/openspec validate --all --strict` reports 8 passed, 0 failed, and
+  `/usr/bin/openspec status --change add-project-clean-branch-retirement
+  --json` shows every artifact done; verified by running the three on this
+  branch after 1.4, after the alignment fix round, after the council round
+  and after rounds A3 to A27
+  (build 1.13.1, which notes only as INFO that archive would refuse the
+  MODIFIED blocks whose base still sits in change 1).
+- [ ] 1.6 Ratified by Brett Heap's word on the pull request, quoted with its
+  link here, the proposal's six Open Questions before him, the project-command
+  block that lane openRepoProject-2 agreed being dropped if PR #19 absorbs its
+  clauses (lane openRepoProject-2's LQ-6) and also a Budgets exception that
+  covers the re-read's shorter budget, which LQ-6 does not list for this
+  change (its Budgets clause, recorded under A-20; `proposal.md`, Dependencies
+  and Sequencing). Ratifying this change ratifies the
+  two blocks written on PR #19's text, "Clean bounds its Git work and reports
+  omitted work" and "Repository inspection requires Git 2.36 and shares one
+  evidence model", only as written there at `c462d87`, never PR #19's own
+  sentences, and 2.2 then re-reads them before the handoff (lane
+  openRepoProject-3's M1); verified by that quote. No implementation starts
+  before it.
+
+## 2. Before the Speckit handoff
+
+- [ ] 2.1 Change 1 (`add-project-clean-all-safe`, issue #9) archived after
+  feature 004 merges, so that "Clean previews and applies a batch of eligible
+  worktree removals in one repository", "Clean bounds its Git work and reports
+  omitted work", "Clean records a reconcilable result for every removal
+  target" and "Cleanup states a narrow guarantee and its residual window" are
+  canonical and the seam this change attaches to is on `main`; and "Clean
+  reports local worktree state", written on change 1's text at `961c405` and
+  modified by no open change but PR #19, the amendment of change 1, which adds
+  to it, beyond round (l)'s AND, its `relative-config-path` paragraph, its
+  scenario "A relative configuration path", a changed "The plain report
+  exits by completeness" (the reader RD's L1 of 2026-10-23; ruling A-100) and,
+  since its round (t), the scenario "A worktree whose path holds the main
+  worktree" (Brett Heap's M3 (a), R-413; ruling A-119), is
+  re-read against change 1's archived text, that amendment included, and
+  re-copied from it with this change's one clause, so that no
+  amendment of change 1 is reverted by this change's archive (lane
+  openRepoProject-5's reader RD, its M4; ruling A-33); a re-copy that changes
+  this change's words returns the block to Brett Heap before the handoff
+  (reader RF's M1; ruling A-37); verified by
+  those headers in `openspec/specs/`, by `diff -u` of the archived "Clean
+  reports local worktree state" against this change's block showing
+  additions only, by a second `diff -u`, of this change's block as committed
+  at its ratified head against the re-copied block, showing only change 1's
+  archived text carried in (RF's M1), and by `/usr/bin/openspec validate
+  add-project-clean-branch-retirement --strict` passing with no archive notice.
+- [ ] 2.2 PR #19 resolved: when it lands, the two blocks written on its text,
+  "Clean bounds its Git work and reports omitted work" and "Repository
+  inspection requires Git 2.36 and shares one evidence model", are re-read
+  against the text that landed and re-based if that text moved past
+  `c462d87`; when it closes unmerged, both are re-based on change 1's archived
+  text; a re-base that changes either block's text returns that block to
+  Brett Heap for ratification before the handoff (lane openRepoProject-3's
+  re-read, LOW-8); verified by a diff of each block's carried text against the
+  canonical requirement, and by a second `diff -u`, of each block as
+  committed at this change's ratified head, on PR #19's text at `c462d87`,
+  against the re-based block, showing only the text that landed, or change
+  1's archived text, carried in and no change to this change's added text
+  (reader RF's M1; ruling A-37), and by a read of this change's own
+  restatements of PR #19's moving facts, which round A15 words relatively so
+  that a re-base changes none of them (ruling A-50): the branch child's
+  environment, the residual-window line, the `state-changed` definition's
+  deadline clause and D7's counts at each base, each checked against the text
+  that landed.
+- [ ] 2.3 `add-project-clean-cache-disposal` (issue #24) checked: the five
+  requirements both changes MODIFY under the lane's rulings B-10 and A-13
+  ("Clean can explicitly retire verified worktrees", one cache clause; "Clean
+  previews and applies a batch of eligible worktree removals in one
+  repository", the cache digest; "Clean bounds its Git work and reports
+  omitted work", the counting sentence merged, this change's incompleteness
+  clause kept, and the cache fit sentence, which counted at `e1049b2` "at most
+  250 Git children besides the 16 removals, about 42.3 s" and counts at
+  `69cb7a1` "at most 283 Git children besides the 16 removals where the plan
+  read the repository's `extensions.worktreeConfig` as false, about 47.3 s",
+  as it then reads, or any restatement under the cache change's rulings B-25,
+  B-54, B-55, B-57 and B-59 or a later one, scoped to runs without the flag
+  (ruling A-50); "Clean
+  records a reconcilable result for
+  every removal target", the cache-deletion exception and five other edits,
+  exit-table row 2 being edited by both (lane openRepoProject-5's reader RD,
+  its L1); "Cleanup states a
+  narrow guarantee and its residual window", the cache target's revalidation
+  and the residual-window line, whose cache clauses then precede this
+  change's branch clause, as `design.md` D8 says (ruling A-23; lane
+  openRepoProject-3's delta read, D6))
+  are listed here with the cache change's state, and if it has archived, this
+  change's five blocks are re-based on its archived text now, otherwise 3.2
+  holds the re-base (L-11). At the re-base the flagless digest becomes
+  byte-identical to the cache change's, the two stage sentences after the
+  removal floor sit side by side, and the rewordings that `design.md`'s
+  Migration Plan writes out are made, no others (RD's M3, L1, L2 and L3;
+  ruling A-33): this change's digest sentence after the cache change's,
+  binding to "the canonical text" with no position for `retire` (ruling
+  A-30); this change's guarantee sentences directly after the guarantee
+  sentence, reading "that guarantee"; exit-table row 2 merged; the ADDED
+  requirement's sentence that orders the flagged result ("Under the flag the
+  human result SHALL end with these lines, in this order"), reworded to place
+  the cache change's `Caches disposed` line after the summary line (reader
+  RF's L1; ruling A-37); and the scenario "A
+  branch changed after the re-read meets Git's own check" naming a run whose
+  plan selects no cache target. Two of those rewordings change the cache
+  change's ratified words, its fit sentence's scope and its "or" moved in
+  exit-table row 2, and each returns to Brett Heap, who ratifies it with this
+  change (RF's L2). A re-base that changes this change's words
+  beyond those rewordings returns that block to Brett Heap for ratification
+  before the handoff (RD's M3).
+  At that re-base, and only then, "A flagged preview's digest binds the
+  flagged apply" gains this AND, which tests the cache change's own
+  requirement (lane openRepoProject-3's re-read, MEDIUM-2) and pins no order
+  of the canonical text's members (ruling A-30): "**AND** when the
+  flagged plan also selects a target whose plan lists caches, as "Clean
+  disposes of listed caches before a worktree removal" states, the canonical
+  text carries that target's cache data and the `retire` member, so that a
+  change to one of its listed caches, or to a branch the plan retires or its
+  planned SHA, gives another digest and the flagged apply refuses with
+  `plan-digest-mismatch` and exit 2". If PR #27 is not ratified, the five
+  blocks re-base on change 1's archived text instead, that AND is not added,
+  and A-9's joint fit is moot; verified by `diff -u` of each archived block
+  against this change's re-based block showing additions only, apart from
+  the rewordings above and this change's own edits of its base text (RD's
+  M1; ruling A-33), by a second `diff -u`, of each of this change's blocks
+  as committed at its ratified head, the ADDED requirement included, against
+  the re-based block, showing only the archived text carried in, the
+  rewordings above and, in the ADDED requirement, the AND above (RF's M1),
+  and by `/usr/bin/openspec validate --all --strict`
+  passing after any re-base, a check that alone proves nothing, since
+  a re-base that keeps every scenario but drops sentences validates and
+  archives.
+- [ ] 2.4 `add-project-overview-remote-merge-status` (issue #25, PR #29)
+  checked: its MODIFIED block of "Repository inspection requires Git 2.36 and
+  shares one evidence model" is committed at `f66ed58`, on PR #19's text,
+  agreed by lane openRepoProject-2 with one fix and unchanged at its head
+  `c928cb2`, and by L-11 and L-17 whichever of it and this change archives
+  second re-bases that block on the other's archived block, changing none of
+  the other's ratified words, quotation marks included, so that if this
+  change is second the composed block keeps that change's backquoted
+  requirement name beside this change's double-quoted ones (ruling A-35,
+  lane openRepoProject-3's confirm read, F9, refining lane
+  openRepoProject-5's reader RD, its L4), and a re-base that changes this
+  change's added text returns the block to Brett Heap (RD's M3; ruling
+  A-33); verified by `diff -u` of the archived block against the re-based
+  block showing additions only (RD's M1), by a second `diff -u`, of this
+  change's block as committed at its ratified head, on PR #19's text at
+  `c462d87`, against the re-based block, showing only the archived block's
+  text carried in and no change to this change's added text (reader RF's
+  M1; ruling A-37), and by
+  `/usr/bin/openspec validate --all --strict` passing after any re-base, a
+  check that alone proves nothing.
+
+## 3. Landing and archive readiness
+
+- [ ] 3.1 The realization PR is merged with green checks on every job of
+  `.github/workflows/tests.yml` at its merge (at `origin/main` `15504f1`, the
+  `test` job on `ubuntu-latest` for Python 3.10 and 3.12; feature 004 adds
+  `git-floor`) and closes issue #23; verified by citing its merge sha here,
+  from `gh pr view <number> --json mergeCommit,statusCheckRollup`.
+- [ ] 3.2 If `add-project-clean-cache-disposal` is ratified, it is archived
+  before this change, all five of this change's MODIFIED blocks, each shared
+  with it, carry its archived text (L-5, L-11, A-13), and the AND of 2.3 is
+  added; if it is not ratified, the five blocks carry change 1's archived text
+  and the AND is not added (lane openRepoProject-3's re-read, MEDIUM-2; its
+  review 26, M4); a re-base that changes this change's words beyond the
+  rewordings of 2.3 returns that block to Brett Heap for ratification before
+  the archive (reader RF's M1; ruling A-37; lane openRepoProject-3's confirm
+  read of round A9, LOW-4, ruling A-38); verified by `diff -u` of each
+  archived block against this
+  change's re-based block showing additions only, apart from the rewordings
+  of 2.3 and this change's own edits of its base text (lane
+  openRepoProject-5's reader RD, its M1; ruling A-33), by a second `diff -u`,
+  of each of this change's blocks as committed at its ratified head, the
+  ADDED requirement included, against the re-based block, showing only the
+  archived text carried in, the rewordings of 2.3 and, in the ADDED
+  requirement, the AND of 2.3 (RF's M1), and by
+  `/usr/bin/openspec validate add-project-clean-branch-retirement --strict`
+  passing against the main specs that archive left, a check that
+  alone proves nothing.
+- [ ] 3.3 The change is archived with `/opsx:archive` only after 3.1 and 3.2,
+  and after PR #19 is resolved: after its amendment of change 1 has landed,
+  or, if it closed unmerged, after both blocks on its text were re-based on
+  change 1's archived text (2.2, 2.4; lane openRepoProject-3's re-read,
+  LOW-8); verified by `/usr/bin/openspec validate --all --strict` passing
+  after the archive.
+
+## Speckit Handoff
+
+Implementation is tracked exclusively in one Speckit feature, to be created by
+`/speckit.specify` after ratification (1.6) and section 2, from a local `main`
+synced to `origin/main`. The feature covers the flag, the branch stage and its
+record in `project` (`design.md` D1 to D8 and D10), the README's "Clean up Git
+worktrees", with D8's note that a command printed in the `$'...'` form needs a
+shell that implements it (bash, zsh, ksh93 or a POSIX.1-2024 shell), in a UTF-8
+locale for its code-point escapes, which dash, Ubuntu's `/bin/sh`, lacks, a
+limitation change 1's path rule shares (ruling A-28 as amended), the note, the
+README text and the quoting scenario's literal following change 1's command
+form as ratified, whether that form changes being lane openRepoProject-2's
+LQ-8, with Brett Heap, on which this change takes no side (ruling A-29), and
+the tests of D9.
+
+- Feature identifier: to be created by /speckit.specify after 1.6 (006 or the
+  next free number)
+- Branch: to be created by /speckit.specify after 1.6 (006 or the next free
+  number)
+- Tasks: to be created by /speckit.specify after 1.6 (006 or the next free
+  number), then written by /speckit.tasks
+
+`/opsx:apply` is not run until this section names exactly one feature and that
+feature exists.
