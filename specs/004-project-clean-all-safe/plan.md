@@ -68,11 +68,11 @@ Implementation slices, in dependency order; each leaves the suite green:
    incremental parsers; filesystem calls on daemon threads under
    `min(5 s, work remaining)`; the scrub, seventeen names and Q9 B's fourteen
    trace names with the trace2 targets set to `0`, and the pins, LQ-10's two
-   stat pins among the status pins (R1; lead rulings R-99 (d) and R-102); the
-   memoized version check; path escaping. Tests: each parser fed byte by byte
-   and whole (FR-062); two handles driven at once through the shared scrub,
-   termination path and parsers (SC-012); the three fake Gits of D1; the
-   escaping rules.
+   stat pins and Q1's `core.ignoreCase=false` among the status pins (R1; lead
+   rulings R-99 (d), R-102 and R-380); the memoized version check; path
+   escaping. Tests: each parser fed byte by byte and whole (FR-062); two
+   handles driven at once through the shared scrub, termination path and
+   parsers (SC-012); the three fake Gits of D1; the escaping rules.
 3. **Evidence pipeline and ladder** (D4, D6, D10, D11; R9). Row 1 once per
    invocation; rows 3 to 7 memoized by the `(dev, ino)` of the common
    directory (lead rulings R-54 X-1 and R-64); identity and two-way
@@ -332,12 +332,13 @@ AGENTS.md                    Git 2.36, the clean tests and a section on
                              `test` job unchanged
 openspec/changes/add-project-clean-all-safe/
                              the ratified change; read, not changed by the
-                             implementation, except its tasks.md: four
-                             hunks from the specify and plan commits (PR
-                             #11's governance links, the Speckit Handoff's
-                             feature lines) and T133's Tasks line; a merge
-                             resolves their conflict with PR #19 when main
-                             gains it (analyze M8)
+                             implementation: this branch carries main's
+                             copy of its tasks.md, PR #19's round (p) the
+                             four hunks from the specify and plan commits
+                             (PR #11's governance links, the Speckit
+                             Handoff's feature lines) and T133's Tasks
+                             line (lead ruling R-377; tasks.md, Path
+                             Conventions)
 ```
 
 **Structure Decision**: one executable; its new tests in modules of their own,

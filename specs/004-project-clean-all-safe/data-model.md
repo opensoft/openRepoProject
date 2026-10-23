@@ -57,13 +57,18 @@ evidence's `main_path`, the path `main_worktree()` named before row 5 ran
 
 Candidates, in order: the manifest's `tracking_branch` less a leading
 `origin/`; the symref of `refs/remotes/origin/HEAD` less
-`refs/remotes/origin/`; `main`; `master`. The manifest is read at `root` by
-one bounded filesystem call per candidate file: `project.yaml`, then
-`family.yaml` when there is no `project.yaml`, by `Path.is_file()`'s test,
-as `manifest()` picks it (lead ruling R-73 (e)). An `st_size` over 1 MiB is
-`manifest-invalid` without a read, and an unreadable manifest, one that is
-not a mapping or has the wrong kind, and a missing PyYAML are
-`manifest-invalid` too, with the contract's messages. No candidate refuses
+`refs/remotes/origin/`; `main`; `master`. A name that no ref can hold, such as
+the lone surrogate of a manifest's `"\ud800"`, which YAML builds and
+`str.encode` cannot encode, names no local branch and is no candidate, so the
+next candidate is taken (FR-018; T7, lane 2's wave 22 triage, sr-evidence M-3;
+lead R-373 and R-385, writer's `e702a65`): `status` exits 0, and the
+revalidation's narrowed ref listing leaves such a name out. The manifest is
+read at `root` by one bounded filesystem call per candidate file:
+`project.yaml`, then `family.yaml` when there is no `project.yaml`, by
+`Path.is_file()`'s test, as `manifest()` picks it (lead ruling R-73 (e)). An
+`st_size` over 1 MiB is `manifest-invalid` without a read, and an unreadable
+manifest, one that is not a mapping or has the wrong kind, and a missing PyYAML
+are `manifest-invalid` too, with the contract's messages. No candidate refuses
 with `no-merge-target` and its baseline message (`project:551`). A manifest
 and `origin/HEAD` naming different existing branches: the manifest wins,
 with the plan note `merge-target-conflict`.
@@ -77,7 +82,7 @@ names and types; the last six are added.
 | --- | --- | --- |
 | `path` | the registered path, from the NUL-delimited registry | never null |
 | `present` | true; false when `lstat` fails with `ENOENT` or `ENOTDIR` | any other `lstat` failure (with an `os-error`) |
-| `branch` | short name, or `detached` | (baseline) |
+| `branch` | short name, or the text `detached` for a detached HEAD; the row's own `detached` flag, true where the registry record has no branch, tells that HEAD from a branch named `detached`, and no document writes the flag (T10) | (baseline) |
 | `head` | full object name | not established |
 | `upstream` | configured short name, also when its remote-tracking ref is gone | none configured; not established for a branch named `HEAD` (below) |
 | `remote_present` | false when the track is `gone` | none configured, or not established, a branch named `HEAD` among them |
@@ -85,14 +90,14 @@ names and types; the last six are added.
 | `dirty` | from the combined probe | probe not run, failed or timed out |
 | `ignored_files` | ignored records read; a lower bound when truncated | probe not run or failed, or stopped before any ignored record |
 | `current` | the working directory is inside it (baseline) | |
-| `merged_into_target` | head is in row 7's merged set | detached, or not established |
+| `merged_into_target` | head is in row 7's merged set | detached, or not established, row 7 having failed (T19) |
 | `classification`, `recommendation` | the ladder below; the recommendation keeps its baseline text, except for the main worktree's row where the ladder says `merged-removable` or `merged-current`, and a locked `stale-worktree` row (lane 3's W52 F-6 and F-10; lead ruling R-259) | |
 | `prunable` | `true` when the record says `prunable`, else absent | |
 | `locked` | from the registry's `locked` attribute | never null |
 | `ignored_files_truncated` | the probe stopped at a bound | probe not run or failed |
 | `ignored_samples` | at most 8 `{path, path_valid_utf8}`, paths relative to the worktree | probe not run or failed |
 | `path_valid_utf8` | the path is valid UTF-8 | never null |
-| `errors` | `{code, message, path?, path_valid_utf8?, reason?}`: `os-error`, `probe-failed`, `probe-timeout`, `deadline-exceeded` | |
+| `errors` | `{code, message, path?, path_valid_utf8?, reason?}`: `os-error`, `probe-failed`, `probe-timeout`, `deadline-exceeded`; each present row on a branch also carries the errors of row 6, or of row 7 where row 6 was read, when that listing failed (below; T19) | |
 | `notes` | `partially-removed` (D4) or empty | |
 
 Null means unknown or not established, never a default false or 0, in every
@@ -117,18 +122,25 @@ and again immediately before its own status probe, its `lstat`, realpath and
 two-way registration in one bounded filesystem call, since the probes of the
 rows before it may take their whole budgets; a row whose identity changed
 gets no probe and is `inspection-error`, and once the work deadline has
-passed no probe starts (lane 3's F3; lead ruling R-101 (e)). Then, where row
-4c is not false, each linked row's effective work tree is probed (`rev-parse
---path-format=absolute --show-toplevel` in it); its output, less the one
-closing line feed, is read as one path, which may hold line feeds, since a
-worktree whose own path holds one prints that path over two lines or more: a
-work tree other than its path, a failure, or output that is empty, a line feed
-alone or without a closing line feed is `registration-mismatch`, unprobed, and
-a probe cut at its budget or the deadline is a row error, `inspection-error`
-(LQ-11; lead rulings R-113 and R-287; lane 3's W70 M-2). A row with `present:
-false` is decided first: it gets no registration check, no shared-path
-check and no probe, and its reason is its class, `stale-worktree` (lead
-rulings R-57 and R-59 D5). Otherwise a row whose registration disagrees
+passed no probe starts (lane 3's F3; lead ruling R-101 (e)). A read of either
+file whose content holds a NUL byte, which Git reads as a C string and Python's
+`os.path.realpath()` and `lstat` refuse with a `ValueError`, is an `os-error`
+row error with Python's own text and no error number, as a failed read is
+(`_fs()` and `_direct()` catch it; T7, lane 2's wave 22 triage, sr-evidence
+M-2; lead R-373 and R-385, writer's `e702a65`): the row is `inspection-error`
+and gets no probe, `status` exits 0, and `clean` is incomplete, where `status`
+ended in a traceback and every `clean` was refused `internal-error`. Then,
+where row 4c is not false, each linked row's effective work tree is probed
+(`rev-parse --path-format=absolute --show-toplevel` in it); its output, less
+the one closing line feed, is read as one path, which may hold line feeds,
+since a worktree whose own path holds one prints that path over two lines or
+more: a work tree other than its path, a failure, or output that is empty, a
+line feed alone or without a closing line feed is `registration-mismatch`,
+unprobed, and a probe cut at its budget or the deadline is a row error,
+`inspection-error` (LQ-11; lead rulings R-113 and R-287; lane 3's W70 M-2). A
+row with `present: false` is decided first: it gets no registration check, no
+shared-path check and no probe, and its reason is its class, `stale-worktree`
+(lead rulings R-57 and R-59 D5). Otherwise a row whose registration disagrees
 gets no status probe and is `inspection-error`, excluded as
 `registration-mismatch`. Two registry entries naming one path, compared by
 the registry records' raw path bytes as listed, fail closed: each is
@@ -196,12 +208,21 @@ unparseable output` (lead rulings R-61 and R-64 (a); built by lane G's
 follow-up). Since a status probe whose standard error holds anything but
 Git's advice lines establishes nothing (contract, "Git children"), and Git
 warns `refname 'HEAD' is ambiguous.` in every worktree of such a repository,
-every row there is `inspection-error` too, failing closed (lead ruling
-R-116, which narrows R-61 (b)'s effect). Where row 6 gives no listing,
-because it or a probe before it failed, each present row on a branch carries
-that probe's row errors and is `inspection-error`, its upstream fields null,
-where every row once printed as `unpublished` (the plan review's F3; lead
-ruling R-101 (c)).
+every row there is `inspection-error` too, failing closed (lead ruling R-116,
+which narrows R-61 (b)'s effect), a rule that counts a blank line as such a
+line and the empty text after the last line end as none, and that #19's
+`project-command` delta states at round (q), `818311a`, with this consequence
+(Brett Heap's Q8, ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9";
+lead R-380; lane 2's wave 22 triage T9; writer's `70345ee`). Where row 6 gives
+no listing, because it or a probe before it failed, each present row on a
+branch carries that probe's row errors and is `inspection-error`, its upstream
+fields null, where every row once printed as `unpublished` (the plan review's
+F3; lead ruling R-101 (c)). Row 7 is read the same way (T19; lane 3's W121
+MEDIUM-2; lead R-374 and R-385, writer's `e702a65`): where row 6 gave its
+listing, a merge target is named and row 7 failed, no row's
+`merged_into_target` is established, so each present row on a branch carries
+row 7's errors and is `inspection-error`, never `review-required`; a detached
+row needs no merged set.
 
 A row whose `present` is null is unread: `path_unread(row)` is `row["present"]
 is None`, and `unread_paths(plan)` is the set of the raw paths of such rows of
@@ -226,16 +247,33 @@ once every row is gated, and makes the `inspect-cap` remedy
 past the cap are never read. R-324 (ruled by Brett Heap, "R-324: yes", lead
 R-343; #19's round (n) at `2250830`; writer's `e8dda2a`) makes each of these
 warnings, and `partial_removal_note_unread`'s, also name `git worktree remove`
-and `git gc`. Only texts change: no field, code, class or reason does, though
-a stale row's `recommendation` in the report and in `--json` carries the new
-text.
+and `git gc`. R-365 (ruled by Brett Heap on 2026-10-23, "Yes, warn
+(Recommended)" for lane 3's W52 F-1 (b) and "Yes, add T9 (Recommended)" for T9;
+lead R-365; writer's `7a20789`, merged as `d8724e2`) carried the same warning
+into two texts outside the plan: the result's ceiling note, which was
+`partial_removal_note_prune_unread` in place of `partial_removal_note_prune`
+wherever the set was not empty, and which Brett Heap's Q3 (a) superseded (ruled
+on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; "Target
+result and reconciliation record" below), and `status`'s stale recommendation,
+which `repo_state()` ends with the warning wherever any row of its listing is
+unread ("Classification" below), and which stands. Q3 (b) (ruled on
+2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; writer's
+`da5502d`) ends the plain forms of the texts that name `git worktree prune`,
+where the set is empty, with a dry-run warning, `; git worktree prune also
+deletes the entry, and so the HEAD reflog, of every other worktree whose path
+is missing, one moved or on an unmounted drive included, so run git worktree
+prune --dry-run first and remount or repair any it lists that still exists`
+(the contract's "The unread forms" and the paragraph after it). Only texts
+change: no field, code, class or reason does, though a stale row's
+`recommendation` in the report and in `--json`, and in `status --json` and
+`doctor --json`, carries the new text.
 
 ### Classification (D6; FR-007)
 
 First, a row whose evidence could not be established (`present` null, a
-registration that disagrees, a status probe that failed or timed out, or
-branch evidence row 6 could not establish, a branch named `HEAD` with its
-`probe-failed` row error, R-61 and R-64) is
+registration that disagrees, a status probe that failed or timed out, or branch
+evidence row 6 or row 7 could not establish, a branch named `HEAD` with its
+`probe-failed` row error, R-61 and R-64, a failed merged set, T19) is
 `inspection-error` directly, whatever its branch, so a failed probe on the
 merge-target checkout is never `protected-default`. Every other row takes the
 first rung that holds, in this order (names unchanged; the one reorder is
@@ -244,14 +282,14 @@ marked):
 | Rung | Holds when |
 | --- | --- |
 | `stale-worktree` | `present` is false |
-| `protected-default` | `branch` is the merge target |
+| `protected-default` | `branch` is the merge target, a detached HEAD being none (the `detached` flag, not the text; T10) |
 | `inspection-error` | `dirty` is null |
 | `dirty` | `dirty` is true |
 | `ignored-local-files` | `ignored_files` is non-zero |
-| `detached` | `branch` is `detached` |
+| `detached` | the row's `detached` flag: the registry record has no branch (T10); a branch named `detached` is a branch |
 | `unpublished` | no upstream configured |
 | `remote-gone` | `remote_present` is false; but first (the reorder) a merged row is `merged-removable`, or `merged-current` when it is current |
-| `review-required` | defensive; no value of the evidence model reaches it |
+| `review-required` | defensive; no value of the evidence model reaches it, a failed row 7 giving `inspection-error` (T19) |
 | `diverged` | `ahead` and `behind` both positive |
 | `remote-ahead` | `behind` positive |
 | `unpushed` | `ahead` positive |
@@ -263,16 +301,39 @@ The ladder is a pure function of the row (OQ-28). The partial-removal note is
 added after it by a separate function (D4): a present, registration-verified,
 `dirty` linked worktree whose status records read are all tracked-file
 deletions (`" D"`), judged on the records read when the stream stopped at its
-bound. It changes no class, rung or gate. The recommendation is the ladder's
-too, but in two cases `row_evidence()` replaces it after the ladder has run
+bound. It changes no class, rung or gate. Its text names its check first,
+`Probable partial removal: check that git -C PATH status --short --ignored
+lists only deleted files, then git worktree remove --force PATH by hand.`, and
+for a locked row `Probable partial removal: check that git -C PATH status
+--short --ignored lists only deleted files, unlock it, then git worktree remove
+--force PATH by hand.`, because a status stream stopped at its record bound
+leaves untracked and modified files unread, and an ignored record leaves the
+flag alone, so that `--force` could delete either (Brett Heap's Q4 (a) and (b),
+ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; lane
+2's wave 22 triage T4, sr-removal F3 and F4; writer's `c6daebc`); no detection
+rule changes. The recommendation is the ladder's too, but in three cases
+`row_evidence()` replaces it after the ladder has run
 (lane 3's W52 F-6 and F-10; writer E's `02aa71d`, merged as `d764c26`; lead
 ruling R-259): the main worktree's row, where the ladder says
 `merged-removable` or `merged-current`, takes `The main worktree is never
 removed by project clean.`, since no removal of it can succeed, and a locked
 `stale-worktree` row takes `Review, unlock it, then prune stale worktree
-metadata manually.`, since `git worktree prune` keeps a locked entry. The
-class is unchanged in both. Where any row of the plan is unread
-(`unread_paths(plan)`), `stale_recommendations()`, which `build_plan()` calls
+metadata manually; git worktree prune also deletes the entry, and so the HEAD
+reflog, of every other worktree whose path is missing, one moved or on an
+unmounted drive included, so run git worktree prune --dry-run first and remount
+or repair any it lists that still exists.`, since `git worktree prune` keeps a
+locked entry, and any other `stale-worktree` row takes `Review and prune stale
+worktree metadata manually; git worktree prune also deletes the entry, and so
+the HEAD reflog, of every other worktree whose path is missing, one moved or on
+an unmounted drive included, so run git worktree prune --dry-run first and
+remount or repair any it lists that still exists.`, since `git worktree prune`
+acts on the whole repository (Brett Heap's Q3 (b), ruled on
+2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; writer's
+`da5502d`: both end with the dry-run warning, where the baseline's texts ended
+after `manually`; `classify()` still returns the baseline's `Review and prune
+stale worktree metadata manually.`). The class is unchanged in all three. Where
+any row of the plan is unread (`unread_paths(plan)`),
+`stale_recommendations()`, which `build_plan()` calls
 once every row is gated, replaces each `stale-worktree` row's recommendation
 by `Review and prune stale worktree metadata manually; a row's path could not
 be read, so do not run git worktree prune, git worktree remove or git gc until
@@ -281,11 +342,18 @@ it, then prune stale worktree metadata manually; a row's path could not be
 read, so do not run git worktree prune, git worktree remove or git gc until it
 can.` (`recommendation_stale_locked_unread`), from what planning recorded and
 nothing read again (R-320; lane 3's W86 NM-1; ruled by Brett Heap, "R-320:
-yes", lead R-321). `status` is not among them: its `repo_state()` keeps the
-baseline's `Review the stale worktree metadata before pruning it manually.`
-for every stale entry, a locked one included, a known residual left to a
-follow-on change (lane 3's W65 LOW-3; lead ruling R-269;
-contracts/project-clean.md, "`status`, `doctor` and `update`").
+yes", lead R-321). `status` reads no plan, and `stale_recommendations()` does
+not set its text: its `repo_state()` keeps the baseline's `Review the stale
+worktree metadata before pruning it manually.` for every stale entry, a locked
+one included, so that it still omits unlocking for a locked entry, a known
+residual left to a follow-on change (lane 3's W65 LOW-3; lead ruling R-269;
+contracts/project-clean.md, "`status`, `doctor` and `update`"), except that
+where any row of the listing it reads has a path that could not be read
+(`path_unread(row)`: `present` null) each stale entry's recommendation is
+`Review the stale worktree metadata before pruning it manually; a row's path
+could not be read, so do not run git worktree prune, git worktree remove or
+git gc until it can.` (T9; ruled by Brett Heap on 2026-10-23, "Yes, add T9
+(Recommended)"; lead R-365; writer's `7a20789`, merged as `d8724e2`).
 
 ### Gate (FR-020 to FR-023; D10, D12, D13)
 
@@ -307,13 +375,13 @@ as `3bc1d68`):
 | --- | --- | --- |
 | 1 | `main-worktree` | the row is the main worktree |
 | 2 | `unsupported-path-bytes` | the path is not valid UTF-8 |
-| 3 | `registration-mismatch` | the two-way registration was read and disagrees (`registered is False`), its `commondir` and, where row 4c is not false, its effective work tree included (LQ-11); a row whose registration was never read, a `present: false` one among them, passes and is excluded at gate 5 by its class (lead ruling R-53 P-16) |
+| 3 | `registration-mismatch` | the two-way registration was read and disagrees (`registered is False`), its `commondir` and, where row 4c is not false, its effective work tree included (LQ-11); a row whose registration was never read, a `present: false` one among them, passes and is excluded at gate 5 by its class (lead ruling R-53 P-16); or the row's path is, or holds, the common directory, the main worktree or another row's path (`enclosing_rows()`; Brett Heap's Q2 (1), ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; writer's `5eeaedd`), the row then unprobed and `inspection-error`, as a shared path is; or the row's registered path is a symbolic link (`_read_row()`, from its `lstat`; Brett Heap's Q9 (b), ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; lane 2's wave 22 triage T12, sr-removal F7; writer's `338edb0`), which reads its registration as disagreeing, the row again unprobed and `inspection-error` |
 | 4 | `locked-worktree` | `locked` is true |
 | 5 | the classification | the class is not `merged-removable` |
 | 6 | `not-requested` | single mode, an eligible row other than P |
 | 7 | `unstarted-branch` or `reflog-unavailable` | the reflog rule below |
 | 8 | `deferred-target-cap` | beyond the first 16 rows that passed gates 1 to 7 |
-| 9 | `contains-submodule` | a gitlink in the row's index, or `modules` in its admin directory |
+| 9 | `contains-submodule` | a gitlink in the row's index, or `modules` in its admin directory, or an entry of any type named `.git` in a directory of the worktree that holds an index entry, found by an `lstat` (`nested_git_check()`; Brett Heap's Q2 (2), ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; writer's `5eeaedd`), which revalidation's step 7 makes again (below) |
 | 10 | `hidden-local-state` | an index entry flagged assume-unchanged or skip-worktree |
 | 11 | `operation-in-progress` | an entry of any kind named by one of the eleven markers in the row's administrative directory, `<common_dir>/worktrees/<admin_id>`: `MERGE_HEAD`, `CHERRY_PICK_HEAD`, `REVERT_HEAD`, `BISECT_LOG`, `BISECT_START`, `rebase-apply`, `rebase-merge`, `sequencer`, `MERGE_AUTOSTASH`, `NOTES_MERGE_PARTIAL` and `NOTES_MERGE_REF` (`NOTES_MERGE_WORKTREE`, which a notes merge leaves behind, is none) |
 | 12 | `worktree-only-commits` | a commit that only the row's own HEAD reflog or `refs/worktree/` holds: the reachability probe prints an object, or the row's `logs/HEAD` was read to its 64 KiB bound or holds a line that cannot be parsed |
@@ -321,7 +389,17 @@ as `3bc1d68`):
 Gates 9 and 10 read the row's own index, inside its worktree, and gate 11
 lists its administrative directory, one filesystem call (`os.listdir`,
 OPERATION `listdir`) within the filesystem budget and no Git child, only for
-rows that passed gates 1 to 8; at most 16 rows reach them. Gate 12 runs only
+rows that passed gates 1 to 8; at most 16 rows reach them. Gate 9 also makes
+one filesystem call of its own, OPERATION `lstat`, in the same budget and with
+no Git child: an `lstat` of `<dir>/.git` for each directory of gate 10's index
+listing that holds an entry, in byte order, which `HiddenStateParser` collects
+as `directories` (Q2 (2)). Git's directory walk skips every entry named `.git`
+and recurses into a tracked directory without asking whether it holds a
+repository, so a nested repository shows in no status record and passes Git's
+own check; it is found here, and a `.git` entry beside a flagged entry still
+names `contains-submodule`, gate 9 coming first. Revalidation's step 7 makes the
+same `lstat`s again over the directories of its own fresh listing (below). Gate
+12 runs only
 for a row that passed gate 11, so that a row with an operation in progress
 spawns no child for it. It reads `logs/HEAD` in the row's administrative
 directory by one filesystem call (OPERATION `read`, at most 64 KiB, as gate 7
@@ -344,10 +422,10 @@ rulings R-102, R-124 and R-146), built by writer G at `8ae0bb5` and merged as
 
 A gate whose own read cannot finish decides nothing: a reflog read error
 other than `ENOENT` or `ENOTDIR`, a failed or timed-out `modules` read,
-hidden-state probe or gate 11 listing, or gate 12's `logs/HEAD` read failing
-other than with `ENOENT` or `ENOTDIR` or its reachability probe failing (as
-on an object the repository does not hold, exit 128) or timing out, makes the
-row `inspection-error`
+hidden-state probe, nested `.git` lstat or gate 11 listing, or gate 12's
+`logs/HEAD` read failing other than with `ENOENT` or `ENOTDIR` or its
+reachability probe failing (as on an object the repository does not hold, exit
+128) or timing out, makes the row `inspection-error`
 (classification and `reason`), its `errors` naming `os-error`,
 `probe-failed`, `probe-timeout` or `deadline-exceeded`, and the plan
 incomplete (`inspection-incomplete`, or `deadline-exceeded` where only the
@@ -556,19 +634,45 @@ search; #19's round (i) at `1a4785e`; lane 3's W73 M-1; lead ruling R-284,
 which Brett Heap ruled "R-284: yes", R-290; writer G's `6a32d10`, merged as
 `3bc1d68`; for the null path, lane 3's W90 M-1, lead ruling R-329, which
 applies Brett Heap's R-284 as ruled; writer's `b96b335`, merged as `7149e08`).
-Otherwise D18's `git worktree remove --force` form where
+Otherwise D18's `git worktree remove --force` form,
+`partial_removal_note_ceiling`, which has no check first, since the target was
+clean at its revalidation (Brett Heap's Q4, ruled on 2026-10-23T13:30:27Z,
+"yes, recommended for Q1-Q9"; lead R-380; writer's `c6daebc`), where
 `registry_entry_present` and `git_file_present` are both true, and `Probable
-partial removal: inspect, then git worktree prune and delete PATH by hand.`
-for the rest, since Git refuses `git worktree remove --force` once the `.git`
-file is gone ("validation failed", as a kill part way through a removal
-usually leaves it) or the entry is gone ("is not a working tree"), and accepts
-`git worktree prune`, which leaves the path a plain directory for deletion by
-hand; a value not established never shows both present. A report row's note is
-the baseline's and keeps its text, its `.git` file and entry being present
-(lane 3's W52 F-1; Brett Heap's ruling "F-1: prune-then-delete" of 2026-10-22,
-lead ruling R-263, which amends ratified text, the `project-clean` delta's
-`spec.md:253-256` and `:922-926` at `0050f3e`; #19 at `b3228bb`; writer G's
-`3eb2e9c`, merged as `7164d7f`).
+partial removal: inspect, then delete PATH and its administrative directory
+ADMIN by hand.` (`partial_removal_note_prune`) for the rest, since Git refuses
+`git worktree remove --force` once the `.git` file is gone ("validation
+failed", as a kill part way through a removal usually leaves it) or the entry
+is gone ("is not a working tree"); a value not established never shows both
+present. ADMIN is `<common_dir>/worktrees/<admin_id>` in the command form
+(`partial_removal_admin(target)`, from the plan's repository identity and the
+target's row, both verified again at its revalidation, nothing read; `unknown`
+for a plain dict, which carries neither). The note names no `git worktree
+prune`, which acts on the whole repository with an expiry of now and deletes
+the administrative directory, and with it the HEAD reflog, of every unlocked
+entry whose path is missing, a worktree moved or on a drive not mounted among
+them: the person deletes the path and its own directory by hand, after looking,
+and no other worktree's entry is touched. So the note is the same in every mode
+and beside any row of the plan, and `partial_removal_text(target)` takes the
+target alone (Brett Heap's Q3 (a), ruled on 2026-10-23T13:30:27Z, "yes,
+recommended for Q1-Q9"; lead R-380; writer's `da5502d`). It supersedes R-365's
+form, `partial_removal_note_prune_unread`, `Probable partial removal: inspect,
+then delete PATH by hand; a row's path could not be read, so do not run git
+worktree prune, git worktree remove or git gc until it can.`, which
+`partial_removal_text(target, plan_unread)` chose where
+`bool(unread_paths(plan))`, which `print_result()` passed, was true (`present`
+null, a deadline-stopped row included); that key and its selection are gone
+from `project`, and R-365's record stands as superseded.
+`partial_removal_note_ceiling`, which has the text that `partial_removal_note`
+had until Q4, and `partial_removal_note_unread` never changed, since `git
+worktree remove --force PATH` acts on PATH alone and the second already advises
+no prune (lead R-365, ruled by Brett Heap on 2026-10-23, "Yes, warn
+(Recommended)"; writer's `7a20789`, merged as `d8724e2`). A report row's note
+is `partial_removal_note`, whose check comes first (D4, above), its `.git` file
+and entry being present (lane 3's W52 F-1; Brett Heap's ruling "F-1:
+prune-then-delete" of 2026-10-22, lead ruling R-263, which amends ratified
+text, the `project-clean` delta's `spec.md:253-256` and `:922-926` at
+`0050f3e`; #19 at `b3228bb`; writer G's `3eb2e9c`, merged as `7164d7f`).
 
 ### Revalidation step and `probes_performed` (D7; FR-046, FR-047)
 
@@ -584,8 +688,24 @@ target:
 | 4. the narrowed ref listing | Git child | `branch-changed` (branch name or head); `state-changed` (upstream, `upstream_oid`, `ahead`, `behind`, merge target, or a listing that decides nothing) |
 | 5. the target's identity and registration (its `commondir` included), a twin of a checked row, the `modules` check and gate 11's listing of its administrative directory, by filesystem reads; then, where row 4c read true, its effective work tree, so that a filesystem check that refuses spares the probe's child (the lead's R-198; writer G's `963fccf`) | filesystem, then one Git child for the work tree | `identity-changed` (the identity or registration decided different; the target's path, its `.git` or its administrative directory found absent, `ENOENT` or `ENOTDIR`, the listing that finds no administrative directory included, writer G's reading of a gap in #19 at `9267303`, lead ruling R-220; or another present entry of the fresh registry listing sharing a checked row's realpath or admin id, `registry_twin()`, R-81 (a)); `contains-submodule` (a `modules` entry); `operation-in-progress` (a marker, LQ-14); `state-changed` for a read that fails other than with `ENOENT` or `ENOTDIR` or runs past its own budget: the target's lstat, its registration reads (a `.git` that cannot be read among them), a registry entry's lstat or realpath in the twin check, unless the plan read its lstat as failed too, null and null again (R-95 (c)), the `modules` check and the listing (the lead's R-208; lead rulings R-124 and R-127); for the work-tree probe, `identity-changed` only for a work tree the probe decides is not the target's path, its output read as one path (R-287), and `state-changed` for one that fails, runs past its own budget or prints output that is empty, a line feed alone or without a closing line feed (LQ-11; the lead's R-171 and R-287) |
 | 6. the combined status probe in the target, which must print nothing | Git child | `state-changed` (a record, or a probe that decides nothing) |
-| 7. the hidden-state probe | Git child | `contains-submodule` (a gitlink); `hidden-local-state` (a flagged entry); `state-changed` (a probe that decides nothing; R-195) |
+| 7. the hidden-state probe, which lists the target's index again, and then the nested `.git` lstats of Q2 (2) over the directories of that listing that hold an index entry | Git child, then filesystem | `contains-submodule` (a gitlink, or an entry named `.git`, made after the plan, in a directory that holds an index entry); `hidden-local-state` (a flagged entry); `state-changed` (a probe that decides nothing, R-195, or an lstat that fails other than with `ENOENT` or `ENOTDIR` or runs past its own budget); `deadline-exceeded` (an lstat that the work deadline cuts, the target and every later one `not-attempted`) |
 | 8. gate 12's check in the target: `logs/HEAD` read again and the reachability probe run again, the negatives the plan's, taken as they were | filesystem, then one Git child | `worktree-only-commits` (an object printed, or a `logs/HEAD` read to its bound or holding a line that cannot be parsed); `state-changed` (a read that fails or times out, or a probe that decides nothing; LQ-13, lead rulings R-124 and R-127) |
+
+Step 7 runs Q2 (2)'s nested `.git` check again, as #19's round (r) (at
+`4512441`; lane 3's W133 MEDIUM-2; the lead's R-391 and R-395) words
+it in the `project-clean-review-safety` delta: the hidden-state probe, "with the
+`lstat` of `<dir>/.git` for every directory that its listing shows holding an
+index entry" (`spec.md:110-112`). `hidden_state_probe()` runs gate 10's listing
+again, the step's one Git child, and then `nested_git_check()` makes one
+`fs_call()` of those `lstat`s, counted in the filesystem budget, so that a
+`.git` entry made after the plan, which neither step 6's status probe nor Git's
+own check reports, refuses the target as `contains-submodule`, the reason
+that delta gives "for a new gitlink, `modules` entry or `.git` entry"
+(`:131-132`; its scenario "A nested repository made after the plan"), and the
+nested repository remains. The `lstat`s are filesystem calls only, no Git
+child, so the bounds of six, seven, nine and ten children below stand; one
+that fails or runs past its budget is `state-changed`, and one that the work
+deadline cuts is `deadline-exceeded`, by the rule below.
 
 At most six Git children (steps 1, 3, 4, 6, 7 and 8), as T084 built them and
 LQ-13 added step 8's probe (lead ruling R-75 (i)), and seven where row 4c read
@@ -617,26 +737,27 @@ reason only for a value it decided (the lead's R-171, R-195, R-198 and R-208;
 draft PR #19 at `4485678`, `2e819ad` and `9267303`; writer G's `73d8888`,
 merged as `9ab996e`). The filesystem calls are step 1's identity reads, step
 5's lstat of the target, its registration reads, the twin check's reads, the
-`modules` check and the listing, and step 8's read of `logs/HEAD`; the
-`modules` check that fails gave `contains-submodule` and the others
-`identity-changed` before R-208. `ENOENT` or `ENOTDIR` decides that the path is
-absent, which keeps the step's reason, `identity-changed` for an absent target,
-`.git` or administrative directory; step 8's missing `logs/HEAD` names no
-candidate. A read the work deadline cut is none: `revalidate()` returns its
-distinct `deadline-exceeded`, and that target and every later one are
-`not-attempted` with that reason and no reconciliation (T099; lead ruling R-80
-P-2), `registry_twin()` giving it too when the deadline cut one of its reads,
-so that no twin goes unread for want of time. A signal in the slot before a
-read starts is no difference either: `revalidate()` returns `interrupted`, its
-own return beside the deadline's, and that target and every later one are
-`not-attempted` with `interrupted` and no reconciliation (T093; lead ruling
-R-95 (a)). The first target's revalidation is the preflight of every selected
-target: its steps 3 and 4 and its filesystem reads compare every selected
-target's registration, `locked` and filesystem identity, branch tip and
-upstream object, beside the merge-target SHA, and a difference on any target
-refuses the first target with that step's reason, nothing removed and later
-targets `not-attempted` with `batch-stopped`; step 5's `modules` check, listing
-and work-tree probe, and steps 6 to 8 (the target's ignored-file state,
+`modules` check and the listing, step 7's nested `.git` lstats (one `fs_call()`
+over its fresh listing's directories, counted in the filesystem budget), and
+step 8's read of `logs/HEAD`; the `modules` check that fails gave
+`contains-submodule` and the others `identity-changed` before R-208. `ENOENT` or
+`ENOTDIR` decides that the path is absent, which keeps the step's reason,
+`identity-changed` for an absent target, `.git` or administrative directory;
+step 8's missing `logs/HEAD` names no candidate. A read the work deadline cut is
+none: `revalidate()` returns its distinct `deadline-exceeded`, and that target
+and every later one are `not-attempted` with that reason and no reconciliation
+(T099; lead ruling R-80 P-2), `registry_twin()` giving it too when the deadline
+cut one of its reads, so that no twin goes unread for want of time. A signal in
+the slot before a read starts is no difference either: `revalidate()` returns
+`interrupted`, its own return beside the deadline's, and that target and every
+later one are `not-attempted` with `interrupted` and no reconciliation (T093;
+lead ruling R-95 (a)). The first target's revalidation is the preflight of
+every selected target: its steps 3 and 4 and its filesystem reads compare every
+selected target's registration, `locked` and filesystem identity, branch tip
+and upstream object, beside the merge-target SHA, and a difference on any
+target refuses the first target with that step's reason, nothing removed and
+later targets `not-attempted` with `batch-stopped`; step 5's `modules` check,
+listing and work-tree probe, and steps 6 to 8 (the target's ignored-file state,
 classification and worktree-only commits among them) read the target alone, in
 its own revalidation (research.md R16, lead ruling R-41; lane 3's W32 L2).
 After target k's removal child is reaped, its rescan runs steps 1 to 4 again,
@@ -709,7 +830,10 @@ path as not configured, doctor's credential presence checks read no file
 under it, the default projects directories and the workBenches root and
 marker are not taken from it, and a `~` target refuses with
 `relative-config-path` (`home_directory()`, `expand_user()`; lead rulings
-R-202 and R-205; lane H's `22f95d1`).
+R-202 and R-205; lane H's `22f95d1`). A stale entry's `recommendation` there
+is the baseline's text, except that where any row of the listing has a null
+`present` it ends with the warning against `git worktree prune`
+("Classification" above; T9, lead R-365).
 
 ### Child handle (D2; lead ruling R-30, research.md R14)
 

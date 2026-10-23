@@ -220,7 +220,8 @@ p clean "$R" --all-safe --apply --yes --json 2>/dev/null | python3 -m json.tool
 
 Expected: the tab path printed as `$'.../tab\u0009here'` and selected; the
 `\377` path shown with `\xff`, excluded as `unsupported-path-bytes` under the
-group line `  unsupported-path-bytes (1): rename the path to valid UTF-8`
+group line `  unsupported-path-bytes (1): move it to a valid UTF-8 path with git
+worktree move, or mv it and then git worktree repair NEWPATH`
 (lead ruling R-59 D8), with `path_valid_utf8: false` in the JSON, and still
 present after the apply; standard output of the apply parses as exactly one
 JSON document.
@@ -264,7 +265,8 @@ git diff -U0 main...HEAD -- project tests README.md AGENTS.md .github |
 # tests/test_status_doctor_update.py, tests/clean_support.py,
 # tests/launch_project.py, and tests/test_project.py (one method and one loader
 # line, T046 and T009); README.md; AGENTS.md; .github/workflows/tests.yml;
-# specs/004-project-clean-all-safe/ and the change's tasks.md.
+# specs/004-project-clean-all-safe/. The change's tasks.md is not listed: it is
+# main's copy (R-377).
 git diff --stat main...HEAD
 # 1.6.0 or later; the openspec first on some PATHs is 1.2.0.
 /usr/bin/openspec validate --all --strict

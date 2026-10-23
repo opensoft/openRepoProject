@@ -14,13 +14,17 @@ round 14, LQ-13's two, "A commit held only by the worktree" and "A
 worktree-only commit made after the plan", and round (c)'s "A work-tree probe
 at revalidation" (PR #19 at `2e819ad`), whose builds are on 004 at
 `93a3ae9`, each in its delta's order: 117 rows (lead rulings R-122, R-166 and
-R-196). The Delta
-column is the capability, the directory under `specs/`; the Requirement column
-is the `### Requirement:` title the scenario sits under; the Scenario column is
-the `#### Scenario:` title exactly. The Story column names the user stories
-(`spec.md`, US1 to US9) whose test tasks in `tasks.md` list the scenario, each
-one when two stories test it. The Tests column names the test methods that
-cover the scenario.
+R-196), and, since doc round 26, round (q)'s five scenarios (PR #19 at
+`818311a`; lead R-389), whose builds are on 004 at `da5502d` and, for the last,
+`d8724e2`: 122 rows, and, since doc round 26, Part D, round (r)'s two scenarios
+(PR #19 at `4512441`; lead R-396), "A nested repository made after the plan" and
+"A stale entry's recommendation", whose builds are on 004 at `5eeaedd` and
+`da5502d`: 124 rows. The Delta column is the capability, the directory under
+`specs/`; the Requirement column is the `### Requirement:` title the scenario
+sits under; the Scenario column is the `#### Scenario:` title exactly. The
+Story column names the user stories (`spec.md`, US1 to US9) whose test tasks in
+`tasks.md` list the scenario, each one when two stories test it. The Tests
+column names the test methods that cover the scenario.
 
 | Delta | Requirement | Scenario | Story | Tests |
 | --- | --- | --- | --- | --- |
@@ -141,18 +145,25 @@ cover the scenario.
 | project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | A relative configuration path in status, doctor and update | US9 | `test_status_a_relative_configuration_path_in_status_doctor_and_update`, `test_status_a_relative_configuration_path_in_status_doctor_and_update_home_beginning_with_tilde` |
 | project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | An edit that keeps its size and restores its mtime | US9 | none named after it at `e8dda2a` (a gap; below) |
 | project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | Trace targets are never written | US9 | `test_status_trace_targets_are_never_written`, `test_status_trace_targets_are_never_written_by_any_kind_of_child` |
+| project-clean-review-safety (PR #19 draft) | Cleanup preserves all local work not proven disposable | A repository nested in a tracked directory | US2 | `test_clean_a_repository_nested_in_a_tracked_directory` |
+| project-clean-review-safety (PR #19 draft) | Cleanup preserves all local work not proven disposable | The main worktree inside a linked worktree | US2 | `test_clean_the_main_worktree_inside_a_linked_worktree` |
+| project-clean (PR #19 draft) | Clean can explicitly retire verified worktrees | Two worktree paths that differ only in case | US2 | `test_clean_two_worktree_paths_that_differ_only_in_case` |
+| project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | A case-variant untracked file | US9 | `test_status_a_case_variant_untracked_file` |
+| project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | A stale entry beside a worktree whose path cannot be read | US9 | none named after it at `703b58c` (a gap; below) |
+| project-clean-review-safety (PR #19 draft) | Cleanup revalidates destructive actions | A nested repository made after the plan | US4 | none named after it at `703b58c` (a gap; below) |
+| project-clean (PR #19 draft) | Clean classifies preservation and cleanup actions | A stale entry's recommendation | US2 | none named after it at `703b58c` (a gap; below) |
 
 T126's writer fills the Tests cells from the merged tests (lead ruling R-32b).
 
-The last seventeen rows are PR #19's draft scenarios, from branch
+The last twenty-four rows are PR #19's draft scenarios, from branch
 `change/amend-clean-all-safe-push-pins`, not yet on `main`; each Delta cell
 carries the mark "(PR #19 draft)". T002 and T126 name their titles, and read
 the others from `main`'s deltas.
 
 A test goes in a row only when its name begins with its scenario's title, as
-rule 1 and T126 require (lead ruling R-98 (a) 2). Three of PR #19's scenarios
-have no test so named at `28db786`, though tests cover them; each is a gap,
-not a missing check (lead ruling R-166):
+rule 1 and T126 require (lead ruling R-98 (a) 2). Six of PR #19's scenarios
+have no test so named at `703b58c`, though tests cover them; each is a gap, not
+a missing check (lead ruling R-166):
 
 - "Branch deletion refuses a branch it may not delete" (round (a)): by
   `test_clean_a_branch_deletion_of_the_default_branch_is_refused`,
@@ -167,7 +178,10 @@ not a missing check (lead ruling R-166):
   scenario either.
 - "An edit that keeps its size and restores its mtime" (LQ-10): by
   `test_status_the_pinned_status_configuration_sees_a_same_size_edit`, named
-  after "The pinned status configuration" (T012).
+  after "The pinned status configuration" (T012); since lane 3's W115 LOW-2
+  (T15; lead R-373 and R-385, writer's `e702a65`) it also pins row 116's
+  `--all-safe --apply --yes` arm, which leaves the worktree and the edit, so
+  that the name is the gap and no check is missing.
 - "A work-tree probe at revalidation" (round (c), `2e819ad`): its first arm,
   a decided other work tree giving `identity-changed`, by
   `test_clean_a_linked_worktree_whose_work_tree_is_redirected_after_the_plan`
@@ -176,10 +190,50 @@ not a missing check (lead ruling R-166):
   the lead's R-171; writer G's `6dec3f4`; since R-287 its cases are a probe
   that prints nothing or P's own path with no closing line feed, which is
   `state-changed`, and two lines, which are one other path and so
-  `identity-changed`), with the probe's place after the
-  filesystem checks by
+  `identity-changed`), with the probe's place after the filesystem checks by
   `test_clean_a_redirected_work_tree_beside_a_later_check_s_difference` (T083;
-  the lead's R-198; writer G's `963fccf`).
+  the lead's R-198; writer G's `963fccf`). Lane 3's W115 LOW-3 (T15; lead R-373
+  and R-385, writer's `e702a65`) adds the arm on real Git,
+  `test_clean_a_work_tree_probe_that_exits_128_at_revalidation_on_real_git`
+  (T030): Git's own `rev-parse --show-toplevel` exiting 128 in P at
+  revalidation refuses P `state-changed`, nothing is removed, and the second
+  target is `not-attempted` with `batch-stopped`; its name does not begin with
+  the title either.
+- "A stale entry beside a worktree whose path cannot be read" (round (q), PR
+  #19 at `818311a`; R-365's T9, ruled by Brett Heap on 2026-10-23, "Yes, add T9
+  (Recommended)"; lead R-365): by
+  `test_status_a_stale_worktree_beside_an_unread_row_warns_against_prune`
+  (T115), named after neither the scenario's title nor "A deleted upstream in
+  status and doctor".
+- "A nested repository made after the plan" (round (r), PR #19 at `4512441`,
+  its `project-clean-review-safety` delta, "Cleanup revalidates destructive
+  actions"; lane 3's W133 MEDIUM-2; lead R-391 and R-395): by
+  `test_clean_revalidate_refuses_a_repository_nested_after_the_plan` (T045;
+  writer's `5eeaedd`), in process: a repository `git init`-ed after the plan in
+  a tracked directory of the first target, where Git's own status prints
+  nothing, makes `revalidate()` refuse that target `contains-submodule`, the
+  other passes, and the nested repository remains; and, for step 7's `lstat` of
+  `<dir>/.git` that fails or is cut,
+  `test_clean_revalidate_a_nested_git_lstat_that_fails_or_is_cut` (T045;
+  writer's `703b58c`): `state-changed`, `state-changed` and
+  `deadline-exceeded`. Neither name begins with the title. No test runs the
+  scenario through `--apply`, so its exit status 2 and the later target's
+  `not-attempted` with `batch-stopped` are pinned for a `contains-submodule`
+  refusal only by `test_clean_submodules_after_confirmation` (T083), whose
+  difference is a `modules` directory, not a nested `.git`.
+- "A stale entry's recommendation" (round (r), PR #19 at `4512441`, its
+  `project-clean` delta, "Clean classifies preservation and cleanup actions";
+  lane 3's W133 MEDIUM-4; lead R-391; Brett Heap's Q3 (b), ruled on
+  2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9", lead R-380; writer's
+  `da5502d`): by `test_clean_report_advice_for_the_main_worktree_and_a_locked_stale_row`
+  (T028), where an unlocked stale row beside rows whose paths can all be read
+  takes `recommendation_stale_worktree` in the plain report, and
+  `test_clean_a_stale_row_beside_an_unread_row_warns_against_prune` (T061),
+  whose last arm, the unread row's path readable again, pins the plain text in
+  the report's human lines and in the `worktrees` rows of `--json`; the text
+  itself, RECOMMENDATIONS's with the dry-run warning, is pinned by
+  `test_clean_row_evidence_never_recommends_a_step_git_refuses` (T028). None is
+  named after the title.
 
 "Push refuses a branch it may not push" names lane A's addendum 5 test
 (`f0e4945`, on 004 at `598929b`), which pins the baseline's `No unique linked
@@ -353,7 +407,26 @@ warning with `git worktree remove` and `git gc` named:
 `test_clean_an_unread_row_beside_a_redirected_row` and
 `test_clean_a_stale_row_beside_an_unread_row_warns_against_prune`; and
 `tests/clean_support.py`'s nine fixtures (T011).
-The work-tree probe's output read as one path (lane 3's W70 M-2, R-287):
+R-365 (ruled by Brett Heap on 2026-10-23, "Yes, warn (Recommended)" for lane
+3's W52 F-1 (b) and "Yes, add T9 (Recommended)" for T9; lead R-365; writer's
+`7a20789`, merged as `d8724e2`) added three tests:
+`test_clean_the_prune_note_beside_an_unread_row_warns_against_prune` (T091),
+`test_clean_the_ceiling_s_prune_note_beside_an_unread_sibling_warns_against_prune`
+(T089) and, in `tests/test_status_doctor_update.py`,
+`test_status_a_stale_worktree_beside_an_unread_row_warns_against_prune`
+(T115); changed two, which passed `partial_removal_text()` its new second
+argument as `False`:
+`test_clean_the_ceiling_s_partial_removal_note_follows_the_git_file_and_the_entry`
+(T091) and
+`test_clean_rescan_reads_the_git_file_where_the_entry_and_the_path_remain`
+(T085); and gave `tests/clean_support.py` one more fixture,
+`partial_removal_note_prune_unread` (T011). Brett Heap's Q3 (a) (doc round 26,
+below) supersedes all of it but the third test: the first two are replaced by
+`test_clean_the_ceiling_s_second_note_names_no_prune_beside_any_row` (T091) and
+`test_clean_the_ceiling_s_second_note_beside_an_unread_sibling_names_no_prune`
+(T089), the second argument and the fixture are gone, and the two changed tests
+read `partial_removal_text(target)` again. The work-tree probe's output read as
+one path (lane 3's W70 M-2, R-287):
 `test_clean_effective_work_tree_reads_its_output_as_one_path`,
 `test_clean_a_work_tree_probe_whose_output_is_empty_or_ends_in_no_line_feed` and
 `test_clean_a_redirected_linked_worktree_whose_path_holds_a_line_feed` (T030),
@@ -371,3 +444,121 @@ Doc round 24 (the lead's R-360; lane 3's W102 and W108): T030's spy clause is
 row 4b's subtest alone, T128's bound is for an idle `py-bench` and records the
 measured times, and `hand-runs.md` records that the hand runs are owed again
 at the landing head. No test name changes.
+
+Doc round 25 (the lead's R-365 and R-377): R-365's three tests are listed
+above. Feature 004 no longer edits change 1's `tasks.md` (R-377): Path
+Conventions and T133 say that PR #19's round (p) carries its hunks, T131 no
+longer lists the file among those this branch may change, and T133's verify
+reads it as `main`'s copy. `hand-runs.md` names R-365 among the changes since
+its walk. Its head sentence read `d8724e2`.
+
+Doc round 26 (the lead's R-373, R-374, R-380, R-385 and R-389; Brett Heap's Q1
+to Q3, ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; the build's
+writers' `e702a65`, `9d5c2fb`, `5eeaedd` and `da5502d` on `impl/004-q-build`,
+merged as `ff12f47`): the tests below are named in their tasks. A-items, in
+`tests/test_clean_evidence.py` unless said otherwise: T7's
+`test_clean_a_nul_byte_in_a_worktree_s_git_file_or_commondir_makes_its_row_inspection_error`,
+`test_clean_a_tracking_branch_no_ref_can_hold_names_no_local_branch` and
+`test_clean_a_manifest_name_with_a_lone_surrogate_is_no_candidate_and_no_ref_pattern`
+(T030); T10's
+`test_clean_a_branch_named_detached_is_classified_by_its_upstream` and
+`test_clean_a_merge_target_named_detached_protects_no_detached_row` (T029),
+and, in `tests/test_clean_push.py`,
+`test_clean_a_branch_named_detached_is_held_by_its_own_worktree_and_by_no_detached_row`
+(T073); T19's
+`test_clean_a_failed_row_7_makes_each_present_row_on_a_branch_inspection_error`
+(T029); T15's
+`test_clean_a_work_tree_probe_that_exits_128_at_revalidation_on_real_git`
+(T030), which row 111's gap note above names, and the new arm of
+`test_status_the_pinned_status_configuration_sees_a_same_size_edit` (T012),
+which row 116's does; and the changed `test_clean_ladder_is_a_pure_function`
+(T028), `test_clean_row_evidence_assembles_a_row_from_literal_reads` (T029),
+`test_clean_control_character_and_non_utf_8_paths` in
+`tests/test_clean_paths.py` (T14; T110) and
+`test_clean_the_plain_report_exits_by_completeness` in
+`tests/test_clean_bounds.py` (LOW-5; T096). Q1:
+`test_status_a_case_variant_untracked_file` and
+`test_clean_two_worktree_paths_that_differ_only_in_case` (T012), in their rows,
+and the pin lists of `test_clean_pins_are_on_every_argv` (T012),
+`test_clean_git_s_own_check_runs_on_the_pinned_configuration` (T082) and
+`test_status_the_pinned_status_configuration` (T116), and the pin lists of
+`tests/test_clean_apply.py` (T045), `tests/test_clean_result.py` (T089),
+`tests/test_clean_runner.py` and `tests/test_status_doctor_update.py` (T116),
+which read `core.ignoreCase=false` as the fifth status pin, the removal's
+sixth. Q2: in `tests/test_clean_gates.py`,
+`test_clean_a_repository_nested_in_a_tracked_directory` and
+`test_clean_a_nested_git_lstat_that_fails` (T063),
+`test_clean_the_main_worktree_inside_a_linked_worktree` and
+`test_clean_enclosing_rows_decides_on_literal_values` (T061);
+`test_clean_hidden_state_parser_names_the_directories_that_hold_an_entry` in
+`tests/test_clean_parsers.py` (T014) and
+`test_clean_revalidate_refuses_a_repository_nested_after_the_plan` in
+`tests/test_clean_apply.py` (T045). Q3 (a) and (b), besides the two replaced
+tests above: the changed
+`test_clean_the_ceiling_s_recovery_text_follows_the_git_file_and_the_entry`
+(T089),
+`test_clean_the_ceiling_s_partial_removal_note_follows_the_git_file_and_the_entry`
+(T091),
+`test_clean_rescan_reads_the_git_file_where_the_entry_and_the_path_remain`
+(T085), `test_clean_row_evidence_never_recommends_a_step_git_refuses` and
+`test_clean_report_advice_for_the_main_worktree_and_a_locked_stale_row` (T028),
+`test_clean_a_redirected_worktree_s_incomplete_plan_names_the_unset` and
+`test_clean_a_stale_row_beside_an_unread_row_warns_against_prune` (T061),
+`test_clean_row_cap_and_planning_failures` (T097) and
+`test_clean_paths_and_empty_plans` (T038), with `tests/clean_support.py`'s
+fixtures (T011): the new `recommendation_stale_worktree`, the dry-run warning
+on `recommendation_stale_locked`, `remedy_inspection_incomplete`,
+`remedy_inspection_incomplete_redirect`, `remedy_inspect_cap` and the next
+steps of `registration-mismatch` and `inspection-error`, the new
+`unsupported-path-bytes` step, and `partial_removal_note_prune` in its new
+form, `partial_removal_note_prune_unread` being removed. No test name changes
+beyond the two replaced ones. Round (q)'s five scenarios have rows above; its
+head sentence read `da5502d`.
+
+Doc round 26, Part C (the lead's R-393; Brett Heap's Q4, Q5, Q8 and Q9 (b),
+ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; the
+build's writers' `c6daebc`, `c28c9ea`, `70345ee`, `338edb0` and `703b58c` on
+`impl/004-q-build`, merged as `c81b948`). Q4:
+`test_clean_the_partial_removal_note_names_its_check_first` (T091), and the
+changed `test_clean_only_tracked_file_deletions`,
+`test_clean_a_locked_worktree_s_partial_removal_note_unlocks_it_first`,
+`test_clean_the_stop_block`,
+`test_clean_the_ceiling_s_partial_removal_note_follows_the_git_file_and_the_entry`
+and `test_clean_the_ceiling_s_second_note_names_no_prune_beside_any_row`
+(T091), `test_clean_a_removal_past_the_hard_ceiling`,
+`test_clean_the_ceiling_s_recovery_text_follows_the_git_file_and_the_entry` and
+`test_clean_the_ceiling_s_second_note_beside_an_unread_sibling_names_no_prune`
+(T089), with `test_clean_a_worktree_holding_a_submodule_is_never_offered`
+(T063, which has its row), which pins the new `contains-submodule` step. Q5:
+`test_clean_gate_7_s_step_names_the_checks_of_the_gates_that_did_not_run`
+(T060), and the changed
+`test_clean_twenty_rows_pass_every_gate_before_deferred_target_cap` and
+`test_clean_deferred_rows_that_will_not_drain_name_the_gates_after_the_cap`
+(T097). Q8: `test_clean_evidence_the_status_warning_rule_counts_every_line` and
+`test_clean_evidence_refs_heads_head_makes_every_row_inspection_error` (T030);
+the scenario "A git that floods standard error" now reads, in #19's round (q),
+that the row is `inspection-error` with `probe-failed`, which its row's
+`test_status_a_git_that_floods_standard_error` already pinned. Q9 (b):
+`test_clean_a_registered_path_that_is_a_symbolic_link` (T061), a requirement's
+clause that no scenario names. Q2 (2):
+`test_clean_revalidate_a_nested_git_lstat_that_fails_or_is_cut` (T045).
+`tests/clean_support.py`'s fixtures change with them (T011):
+`partial_removal_note`, `partial_removal_note_locked` and `non_drain_line` in
+their new forms, the new `partial_removal_note_ceiling`, and the new
+`unstarted-branch`, `reflog-unavailable` and `contains-submodule` next steps.
+No scenario is added and no test name changes; T127's verify exempts two more
+old spans of main's `design.md` D18 (T127). The head sentence reads `703b58c`.
+
+Doc round 26, Part D (lane 3's W133 MEDIUM-2 and MEDIUM-4; the lead's R-391,
+R-395 and R-396; PR #19's round (r) at `4512441`). Its two new scenarios,
+"A nested repository made after the plan" (`project-clean-review-safety`,
+"Cleanup revalidates destructive actions") and "A stale entry's
+recommendation" (`project-clean`, "Clean classifies preservation and cleanup
+actions"), are rows 123 and 124 above (124 rows; T002 and T126 count them),
+each a named gap because no test's name begins with its title: the gap notes
+above name the tests that cover them, all already built and listed in the
+paragraphs above and in their tasks (T045, T028 and T061), so that no test is
+added and no test name changes. Revalidation's step 7 re-runs the hidden-state
+probe's listing and, over its directories, the nested `.git` lstats of Q2 (2),
+which the contract, the data model, the README and FR-046 and FR-047 now say
+(`project` unchanged since `703b58c`). The head sentence reads `703b58c`.

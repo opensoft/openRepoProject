@@ -23,15 +23,26 @@ e48de37 on 2026-10-21 from about 09:15Z to 09:36Z, matched every run
   - the push fix, Q9 B's trace names, Brett Heap's rulings LQ-10 to LQ-15,
     and the fix lanes.
 
-Note, 2026-10-23 (lead ruling R-360): the walk recorded here is at `project`
-e69f6ef. Since then `project` has changed (`git diff --shortstat e69f6ef
-d6bac50 -- project`: 1 file changed, 669 insertions(+), 114 deletions(-)):
-R-284's note; T1 to T8, the no-prune texts (R-319, R-321); the closed-stdout
-refusal (R-322); W90's fix (R-329, R-335); rows 4b and 4c (R-332, R-336); and
-R-324's texts (R-343). The hand runs are therefore owed again at feature 004's
-landing head. As T132 and R-50 require, the lead walks them through tmux, or
-Brett Heap does; no subagent dispatches them. The record of the earlier walk
-above and below is unchanged.
+Note, 2026-10-23 (lead rulings R-360, R-365, R-373, R-374 and R-380): the walk
+recorded here is at `project` e69f6ef. Since then `project` has changed (`git
+diff --shortstat e69f6ef 703b58c -- project`: 1 file changed, 1018
+insertions(+), 173 deletions(-)): R-284's note; T1 to T8, the no-prune texts
+(R-319, R-321); the closed-stdout refusal (R-322); W90's fix (R-329, R-335);
+rows 4b and 4c (R-332, R-336); R-324's texts (R-343); R-365's status
+recommendation beside an unread row (ruled by Brett Heap on 2026-10-23), and
+its ceiling note beside one, which Q3 (a) replaced; the A-items (R-373, R-374),
+`unsupported-path-bytes`' next step among them; and Brett Heap's Q1 to Q5, Q8
+and Q9 (b) (ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9";
+R-380): the fifth status pin, the nested `.git` and the enclosing row, the
+ceiling's note that names the administrative directory, the dry-run warning on
+the plain prune texts, the check first in a report row's partial-removal note,
+the submodule-commit warning in `contains-submodule`'s step, gate 7's two steps
+that name the later gates' checks, the non-drain line that defers to each
+group's step, a blank line as a warning of the status probe, and a symbolic
+link as a registration mismatch. The hand runs are therefore owed again at
+feature 004's landing head. As T132 and R-50 require, the lead walks them
+through tmux, or Brett Heap does; no subagent dispatches them. The record of
+the earlier walk above and below is unchanged.
 
 - Terminal: a tmux pane (a pseudo-terminal) in the py-bench container,
   window `openRepoProject-2-pyBench:handruns`. Pane 0 ran the commands;
