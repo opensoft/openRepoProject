@@ -13,9 +13,10 @@ duplicate them.
   on change 1's text at `961c405` and PR #19's at `c462d87` (`d66d02c`),
   `design.md` D7 also stating its fit at PR #19's `6f2cb54`, `a664799`,
   `9267303` and `f0bf538` (rounds A9 to A12, rulings A-37 to A-42) and on its
-  measured basis at `662be89`, unchanged at `88d0d36`, at `818311a` and at its
-  current head `4512441` (rounds A16 to A26, rulings A-47, A-57, A-62, A-64,
-  A-67, A-71, A-75, A-78, A-84, A-86, A-106 and A-110), the joint fit with the
+  measured basis at `662be89`, unchanged at `88d0d36`, at `818311a`, at
+  `4512441` and at its current head `54e869b` (rounds A16 to A27, rulings A-47,
+  A-57, A-62, A-64, A-67, A-71, A-75, A-78, A-84, A-86, A-106, A-110 and A-119),
+  the joint fit with the
   cache change also at that change's own 3.7 s
   (round A13, ruling A-44),
   `design.md` D8 giving a holder that is the main worktree its own next step
@@ -219,7 +220,17 @@ duplicate them.
   A-50's note re-run), with A-107 recorded, by `d28329a` (the spec delta,
   LOW-3 and Q9 (c)), `07e8bc1` (the design) and the commit that edits the
   proposal's body, records the round's table and updates this task; verified
-  by "Re-read and Codex Findings (round A26)" in `proposal.md`.
+  by "Re-read and Codex Findings (round A26)" in `proposal.md`. Round A27, on
+  `052fee0`, applied the lane's ruling A-119, with A-111 to A-118 (lane
+  openRepoProject-3's W138 confirm read of round A26, 0 HIGH, 0 MEDIUM, 0 LOW
+  and 5 OBS, its OBS-1 under A-112 and A-115; its W146 read of PR #19's round
+  (s), under A-117; and PR #19's rounds (s) at `dab8a64` and (t) at `54e869b`,
+  accepted under lane openRepoProject-2's R-412 and R-415, round (t) building
+  Brett Heap's "yes, recommended for M1 and M3", R-413: the currency, A-50's
+  note re-run and M1 and M3 named as ruled), by `e76ee75` (the spec delta,
+  OBS-1), `f6ba086` (the design) and the commit that edits the proposal's
+  body, records the round's table and updates this task; verified by
+  "Re-read and Codex Findings (round A27)" in `proposal.md`.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md`
   modifies five requirements and adds one (72 scenarios: 43 carried unchanged
   from change 1 and PR #19, 6, 14, 10, 5 and 8 by block, and 29 added, the
@@ -274,25 +285,28 @@ duplicate them.
   quoted for the shell", under ruling A-106, and round A26 adding no
   scenario, editing that sentence and that AND again, and adding one sentence
   to the ADDED requirement and one AND to "A single target with the flag
-  equals a one-item batch", under ruling A-110),
+  equals a one-item batch", under ruling A-110, and round A27 adding no
+  scenario, editing one reason clause of the ADDED requirement's
+  main-worktree holder line, under ruling A-119),
   `specs/project-clean-review-safety/spec.md` modifies one (4 scenarios: 3
   carried, 1 added, whose THEN round A24 edits and to which it adds an AND),
   and `specs/project-command/spec.md` modifies one on
   PR #19's text (9 scenarios carried, none added; agreed by lane
   openRepoProject-2 on 2026-10-19 and committed in `16051d1`, ruling A-20; at
-  PR #19's `4512441`, as at `818311a`, its source block differs in its text,
-  by Q1's pin, Q8's warned-probe rule, which round (r) qualifies to Git's
-  default `core.warnAmbiguousRefs`, and T9's "Stale entries:" paragraph, whose
-  plain text PR #19's owed round (s) may still change, and in ten of its
-  sixteen scenarios, which 2.2's re-read takes, this block's text staying
-  `c462d87`'s, rulings A-106 and A-110),
+  PR #19's `54e869b`, as at `4512441` and `818311a`, its source block differs
+  in its text, by Q1's pin, Q8's warned-probe rule, which round (r) qualifies
+  to Git's default `core.warnAmbiguousRefs`, and T9's "Stale entries:"
+  paragraph, which Brett Heap's M1 (a) keeps (R-413), PR #19's rounds (s) and
+  (t) changing no line of that delta, and in ten of its sixteen scenarios,
+  which 2.2's re-read takes, this block's text staying `c462d87`'s, rulings
+  A-106, A-110 and A-119),
   every scenario of
   each modified requirement's source text kept byte for byte; `design.md`
   holds D1 to D10 (`8341954`, `d0b33ce`, and the commit titled 'Settle which
   later targets carry branch-retention-stop'), revised by the alignment fix
-  round (1.2), the council round (1.3) and rounds A3 to A26; verified
+  round (1.2), the council round (1.3) and rounds A3 to A27; verified
   by `grep -c '^#### Scenario:'` on each spec file and by a scenario-carry
-  script run after the council round and again after rounds A3 to A26
+  script run after the council round and again after rounds A3 to A27
   over all seven MODIFIED blocks, every source scenario present byte for byte
   and in order.
 - [x] 1.5 Validation passes: `/usr/bin/openspec validate
@@ -301,7 +315,7 @@ duplicate them.
   `/usr/bin/openspec status --change add-project-clean-branch-retirement
   --json` shows every artifact done; verified by running the three on this
   branch after 1.4, after the alignment fix round, after the council round
-  and after rounds A3 to A26
+  and after rounds A3 to A27
   (build 1.13.1, which notes only as INFO that archive would refuse the
   MODIFIED blocks whose base still sits in change 1).
 - [ ] 1.6 Ratified by Brett Heap's word on the pull request, quoted with its
@@ -329,8 +343,10 @@ duplicate them.
   reports local worktree state", written on change 1's text at `961c405` and
   modified by no open change but PR #19, the amendment of change 1, which adds
   to it, beyond round (l)'s AND, its `relative-config-path` paragraph, its
-  scenario "A relative configuration path" and a changed "The plain report
-  exits by completeness" (the reader RD's L1 of 2026-10-23; ruling A-100), is
+  scenario "A relative configuration path", a changed "The plain report
+  exits by completeness" (the reader RD's L1 of 2026-10-23; ruling A-100) and,
+  since its round (t), the scenario "A worktree whose path holds the main
+  worktree" (Brett Heap's M3 (a), R-413; ruling A-119), is
   re-read against change 1's archived text, that amendment included, and
   re-copied from it with this change's one clause, so that no
   amendment of change 1 is reverted by this change's archive (lane
