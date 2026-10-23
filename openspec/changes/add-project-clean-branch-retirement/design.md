@@ -189,7 +189,11 @@ deltas edit the ADDED requirement's `branch_retirement` fields, its summary,
 four ADDED scenarios, and edit the review-safety scenario's THEN and add an AND
 to it (proposal, "Re-read and Codex Findings (round A24)"); PR #19's round
 (p), its F-1 (b) and the other items that wait on it or on Brett Heap's Q8 are
-round A25's (ruling A-100).
+round A25's (ruling A-100). Its ruling A-103, on the writer's five decisions,
+maps to D8 (the main-worktree holder line, which names the detach or a checkout
+of MERGE_TARGET there, one text whatever the upstream's state, narrowing A-45)
+and Risks (the checkout's residual); the spec deltas edit that line's template
+and the two literals of the scenario that carries it, adding no scenario.
 
 Citations follow `proposal.md`: packet files at `da33d92`, `CAS` for change 1,
 `APO` for change 2, `project:N` and `tests:N` at `961c405`, all but the packet
@@ -1784,19 +1788,23 @@ as amended, Codex's P2 on `9ff8202`).
       A-101);
     - for the main worktree, which Git refuses to remove (`worktree remove` of
       it exits 128, "is a main working tree"), `next: BRANCH is checked out
-      at PATH2, the main worktree; switch it off BRANCH, by checking out
-      another branch there, such as MERGE_TARGET, or by detaching it;
-      BRANCH's reflog was proven merged into MERGE_TARGET only at this run's
-      plan; inspect git -C ROOT reflog show refs/heads/BRANCH before
-      retrying: RETRY` (ruling A-45, Codex's P2 on `1bf217c`; Context; the
-      inspection under ruling A-60, since neither the plan's keep nor the
-      rescan's re-proves the reflog, in ruling A-63's words), which names a
-      detach too because a checkout of MERGE_TARGET is refused while a linked
-      worktree holds it, and which reads `by checking out MERGE_TARGET there
-      or by detaching it` when the branch's upstream remote-tracking ref is
-      absent, since Git then judges the retry against that worktree's `HEAD`,
-      which another branch that lacks BRANCH would make the retry fail (the
-      reader RA2's L4; Context);
+      at PATH2, the main worktree; switch it off BRANCH, by detaching it with
+      git -C PATH2 switch --detach, which changes none of its files, or by
+      checking out MERGE_TARGET there; BRANCH's reflog was proven merged into
+      MERGE_TARGET only at this run's plan; inspect git -C ROOT reflog show
+      refs/heads/BRANCH before retrying: RETRY` (ruling A-45, Codex's P2 on
+      `1bf217c`, as ruling A-103 narrows it; Context; the inspection under
+      ruling A-60, since neither the plan's keep nor the rescan's re-proves
+      the reflog, in ruling A-63's words), one text whether the branch's
+      upstream remote-tracking ref is present or absent: the detach comes
+      first, since it changes no file and Git refuses a checkout of
+      MERGE_TARGET while a linked worktree holds it; the checkout it names is
+      of MERGE_TARGET alone, since with that ref absent Git judges the retry
+      against that worktree's `HEAD`, which another branch that lacks BRANCH
+      would make the retry fail (the reader RA2's L4; Context), and a
+      checkout of another branch, which A-45's text named, adds the silent
+      overwrite of an ignored file at a path that branch tracks (Context,
+      round A24; ruling A-103, which drops "another branch there, such as");
     - otherwise, `next: BRANCH is checked out at PATH2; HOLD`, HOLD being
       `save its own work, uncommitted, ignored or flagged assume-unchanged or
       skip-worktree, by keeping that worktree and switching it off BRANCH with
@@ -2181,9 +2189,24 @@ proposal puts it before Brett Heap with L-4's recommendation.
   no-prune clause for one whose path could not be read; and otherwise its own
   work named and a detach, which changes none of its files, then
   `delete-branch` after the reflog inspection, the main worktree switched off
-  the branch by a checkout or a detach (rulings A-45 and A-98; D8). No line
+  the branch by a detach or a checkout of MERGE_TARGET (rulings A-45, A-98 and
+  A-103; D8). No line
   tells the person to remove a holder that the plan excluded, or this run
   refused, for its local state, or one that this run did not read.
+- [A checkout of MERGE_TARGET in the main worktree overwriting an ignored file]
+  -> A residual (ruling A-103): every step that advises checking out
+  MERGE_TARGET in the main worktree, or its tip TARGET_SHA detached there,
+  inherits Git's silent overwrite of an ignored file at a path that
+  MERGE_TARGET tracks, as a checkout of any branch that tracks that path does,
+  with exit 0 (Context, round A24): the `head-not-merge-target` lines, the
+  `git-refused` lines with the upstream ref absent, the holder lines' step
+  for `head-not-merge-target`'s condition, and the main-worktree holder line,
+  which names the detach first, which changes no file. The steps keep the
+  checkout because with the upstream's remote-tracking ref absent Git judges
+  the retry against the main worktree's `HEAD`, which the merge target, or a
+  detach at a commit that holds BRANCH, satisfies (Context); the person runs
+  the checkout, never the run, and Git refuses one that would overwrite a
+  tracked file's or a flagged file's change.
 - [A branch moved after its re-proof and moved back before the post-check]
   -> The moved line covers a branch that the post-check finds at another head
   (D8). Two moves by a concurrent writer, both after the re-proof and before
