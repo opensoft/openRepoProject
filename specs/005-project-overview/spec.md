@@ -8,9 +8,10 @@ Lane: openRepoProject-4
 
 **Status**: Draft. Created before feature 004 merges, on Brett Heap's word
 (below), and planned before it on his word of 2026-10-22, "lane 4 plans 005
-now" (the plan at `a80f10b`, its revisions 1 and 2 at `aeb0bb2` and `6fb619c`);
-the tasks and the implementation still wait for his word, as the implementation
-does for feature 004's merge into `main` (Clarifications, C-56).
+now" (the plan at `a80f10b`, its revisions 1 to 4 at `aeb0bb2`, `6fb619c`,
+`664461f` and `06b16e1`); the tasks and the implementation still wait for his
+word, as the implementation does for feature 004's merge into `main`
+(Clarifications, C-56).
 
 **Input**: User description: "Realize the ratified OpenSpec change
 add-project-overview: a read-only `project overview [--root D]...
@@ -679,8 +680,12 @@ that lane agreed on 2026-10-21 to carry it in.
   plans 005 now", recorded by lane openRepoProject-4 as a RULED line at
   19:49:51Z (issue #10), the plan step starts before that merge, as C-21's word
   moved the specify step: the plan was committed at `a80f10b`, its revisions 1
-  and 2 at `aeb0bb2` and `6fb619c`, and the tasks and the implementation still
-  wait for his word. Where applied: header, Status; Assumptions; Dependencies.
+  and 2 at `aeb0bb2` and `6fb619c`, its revision 3 at `664461f` (R20's five
+  chosen and six open items after C-72; O11's part 1 built, its part 2 held)
+  and its revision 4 at `06b16e1` (D5's clause 2 only through O6's text; C-72's
+  ordering sentence; feature 004 read at `d6bac50` and #19 at `88d0d36`), and
+  the tasks and the implementation still wait for his word. Where applied:
+  header, Status; Assumptions; Dependencies.
 - **C-57** Q: Should the overview's tests also run in the Git 2.36 floor job?
   -> A: Q3 B: A small set: the version check accepting Git 2.36, and one
   end-to-end run over a fixture with linked worktrees, merge targets and a
@@ -957,8 +962,8 @@ that lane agreed on 2026-10-21 to carry it in.
   D5's clause 2 case (FR-006); and O6 (A) and O7, item 10's parts 1 and 2, the
   warning beside a row whose path could not be read (FR-028, FR-009, FR-035).
   D5's clause 2, item 8's case, was taken through O6's recommended text in R20
-  at `7af798a`, which carried it; lane openRepoProject-3's W105 asked that he
-  confirm it directly, and the lead has put it to him in lane
+  at `7af798a`, which carried it; lane openRepoProject-3 asked, on W105's
+  OBS-1, that he confirm it directly, and the lead has put it to him in lane
   openRepoProject-4's pane, so that until he answers it rests on that text.
   Five stay open for his direct word: O3, item 7's count (FR-020, EC-032); O5,
   item 9, #19 round (j)'s reading of the work-tree probe (FR-007); O8, the
@@ -971,11 +976,13 @@ that lane agreed on 2026-10-21 to carry it in.
   extension) and O5 (item 9, owed under it); O1, O2, O4, O6 and O7 (items 2, 6,
   8 and 10) rest on his word for change 2 and on #19's rounds, and reach A1 in
   the same re-alignment commit, which follows #19's ratification, he reviewing
-  the final text before #34 merges; the open O3 and O8 (items 7 and 10) and O11
-  (item 11) rest on his word for change 2 too. So this spec records his word
-  and follows A1 as ratified until A1's re-alignment lands, changing no
-  requirement ahead of it. Where applied: FR-006; FR-007; FR-008; FR-009;
-  FR-020; FR-028; FR-034; FR-035; EC-020; EC-032; User Story 8; Dependencies.
+  the final text before #34 merges; the open O3 and O8 (items 7 and 10), O11's
+  part 2 (item 11) and, should he take (C), O9 wait on his word for change 2
+  too, and O11's part 1 is a text re-alignment on a lane finding for his
+  review. So this spec records his word and follows A1 as ratified until A1's
+  re-alignment lands, changing no requirement ahead of it. Where applied:
+  FR-006; FR-007; FR-008; FR-009; FR-020; FR-028; FR-034; FR-035; EC-020;
+  EC-032; User Story 8; Dependencies.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -1828,8 +1835,9 @@ path"; "Non-UTF-8 common directory".
   read set for another remote's branch, giving an `unpublished` warning,
   the direction in which the overview errs (design D9, Risks).
 - **EC-012**: A gitfile repository whose checkout lies outside every root
-  reads `unsupported-layout`, an error; adding the checkout's parent with
-  `--root` names it (design, Risks; N-6).
+  reads `unsupported-layout`, an error (its unset `core.worktree` reading as no
+  value, which FR-008 notes against A1's failure table; O11, C-72); adding the
+  checkout's parent with `--root` names it (design, Risks; N-6).
 - **EC-013**: A squash merge never puts the branch tip into the merge
   target's ancestry, so squash-merging repositories yield few
   `merged-removable` rows. Open question 2 of `add-project-clean-all-safe`
@@ -2252,7 +2260,8 @@ and [P] are change 1's requirements as the header names them.
   repository, as lane openRepoProject-3's W83 found with feature 004 at
   `60631eb` on Git 2.43.0 and 2.36.6. A1's re-alignment for that layout, its
   item 8, which Brett Heap's word of 2026-10-22 chose for change 2, O4 (a) with
-  its sub-items (c) and (d) and D5's clause 2 case (C-72), has not landed, and
+  its sub-items (c) and (d) and D5's clause 2 case (only through O6's text at
+  `7af798a`, until his direct word; C-72), has not landed, and
   until it does this spec follows A1 as ratified, a suggestion there being an
   exception to the "never" of C-55 and of User Stories 4 and 8 (Dependencies).
 - **FR-007**: Each registered path MUST fall into exactly one case: `lstat`
@@ -2358,9 +2367,9 @@ and [P] are change 1's requirements as the header names them.
   review, and whether the suggestions withheld on any other failure of that
   read carry `target-not-repository-root` is its part 2, for his word for
   change 2, the plan's O11, added in its revision 3 at `664461f` after Brett
-  Heap's O1-O10 word and not yet answered (C-72); until then this spec follows
-  A1 as ratified (FR-008; Dependencies). Where the extension reads or counts as
-  true, each linked row whose registration agrees MUST take `git rev-parse
+  Heap's O1-O10 word and not yet answered (C-72); until then the unset key
+  reads as no value (FR-008; Dependencies). Where the extension reads or counts
+  as true, each linked row whose registration agrees MUST take `git rev-parse
   --path-format=absolute --show-toplevel` in that worktree, after its identity
   reads and before its re-verification and status probe: a toplevel whose
   realpath, taken in a bounded task (FR-013), is not the realpath of the row's
@@ -2435,8 +2444,8 @@ and [P] are change 1's requirements as the header names them.
   as A1's :130-135 and design D3 have it, though A1's failure table (its :369),
   read literally, makes that exit `probe-failed`: excepting it is A1's held
   item 11, part 1, and its part 2 asks whether another failure of that read
-  gives the withheld suggestions `target-not-repository-root`, both before
-  Brett Heap (O11; C-72; FR-007).
+  gives the withheld suggestions `target-not-repository-root`, part 1 for Brett
+  Heap's review and part 2 for his word (O11; C-72; FR-007).
 - **FR-009**: In the ordinary layout `repository.root` MUST be the main
   worktree: the identity probe's toplevel when the candidate that reached
   the repository first is the main worktree itself, and otherwise the
@@ -2933,7 +2942,8 @@ and [P] are change 1's requirements as the header names them.
   the finding's own text is shortened with `...` and the remedy kept whole; a
   rule that keeps the warning of A1's item 10 whole and, beside item 8's
   redirect remedy, leaves the recommendation out and shortens the remedy, was
-  chosen for change 2 with those items (O6 (A) and O4 (a); C-72) and lands with
+  chosen for change 2 with those items (O6 (A) and O4 (a), D5's clause 2 only
+  through O6's text at `7af798a`, until his direct word; C-72) and lands with
   A1's re-alignment (FR-009, FR-028; Dependencies).
 
 **JSON document**
@@ -3537,7 +3547,8 @@ and [P] are change 1's requirements as the header names them.
   before feature 004 merges on Brett Heap's word of 2026-10-11T16:14:21Z,
   for the specify step only (header; change `tasks.md` 3.1 and Speckit
   Handoff), and planned before it on his word of 2026-10-22T19:46:57Z, "lane 4
-  plans 005 now", for the plan step only (C-56).
+  plans 005 now", for the plan step only, the plan at `a80f10b` and its
+  revisions 1 to 4 at `aeb0bb2`, `6fb619c`, `664461f` and `06b16e1` (C-56).
 - workBenches' `onp` and any other installed copy of `project` gain the
   overview only when their owners move their pins; this feature edits
   nothing outside this repository (proposal, "What This Repository Does Not
@@ -4105,13 +4116,13 @@ and [P] are change 1's requirements as the header names them.
     `specs/project-overview/spec.md:369`) excepts only the extension read's
     exit 1 and the effective-work-tree read, so that, read literally, that exit
     is `probe-failed`, against its :130-135, its scenario "A separate git
-    directory" (:172-175) and its `clarifications.md:79-83`; the lane
-    openRepoProject-4 lead found it at `e4a30fc`, and lane openRepoProject-3's
-    W86 confirmed on Git 2.43.0 and 2.36.6 that `git config --get
-    core.worktree` exits 1 there with nothing printed. A1's held item 11 (the
-    plan's O11, at `664461f`) has two parts: part 1 excepts the unset key's
-    exit 1, a text re-alignment of A1 on a lane finding, for his review, its
-    ground A1's own contradiction and its form #19's row 4b
+    directory" (:172-175) and its `clarifications.md:79-83`; the A1 drafter of
+    lane openRepoProject-4 found it and its lead confirmed it at `e4a30fc`, and
+    lane openRepoProject-3's W86 confirmed on Git 2.43.0 and 2.36.6 that `git
+    config --get core.worktree` exits 1 there with nothing printed. A1's held
+    item 11 (the plan's O11, at `664461f`) has two parts: part 1 excepts the
+    unset key's exit 1, a text re-alignment of A1 on a lane finding, for his
+    review, its ground A1's own contradiction and its form #19's row 4b
     (`design.md:511-515` at `2250830`, R-336), which feature 004 at `211e43d`
     builds; part 2 asks whether, for any other failure of that read, where the
     plan keeps `probe-failed`, `repository.root` null, no suggestion, no gate
@@ -4874,13 +4885,15 @@ and [P] are change 1's requirements as the header names them.
   item 10's warning and now take round (n)'s words, item 10's parts 1 and 2
   being chosen (C-72); the records of rounds (h) and (m) above keep the texts
   of their heads. No other hold moves, and no requirement of this spec moves.
-  The holds that the records of rounds (g) to (j) above name now stand as C-72
+  The holds that the records of rounds (g) to (l) above name now stand as C-72
   gives them. Later heads are recorded only: #19's round (o) at `88d0d36`
   (R-349, R-350) adds two lines to its design at :73 and changes its proposal
   and tasks in their records alone, with no spec text, and feature 004's
-  `d6bac50`, its doc round 23, gives its TEXT rows R-324's phrase and tests a
-  `config` that is a directory for rows 4c and 4b; this spec keeps #19 at
-  `2250830` and its feature 004 pins as they stand. So PR #34 does not merge
+  `d6bac50` merges its TEXT rows in R-324's phrase (`e8dda2a`), its tests of a
+  `config` that is a directory, on real Git, for rows 4c and 4b (`2057c31`) and
+  its doc round 23; this spec keeps #19 at `2250830` and its feature 004 pins
+  as they stand, and the plan, at its revision 4, `06b16e1`, reads #19 at
+  `88d0d36` and feature 004 at `d6bac50`. So PR #34 does not merge
   before #19's ratification of those commits; should Brett Heap want #34
   sooner, the four items move to a later amendment of change 2, and A1 lands
   without them (its :1281-1284), the parts of this spec that follow them

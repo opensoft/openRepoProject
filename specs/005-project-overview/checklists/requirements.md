@@ -1166,6 +1166,29 @@ Lane: openRepoProject-4
   cited at `e4a30fc`, and `clarify-questions.md` is unchanged. Re-validation:
   16 of 16 items pass, with the checks of iteration 2 re-run by script on the
   edited spec.
+- 2026-10-23, a thirty-sixth pass, by the lead's commit 3ah decisions: lane
+  openRepoProject-3's W105 read of 3ag is taken, with its W86 note on the A1
+  draft, the same point as LOW-1. LOW-1: C-72's open items read that O3 and O8,
+  O11's part 2 and, should he take (C), O9 wait on his word for change 2, and
+  that O11's part 1 is a text re-alignment on a lane finding for his review.
+  LOW-2 (lane openRepoProject-3 asked, on W105's OBS-1, that he confirm D5's
+  clause 2 directly), LOW-3 (FR-006 and FR-035 say that clause 2 is taken only
+  through O6's text at `7af798a`, until his direct word), LOW-4 (EC-012 and
+  discovery-identity.md's CHK009 note O11; C-28 and FR-019, which follow A1's
+  design D3 as ratified, keep their text, FR-008 carrying the note), LOW-5
+  (FR-007 reads the unset key as no value, and FR-008 puts part 1 to his review
+  and part 2 to his word), LOW-6 (the A1 drafter found item 11 and the lead
+  confirmed it), LOW-7 (the Status, C-56 and the Assumptions name the plan's
+  revisions 3 and 4, `664461f` and `06b16e1`), LOW-8 (feature 004's `d6bac50`
+  merges `e8dda2a` and `2057c31`) and LOW-9 (the round (n) record's closing
+  sentence reaches round (l)) are applied. The round (n) record names the
+  plan's pins at `06b16e1`, #19 at `88d0d36` and feature 004 at `d6bac50`; this
+  spec keeps #19 at `2250830` and its feature 004 pins, and no pin moves. No
+  checklist category changes, and the totals below were recounted by script.
+  Traceability is checked against A1's ratified deltas at `e4a30fc` (64 of 64).
+  A1 stays cited at `e4a30fc`, and `clarify-questions.md` is unchanged.
+  Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run by
+  script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -1290,4 +1313,4 @@ to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
 passes of that day, and after the thirteenth to thirty-fourth passes on
-2026-10-22 and the thirty-fifth on 2026-10-23.
+2026-10-22 and the thirty-fifth and thirty-sixth on 2026-10-23.

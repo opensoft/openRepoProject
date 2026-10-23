@@ -38,7 +38,9 @@ Lane: openRepoProject-4
 - [x] CHK008 Is a candidate without a `.git` entry specified (no Git child, null Git fields, no finding)? [Completeness, Spec FR-004, Clarifications C-4]
   - Result: pass.
 - [x] CHK009 Are the rules naming the main checkout specified for every layout: ordinary, reached by a linked worktree first, gitfile with and without `core.worktree`, submodule, bare and missing main worktree? [Completeness, Spec FR-008, FR-009]
-  - Result: pass, the bare record's own row included (FR-008; C-68).
+  - Result: pass, the bare record's own row included (FR-008; C-68). Without
+    `core.worktree`, the unset key's exit 1 reads as no value, as FR-008 notes
+    against A1's failure table (O11; C-72; EC-012).
 - [x] CHK010 Is the outcome recorded for a candidate whose `.git` file names a bare repository, where the identity probe asks for a toplevel that Git cannot give? [Completeness, Edge Case, Gap]
   - Result: fixed in spec.md, C-54 and EC-030, the outcome as written (a
     `probe-failed` error row), which stays so on Brett Heap's answer to Q14
@@ -193,10 +195,11 @@ again after its W17 read of `b511bdb` and PR #19's `93f3194`, and after its W20
 read of A1 revision 3, and after A1's revisions 5, 6, 7 and 8 at `3ee860c`,
 `d644517`, `0394be4` and `177eadf`, and CHK016 after PR #19's round (j) at
 `e14ada0` and lane openRepoProject-3's W88 read, and CHK025 after its round (m)
-at `20084cd`, and CHK016 and CHK025 after C-72 and its round (n) at `2250830`.
-29 items: 27 pass, 1 fixed in the spec, 0 open, 1 plan notes, 0
-new questions. An open item waits on the question or residual its result names;
-a plan note is for the plan, not the spec; a new question is asked in
-`clarify-questions.md`.
+at `20084cd`, and CHK016 and CHK025 after C-72 and its round (n) at `2250830`,
+and CHK009 after lane openRepoProject-3's W105 read of `7b37557` (O11), its
+result still pass. 29 items: 27 pass, 1 fixed in the spec, 0 open, 1 plan
+notes, 0 new questions. An open item waits on the question or residual its
+result names; a plan note is for the plan, not the spec; a new question is
+asked in `clarify-questions.md`.
 
 Plan notes: PN-9 (CHK024).
