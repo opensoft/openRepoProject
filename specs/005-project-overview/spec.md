@@ -957,11 +957,11 @@ that lane agreed on 2026-10-21 to carry it in.
   O10 (research.md R20 as it stood at `7af798a` when he answered, reworded at
   `6fb619c` and, at `664461f` as at `464c361`, "five chosen, six open"), O11,
   added in the plan's revision 3 at `664461f`, D5's clause 2, O12 to O16, which
-  the review of the plan at `39f4ab6` raised, and O17 to O20, which #19's round
-  (q) at `818311a` raised? -> A: On Brett Heap's word typed in lane
-  openRepoProject-4's session at 2026-10-22T21:24:03Z, "yes, recommended for
-  O1-O10", recorded by lane openRepoProject-4 as a RULED line at 21:30:52Z
-  (issue #10), with three NOTED corrections, at 21:33:31Z (O3),
+  the review of the plan at `39f4ab6` raised, and O17 to O21, which #19's round
+  (q) at `818311a` and feature 004's `41759a4` raised? -> A: On Brett Heap's
+  word typed in lane openRepoProject-4's session at 2026-10-22T21:24:03Z, "yes,
+  recommended for O1-O10", recorded by lane openRepoProject-4 as a RULED line
+  at 21:30:52Z (issue #10), with three NOTED corrections, at 21:33:31Z (O3),
   21:51:17Z (O8 to O10) and 21:54:01Z (O5), which read his "recommended" as
   choosing only where R20 or the lane's A1 re-alignment draft stated a
   recommendation, change 2 takes five: O1 (A), the draft's item 2, the F-7
@@ -1099,11 +1099,23 @@ that lane agreed on 2026-10-21 to carry it in.
   lands, by FR-016's own rule, A1's re-alignment adding it to its requirement 3
   and design D13, or (B) keep four pins until A1's re-alignment lands, the
   overview carrying its own copy of them until then; recommended, (A), and
-  built until he rules, the four pins as FR-016 states them (FR-016). Where
-  applied: C-40; C-68; FR-006; FR-007; FR-008; FR-009; FR-016; FR-020; FR-026;
-  FR-028; FR-032; FR-034; FR-035; FR-043; EC-012; EC-020; EC-032; SC-003;
-  SC-004; User Story 8; Key Entities, Repository identity; Dependencies; the
-  discovery-identity checklist's CHK009.
+  built until he rules, the four pins as FR-016 states them (FR-016). A fifth
+  item, O21, which feature 004's `41759a4` raised and which lane
+  openRepoProject-4 added to its questions for him at 19:34Z on 2026-10-23,
+  with the lane's recommendation, is open for his word in the same way. O21,
+  the sibling of O12, which O12 (A) does not cover: a repository whose
+  merged-set listing fails, its ref listing read, where A1 leaves every
+  worktree row's class null (its `specs/project-overview/spec.md:434-437`)
+  while `project clean` at `41759a4` makes each present row on a branch
+  `inspection-error` (its `project:3685-3692` and :3727-3728 there; not at
+  `d8724e2`), A1 also asking the two classes to be equal; (A) keep A1's null
+  class, the parity tests naming the case as a lasting difference, as O12 (A)
+  does, or (B) amend change 2 so that the overview follows `project clean`
+  there; recommended, (A), which needs no amendment, and built until he rules,
+  A1 as ratified (FR-026, SC-003). Where applied: C-40; C-68; FR-006; FR-007;
+  FR-008; FR-009; FR-016; FR-020; FR-026; FR-028; FR-032; FR-034; FR-035;
+  FR-043; EC-012; EC-020; EC-032; SC-003; SC-004; User Story 8; Key Entities,
+  Repository identity; Dependencies; the discovery-identity checklist's CHK009.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -2092,7 +2104,10 @@ path"; "Non-UTF-8 common directory".
   branch named `detached`, reading `"detached"` for a detached head as the
   clean report always has (POD:633-634; DI:765-766); the row's
   classification is the one [L] gives it, as for every row (FR-026;
-  Clarifications, C-52).
+  Clarifications, C-52). At feature 004's `41759a4`, which reads a detached
+  head from the registry record and not from that text, [L] gives a worktree
+  on a branch named `detached` the ladder's class, where `d8724e2` gave it
+  `detached` (lane openRepoProject-2's wave 22 triage, its T10).
 - **EC-029**: A repository with about 10,000 loose refs can pass the 5 s
   per-child budget with its ref listing on a cold cache (8.65 s measured by
   governance task 2.1), giving `probe-timeout` and an incomplete run, never
@@ -2949,9 +2964,15 @@ and [P] are change 1's requirements as the header names them.
   A1 leaving every class null (its `specs/project-overview/spec.md:434-437`)
   while `project clean` at `d6bac50` makes each present row on a branch
   `inspection-error` (its `project:3511-3514`), Brett Heap's word of 2026-10-23
-  keeping A1's null class there (O12 (A); C-72; Dependencies). The ladder's
-  `stale-worktree` text, which #19's round (q) extends by Q3 (b), is A1's until
-  Brett Heap rules on O18 (FR-028; C-72).
+  keeping A1's null class there (O12 (A); C-72; Dependencies). A merged-set
+  listing that failed, the ref listing read, is the same kind of case: A1
+  leaves every class null there too (its :434-437), while `project clean` at
+  feature 004's `41759a4` makes each present row on a branch `inspection-error`
+  (its `project:3685-3692` and :3727-3728 there), which `d8724e2` did not;
+  whether the parity tests name it as a lasting difference is O21, open for
+  Brett Heap's word, and until he rules this spec keeps A1's null class (C-72).
+  The ladder's `stale-worktree` text, which #19's round (q) extends by Q3 (b),
+  is A1's until Brett Heap rules on O18 (FR-028; C-72).
 
 **Findings and attention**
 
@@ -3649,8 +3670,10 @@ and [P] are change 1's requirements as the header names them.
   lasting differences that the parity tests name, the rows of a run whose
   working directory's realpath cannot be established (O9 (A)) and those of a
   repository whose ref listing failed (O12 (A); FR-026; Clarifications, C-72),
-  and for 100% of repositories with a merge target its name equals the one
-  clean reports.
+  and, while O21 is open, those of a repository whose merged-set listing
+  failed, its ref listing read (O21; FR-026; Clarifications, C-72), and for
+  100% of repositories with a merge target its name equals the one clean
+  reports.
 - **SC-004**: 0 suggestions carry `--apply` or `--yes` or name a project by
   bare name; 0 rows with a null root, or a root or common directory that is not
   valid UTF-8, carry a clean suggestion; and in every fixture, each worktree
@@ -3921,7 +3944,13 @@ and [P] are change 1's requirements as the header names them.
   `project:3511-3514`), while the overview leaves every class null, as A1 does
   (its `specs/project-overview/spec.md:434-437`), so that the classes differ
   there, a lasting difference that the parity tests name, on Brett Heap's word
-  of 2026-10-23 keeping A1's null class (O12 (A); C-72; FR-026).
+  of 2026-10-23 keeping A1's null class (O12 (A); C-72; FR-026). At feature
+  004's `41759a4` a failed merged-set listing, the ref listing read, also makes
+  each present row on a branch `inspection-error` (its `project:3685-3692` and
+  :3727-3728 there), which `d8724e2` did not, while the overview leaves every
+  class null there too, as A1 does: O21, open for Brett Heap's word, its (A),
+  recommended, naming the case in the parity tests as a lasting difference, as
+  O12 (A) does (C-72; FR-026).
 - **Change 1's archive order**: change 2 archives after change 1. This
   feature realizes change 2's MODIFIED `project-review-safety` requirement,
   not change 1's `project-clean-review-safety` (proposal, Capabilities;
@@ -5209,10 +5238,12 @@ and [P] are change 1's requirements as the header names them.
   305, the texts of O18; its `NEXT_STEPS` table gives the `unstarted-branch`
   and `reflog-unavailable` next steps Q5's words, 248 and 243 characters, the
   texts of O17; its `project clean` excludes O19's two cases as
-  `registration-mismatch`; and its `STATUS_PINS` (`project:1156` there) carries
-  the fifth pin, `-c core.ignoreCase=false`, O20's. The four wait for his word
-  (C-72), and until he rules this spec builds A1 as ratified and the four pins
-  as FR-016 states them. The other `TEXT` and `NEXT_STEPS` rows that `41759a4`
+  `registration-mismatch`, and makes each present row on a branch
+  `inspection-error` where the merged-set listing fails, O21's case (FR-026);
+  and its `STATUS_PINS` (`project:1156` there) carries the fifth pin, `-c
+  core.ignoreCase=false`, O20's. The five wait for his word (C-72), and until
+  he rules this spec builds A1 as ratified and the four pins as FR-016 states
+  them. The other `TEXT` and `NEXT_STEPS` rows that `41759a4`
   adds, removes or changes, its partial-removal notes, its non-drain line, its
   `inspection-incomplete` and `inspect-cap` remedies and four next steps, are
   `project clean`'s, texts that the overview never shows, its own remedies

@@ -1446,6 +1446,28 @@ Lane: openRepoProject-4
   deltas at `e4a30fc` (64 of 64). A1 stays cited at `e4a30fc`, and
   `clarify-questions.md` is unchanged. Re-validation: 16 of 16 items pass, with
   the checks of iteration 2 re-run by script on the edited spec.
+- 2026-10-23, a forty-fifth pass, by the lead's word, from `922a7c0` (spec
+  commit 3ap), on lane openRepoProject-4's map of feature 004's `project` from
+  `d8724e2` to `41759a4`. O21, which lane openRepoProject-4 added to its
+  questions for Brett Heap at 19:34Z, is recorded in C-72 as open beside O17 to
+  O20, in their form, with (A) recommended: a repository whose merged-set
+  listing fails, its ref listing read, where A1 leaves every class null and
+  `project clean` at `41759a4` makes each present row on a branch
+  `inspection-error`, which `d8724e2` did not; (A) keeps A1's null class, a
+  lasting difference that the parity tests name, as O12 (A) does. C-72's
+  question reads "O17 to O21", and the case is named, open, beside O12's at
+  FR-026, SC-003 and the Dependencies' parity record, and in the round (n)
+  record's account of `41759a4`. EC-028's "the one [L] gives it" holds; beside
+  it, at `41759a4` [L] gives a worktree on a branch named `detached` the
+  ladder's class, where `d8724e2` gave it `detached`; C-52 states no class and
+  is unchanged. C-72 is now spec.md:956-1118, 163 lines, sha256 `126d943e...`;
+  O17 to O21 stay open. #19 stays at `4512441` beside the reading at `2250830`,
+  #27 at `d95eea2` and feature 004's pins as they stand, and no pin moves. No
+  checklist category changes, and the totals below were recounted by script.
+  Traceability is checked against A1's ratified deltas at `e4a30fc` (64 of 64).
+  A1 stays cited at `e4a30fc`, and `clarify-questions.md` is unchanged.
+  Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run by
+  script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -1570,4 +1592,4 @@ to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
 passes of that day, and after the thirteenth to thirty-fourth passes on
-2026-10-22 and the thirty-fifth to forty-fourth on 2026-10-23.
+2026-10-22 and the thirty-fifth to forty-fifth on 2026-10-23.
