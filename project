@@ -2254,13 +2254,18 @@ class HiddenStateParser(RecordStream):
     bound is the first entry of mode 160000, a gitlink, which sets `gitlink`;
     before it, a lowercase tag (assume-unchanged) or `S` (skip-worktree) sets
     `hidden`. finish() returns {gitlink, hidden, entries}, `entries` counting
-    the entries read before the bound."""
+    the entries read before the bound. `directories` holds, as relative
+    bytes, every directory of the worktree that holds an entry read before
+    the bound, directly or below it, the worktree's own top level aside: the
+    directories whose `.git` nested_git_check() looks for (Brett Heap's Q2
+    (2), lead R-380)."""
 
     def __init__(self):
         super().__init__()
         self.entries = 0
         self.gitlink = False
         self.hidden = False
+        self.directories = set()
 
     def _take(self, field):
         match = INDEX_ENTRY.fullmatch(field)
@@ -2272,6 +2277,12 @@ class HiddenStateParser(RecordStream):
         self.entries += 1
         if match[1].islower() or match[1] == b"S":
             self.hidden = True
+        directory = match[5]
+        while True:  # each directory above the entry, nearest first, until one already held
+            directory = directory.rpartition(b"/")[0]
+            if not directory or directory in self.directories:
+                break
+            self.directories.add(directory)
 
     def _result(self):
         return {"gitlink": self.gitlink, "hidden": self.hidden, "entries": self.entries}
@@ -3296,6 +3307,40 @@ def shared_identities(reads):
     return frozenset(at for group in groups.values() if len(group) > 1 for at in group)
 
 
+def _encloses(path, other):
+    """Whether the path other is path or lies inside it, as bytes: equal, or
+    beginning with path and a slash; `/` encloses every absolute path."""
+    return other == path or other.startswith(path.rstrip(b"/") + b"/")
+
+
+def enclosing_rows(built, identity, registry):
+    """The positions in built, the (index, record, raw, read) of the rows one
+    worktree_rows() call builds, of the present linked rows whose path is the
+    common directory, the main worktree or another row's path, or an ancestor
+    of one (Brett Heap's Q2 (1), "yes, recommended for Q1-Q9", lead R-380;
+    lane 2's wave 22 triage T2, sr-evidence H-3): each is
+    registration-mismatch, as a shared path is, since a removal of it deletes
+    what it encloses, the whole repository where the main worktree or the
+    common directory sits in one of its tracked directories. A pure function
+    of values already read, nothing read again: the row's raw path and its
+    realpath (`tree`) against identity's common directory and main worktree,
+    the raw path of every other entry of registry (row 4), an entry this call
+    builds no row for included, and the realpath of every other row built.
+    The main worktree's own row is never one, gate 1 keeping it."""
+    fixed = [value for value in (identity.get("common_dir"), identity.get("root")) if value is not None]
+    trees = [read["tree"] for _, _, _, read in built]
+    found = set()
+    for at, (index, _, raw, read) in enumerate(built):
+        if index == 0 or read["present"] is not True:
+            continue
+        own = [value for value in (raw, read["tree"]) if value is not None]
+        others = fixed + [entry["path"] for number, entry in enumerate(registry) if number != index]
+        others += [tree for spot, tree in enumerate(trees) if spot != at and tree is not None]
+        if any(_encloses(path, other) for path in own for other in others):
+            found.add(at)
+    return frozenset(found)
+
+
 def _registry_entries(registry, records):
     """(index, record) for each registry entry worktree_rows() builds a row
     for: every entry of registry, in its order, when records is None; else
@@ -3517,7 +3562,10 @@ def worktree_rows(repo, run, records=None):
     and L3, R-59 D5). Among the present rows one call builds, rows with one
     realpath, or one admin id, are registration-mismatch too, two spellings
     of one worktree passing the two-way check with one admin id
-    (shared_identities(); lead ruling R-67 (c)). They are compared once every
+    (shared_identities(); lead ruling R-67 (c)), and so is a linked row
+    whose path is the common directory, the main worktree or another row's
+    path, or an ancestor of one (enclosing_rows(); Brett Heap's Q2 (1), lead
+    R-380). They are compared once every
     row of the call is read and before any status probe, so that none of
     them gets one; an entry the call does not build is never read for it,
     so a row past the cap stays uninspected, while match_target() builds P's
@@ -3592,9 +3640,10 @@ def worktree_rows(repo, run, records=None):
         built.append((index, record, raw,
                       _read_row(raw, index == 0, common_dir, active, active_error, record["path"] in shared)))
     twins = shared_identities([read for _, _, _, read in built])
+    enclosing = enclosing_rows(built, identity, registry)  # Q2 (1), lead R-380
     rows = []
     for at, (index, record, raw, read) in enumerate(built):
-        if at in twins:  # registration-mismatch, as a shared path is (R-67 (c))
+        if at in twins or at in enclosing:  # registration-mismatch, as a shared path is (R-67 (c))
             read["registered"], read["admin_id"] = registration_verdict(
                 index == 0, common_dir, None, shared=True)
         elif read["registered"] and not read["errors"] and (
@@ -5387,6 +5436,56 @@ def modules_check(common_dir, admin_id, run):
     return "contains-submodule", None
 
 
+def nested_git_entry(path, directories):
+    """The first of directories, relative paths of the worktree at path, as
+    bytes, in which an lstat of `<directory>/.git` finds an entry of any
+    type, or None where none does; an lstat that fails other than with
+    ENOENT or ENOTDIR raises its OSError. Every lstat runs in the one
+    fs_call() that nested_git_check() makes."""
+    for directory in directories:
+        try:
+            os.lstat(os.path.join(path, directory, b".git"))
+        except OSError as exc:
+            if exc.errno in (errno.ENOENT, errno.ENOTDIR):
+                continue
+            raise
+        return directory
+    return None
+
+
+def nested_git_check(path, directories, run):
+    """Gate 9's third half for one target (Brett Heap's Q2 (2), "yes,
+    recommended for Q1-Q9", lead R-380; lane 2's wave 22 triage T2,
+    sr-classification H-1, sr-evidence H-3), shared with the revalidation
+    through hidden_state_probe(). Git's directory walk skips every entry
+    named `.git` and recurses into a directory the index tracks without
+    asking whether it holds a repository, so a repository nested in a
+    tracked directory, or any `.git` entry there, shows in no status record
+    and passes Git's own check, and the removal deletes it.
+
+    Signature: nested_git_check(path, directories, run) -> (result,
+    row_error). path is the worktree's raw path; directories the directories
+    of its index that hold an entry, from gate 10's listing
+    (HiddenStateParser's `directories`); run the Invocation in force, whose
+    per-child budget bounds the call. One fs_call() (through _fs(),
+    OPERATION `lstat`), counted in the filesystem budget, makes an lstat of
+    `<directory>/.git` for each, in byte order (nested_git_entry()), never a
+    Git child:
+
+    - an entry of any type for any of them: ("contains-submodule", None);
+    - ENOENT or ENOTDIR for every one, or no directory: (None, None);
+    - any other error: (None, its `os-error`), the row inspection-error;
+    - the call cut at its budget: (None, a `probe-timeout` row error), or
+      `deadline-exceeded` where the work deadline was the limit."""
+    if not directories:
+        return None, None
+    try:
+        found = _fs("lstat", nested_git_entry, path, sorted(directories))
+    except EvidenceError as exc:
+        return None, exc.error
+    return ("contains-submodule" if found is not None else None), None
+
+
 def hidden_state_probe(path, run):
     """Gates 9's index half and gate 10 for one target (T067; D2, D11, D12,
     FR-023; lead ruling R-56 Q-6), shared with US4's revalidation (T084).
@@ -5400,6 +5499,9 @@ def hidden_state_probe(path, run):
 
     - a gitlink (mode 160000), where the parser stops at its bound:
       ("contains-submodule", None);
+    - else nested_git_check() over the directories the listing names (Q2
+      (2), lead R-380): a `.git` entry in one of them, ("contains-submodule",
+      None), and its read failing or cut, (None, its row error);
     - else an entry flagged assume-unchanged (a lowercase tag) or
       skip-worktree (`S`): ("hidden-local-state", None);
     - else (None, None), the gates pass;
@@ -5407,12 +5509,18 @@ def hidden_state_probe(path, run):
       error), `probe-failed`, `probe-timeout` or `deadline-exceeded` by T024's
       map as built (OUTCOME_ERRORS, probe_error()), OPERATION `git ls-files`.
 
-    Interrupted passes, as from any probe."""
-    outcome, error = _git(run, path, list(HIDDEN_STATE_PROBE), "ls-files", HiddenStateParser(), kind="hidden")
+    Gate 9 comes before gate 10, so a `.git` entry, as a gitlink, names the
+    row's reason even beside a flagged entry. Interrupted passes, as from
+    any probe."""
+    parser = HiddenStateParser()
+    outcome, error = _git(run, path, list(HIDDEN_STATE_PROBE), "ls-files", parser, kind="hidden")
     if error is not None:
         return None, error
     if outcome.result["gitlink"]:
         return "contains-submodule", None
+    reason, error = nested_git_check(path, parser.directories, run)
+    if reason is not None or error is not None:
+        return reason, error
     if outcome.result["hidden"]:
         return "hidden-local-state", None
     return None, None
@@ -5426,7 +5534,9 @@ def index_gates(row, plan, run):
     passed gates 1 to 8 only. Through the per-target helpers T067 adds,
     modules_check(common_dir, admin_id, run) and hidden_state_probe(path, run),
     each (result, row_error): `contains-submodule` for a `modules` entry in the
-    row's admin directory or a gitlink in its own index; `hidden-local-state`
+    row's admin directory, a gitlink in its own index, or a `.git` entry in a
+    directory that holds an index entry (nested_git_check(); Brett Heap's Q2
+    (2), lead R-380); `hidden-local-state`
     for an index entry flagged assume-unchanged or skip-worktree; and
     `inspection-error`, after putting the check's row error in row["errors"]
     and setting row["classification"] to inspection-error, for a check that
@@ -6165,7 +6275,9 @@ def revalidation_difference(plan, target, run, part, seen):
     6. The combined status probe in the target, which must print no record,
        else `state-changed`.
     7. The hidden-state probe in the target: its own reason
-       (`contains-submodule` or `hidden-local-state`).
+       (`contains-submodule` or `hidden-local-state`), the lstats of
+       nested_git_check() over its listing's directories included (Q2 (2),
+       lead R-380).
     8. Gate 12's check in the target (worktree_only_check(); D21, LQ-13):
        logs/HEAD read again and the reachability probe run again, with the
        non-zero objects that the plan's branch reflog named taken as they
@@ -6190,10 +6302,11 @@ def revalidation_difference(plan, target, run, part, seen):
     every filesystem call of these steps that fails other than with ENOENT
     or ENOTDIR, or runs past its own budget (the lead's R-208; #19 at
     9267303): step 1's identity reads, step 5's lstat, registration reads,
-    twin reads, `modules` check, admin directory listing and read of
-    logs/HEAD. ENOENT or ENOTDIR decides that the path is absent, which
-    keeps the step's reason: an absent target, `.git` or admin directory is
-    `identity-changed`. A `timeout` stays such a difference (T084).
+    twin reads, `modules` check and admin directory listing, step 7's
+    nested `.git` lstats and step 8's read of logs/HEAD. ENOENT or ENOTDIR
+    decides that the path is absent, which keeps the step's reason: an
+    absent target, `.git` or admin directory is `identity-changed`. A
+    `timeout` stays such a difference (T084).
 
     A read the work deadline cut gives `deadline-exceeded` instead, never a
     difference (T099; lead ruling R-80, P-2): its row error's code says so

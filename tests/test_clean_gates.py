@@ -649,6 +649,206 @@ class GatesTests(clean_support.CleanCase):
         self.assert_refused_target(result, tree, "contains-submodule", message)
         self.assertEqual(self.snapshot(root), before)
 
+    # Brett Heap's Q2, "yes, recommended for Q1-Q9" (lead R-380; lane 2's wave
+    # 22 triage T2; sr-classification H-1, sr-evidence H-3). Git's directory
+    # walk skips every entry named `.git` and recurses into a directory the
+    # index tracks without asking whether it holds a repository, so such an
+    # entry showed in no status record, passed Git's own check, and the
+    # removal deleted it: (2) gate 9 now lstats `<dir>/.git` for every
+    # directory that holds an index entry, and (1) a linked row that encloses
+    # the common directory, the main worktree or another row is
+    # registration-mismatch.
+
+    def test_clean_a_repository_nested_in_a_tracked_directory(self):
+        # Three merged worktrees and a control: a repository `git init`-ed in
+        # the tracked directory tools/, its own commit on a branch of its own;
+        # a `.git` directory holding a plain file in the tracked docs/; and a
+        # `.git` file in a/, whose index entry sits two levels down, at a/b/.
+        # Git's own status in each prints nothing. Each is contains-submodule,
+        # and the apply removes the control alone.
+        root = self.repo()
+        self.bare_remote()
+
+        def tracked(*names):
+            def setup(tree):
+                for name in names:
+                    (tree / name).parent.mkdir(parents=True, exist_ok=True)
+                    (tree / name).write_text("tracked\n")
+            return setup
+
+        nested = self.merged_worktree("001-nested", path=self.base / "nested", setup=tracked("tools/run.sh"))
+        docs = self.merged_worktree("002-docs", path=self.base / "docs", setup=tracked("docs/a.md"))
+        deep = self.merged_worktree("003-deep", path=self.base / "deep", setup=tracked("a/b/c.txt"))
+        control = self.merged_worktree("004-control", path=self.base / "control", setup=tracked("tools/run.sh"))
+        inner = nested / "tools"
+        self.git(inner, "init", "-q", "-b", "master")
+        self.commit(inner, "inner base")
+        self.git(inner, "checkout", "-q", "-b", "experiment")
+        (inner / "idea.txt").write_text("experimental work, nowhere else\n")
+        idea = self.commit(inner, "inner work")
+        self.git(inner, "checkout", "-q", "master")
+        (docs / "docs" / ".git").mkdir()
+        (docs / "docs" / ".git" / "chapter2.txt").write_text("a chapter, nowhere else\n")
+        (deep / "a" / ".git").write_text("gitdir: nowhere\n")
+        for tree in (nested, docs, deep):
+            with self.subTest("Git's own status prints nothing", tree=tree.name):
+                self.assertEqual(self.git(tree, "status", "--porcelain=v1", "--untracked-files=normal", "--ignored",
+                                          env=dict(self.env, GIT_OPTIONAL_LOCKS="0")), "")
+        result = self.preview(root)
+        self.assert_status(result, 0)
+        self.assertEqual([entry["path"] for entry in result.document["selected"]], [str(control)])
+        self.assertEqual(by_path(result.document), {
+            str(root): "main-worktree", str(nested): "contains-submodule", str(docs): "contains-submodule",
+            str(deep): "contains-submodule"})
+        self.assertEqual(result.document["completeness"], "complete")
+        message = TEXT["target_excluded_gate"].format(REASON="contains-submodule", NEXT_STEP=STEPS["contains-submodule"])
+        for tree in (nested, docs, deep):
+            with self.subTest("--worktree names it", tree=tree.name):
+                single = self.run_json("clean", root, "--apply", "--action", "remove", "--worktree", tree, "--yes",
+                                       "--json")
+                self.assert_refused_target(single, tree, "contains-submodule", message)
+        result, records = self.run_counted("clean", root, "--all-safe", "--apply", "--yes")
+        self.assert_status(result, 0)
+        self.assertEqual([argv_words(record)[-1] for record in removals(records)], [str(control)])
+        self.assertFalse(control.exists())
+        self.assertEqual(self.git(inner, "cat-file", "-t", idea).strip(), "commit", "the inner commit remains")
+        self.assertTrue((docs / "docs" / ".git" / "chapter2.txt").is_file())
+        self.assertTrue((deep / "a" / ".git").is_file())
+
+    def test_clean_a_nested_git_lstat_that_fails(self):
+        # In process: nested_git_check()'s one filesystem call, the lstats of
+        # `<dir>/.git`, made to raise PermissionError and then to time out;
+        # every other filesystem call runs as it is. The check decides
+        # nothing, so the row is inspection-error and the plan incomplete, and
+        # nothing is removed.
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-target", path=self.base / "target",
+                                    setup=lambda tree: ((tree / "tools").mkdir(), (tree / "tools" / "run.sh").write_text("x")))
+        real_fs_call = project.fs_call
+        denied = PermissionError(errno.EACCES, os.strerror(errno.EACCES))
+        cut = project.DriverOutcome(None, "timeout", detail="no answer within 5 s")
+        os_error = {"code": "os-error", "message": TEXT["row_error_os_error"].format(
+            OPERATION="lstat", STRERROR=os.strerror(errno.EACCES))}
+        timeout = {"code": "probe-timeout", "message": TEXT["row_error_probe_timeout"].format(OPERATION="lstat", S="5")}
+        refused = {"code": "inspection-incomplete", "message": TEXT["plan_incomplete"].format(
+            CODE="inspection-incomplete", REMEDY=TEXT["remedy_inspection_incomplete"])}
+        for label, answer, error in (("PermissionError", denied, os_error), ("a timeout", cut, timeout)):
+            with self.subTest(label):
+                calls = []
+
+                def fs_call(fn, *args, **options):
+                    if fn is project.nested_git_entry:
+                        calls.append(args)
+                        if isinstance(answer, BaseException):
+                            raise answer
+                        return answer
+                    return real_fs_call(fn, *args, **options)
+
+                before = self.snapshot(root)
+                for words, expected in ((("--all-safe", "--json"), 1), (("--all-safe", "--apply", "--yes", "--json"), 2)):
+                    status, out, err = self.main_in_process("clean", root, *words, fs_call=fs_call)
+                    self.assertEqual(status, expected, out + err)
+                    document = json.loads(out)
+                    self.assertEqual((document["selected"], by_path(document)),
+                                     ([], {str(root): "main-worktree", str(tree): "inspection-error"}))
+                    self.assertEqual((row_of(document, tree)["classification"], row_of(document, tree)["errors"]),
+                                     ("inspection-error", [error]))
+                    self.assertEqual(document["refusals"], [refused])
+                self.assertEqual(calls, [(os.fsencode(tree), [b"tools"])] * 2, "one call per run, its one directory")
+                self.assertEqual(self.snapshot(root), before, "nothing removed")
+
+    def test_clean_the_main_worktree_inside_a_linked_worktree(self):
+        # Sr-evidence H-3's worst case: the main worktree sits at W/data, a
+        # tracked directory of the linked worktree W, by `git worktree repair`
+        # and no hand-edited file, and the repository holds an unpushed branch.
+        # W is merged into the manifest's `release` and its status prints
+        # nothing, since data/.git is skipped and data/'s files are the main
+        # checkout's. Its removal deleted W/data, the main worktree and the
+        # common directory: every branch and the repository. W encloses the
+        # main worktree and the common directory, so it is registration-mismatch,
+        # unprobed and inspection-error: the plan is incomplete, and nothing
+        # is removed, in batch and in single mode.
+        main = self.base / "M"
+        self._init_repo(main, "other")
+        (main / "README").write_text("hello\n")
+        (main / "project.yaml").write_text("kind: project-manifest\ntracking_branch: release\n")
+        self.commit(main, "base")
+        self.bare_remote(main)
+        tree = self.base / "W"
+        self.git(main, "worktree", "add", "-q", "-b", "feat", tree)
+        (tree / "data").mkdir()
+        for name in ("README", "project.yaml"):
+            (tree / "data" / name).write_bytes((main / name).read_bytes())
+        self.commit(tree, "feat")
+        self.git(tree, "push", "-q", "-u", "origin", "feat")
+        self.git(main, "branch", "release", "feat")
+        self.git(main, "checkout", "-q", "-b", "secret")
+        (main / "notes").write_text("unpushed design notes\n")
+        secret = self.commit(main, "secret")
+        self.git(main, "checkout", "-q", "other")
+        for name in ("README", "project.yaml"):
+            (tree / "data" / name).unlink()
+        (tree / "data").rmdir()
+        root = tree / "data"
+        main.rename(root)
+        self.git(root, "worktree", "repair")
+        self.assertEqual(self.git(tree, "status", "--porcelain=v1", "--untracked-files=normal", "--ignored",
+                                  env=dict(self.env, GIT_OPTIONAL_LOCKS="0")), "", "W's own status prints nothing")
+        before = self.snapshot(root)
+        result = self.preview(root)
+        self.assert_status(result, 1)
+        document = result.document
+        self.assertEqual(document["selected"], [])
+        self.assertEqual(by_path(document), {str(root): "main-worktree", str(tree): "registration-mismatch"})
+        self.assertEqual((row_of(document, tree)["classification"], row_of(document, tree)["dirty"]),
+                         ("inspection-error", None))
+        self.assertEqual([refusal["code"] for refusal in document["refusals"]], ["inspection-incomplete"])
+        for words in (("--all-safe", "--apply", "--yes"),
+                      ("--apply", "--action", "remove", "--worktree", tree, "--yes")):
+            with self.subTest(words=words[:2]):
+                result, records = self.run_counted("clean", root, *words)
+                self.assert_status(result, 2)
+                self.assertTrue(result.stderr.startswith("REFUSED: The plan is incomplete (inspection-incomplete)"),
+                                result.stderr)
+                self.assertEqual(removals(records), [])
+        self.assertEqual(self.snapshot(root), before, "nothing removed")
+        self.assertTrue((root / ".git").is_dir(), "the common directory remains")
+        self.assertEqual(self.git(root, "rev-parse", "refs/heads/secret").strip(), secret)
+
+    def test_clean_enclosing_rows_decides_on_literal_values(self):
+        # enclosing_rows() is a pure function of values already read: a linked
+        # row's raw path and realpath against the common directory, the main
+        # worktree, every other registry entry's raw path and every other built
+        # row's realpath. A sibling that only shares a prefix is not enclosed.
+        def read(tree, present=True):
+            return {"present": present, "tree": tree}
+
+        identity = {"common_dir": b"/r/m/.git", "root": b"/r/m"}
+        registry = [{"path": b"/r/m"}, {"path": b"/r/a"}, {"path": b"/r/ab"}, {"path": b"/r/x/y"},
+                    {"path": b"/r/x"}, {"path": b"/r/link"}, {"path": b"/"}, {"path": b"/r/gone"}]
+        built = [(0, registry[0], b"/r/m", read(b"/r/m")),
+                 (1, registry[1], b"/r/a", read(b"/r/a")),
+                 (2, registry[2], b"/r/ab", read(b"/r/ab")),
+                 (3, registry[3], b"/r/x/y", read(b"/r/x/y")),
+                 (4, registry[4], b"/r/x", read(b"/r/x")),
+                 (5, registry[5], b"/r/link", read(b"/r/real")),
+                 (6, registry[6], b"/", read(b"/")),
+                 (7, registry[7], b"/r/gone", read(None, present=False))]
+        self.assertEqual(project.enclosing_rows(built, identity, registry), frozenset({4, 6}),
+                         "/r/x holds /r/x/y, and / holds everything; /r/a is no ancestor of /r/ab")
+        for label, values, expected in (
+                ("the main worktree inside", dict(identity, root=b"/r/a/m"), {1, 4, 6}),
+                ("the common directory inside", dict(identity, common_dir=b"/r/a/.git"), {1, 4, 6}),
+                ("another row's realpath inside", identity, {4, 5, 6})):
+            with self.subTest(label):
+                rows = built if label != "another row's realpath inside" else [
+                    *built[:2], (2, registry[2], b"/r/ab", read(b"/r/real/nested")), *built[3:]]
+                self.assertEqual(project.enclosing_rows(rows, values, registry), frozenset(expected))
+        with self.subTest("an entry the call builds no row for"):
+            self.assertEqual(project.enclosing_rows([built[1]], identity, registry + [{"path": b"/r/a/b"}]),
+                             frozenset({0}))
+
     # T064: "A merged worktree whose upstream was deleted"; "A deleted upstream
     # is remote-gone". They pin T032, T049 and T057.
 
