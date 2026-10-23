@@ -642,9 +642,10 @@ TEXT_FIXTURES = {
     # Its warning also names git worktree remove and git gc (R-324, ruled by Brett Heap,
     # "R-324: yes", lead R-343).
     "partial_removal_note_unread": "Probable partial removal: inspect {PATH} by hand; its .git could not be read, so do not run git worktree prune, git worktree remove or git gc until it can.",
-    # D18's note for a locked worktree (#19 at 4f1c0e0, design.md:1225-1228; W52 F-2, R-248),
-    # which replaces ratified text and so waits on Brett Heap's word; its check first by his Q4
-    # (a) and (b) (lead R-380), copied exactly from #19's round (q) at 818311a, design.md D18.
+    # D18's note for a locked worktree (#19 at 4f1c0e0, design.md:1225-1228; W52 F-2, R-248).
+    # It replaces ratified text; Brett Heap ruled it on 2026-10-22, "F-2: yes" (the lead's R-263;
+    # traceability.md:307-308), as project's own comment has said since T16. Its check first by
+    # his Q4 (a) and (b) (lead R-380), copied exactly from #19's round (q) at 818311a, design.md D18.
     "partial_removal_note_locked": "Probable partial removal: check that git -C {PATH} status --short --ignored lists only deleted files, unlock it, then git worktree remove --force {PATH} by hand.",
     # D18: refusal messages and remedies.
     "target_excluded_gate": "Worktree is excluded: {REASON}; {NEXT_STEP}",
