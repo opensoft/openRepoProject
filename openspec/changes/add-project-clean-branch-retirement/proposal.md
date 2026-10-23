@@ -145,10 +145,17 @@ W98 confirm read of round A21 (0 HIGH, 0 MEDIUM and 2 LOW): the count of the
 worded as edits and not as a total, the citation key gains the register line
 that relays "R-320: yes", the no-prune clauses this change quotes take the words
 of Brett Heap's "R-324: yes", "git worktree prune, git worktree remove or git
-gc", and PR #19's current head is named at its round (n), `2250830`, whose D14
-and task 2.1 leave every figure unchanged and whose wider warnings change no
-scenario that this change's blocks still carry, so that A-50's note stays at 17
-scenarios; Codex is still at its usage limit;
+gc", and PR #19's head is named at its round (n), `2250830`, its head then,
+whose D14 and task 2.1 leave every figure unchanged and whose wider warnings
+change no scenario that this change's blocks still carry, so that A-50's note
+stays at 17 scenarios; Codex is still at its usage limit;
+round A23 applied the lane's rulings A-86 to A-88, with lane openRepoProject-3's
+W104 confirm read of round A22 (0 HIGH, 0 MEDIUM and 2 LOW): A-50's note says
+that round (n) leaves the retire requirement's other scenarios as they were, the
+in-place lines of the lane's rulings file are listed in full, and PR #19's
+current head is named at its round (o), `88d0d36`, whose spec text is
+`2250830`'s and whose D14 and task 2.1 leave every figure unchanged, A-50's note
+staying at 17 scenarios; Codex is still at its usage limit;
 nothing here is ratified. Governing issue:
 opensoft/openRepoProject#23, claimed by lane openRepoProject-5 (comment
 6111211798); refs #6, the record of the project maintenance design packet.
@@ -233,15 +240,18 @@ the scenario "Row cap and planning failures", which gives the inspect-cap
 refusal's remedy a clause that round (n) words "if a worktree's path cannot be
 read, do not run git worktree prune, git worktree remove or git gc until it
 can", a text this change neither carries, its block keeping `c462d87`'s text,
-nor restates. PR #19's current head is `2250830`, after that lane's round (n),
-`e6b6b16` before it: its D14 and its task 2.1 equal `20084cd`'s byte for byte,
-and every such cite holds there by content, at the lines `design.md` D7 gives,
-but for that sentence, so that the cites stay at those shas (rulings A-83 and
-A-84); its spec moves only in the closing words of every no-prune warning, the
-texts above and R-284's text (c) among them, which now read "so do not run git
-worktree prune, git worktree remove or git gc until it can", as Brett Heap
-ruled, "R-324: yes" (lane openRepoProject-2's R-343), texts this change neither
-carries, its blocks keeping `c462d87`'s and main's text, nor restates.
+nor restates. At `2250830`, after that lane's round (n), `e6b6b16` before it,
+its D14 and its task 2.1 equalled `20084cd`'s byte for byte, and every such cite
+held there by content, but for that sentence (rulings A-83 and A-84), its spec
+moving only in the closing words of every no-prune warning, the texts above and
+R-284's text (c) among them, which now read "so do not run git worktree prune,
+git worktree remove or git gc until it can", as Brett Heap ruled, "R-324: yes"
+(lane openRepoProject-2's R-343), texts this change neither carries, its blocks
+keeping `c462d87`'s and main's text, nor restates. PR #19's current head is
+`88d0d36`, after that lane's round (o), whose spec text is `2250830`'s: its D14
+and its task 2.1 equal `2250830`'s byte for byte, and every such cite holds
+there by content, at the lines `design.md` D7 gives, but for that sentence, so
+that the cites stay at those shas (ruling A-86).
 `project:N` and `tests:N` are
 `project` and `tests/test_project.py` at `961c405`. Main is now `15504f1`,
 whose `ideation/` has moved from `961c405`'s with packet revision 1
@@ -292,7 +302,10 @@ Brett Heap's confirmation of round (l)'s texts, A-78 on PR #19's round (m) and
 A-79 and A-80 on lane openRepoProject-3's W94 confirm read of round A20, and its
 rulings for round A22, A-82 on lane openRepoProject-3's W98 confirm read of
 round A21 and A-83 and A-84 on Brett Heap's "R-324: yes" and PR #19's round (n),
-bind this draft and are applied under Decisions and in the round tables. That
+with A-85, which ran round A22, and its rulings for round A23, A-86 on PR #19's
+round (o) and A-87 and A-88 on lane openRepoProject-3's W104 confirm read of
+round A22, bind this draft and are applied under Decisions and in the round
+tables. That
 wave's readers are lane openRepoProject-5's RA (an adversarial read of
 `01b5dd8`), RD (how this change,
 PR #27 at `fe5b245` and PR #29 at `e11d755` compose in archive order) and RE
@@ -379,7 +392,15 @@ lane openRepoProject-3's pane and the RULED lines of lanes openRepoProject-3 and
 openRepoProject-2 at `:2861`, PR #19's round (n) at `:2866` and A-84 at `:2871`,
 read at its `origin/main` `83abc2045`, W98's findings file,
 `attachments/lane-openRepoProject-3/confirm-a21-findings.md`, attached at
-`6340395a7`; the reader files RI and RH, at
+`6340395a7`, and A-85 at `:2895`, #26's late read at 6df5866 at `:2906`,
+PR #19's round (o) at `:2949`, A-86 at `:2953`, W104's findings at `:2954`, the
+lead's facts for what W104 left undone at `:2960`, A-87 at `:2961` and A-88 at
+`:2964`, read at its `origin/main` `b0d2d3a42`, W104's findings file,
+`attachments/lane-openRepoProject-3/confirm-a22-findings.md`, attached at
+`215ab7715`; the rulings file is cited at the commit each cite names, since
+three of its commits rewrote 15 of its lines in place, times only, none of them
+a line cited here at a commit before its rewrite (round A23's table); the reader
+files RI and RH, at
 `S/review-1022/`, are the lane's working records, cited by finding id, RI-1 to
 RI-9 and M2, M3, L1 and L3, and RH's item 6; lane openRepoProject-3's confirm
 read of round A14,
@@ -913,25 +934,27 @@ their `CAS` line.
   `f0bf538`'s, at `6bf9f77`, after its rounds (g), (g2) and (g3), at
   `b3228bb`, after its round (h), at `e0c91bb`, after its round (i), at
   `e14ada0`, after its round (j), at `173d83c`, after its round (k), at
-  `ccc52b9`, after its round (l), at `20084cd`, after its round (m), and at
-  `2250830`, its current head, after its round (n), it changes all seven
-  requirements this change modifies, and the inputs of `design.md` D7's fit,
-  which D7 states at `c462d87`, at `6f2cb54`, at `a664799`, at `9267303`, at
-  `f0bf538` and at `662be89`, where LQ-20's step (i) measured the two probes
-  that moved D14's measured basis, each of them unchanged at `2250830`, whose
-  D14, like `b3228bb`'s, `e0c91bb`'s, `e14ada0`'s, `173d83c`'s, `ccc52b9`'s and
-  `20084cd`'s, adds a case for a path that holds a line feed (`design.md` D7;
-  rulings A-62, A-64, A-67, A-71, A-75, A-78 and A-84). At `2250830` the text of
-  all seven requirements differs from this change's sources, and five of the
-  seven blocks would not carry their scenarios from it, 17 scenarios in all, as
-  at `20084cd`, where it was 16 at `ccc52b9`, 15 at `b3228bb`, `e0c91bb`,
-  `e14ada0` and `173d83c`, and 14 at `f0bf538` and `662be89`, as lane
-  openRepoProject-3's W60 counted, and at `6bf9f77`, as this change counted:
+  `ccc52b9`, after its round (l), at `20084cd`, after its round (m), at
+  `2250830`, after its round (n), and at `88d0d36`, its current head, after its
+  round (o), whose spec text is `2250830`'s, it changes all seven requirements
+  this change modifies, and the inputs of `design.md` D7's fit, which D7 states
+  at `c462d87`, at `6f2cb54`, at `a664799`, at `9267303`, at `f0bf538` and at
+  `662be89`, where LQ-20's step (i) measured the two probes that moved D14's
+  measured basis, each of them unchanged at `88d0d36`, whose D14, like
+  `b3228bb`'s, `e0c91bb`'s, `e14ada0`'s, `173d83c`'s, `ccc52b9`'s, `20084cd`'s
+  and `2250830`'s, adds a case for a path that holds a line feed (`design.md`
+  D7; rulings A-62, A-64, A-67, A-71, A-75, A-78, A-84 and A-86). At `88d0d36`,
+  as at `2250830`, the text of all seven requirements differs from this change's
+  sources, and five of the seven blocks would not carry their scenarios from it,
+  17 scenarios in all, as at `20084cd`, where it was 16 at `ccc52b9`, 15 at
+  `b3228bb`, `e0c91bb`, `e14ada0` and `173d83c`, and 14 at `f0bf538` and
+  `662be89`, as lane openRepoProject-3's W60 counted, and at `6bf9f77`, as this
+  change counted:
   round (n) widens every no-prune warning to "git worktree prune, git worktree
   remove or git gc", in the scenarios "An unreadable worktree is one row", "A
   removal past the hard ceiling" and "Row cap and planning failures", which
   already did not carry, and in the text of the retire and reconcilable-result
-  requirements, whose scenarios it leaves as they were, so that the count
+  requirements, whose other scenarios it leaves as they were, so that the count
   stands; round (m) adds an AND to the scenario "Row cap and planning failures"
   of "Clean bounds its Git work and reports omitted work", a block this change
   carries at `c462d87`, which no longer carries it, so that the block fails to
@@ -961,10 +984,10 @@ their `CAS` line.
   retire and batch requirements, the project-command block and the
   classification requirement, which this change does not modify either. This
   change keeps its blocks on `c462d87`'s and main's text and re-bases none of
-  them now (rulings A-50, A-57, A-59, A-64, A-67, A-71, A-75, A-78 and A-84).
-  This does not block this change, whose blocks meet PR #19's final text at the
-  re-base
-  (`tasks.md` 2.1 to 2.3 and 3.2; reader RF's M2; rulings A-37 to A-42 and
+  them now (rulings A-50, A-57, A-59, A-64, A-67, A-71, A-75, A-78, A-84 and
+  A-86). This does not block this change, whose blocks meet PR #19's final text
+  at the re-base (`tasks.md` 2.1 to 2.3 and 3.2; reader RF's M2; rulings A-37 to
+  A-42 and
   A-47). Ratifying this change ratifies those two blocks only as written on
   PR #19's text at `c462d87`, not PR #19's own sentences, which stay PR #19's to
   ratify (lane openRepoProject-3's M1); before the Speckit handoff, `tasks.md`
@@ -1264,10 +1287,10 @@ open:
   removes 14 worktrees and retires 13 branches on change 1's terms at PR
   #19's `c462d87`. At PR #19's `6f2cb54`, `a664799`, `9267303`, `f0bf538`,
   `662be89`, `6bf9f77`, `b3228bb`, `e0c91bb`, `e14ada0`, `173d83c`, `ccc52b9`,
-  `20084cd` and `2250830`, at the packet's 150 ms per child (D14's 150 ms
-  basis), it removes 11 and retires 10 where the plan read
-  `extensions.worktreeConfig` as false,
-  six children per revalidation, all 16 removals spawning without the flag, and
+  `20084cd`, `2250830` and `88d0d36`, at the packet's 150 ms per child (D14's
+  150 ms basis), it removes 11 and retires 10 where the plan read
+  `extensions.worktreeConfig` as false, six children per revalidation, all 16
+  removals spawning without the flag, and
   where it read it as true, seven, PR #19's D14 counting a plan-time probe on
   each linked row, a flagged run of 16 at 128 rows removes and retires nothing,
   its first removal due at 45.45 s, past the 45 s spawn limit, or 45.3 s without
@@ -1275,11 +1298,11 @@ open:
   2026-10-22, the two probes that task 2.1 did not measure were measured, 8.7 ms
   and 160.3 ms with the margin, and the case passes on the measured basis, D5's
   as ratified, none of LQ-20's options being taken (PR #19's `design.md:956-969`
-  at `662be89`, its figures unchanged at `2250830`; rulings A-47, A-57, A-62,
-  A-64, A-67, A-71, A-75, A-78 and A-84). On that basis, change 1's 16th removal
-  spawning at 30.0 s at 128 rows where the plan read the setting as true and at
-  28.7 s where
-  it read it as false, a flagged run of 16 removes and retires all 16 in both
+  at `662be89`, its figures unchanged at `88d0d36`; rulings A-47, A-57, A-62,
+  A-64, A-67, A-71, A-75, A-78, A-84 and A-86). On that basis, change 1's 16th
+  removal spawning at 30.0 s at 128 rows where the plan read the setting as true
+  and at 28.7 s where it read it as false, a flagged run of 16 removes and
+  retires all 16 in both
   cases with this change's children at 150 ms each, its 16th removal at about
   30.0 + 61 x 0.15 = 39.15 s, or 37.85 s (39.12 s and 37.88 s from D14's
   unrounded 29.97 s and 28.73 s), and its 16th branch child at 40.18 s, or 38.94
@@ -1510,19 +1533,19 @@ departs:
   s, cannot start, so 14 worktrees are removed and 13 branches retired, the
   15th and 16th targets deferred, on change 1's terms at PR #19's `c462d87`; at
   its `6f2cb54`, `a664799`, `9267303`, `f0bf538`, `662be89`, `6bf9f77`,
-  `b3228bb`, `e0c91bb`, `e14ada0`, `173d83c`, `ccc52b9`, `20084cd` and
-  `2250830`, at the same 150 ms per child (D14's 150 ms basis), 11 and 10 where
-  the plan read
-  `extensions.worktreeConfig` as false; where it read it as true, PR #19's D14
+  `b3228bb`, `e0c91bb`, `e14ada0`, `173d83c`, `ccc52b9`, `20084cd`, `2250830`
+  and `88d0d36`, at the same 150 ms per child (D14's 150 ms basis), 11 and 10
+  where the plan read `extensions.worktreeConfig` as false; where it read it as
+  true, PR #19's D14
   counting a plan-time probe on each linked row, a flagged run of 16 at 128 rows
   removes and retires 0 and 0 on that basis, and 7 and 7 on its mixed basis as
   first stated, where change 1 alone removes 0 and 11. On PR #19's measured
   basis at `662be89`, with LQ-20's step (i)'s costs for the two probes that task
   2.1 did not measure (its `design.md:956-969`, its figures unchanged at
-  `2250830`; rulings A-47, A-57, A-62, A-64, A-67, A-71, A-75, A-78 and A-84),
-  change 1 alone removes all 16 at 128 rows, the 16th at 30.0 s where the plan
-  read the
-  setting as true and at 28.7 s where it read it as false, or 37.7 s and 36.4 s
+  `88d0d36`; rulings A-47, A-57, A-62, A-64, A-67, A-71, A-75, A-78, A-84 and
+  A-86), change 1 alone removes all 16 at 128 rows, the 16th at 30.0 s where the
+  plan read the setting as true and at 28.7 s where it read it as false, or 37.7
+  s and 36.4 s
   with 20,000-file removals (its `:991-992`), and a flagged run of 16 removes
   and retires all 16 in both cases with this change's children at 150 ms, the
   16th branch child at 40.18 s and 38.94 s, and with 17 reflog children, and
@@ -1778,20 +1801,20 @@ recommendation, and a different ruling edits them before ratification.
   packet's 150 ms per child, a flagged run of 16 removes 14 worktrees and
   retires 13 branches on change 1's terms at PR #19's `c462d87`, and at its
   `6f2cb54`, `a664799`, `9267303`, `f0bf538`, `662be89`, `6bf9f77`,
-  `b3228bb`, `e0c91bb`, `e14ada0`, `173d83c`, `ccc52b9`, `20084cd` and
-  `2250830`, at the packet's 150 ms per child (D14's 150 ms basis), 11 and 10
-  where the plan read
-  `extensions.worktreeConfig` as false, six children per revalidation, and 0 and
+  `b3228bb`, `e0c91bb`, `e14ada0`, `173d83c`, `ccc52b9`, `20084cd`, `2250830`
+  and `88d0d36`, at the packet's 150 ms per child (D14's 150 ms basis), 11 and
+  10 where the plan read `extensions.worktreeConfig` as false, six children per
+  revalidation, and 0 and
   0 at 128 rows where it read it as true, seven, PR #19's D14 counting a
   plan-time probe on each linked row. PR #19's LQ-20, which this question waited
   on for that case, is resolved: Brett Heap chose its step (i) on 2026-10-22,
   the two probes were measured, and the case passes on the measured basis, D5's
   as ratified, none of LQ-20's options being taken (PR #19's `design.md:956-969`
-  at `662be89`, its figures unchanged at `2250830`; rulings A-47, A-57, A-62,
-  A-64, A-67, A-71, A-75, A-78 and A-84). On that basis, at 128 rows, a flagged
-  run of 16 removes and retires all 16 where the plan read the setting as true
-  and where
-  it read it as false, with this change's children at 150 ms each, its 16th
+  at `662be89`, its figures unchanged at `88d0d36`; rulings A-47, A-57, A-62,
+  A-64, A-67, A-71, A-75, A-78, A-84 and A-86). On that basis, at 128 rows, a
+  flagged run of 16 removes and retires all 16 where the plan read the setting
+  as true and where it read it as false, with this change's children at 150 ms
+  each, its 16th
   removal at about 39.15 s, or 37.85 s, 30.0 s or 28.7 s for change 1 alone plus
   61 x 0.15 s, or at task 2.1's average of about 0.063 s per child; it falls
   short only with 20,000-file removals and this change's children at 150 ms, 15
@@ -2820,3 +2843,41 @@ tasks 1.1, 1.3, 1.4 and 1.5, as earlier rounds did.
 | lane 3 confirm read of round A21 (f21b20f), its W98: 0 HIGH, 0 MEDIUM, 2 LOW and nothing departing; the two ANDs byte-equal to W94's draft, their bodies equal to the `internal-error` literal and to the rule, in this change's own ADDED scenarios; LOW-1 and W94's four notes holding, round A21's row 9 right on :446 and :524; D14 and task 2.1 cmp-identical at `20084cd`; A-50's note five blocks and 17 scenarios at `20084cd`; every PR #19 cite holding by content; T1 to T8 verbatim and rightly attributed; F-1's (b) open at PR #19's `design.md:2187-2188`, nothing restating F-1 as wholly ruled; valid and 8 of 8, ALL BLOCKS CARRIED, 68, 4 and 9, the three blobs, the 245 added lines clean, all 37 hunks declared, the 12 rows matching | check | A-82 (`:2847`): upheld; its two LOW are rows 1 and 2, and its list of R-324's sites is row 3 | none |
 | lane 3's W98, observations 1 to 4: the re-copy sentence names round (l)'s AND but not the block's two other failing scenarios, which task 2.1's whole re-copy carries; round A21's tense changes in D7 and the key are not itemized, following from its row 3; the `interrupted` AND pins its trigger in the scenario's own words, as its siblings do; W94's observation 2 was off by two lines, as round A21's row 9 says | note | A-82: no edit: none is a finding; this round's tense changes for round (m) in D7 and the key follow from row 4 in the same way | none |
 | CI, SonarCloud and Codex (f21b20f): the lead's late read at 21:15:17Z (`:2832`) finds #26 at `f21b20f` MERGEABLE, its six test jobs and SonarCloud passing; no `@codex review` was requested on `f21b20f`, Codex being at its usage limit | none | no finding and no edit | none |
+
+### Re-read and Codex Findings (round A23)
+
+Lane openRepoProject-3's reader W104 read round A22, `f21b20f..6df5866`
+(`attachments/lane-openRepoProject-3/confirm-a22-findings.md`, attached at
+`215ab7715`): 0 HIGH, 0 MEDIUM, 2 LOW and nothing departing
+(`rulings-2026-10-20.md:2954`, read at the register's `origin/main`
+`b0d2d3a42`). It found W98's two LOW applied, "R-324: yes" verbatim in its three
+RULED lines, every no-prune quotation equal to round (n)'s words, the carried
+blocks at their base, D14 and task 2.1 byte-identical, A-50's note at 17
+scenarios and every cite of PR #19 holding by content. The lead's ruling A-87
+(`:2961`) takes its two LOW, both in round A22's record, A-88 (`:2964`) its
+verdict and the lead's facts for what it left undone (`:2960`), and A-86
+(`:2953`) brings this change to PR #19's round (o), `88d0d36` (`:2949`), whose
+spec text is `2250830`'s, after D14 and task 2.1 are diffed, neither moving a
+figure. CI's six test jobs and SonarCloud pass at `6df5866` (22:06:08Z,
+`:2906`), and Codex is still at its usage limit. The round was checkpointed at
+the lane's wrap-up with its design edit saved and uncommitted, and resumed from
+that tree, whose diff still equalled the saved one, in the next window (the
+lead's A-89 and A-90, at the register's later `origin/main`). Where a ruling and
+a finding differ, the ruling governs. Of the 6 rows below, 4 are applied, 1 is a
+check upheld with no change and 1 records the lead's facts, with no finding;
+none is declined. No ruling needs a spec file: the three spec deltas are
+unchanged (project-clean `bc762537`, review-safety `504cb9c8`, project-command
+`e7665dda`), so the scenarios stay 68, 4 and 9 and every MODIFIED block still
+carries its source scenarios byte for byte, no block being re-based (A-50). Its
+commits run design (`cb07033`) and then the proposal and tasks. The round also
+updates `design.md`'s Context map, the Status clause, the rulings and citation
+key and tasks 1.1, 1.3, 1.4 and 1.5, as earlier rounds did.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| lane 3 confirm read (6df5866), its W104, LOW-1: A-50's note in Dependencies and Sequencing (proposal :933-934 at `6df5866`) and round A22's row 5 say that round (n) changes the text of the retire and reconcilable-result requirements, "whose scenarios it leaves as they were", but round (n) also edits the retire scenario "A removal past the hard ceiling" (PR #19's `specs/project-clean/spec.md:536-538` at `2250830`), which the same sentence names just before | LOW | A-87 (`:2961`): applied: "whose other scenarios it leaves as they were" (:957); a search of the live text finds the claim nowhere else: the Status clause's "whose wider warnings change no scenario that this change's blocks still carry" (:149-151) is true, the scenario round (n) edits being one the retire block already did not carry, and `design.md` D7's round (n) paragraph names that scenario among the warnings round (n) changed; round A22's row 5 (:2842) stays as that round's record (A-70), and this row corrects it: round (n) moves the retire requirement's text and one of its 15 scenarios, and the reconcilable-result requirement's text and none of its 8 | Dependencies and Sequencing |
+| lane 3's W104, LOW-2: round A22's row 2 (:2839) names one line of the lane's rulings file rewritten in place, `:1480`, where the file has more: at `1cbdc517d`, where the key reads a findings file, the rulings file also differs at `:1325`, `:1338` and `:1339`, the times that `337c74621` made exact, and `61f71de88` made five more, all times only | LOW | A-87: applied, by `git show` and `git log` in the lane's register checkout, with no fetch, at its `origin/main` `b0d2d3a42`: three commits rewrote lines of `rulings-2026-10-20.md` in place, 15 in all, each a time made exact or narrower and nothing else, and every other commit to the file only appends: `61f71de88` (02:40:55Z) at `:1189`, `:1193`, `:1194`, `:1195` and `:1199`, `337c74621` (08:03:12Z) at `:1325`, `:1338`, `:1339`, `:1344`, `:1372`, `:1373`, `:1397`, `:1411` and `:1424`, and `fada736ef` (08:41:57Z) at `:1480`; of the 34 commits the key reads at, the file at each is a line-prefix of `origin/main`'s but at two, `1cbdc517d` (`:1325`, `:1338` and `:1339`) and `a622a156e` (`:1480`), and the key cites none of those lines; the one rewritten line it cites, `:1193`, it reads at `61f71de88`, after the rewrite, so that every line the key cites reads at `origin/main` as at its commit; one earlier record, round A11's paragraph, cites `:1193` at `1e5bdf22f`, before the rewrite, where the line gave "about 02:3xZ" for the 02:29:29Z the paragraph itself states, and it stays as that round's record (A-70); no live text says that the rulings file is append-only, the key's "append-only" being said of the lane logs, whose openRepoProject files no commit has rewritten, and the key now says why the rulings file is cited at each cite's commit (:400-402); round A22's row 2 stays as that round's record (A-70), and this row gives the full list | citation key |
+| A-86 (`:2953`): the currency, PR #19's round (o), `88d0d36` (`:2949`; lane openRepoProject-2's R-349 and R-350, on lane openRepoProject-3's W103; committed at 22:13:20Z), whose spec text is `2250830`'s and whose design, proposal and tasks change four record items; D14 and task 2.1 to be confirmed byte-identical, the round to stop if a figure moved; every cite of PR #19's design, proposal and tasks checked by content | ruling | applied: `git diff 2250830 88d0d36` on PR #19's specs is empty; D14 (its `design.md:984-1159` at `88d0d36`, `:982-1157` at `2250830`) and task 2.1 (its `tasks.md:148-199`, `:146-197`) compare equal byte for byte, so the round does not stop, and A-47's figures are cited at `662be89` with "its figures unchanged at `88d0d36`"; round (o)'s design and tasks each gain 2 lines, in one hunk each ahead of every cite (its design's Context at `:73` and its tasks at `:108`), so that every cite of `662be89`'s design holds at `88d0d36` by content 2 lines later than at `2250830`: D14's 89 or 100 lines later, `:441-443` at `:490-492`, the F = 8 sentence at `:384-385`, the measured basis at `:1056-1069`, D4's `:489-503` and `:499-503` at `:554-569` and `:564-569`, the LQ-20 entry at `:2152-2214`, task 2.1's step (i) at `tasks.md:189-199`, and F-1's (b) at `design.md:2216-2217`, still not ruled; the spec cites stay where `2250830` put them, and this change cites nothing in PR #19's proposal; every place that states PR #19's current head names `88d0d36`: Status, the key's currency paragraph, Dependencies and Sequencing, `design.md` D4 and D7, the A-9 places in Decisions, the readings and Open Questions, the lists of heads at which the 150 ms basis gives 11 and 10, Risks and task 1.1, `2250830` kept as round (n)'s head and the Context map's round A22 entry calling it "its head then"; records stay (A-70) | citation key; Status; Dependencies and Sequencing; Decisions (A-9); readings; Open Questions (A-9); `design.md` Context, D4, D7, Risks; `tasks.md` 1.1 |
+| A-86: A-50's note brought to `88d0d36` | ruling | applied in Dependencies and Sequencing (:936-957): this round's run of `carry_at.py` at `88d0d36` prints the same lines as at `2250830`, the sha apart: all seven requirements differ from this change's sources, five of the seven blocks fail to carry, 17 scenarios in all, with the per-block counts unchanged (3, 2, 3, 2 and 7), and the reconcilable-result block (8 of 8) and the review-safety block (3 of 3) still carry; nothing is re-based (A-50) | Dependencies and Sequencing |
+| lane 3 confirm read of round A22 (6df5866), its W104: 0 HIGH, 0 MEDIUM, 2 LOW and nothing departing; W98's LOW-1 and LOW-2 applied, the literals re-counted, seven in six scenarios, ten in eight; "R-324: yes" verbatim in its three RULED lines, `26e556b43`, `c7c0b1f5e` and `5ebdba0a5`; the 8 quoted no-prune strings each a substring of PR #19's `2250830` text, T8's form included; the specs `cmp`-identical to `f21b20f`'s, ALL BLOCKS CARRIED; D14 and task 2.1 identical; A-50's note at `2250830` five of seven blocks and 17 scenarios; 23 cites holding by content; F-1's (b) still open at PR #19's `design.md:2214-2215`; the reproduction: valid and 8 of 8, 68, 4 and 9, the three blobs, the 235 added lines clean, 34 hunks and 8 rows each declared and matching; six observations, none a defect | check | A-88 (`:2964`): upheld; its two LOW are rows 1 and 2; its observations take no edit, observation 6's two cites of F-1's (b), `:2187-2188` in round A22's row 6 and `:2214-2215` in its row 3, being the same lines at `20084cd` and at `2250830` | none |
+| the lead's facts for what W104 left undone (`:2960`): CI and SonarCloud at `6df5866`, Codex, and the model of round A22's writer | none | no finding and no edit: CI's six test jobs and SonarCloud pass at `6df5866` (the lead's late read at 22:06:08Z, `:2906`, MERGEABLE, with no new thread or comment); no `@codex review` was requested on `6df5866`, Codex being at its usage limit; round A22's writer ran on claude-opus-5-5, 97 assistant turns by the lead's count of its transcript | none |
