@@ -8,9 +8,10 @@ work, detached state, an unknown default branch, and remote divergence as
 preservation or review states. It SHALL also treat as preservation states the
 main worktree; a locked worktree; a
 worktree whose index holds a gitlink, whose administrative directory holds a
-`modules` entry, or a directory of which, holding an index entry, also holds an
-entry named `.git` (`contains-submodule`); a worktree whose index flags any
-entry assume-unchanged or skip-worktree, sparse checkouts included
+`modules` entry, or a directory of which, holding an index entry directly or
+below it, other than the worktree's own top level, also holds an entry named
+`.git` (`contains-submodule`); a worktree whose index flags any entry
+assume-unchanged or skip-worktree, sparse checkouts included
 (`hidden-local-state`); a worktree whose registration disagrees in either
 direction, whose effective work tree is not its registered path, or whose path
 is the common directory, the main worktree or another row's path, or an
@@ -131,9 +132,10 @@ enumeration that "Clean disposes of listed caches before a worktree removal"
 defines, which SHALL print exactly the ignored records that the plan listed and
 no other record,
 then the hidden-state probe, with the `lstat` of `<dir>/.git` for
-every directory that its listing shows holding an index entry, then the
-`worktree-only-commits` check that "Clean previews and applies a batch of
-eligible worktree removals in one repository" states, `logs/HEAD` read again
+every directory that its listing shows holding an index entry directly or below
+it, other than the worktree's own top level, then the `worktree-only-commits`
+check that "Clean previews and applies a batch of eligible worktree removals in
+one repository" states, `logs/HEAD` read again
 and the non-zero objects that the plan's branch reflog named taken as they
 were, whose probe SHALL print nothing. It SHALL compare
 the recorded repository identity (`root`, `common_dir`, `dev`, `ino`), the
