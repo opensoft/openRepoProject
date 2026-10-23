@@ -381,7 +381,7 @@ as `3bc1d68`):
 | 6 | `not-requested` | single mode, an eligible row other than P |
 | 7 | `unstarted-branch` or `reflog-unavailable` | the reflog rule below |
 | 8 | `deferred-target-cap` | beyond the first 16 rows that passed gates 1 to 7 |
-| 9 | `contains-submodule` | a gitlink in the row's index, or `modules` in its admin directory, or an entry of any type named `.git` in a directory of the worktree that holds an index entry, found by an `lstat` (`nested_git_check()`; Brett Heap's Q2 (2), ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; writer's `5eeaedd`) |
+| 9 | `contains-submodule` | a gitlink in the row's index, or `modules` in its admin directory, or an entry of any type named `.git` in a directory of the worktree that holds an index entry, found by an `lstat` (`nested_git_check()`; Brett Heap's Q2 (2), ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; writer's `5eeaedd`), which revalidation's step 7 makes again (below) |
 | 10 | `hidden-local-state` | an index entry flagged assume-unchanged or skip-worktree |
 | 11 | `operation-in-progress` | an entry of any kind named by one of the eleven markers in the row's administrative directory, `<common_dir>/worktrees/<admin_id>`: `MERGE_HEAD`, `CHERRY_PICK_HEAD`, `REVERT_HEAD`, `BISECT_LOG`, `BISECT_START`, `rebase-apply`, `rebase-merge`, `sequencer`, `MERGE_AUTOSTASH`, `NOTES_MERGE_PARTIAL` and `NOTES_MERGE_REF` (`NOTES_MERGE_WORKTREE`, which a notes merge leaves behind, is none) |
 | 12 | `worktree-only-commits` | a commit that only the row's own HEAD reflog or `refs/worktree/` holds: the reachability probe prints an object, or the row's `logs/HEAD` was read to its 64 KiB bound or holds a line that cannot be parsed |
@@ -397,7 +397,9 @@ as `directories` (Q2 (2)). Git's directory walk skips every entry named `.git`
 and recurses into a tracked directory without asking whether it holds a
 repository, so a nested repository shows in no status record and passes Git's
 own check; it is found here, and a `.git` entry beside a flagged entry still
-names `contains-submodule`, gate 9 coming first. Gate 12 runs only
+names `contains-submodule`, gate 9 coming first. Revalidation's step 7 makes the
+same `lstat`s again over the directories of its own fresh listing (below). Gate
+12 runs only
 for a row that passed gate 11, so that a row with an operation in progress
 spawns no child for it. It reads `logs/HEAD` in the row's administrative
 directory by one filesystem call (OPERATION `read`, at most 64 KiB, as gate 7
@@ -686,8 +688,24 @@ target:
 | 4. the narrowed ref listing | Git child | `branch-changed` (branch name or head); `state-changed` (upstream, `upstream_oid`, `ahead`, `behind`, merge target, or a listing that decides nothing) |
 | 5. the target's identity and registration (its `commondir` included), a twin of a checked row, the `modules` check and gate 11's listing of its administrative directory, by filesystem reads; then, where row 4c read true, its effective work tree, so that a filesystem check that refuses spares the probe's child (the lead's R-198; writer G's `963fccf`) | filesystem, then one Git child for the work tree | `identity-changed` (the identity or registration decided different; the target's path, its `.git` or its administrative directory found absent, `ENOENT` or `ENOTDIR`, the listing that finds no administrative directory included, writer G's reading of a gap in #19 at `9267303`, lead ruling R-220; or another present entry of the fresh registry listing sharing a checked row's realpath or admin id, `registry_twin()`, R-81 (a)); `contains-submodule` (a `modules` entry); `operation-in-progress` (a marker, LQ-14); `state-changed` for a read that fails other than with `ENOENT` or `ENOTDIR` or runs past its own budget: the target's lstat, its registration reads (a `.git` that cannot be read among them), a registry entry's lstat or realpath in the twin check, unless the plan read its lstat as failed too, null and null again (R-95 (c)), the `modules` check and the listing (the lead's R-208; lead rulings R-124 and R-127); for the work-tree probe, `identity-changed` only for a work tree the probe decides is not the target's path, its output read as one path (R-287), and `state-changed` for one that fails, runs past its own budget or prints output that is empty, a line feed alone or without a closing line feed (LQ-11; the lead's R-171 and R-287) |
 | 6. the combined status probe in the target, which must print nothing | Git child | `state-changed` (a record, or a probe that decides nothing) |
-| 7. the hidden-state probe, and the nested `.git` lstats over its listing's directories (Q2 (2)) | Git child, then filesystem | `contains-submodule` (a gitlink, or an entry named `.git` in a directory that holds an index entry); `hidden-local-state` (a flagged entry); `state-changed` (a probe that decides nothing, R-195, or an lstat that fails other than with `ENOENT` or `ENOTDIR` or runs past its own budget) |
+| 7. the hidden-state probe, which lists the target's index again, and then the nested `.git` lstats of Q2 (2) over the directories of that listing that hold an index entry | Git child, then filesystem | `contains-submodule` (a gitlink, or an entry named `.git`, made after the plan, in a directory that holds an index entry); `hidden-local-state` (a flagged entry); `state-changed` (a probe that decides nothing, R-195, or an lstat that fails other than with `ENOENT` or `ENOTDIR` or runs past its own budget); `deadline-exceeded` (an lstat that the work deadline cuts, the target and every later one `not-attempted`) |
 | 8. gate 12's check in the target: `logs/HEAD` read again and the reachability probe run again, the negatives the plan's, taken as they were | filesystem, then one Git child | `worktree-only-commits` (an object printed, or a `logs/HEAD` read to its bound or holding a line that cannot be parsed); `state-changed` (a read that fails or times out, or a probe that decides nothing; LQ-13, lead rulings R-124 and R-127) |
+
+Step 7 runs Q2 (2)'s nested `.git` check again, as #19's round (r) (at
+`4512441`; lane 3's W133 MEDIUM-2; the lead's R-391 and R-395) words
+it in the `project-clean-review-safety` delta: the hidden-state probe, "with the
+`lstat` of `<dir>/.git` for every directory that its listing shows holding an
+index entry" (`spec.md:110-112`). `hidden_state_probe()` runs gate 10's listing
+again, the step's one Git child, and then `nested_git_check()` makes one
+`fs_call()` of those `lstat`s, counted in the filesystem budget, so that a
+`.git` entry made after the plan, which neither step 6's status probe nor Git's
+own check reports, refuses the target as `contains-submodule`, the reason
+that delta gives "for a new gitlink, `modules` entry or `.git` entry"
+(`:131-132`; its scenario "A nested repository made after the plan"), and the
+nested repository remains. The `lstat`s are filesystem calls only, no Git
+child, so the bounds of six, seven, nine and ten children below stand; one
+that fails or runs past its budget is `state-changed`, and one that the work
+deadline cuts is `deadline-exceeded`, by the rule below.
 
 At most six Git children (steps 1, 3, 4, 6, 7 and 8), as T084 built them and
 LQ-13 added step 8's probe (lead ruling R-75 (i)), and seven where row 4c read
@@ -719,14 +737,15 @@ reason only for a value it decided (the lead's R-171, R-195, R-198 and R-208;
 draft PR #19 at `4485678`, `2e819ad` and `9267303`; writer G's `73d8888`,
 merged as `9ab996e`). The filesystem calls are step 1's identity reads, step
 5's lstat of the target, its registration reads, the twin check's reads, the
-`modules` check and the listing, step 7's nested `.git` lstats, and step 8's
-read of `logs/HEAD`; the `modules` check that fails gave `contains-submodule`
-and the others `identity-changed` before R-208. `ENOENT` or `ENOTDIR` decides
-that the path is absent, which keeps the step's reason, `identity-changed` for
-an absent target, `.git` or administrative directory; step 8's missing
-`logs/HEAD` names no candidate. A read the work deadline cut is none:
-`revalidate()` returns its distinct `deadline-exceeded`, and that target and
-every later one are `not-attempted` with that reason and no reconciliation
+`modules` check and the listing, step 7's nested `.git` lstats (one `fs_call()`
+over its fresh listing's directories, counted in the filesystem budget), and
+step 8's read of `logs/HEAD`; the `modules` check that fails gave
+`contains-submodule` and the others `identity-changed` before R-208. `ENOENT` or
+`ENOTDIR` decides that the path is absent, which keeps the step's reason,
+`identity-changed` for an absent target, `.git` or administrative directory;
+step 8's missing `logs/HEAD` names no candidate. A read the work deadline cut is
+none: `revalidate()` returns its distinct `deadline-exceeded`, and that target
+and every later one are `not-attempted` with that reason and no reconciliation
 (T099; lead ruling R-80 P-2), `registry_twin()` giving it too when the deadline
 cut one of its reads, so that no twin goes unread for want of time. A signal in
 the slot before a read starts is no difference either: `revalidate()` returns

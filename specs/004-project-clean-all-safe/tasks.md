@@ -271,10 +271,13 @@ regions and contracts every lane writes against.
   nested in a tracked directory", "The main worktree inside a linked worktree",
   "Two worktree paths that differ only in case", "A case-variant untracked file"
   and "A stale entry beside a worktree whose path cannot be read", whose builds
-  are on 004 at `da5502d` and `d8724e2`: 122 rows. The verify names PR #19's
-  titles, so that it holds before and after PR #19 lands.
+  are on 004 at `da5502d` and `d8724e2`: 122 rows. Doc round 26, Part D adds
+  round (r)'s two (PR #19 at `4512441`; lead R-396), "A nested repository made
+  after the plan" and "A stale entry's recommendation", whose builds are on 004
+  at `5eeaedd` and `da5502d`: 124 rows. The verify names PR #19's titles, so
+  that it holds before and after PR #19 lands.
   — files: `specs/004-project-clean-all-safe/traceability.md`
-  — verify: `python3 -c "import glob,re,sys;V=chr(124);L=open('specs/004-project-clean-all-safe/traceability.md').read().splitlines();R=[[c.strip() for c in l.strip().strip(V).split(V)] for l in L if l.startswith(V)][2:];T=[l[15:].strip() for f in sorted(glob.glob('openspec/changes/add-project-clean-all-safe/specs/*/spec.md')) for l in open(f) if l.startswith('#### Scenario: ')];T+=[x for x in ['The push child reaches its remote','A relative configuration path','Push refuses a branch it may not push','Branch deletion refuses a branch it may not delete','An operation in progress','A squash merge that holds an autostash','An operation started after the plan','A check that fails at revalidation','Owner tools see the repository the check inspected','A linked worktree whose work tree is redirected','A commondir that names another repository','A relative configuration path in status, doctor and update','An edit that keeps its size and restores its mtime','Trace targets are never written','A commit held only by the worktree','A worktree-only commit made after the plan','A work-tree probe at revalidation','A repository nested in a tracked directory','The main worktree inside a linked worktree','Two worktree paths that differ only in case','A case-variant untracked file','A stale entry beside a worktree whose path cannot be read'] if x not in T];e=[x for x in (L[0]=='Lane: openRepoProject-2' or 'lane line',len(R)==122 or 'rows',all(len(r)==5 for r in R) or 'columns',len(T)==122 or 'delta titles',sorted(r[2] for r in R)==sorted(T) or 'titles') if not x is True];print(len(R),'rows',e);sys.exit(1 if e else 0)"`
+  — verify: `python3 -c "import glob,re,sys;V=chr(124);L=open('specs/004-project-clean-all-safe/traceability.md').read().splitlines();R=[[c.strip() for c in l.strip().strip(V).split(V)] for l in L if l.startswith(V)][2:];T=[l[15:].strip() for f in sorted(glob.glob('openspec/changes/add-project-clean-all-safe/specs/*/spec.md')) for l in open(f) if l.startswith('#### Scenario: ')];T+=[x for x in ['The push child reaches its remote','A relative configuration path','Push refuses a branch it may not push','Branch deletion refuses a branch it may not delete','An operation in progress','A squash merge that holds an autostash','An operation started after the plan','A check that fails at revalidation','Owner tools see the repository the check inspected','A linked worktree whose work tree is redirected','A commondir that names another repository','A relative configuration path in status, doctor and update','An edit that keeps its size and restores its mtime','Trace targets are never written','A commit held only by the worktree','A worktree-only commit made after the plan','A work-tree probe at revalidation','A repository nested in a tracked directory','The main worktree inside a linked worktree','Two worktree paths that differ only in case','A case-variant untracked file','A stale entry beside a worktree whose path cannot be read','A nested repository made after the plan','A stale entry'+chr(39)+'s recommendation'] if x not in T];e=[x for x in (L[0]=='Lane: openRepoProject-2' or 'lane line',len(R)==124 or 'rows',all(len(r)==5 for r in R) or 'columns',len(T)==124 or 'delta titles',sorted(r[2] for r in R)==sorted(T) or 'titles') if not x is True];print(len(R),'rows',e);sys.exit(1 if e else 0)"`
 - [x] T003 [P] [S] Add the `git-floor` job to `.github/workflows/tests.yml`
   (FR-067, research.md R11), starting from the lead's ci-spike `workflow.patch`
   (48 added lines, applied with `git apply -p1`; its NOTES.md records the
@@ -2823,7 +2826,9 @@ carrying the reason the gate order gives.
   `test_clean_a_repository_nested_in_a_tracked_directory` and
   `test_clean_a_nested_git_lstat_that_fails` pin it, and T045's
   `test_clean_revalidate_refuses_a_repository_nested_after_the_plan` its use at
-  revalidation.
+  revalidation, where step 7's hidden-state probe lists the index again and
+  calls `nested_git_check()` over that fresh listing's directories (T084; #19's
+  round (r) at `4512441`; lane 3's W133 MEDIUM-2, lead R-391 and R-395).
   — files: `project`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'index:modules_check' 'index:hidden_state_probe' 'index:nested_git_check' 'index:nested_git_entry' 'index~def modules_check(common_dir, admin_id, run)' 'index~def hidden_state_probe(path, run)' && python3 -m unittest discover -s tests -p 'test_clean_gates.py' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' -k '*.test_clean_first_gates_in_order'`
 - [x] T068 [US2] [S] Run the US2 modules, every earlier module and the 96 tests:
@@ -3596,6 +3601,26 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
   `test_clean_revalidate_refuses_a_repository_nested_after_the_plan` and
   `test_clean_revalidate_a_nested_git_lstat_that_fails_or_is_cut` (T045; the
   second is the writer's `703b58c`).
+  Doc round 26, Part D (lane 3's W133 MEDIUM-2; lead R-391 and R-395; PR #19's
+  round (r) at `4512441`, whose `project-clean-review-safety` delta words step 7
+  at `spec.md:110-112` and `:131-132` and adds the scenario "A nested repository
+  made after the plan"): step 7 (`project:6550-6558` at `703b58c`) calls
+  `hidden_state_probe()`, which runs gate 10's listing again, its one Git child
+  (`project:5590`), and then `nested_git_check()` (`project:5595`) over the
+  directories that listing shows holding an index entry, so that revalidation
+  re-runs Q2 (2)'s nested `.git` checks, in #19's words "the hidden-state probe,
+  with the `lstat` of `<dir>/.git` for every directory that its listing shows
+  holding an index entry". The `lstat`s are filesystem calls only, one
+  `fs_call()` counted in the filesystem budget, so the bounds of six, seven,
+  nine and ten Git children stand. A `.git` entry made after the plan, which
+  neither the status probe nor Git's own check reports, refuses the target as
+  `contains-submodule`, #19's "`contains-submodule` for a new gitlink, `modules`
+  entry or `.git` entry", and the nested repository remains; an `lstat` that
+  fails other than with `ENOENT` or `ENOTDIR`, or runs past its budget while
+  the deadline is not the limit, is `state-changed`; one that the work deadline
+  cuts leaves the target and every later one `not-attempted` with
+  `deadline-exceeded`. The scenario's row, 123 of traceability.md, is a named
+  gap, the two tests above covering it.
   — files: `project`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply:narrowed_ref_patterns' && python3 project clean --help >/dev/null && python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'apply:as_candidate' 'apply:reserve_budget' 'apply~operation_check(' 'apply~effective_work_tree(' 'apply~worktree_only_check(' 'apply~revalidation_children(plan)' 'apply~R-208'`
 - [x] T085 [US4] [O] In `rescan()` and `decide_stage()` (region `apply`; D7,
@@ -5240,11 +5265,13 @@ verification.
   — verify: `python3 -c "import ast,sys;t=ast.parse(open('project').read());D={n.name for n in t.body if isinstance(n,ast.FunctionDef)};U={x.id for x in ast.walk(t) if isinstance(x,ast.Name)}.union(x.attr for x in ast.walk(t) if isinstance(x,ast.Attribute));B=[n for n in ('default_branch','ancestor') if n in D]+[n for n in ('print_clean_report','matching_worktree','cleanup_report') if n in D and n not in U];print('defined without a caller, or not retired:',B);sys.exit(1 if B else 0)" && python3 -m unittest discover -s tests`
 - [x] T126 [S] Complete `specs/004-project-clean-all-safe/traceability.md`: every
   one of the 101 rows names at least one test (114 rows since doc round 13, 117
-  since doc round 14, 122 since doc round 26, four of PR #19's rows naming a gap
-  instead, which the verify lists: "Branch deletion refuses a branch it may not
-  delete", "An edit that keeps its size and restores its mtime", "A work-tree
-  probe at revalidation" and "A stale entry beside a worktree whose path cannot
-  be read", whose tests are not named after them; lead ruling R-166;
+  since doc round 14, 122 since doc round 26, 124 since its Part D, six of PR
+  #19's rows naming a gap instead, which the verify lists: "Branch deletion
+  refuses a branch it may not delete", "An edit that keeps its size and
+  restores its mtime", "A work-tree probe at revalidation", "A stale entry
+  beside a worktree whose path cannot be read", "A nested repository made after
+  the plan" and "A stale entry's recommendation", whose tests are not named
+  after them; lead ruling R-166;
   "Push refuses a branch it may not push" names lane A's addendum 5 test, on
   004 at `598929b`), and a script confirms each named
   test is defined as `def NAME` in a `tests/test_*.py` module and starts with
@@ -5252,7 +5279,7 @@ verification.
   landed, the script reads the push-child scenario from `main`'s delta,
   otherwise from `origin/change/amend-clean-all-safe-push-pins`.
   — files: `specs/004-project-clean-all-safe/traceability.md`
-  — verify: `python3 -c "import glob,re,sys;V=chr(124);L=open('specs/004-project-clean-all-safe/traceability.md').read().splitlines();R=[[c.strip() for c in l.strip().strip(V).split(V)] for l in L if l.startswith(V)][2:];T=[l[15:].strip() for f in sorted(glob.glob('openspec/changes/add-project-clean-all-safe/specs/*/spec.md')) for l in open(f) if l.startswith('#### Scenario: ')];T+=[x for x in ['The push child reaches its remote','A relative configuration path','Push refuses a branch it may not push','Branch deletion refuses a branch it may not delete','An operation in progress','A squash merge that holds an autostash','An operation started after the plan','A check that fails at revalidation','Owner tools see the repository the check inspected','A linked worktree whose work tree is redirected','A commondir that names another repository','A relative configuration path in status, doctor and update','An edit that keeps its size and restores its mtime','Trace targets are never written','A commit held only by the worktree','A worktree-only commit made after the plan','A work-tree probe at revalidation','A repository nested in a tracked directory','The main worktree inside a linked worktree','Two worktree paths that differ only in case','A case-variant untracked file','A stale entry beside a worktree whose path cannot be read'] if x not in T];D=set(m for f in glob.glob('tests/test_*.py') for m in re.findall(r'^\s*def (test_\w+)\(',open(f).read(),re.M));P=('test_clean_','test_status_','test_doctor_','test_update_');k=lambda t:re.sub('[^a-z0-9]+','_',t.lower()).strip('_');G=['Branch deletion refuses a branch it may not delete','An edit that keeps its size and restores its mtime','A work-tree probe at revalidation','A stale entry beside a worktree whose path cannot be read'];B=[(r[2],n) for r in R for n in (re.findall(r'test_\w+',r[4]) or ([] if r[2] in G else ['(none)'])) if n not in D or not any(n==p+k(r[2]) or n.startswith(p+k(r[2])+'_') for p in P)];[print('bad:',b) for b in B];print(len(R),'rows; named gaps:',[r[2] for r in R if r[2] in G and not re.findall(r'test_\w+',r[4])]);sys.exit(1 if B or not len(R)==122 or not sorted(r[2] for r in R)==sorted(T) else 0)"`
+  — verify: `python3 -c "import glob,re,sys;V=chr(124);L=open('specs/004-project-clean-all-safe/traceability.md').read().splitlines();R=[[c.strip() for c in l.strip().strip(V).split(V)] for l in L if l.startswith(V)][2:];T=[l[15:].strip() for f in sorted(glob.glob('openspec/changes/add-project-clean-all-safe/specs/*/spec.md')) for l in open(f) if l.startswith('#### Scenario: ')];T+=[x for x in ['The push child reaches its remote','A relative configuration path','Push refuses a branch it may not push','Branch deletion refuses a branch it may not delete','An operation in progress','A squash merge that holds an autostash','An operation started after the plan','A check that fails at revalidation','Owner tools see the repository the check inspected','A linked worktree whose work tree is redirected','A commondir that names another repository','A relative configuration path in status, doctor and update','An edit that keeps its size and restores its mtime','Trace targets are never written','A commit held only by the worktree','A worktree-only commit made after the plan','A work-tree probe at revalidation','A repository nested in a tracked directory','The main worktree inside a linked worktree','Two worktree paths that differ only in case','A case-variant untracked file','A stale entry beside a worktree whose path cannot be read','A nested repository made after the plan','A stale entry'+chr(39)+'s recommendation'] if x not in T];D=set(m for f in glob.glob('tests/test_*.py') for m in re.findall(r'^\s*def (test_\w+)\(',open(f).read(),re.M));P=('test_clean_','test_status_','test_doctor_','test_update_');k=lambda t:re.sub('[^a-z0-9]+','_',t.lower()).strip('_');G=['Branch deletion refuses a branch it may not delete','An edit that keeps its size and restores its mtime','A work-tree probe at revalidation','A stale entry beside a worktree whose path cannot be read','A nested repository made after the plan','A stale entry'+chr(39)+'s recommendation'];B=[(r[2],n) for r in R for n in (re.findall(r'test_\w+',r[4]) or ([] if r[2] in G else ['(none)'])) if n not in D or not any(n==p+k(r[2]) or n.startswith(p+k(r[2])+'_') for p in P)];[print('bad:',b) for b in B];print(len(R),'rows; named gaps:',[r[2] for r in R if r[2] in G and not re.findall(r'test_\w+',r[4])]);sys.exit(1 if B or not len(R)==124 or not sorted(r[2] for r in R)==sorted(T) else 0)"`
 - [x] T127 [O] Check by script that every D18 and D14 literal of
   `tests/clean_support.py`, its placeholders substituted, equals a line or
   quoted string of design.md D18 or D14 character for character, and that every

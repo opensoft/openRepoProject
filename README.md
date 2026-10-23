@@ -473,7 +473,12 @@ directory (a `modules` entry), and `contains-submodule` also looks, with one
 `lstat` of `DIR/.git` for each directory of the index that holds an entry, for
 a repository or any other `.git` entry nested in a tracked directory, which
 Git's own status never lists and its removal would delete, for the 16 worktrees
-a run can take. `operation-in-progress` lists that administrative directory for
+a run can take. The revalidation before each removal makes those `lstat`s again,
+over a fresh listing of the worktree's index, so a `.git` entry made after the
+plan refuses the worktree as `contains-submodule`, and an `lstat` that fails or
+runs past its own time budget refuses it as `state-changed`; one that the run's
+deadline cuts leaves the worktree `not-attempted` (`deadline-exceeded`).
+`operation-in-progress` lists that administrative directory for
 the same 16: a stopped `am`, merge, cherry-pick, revert, rebase, sequence or
 bisect, a squash merge that holds an autostash, or a stopped notes merge leaves
 a marker there (`MERGE_HEAD`, `CHERRY_PICK_HEAD`, `REVERT_HEAD`, `BISECT_LOG`,
@@ -514,10 +519,11 @@ next step, which a plain removal would have skipped.
 it spawns a removal only if, at the revalidation immediately before it, what
 the plan recorded still holds: the repository and the worktree (identity,
 registration, lock), the branch's name and tip, its upstream, the merge target,
-the manifest, a clean status, no submodule or hidden index flag, no
-operation in progress (`operation-in-progress`), and no commit that only the
-worktree's HEAD reflog or `refs/worktree/` holds (`worktree-only-commits`).
-The first
+the manifest, a clean status, no submodule (a gitlink, a `modules` entry, or a
+`.git` entry in a tracked directory, which the revalidation looks for again with
+the same `lstat`s) or hidden index flag, no operation in progress
+(`operation-in-progress`), and no commit that only the worktree's HEAD reflog
+or `refs/worktree/` holds (`worktree-only-commits`). The first
 target's repository-wide checks serve every target, so a difference found there
 removes nothing at all. A difference refuses that target (`refused`), starts no
 removal, attempts no later target and exits 2. Git's own `git worktree remove`,

@@ -999,7 +999,7 @@ closed. It reaches the three kinds that carry the status pins (`GIT_KINDS`),
 | row 6 | `-C ROOT for-each-ref --format=%(refname)%00%(objectname)%00%(symref)%00%(upstream)%00%(upstream:short)%00%(upstream:track,nobracket) refs/heads refs/remotes` | `root` |
 | row 7 | `-C ROOT for-each-ref --merged=SHA --format=%(refname) refs/heads` | `root` |
 | status | `-c core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default -c core.ignoreCase=false` + protocol pins + `-C WORKTREE status --porcelain=v1 -z --untracked-files=normal --ignored=matching` | the row's worktree |
-| hidden state | `-c core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default -c core.ignoreCase=false` + protocol pins + `-C WORKTREE ls-files -v --stage -z` | the target's worktree |
+| hidden state | `-c core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default -c core.ignoreCase=false` + protocol pins + `-C WORKTREE ls-files -v --stage -z` | the target's worktree, for each row that passed gates 1 to 8, at most 16, and at revalidation the target's, step 7, after the status probe; `nested_git_check()`'s `lstat`s of `<dir>/.git` then follow its listing, in the filesystem budget and no child |
 | reachability (gate 12) | `-C WORKTREE rev-list --max-count=1 --glob=refs/worktree CANDIDATES --not --branches --tags --remotes NEGATIVES`, CANDIDATES the non-zero objects that the row's `logs/HEAD` names, NEGATIVES those that its branch's reflog named when gate 7 read it (design D21; LQ-13) | the row's worktree, for each row that passed gate 11, at most 16, and at revalidation the target's, after its hidden-state probe; a `logs/HEAD` read to its 64 KiB bound or holding a line that cannot be parsed runs no child |
 | narrowed ref listing (revalidation) | row 6's format with patterns naming the merge target, the manifest's candidate, the branch `origin/HEAD` named, `main`, `master`, `refs/remotes/origin/HEAD`, and the selected branches and their upstreams | `root` |
 | remote URL | `-C ROOT remote get-url origin` | `root` (push; `handoff()` in `status` and `doctor`, for an inspected repository only, R-66 (c)) |
@@ -1124,11 +1124,26 @@ entry, gate 9 coming before gate 10; `ENOENT` or `ENOTDIR` for every one, or no
 directory, passes; any other error is the row's `os-error` and the row
 `inspection-error`, the plan incomplete; and a call cut at its budget is
 `probe-timeout`, or `deadline-exceeded` where the work deadline was the limit.
-It runs for the rows that reach gate 9, at most 16, and again at revalidation
-inside the hidden-state probe, step 7 (data-model.md, "Revalidation step and
-`probes_performed`"): an entry is `contains-submodule`, a read that fails
-`state-changed`, and one that the work deadline cuts `deadline-exceeded`. No
-Git child is added, so `probes` is unchanged.
+It runs for the rows that reach gate 9, at most 16, and again at revalidation.
+Step 7 (data-model.md, "Revalidation step and `probes_performed`") calls
+`hidden_state_probe()`, which runs gate 10's listing again, the step's one Git
+child, and then `nested_git_check()` over the directories that fresh listing
+shows holding an index entry, the same `lstat` of `<dir>/.git` for each, in one
+`fs_call()` counted in the filesystem budget. #19's round (r) (at `4512441`;
+lane 3's W133 MEDIUM-2; the lead's R-391 and R-395) words it in the
+`project-clean-review-safety` delta, "Cleanup revalidates destructive
+actions", as "the hidden-state probe, with the `lstat` of `<dir>/.git` for every
+directory that its listing shows holding an index entry" (`spec.md:110-112`),
+gives the reason as "`contains-submodule` for a new gitlink, `modules` entry or
+`.git` entry" (`:131-132`), and adds the scenario "A nested repository made
+after the plan". So a `.git` entry made in a tracked directory after the plan,
+which neither the status probe nor Git's own check reports, refuses the target
+as `contains-submodule`, and the nested repository remains; an `lstat` that
+fails other than with `ENOENT` or `ENOTDIR`, or runs past its budget while the
+deadline is not the limit, gives `state-changed`; and one that the work deadline
+cuts gives `deadline-exceeded`, the target and every later one `not-attempted`.
+No Git child is added to the listing that step 7 already ran, so `probes` is
+unchanged.
 
 At revalidation (data-model.md, "Revalidation step and `probes_performed`")
 one rule decides every read that does not finish with a value: a Git child

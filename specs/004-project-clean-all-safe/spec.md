@@ -1539,6 +1539,16 @@ written".
   `merged_into_target`, `current` and `classification`), its `locked` flag, the
   manifest's `tracking_branch` and the merge target re-resolved from the fresh
   read. Traces: "Cleanup revalidates destructive actions"; design D7.
+  Note, 2026-10-23: the targeted check's reads include, at its step 7, the
+  hidden-state probe's listing again and then one filesystem call, the `lstat` of
+  `<dir>/.git` for every directory that the listing shows holding an index
+  entry, counted in the filesystem budget (`nested_git_check()`; Brett Heap's Q2
+  (2), ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380;
+  lane 3's W133 MEDIUM-2, lead R-391 and R-395; #19's round (r) at `4512441`,
+  the `project-clean-review-safety` delta's `spec.md:110-112`; writers' `5eeaedd`
+  and `703b58c`). It is no Git child, so the at most six, or seven, children
+  stand, and FR-047's note states what a difference gives. The requirement's
+  text above stands as written, and this note adds one read to its list.
 - **FR-047**: A difference MUST refuse the target, spawn nothing, attempt no
   later target and exit 2, with `identity-changed` (an identity or registration
   difference, an effective work tree that the probe decides is not the target's
@@ -1576,6 +1586,25 @@ written".
   nothing, a line feed alone or no closing line feed, which is how "prints
   anything but one line" above is read. The requirement's text stands as
   written.
+  Note, 2026-10-23: revalidation re-runs gate 9's nested `.git` check, so that
+  `contains-submodule` above also covers a `.git` entry made in a tracked
+  directory after the plan (Brett Heap's Q2 (2), ruled on 2026-10-23T13:30:27Z,
+  "yes, recommended for Q1-Q9"; lead R-380; lane 3's W133 MEDIUM-2, lead R-391
+  and R-395; writers' `5eeaedd` and `703b58c`). #19's round (r) at `4512441`
+  words it in the `project-clean-review-safety` delta: the hidden-state probe
+  runs "with the `lstat` of `<dir>/.git` for every directory that its listing
+  shows holding an index entry" (`spec.md:110-112`), and the reason is
+  "`contains-submodule` for a new gitlink, `modules` entry or `.git` entry"
+  (`:131-132`), with the scenario "A nested repository made after the plan": a
+  repository that `git init` makes in a tracked directory after the plan, which
+  neither the status probe nor Git's own check reports, refuses the target with
+  `contains-submodule`, and the nested repository and its commit remain. An
+  `lstat` that fails other than with `ENOENT` or `ENOTDIR`, or runs past its own
+  budget while the deadline is not the limit, is `state-changed`, and one that
+  the work deadline cuts leaves the target and every later one `not-attempted`
+  with `deadline-exceeded`, as the paragraph above says of every filesystem call
+  of the steps. The requirement's text above stands as written, and this note
+  adds to its list of what `contains-submodule` covers.
 - **FR-048**: Concurrent writers MUST be outside the safe contract, and cleanup
   MUST claim no lock, lease or writer-quiescence handoff. Its one guarantee
   MUST be that a removal child is spawned only if, at the revalidation
