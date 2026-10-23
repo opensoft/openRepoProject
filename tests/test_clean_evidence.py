@@ -25,14 +25,14 @@ import clean_support
 project = clean_support.load_project()
 TEXT = clean_support.TEXT_FIXTURES
 
-# The seven protocol pins and the four status pins, as the contract writes them
+# The seven protocol pins and the five status pins, as the contract writes them
 # (contracts/project-clean.md, "Git children").
 PINS = ["-c", "protocol.allow=never", "-c", "protocol.file.allow=never",
         "-c", "protocol.ssh.allow=never", "-c", "protocol.git.allow=never",
         "-c", "protocol.http.allow=never", "-c", "protocol.https.allow=never",
         "-c", "protocol.ext.allow=never"]
 STATUS_PINS = ["-c", "core.untrackedCache=false", "-c", "core.fsmonitor=false",
-               "-c", "core.trustctime=true", "-c", "core.checkStat=default"]
+               "-c", "core.trustctime=true", "-c", "core.checkStat=default", "-c", "core.ignoreCase=false"]
 
 # The children of design D6's table, after `-C DIR` (contracts/project-clean.md).
 ROW_3 = ["rev-parse", "--path-format=absolute", "--show-toplevel", "--git-common-dir",

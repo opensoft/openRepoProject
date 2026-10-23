@@ -1093,12 +1093,19 @@ PROTOCOL_PINS = (
 )
 
 # The status pins, on the status and hidden-state probes and the removal: the
-# untracked cache and fsmonitor off (D11), and every stat field compared, so
+# untracked cache and fsmonitor off (D11); every stat field compared, so
 # that an edit which keeps a file's size and restores its mtime still shows by
 # its ctime under a repository's core.trustctime=false or core.checkStat=minimal
-# (lead ruling R-102: LQ-10, approved by Brett Heap; lane 3's F1 H-3).
+# (lead ruling R-102: LQ-10, approved by Brett Heap; lane 3's F1 H-3); and
+# core.ignoreCase off, since under core.ignoreCase=true on a case-sensitive
+# file system Git leaves out of the status records an untracked file whose
+# name differs only in case from a tracked one, and `git worktree remove PATH`
+# can resolve PATH to another worktree whose path differs only in case (Brett
+# Heap's Q1, "yes, recommended for Q1-Q9", lead R-380; lane 2's wave 22 triage
+# T1). On a file system that is truly case-insensitive the pin can only add
+# records, so it fails closed.
 STATUS_PINS = ("-c", "core.untrackedCache=false", "-c", "core.fsmonitor=false",
-               "-c", "core.trustctime=true", "-c", "core.checkStat=default")
+               "-c", "core.trustctime=true", "-c", "core.checkStat=default", "-c", "core.ignoreCase=false")
 
 # Per kind of Git child: whether it is a read-only probe, which sets
 # GIT_OPTIONAL_LOCKS=0; the -c pins it carries before the protocol pins;
@@ -3074,8 +3081,8 @@ def status_warned(outcome):
 
 def status_probe(path, run):
     """The combined status probe in the worktree at path (D6, D11; FR-056,
-    FR-057): STATUS_PROBE with `-C path`, a `status` child (the two status
-    pins and GIT_OPTIONAL_LOCKS=0), read by StatusParser. Returns (outcome,
+    FR-057): STATUS_PROBE with `-C path`, a `status` child (the status pins,
+    STATUS_PINS, and GIT_OPTIONAL_LOCKS=0), read by StatusParser. Returns (outcome,
     error): outcome.result is the parser's result for a complete outcome, one
     stopped at its bound included; error the row error of a failed one. A
     complete outcome whose standard error status_warned() names has not
@@ -5388,7 +5395,7 @@ def hidden_state_probe(path, run):
     the target's worktree, the row's raw path bytes; run is the Invocation
     that bounds and counts the child. One Git child of kind `hidden`,
     git_argv("hidden", ["-C", path, "ls-files", "-v", "--stage", "-z"]): the
-    two status pins, then the protocol pins, run through run_bounded() with
+    status pins (STATUS_PINS), then the protocol pins, run through run_bounded() with
     HiddenStateParser, so that the index read is the worktree's own:
 
     - a gitlink (mode 160000), where the parser stops at its bound:
