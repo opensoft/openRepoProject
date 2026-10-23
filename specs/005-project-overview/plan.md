@@ -6,7 +6,7 @@ Lane: openRepoProject-4
 **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `specs/005-project-overview/spec.md`
-at `7f4ab94` (its commit 3al; its 72 clarifications, Brett Heap's answers
+at `617dcd9` (its commit 3aq; its 72 clarifications, Brett Heap's answers
 of 2026-10-21 folded in and his words on the held items in C-72), with its
 17 checklists and `clarify-questions.md`.
 
@@ -20,7 +20,8 @@ change governs; where the spec settles a reading of the change, the spec
 does. This plan decides only what they leave to the implementation
 ([research.md](research.md), R1 to R19), records Brett Heap's word on the
 held items and keeps each in its own place (R20; C-72: O1 to O16 and D5's
-clause 2 are chosen; O17 to O20, from #19's round (q), are open).
+clause 2 are chosen; O17 to O20, from #19's round (q), and O21, from feature
+004's `41759a4`, are open).
 
 **Authority**: Brett Heap, 2026-10-22T19:46:57Z: "lane 4 plans 005 now".
 That word moves C-56's order (the plan after feature 004's merge) for this
@@ -87,28 +88,29 @@ Implementation slices, in dependency order; each leaves the suite green:
    final `project`, and the full-length timing.
 
 Each held item sits in its own row, decider, term or composer branch
-(research.md R20): O1 to O16 are chosen; O17 to O20, from #19's round (q), are
-open (C-72), and for those four the plan builds A1 as ratified, and the four
-pins by FR-016, until his word. O11's part 1 is built now, as the plan's
-reading of a conflict in ratified A1 (R9); O9 (A), O10 (A), O12 (A) and O14 (A)
-keep A1's behaviour as ratified; O15 (A) and O16 (a) are built now, ahead of
-A1's text, as the spec builds them; and the rest of the chosen items, D5's
-clause 2 among them, now chosen by name, are built in their chosen form once
-A1's re-alignment lands at PR #34, in one commit after PR #19's ratification,
-he reviewing the final text before #34 merges; until then the ratified text
-stands. C-72 at `8c408e6` (spec.md:1003-1010) gives the order: "A1's ordering
-rule (its `proposal.md:1278-1284`) is the four LQ items' and reaches O10
-(LQ-15's extension) and O5 (item 9, owed under it); the other chosen items
-that change A1's text, its items 2, 6, 7, 8, 10 and 11, rest on his word for
-change 2 and on #19's rounds; and items 2 and 6 to 11 reach A1 in the same
-re-alignment commit, which follows #19's ratification, he reviewing the final
-text before #34 merges, while O9 (A) and O10 (A) keep A1's text as ratified and
-O11's part 1 is a text re-alignment on a lane finding." O13 (A) reaches A1 in
-that commit too (C-72). A change in his review of the final text lands as a
-change to that place and its tests alone, with one exception: a change to
-O11's part 1 would also re-word the scenario "A separate git directory" of
-change 2 and of this spec (research.md R20, O11). traceability.md lists
-each item's behaviour test and the assertions that flip.
+(research.md R20): O1 to O16 are chosen; O17 to O20, from #19's round (q), and
+O21, from feature 004's `41759a4`, are open (C-72), and for those five the plan
+builds A1 as ratified, and the four pins by FR-016, until his word. O11's part
+1 is built now, as the plan's reading of a conflict in ratified A1 (R9); O9
+(A), O10 (A), O12 (A) and O14 (A) keep A1's behaviour as ratified; O15 (A) and
+O16 (a) are built now, ahead of A1's text, as the spec builds them; and the
+rest of the chosen items, D5's clause 2 among them, now chosen by name, are
+built in their chosen form once A1's re-alignment lands at PR #34, in one
+commit after PR #19's ratification, he reviewing the final text before #34
+merges; until then the ratified text stands. C-72 at `617dcd9`
+(spec.md:1003-1010) gives the order: "A1's ordering rule (its
+`proposal.md:1278-1284`) is the four LQ items' and reaches O10 (LQ-15's
+extension) and O5 (item 9, owed under it); the other chosen items that change
+A1's text, its items 2, 6, 7, 8, 10 and 11, rest on his word for change 2 and
+on #19's rounds; and items 2 and 6 to 11 reach A1 in the same re-alignment
+commit, which follows #19's ratification, he reviewing the final text before
+#34 merges, while O9 (A) and O10 (A) keep A1's text as ratified and O11's part
+1 is a text re-alignment on a lane finding." O13 (A) reaches A1 in that commit
+too (C-72). A change in his review of the final text lands as a change to that
+place and its tests alone, with one exception: a change to O11's part 1 would
+also re-word the scenario "A separate git directory" of change 2 and of this
+spec (research.md R20, O11). traceability.md lists each item's behaviour test
+and the assertions that flip.
 
 ### Gates on the three 004-touching changes
 
@@ -155,22 +157,29 @@ feature 005 merges, and slice 1's pull request quotes the checks of (a) to
   from `4b4c36b`, revision 3 from `0a82a62` and revision 4 from `211e43d`;
   a later head is re-cited before tasks are written, and `main` after PR
   #33 lands (research.md R1). Its later head `f3724fc` changes documents
-  only, `project` and the tests unchanged since `d6bac50`, and its head
+  only, `project` and the tests unchanged since `d6bac50`, its head
   `d8724e2` (R-365) changes no definition the overview reuses but `TEXT`,
-  which gains one row (research.md R1).
+  which gains one row, and its head `41759a4` (Brett Heap's Q1 to Q5, Q8 and
+  Q9 (b), the A-items, doc rounds 25 and 26) changes nine that research.md
+  R3 reuses, `STATUS_PINS` gaining the fifth pin (research.md R1).
 - `A1:N`, `A1 design.md:N`: change 2's `specs/project-overview/spec.md`
   and `design.md` at `e4a30fc` (branch
   `change/amend-project-overview-clarify-answers`).
 - `PCM:N`, `PCL:N`, `#19 design.md:N`: change 1's
   `specs/project-command/spec.md`, `specs/project-clean/spec.md` and
-  `design.md` at `e0b1671` (branch `change/amend-clean-all-safe-push-pins`,
-  PR #19, round (p), R-365 and R-377), whose `project-command` and
-  review-safety specs equal its round (n)'s, `2250830`, accepted as lane
-  openRepoProject-2's R-345, and whose `project-clean` spec gains F-1's (b)
-  text beside an unread row (PCL:354-361, :540-547, :1217-1225) and a
-  rewording at :378-380; moved from `ccc52b9` in revision 1, from `20084cd`
-  in revision 3, from `2250830` in revision 4 and from `88d0d36` in revision
-  8. The implementation re-pins at #19's ratified head.
+  `design.md` at `4512441` (branch `change/amend-clean-all-safe-push-pins`,
+  PR #19, round (r), R-391), after its round (q) at `818311a` (Brett Heap's
+  "yes, recommended for Q1-Q9", R-380, with R-378 and R-382) and its round
+  (p) at `e0b1671` (R-365, R-377), its three specs all changing from round
+  (p)'s: `project-command` in 7 hunks, the review-safety spec in 7 and
+  `project-clean` in 14, where Q3 (a) replaces F-1's (b) text beside an
+  unread row (PCL:395-399, :582-586, :1264-1267), Q3 (b) ends the plain
+  forms of T2 to T7, and T8, with its dry-run warning, round (r) states the
+  four stale forms in [L] (PCL:188-212), and `PCL:166` and the rewording at
+  :416-418 stand; moved from `ccc52b9` in revision 1, from `20084cd` in
+  revision 3, from `2250830` in revision 4, from `88d0d36` in revision 8 and
+  from `e0b1671` in revision 10. The implementation re-pins at #19's ratified
+  head.
 - POD, PRSD, CMD, CLN, DI, BA and the labels [E], [L], [G], [R] and [P]:
   as [spec.md](spec.md) defines them.
 - The lane's A1 re-alignment draft, held for Brett Heap's review and the
@@ -273,8 +282,9 @@ prefixes, its one change (FR-050; A1's Impact).
 
 No NEEDS CLARIFICATION remains: the change, A1 and the spec decide every
 behaviour but what research.md R1 to R19 settles, and the held items, O1 to O16
-chosen and O17 to O20, from #19's round (q), open (C-72), are planned each in
-its place, most landing with A1's re-alignment (R20).
+chosen and O17 to O20, from #19's round (q), and O21, from feature 004's
+`41759a4`, open (C-72), are planned each in its place, most landing with A1's
+re-alignment (R20).
 
 ## Constitution Check
 
@@ -352,7 +362,12 @@ suggestions lead to `project clean`.
   round 23, R-324's words in `TEXT`, its one changed definition; research.md
   R1). A later head is re-cited the same way before tasks, and `main` after
   PR #33. A change to a reused decider's signature or result is the one
-  re-plan trigger.
+  re-plan trigger. Its head `41759a4` changes nine reused definitions in
+  code, results among them: `classify` reads a `detached` flag in place of
+  the branch text, `row_evidence` gives a stale row Q3 (b)'s text,
+  `status_warned` counts a blank line and `STATUS_PINS` carries a fifth pin
+  (research.md R1); the re-cite before tasks takes them, the cites staying
+  at `d6bac50` until then.
 - **The 004-touching changes** stay inside lane 2's five conditions
   (Summary, "Gates"); a failed gate stops slice 1 and returns the change
   to lane 2 and the lead, never an edit of feature 004's tests.
@@ -360,26 +375,39 @@ suggestions lead to `project clean`.
   check, status pins, extension read, work-tree probe and
   configuration-path test as pending #19; a different ruling there changes
   the reused constants and deciders, which the overview takes as they land.
-- **Lane openRepoProject-2's open safety fixes to feature 004**
-  (2026-10-23: a `core.ignoreCase` pin missing from the status and removal
-  probes; a nested `.git` inside a tracked directory unseen) may change
-  `STATUS_PINS`, `STATUS_PROBE`, `StatusParser`, `status_warned` or
-  `status_probe()`. The overview takes the first four by reference and so
-  inherits a fix there; it mirrors `status_probe()`'s composition
+- **Feature 004's build of #19's round (q)** (its head `41759a4`;
+  research.md R1): the `core.ignoreCase` pin missing from the status and
+  removal probes and the nested `.git` inside a tracked directory unseen,
+  which revision 9 recorded as lane openRepoProject-2's open safety fixes,
+  are Brett Heap's word in #19 since `818311a` (Q1: PCM:158-162 and
+  PCL:374-376; Q2 (2): `specs/project-clean-review-safety/spec.md:8-12` and
+  PCL:809-814, at `4512441`), and feature 004 builds both: `STATUS_PINS`
+  gains the fifth pin, and `hidden_state_probe()` the nested `.git` check
+  (`nested_git_check()`, at `703b58c`), at planning and in
+  `revalidation_difference()`'s step 7. The overview takes `STATUS_PINS`,
+  `STATUS_PROBE`, `StatusParser` and `status_warned` by reference and so
+  inherits a change there; it mirrors `status_probe()`'s composition
   (research.md R3), so each re-cite diffs that function and carries any
   change over. The wrapper and the contract assert `GIT_KINDS["status"]`'s
-  pins and `STATUS_PROBE`, never a literal list. A fix that adds a child, a
-  read or a classification input is a re-plan trigger (FR-019, FR-020's
-  `estimated`, the allow-list, FR-026's parity), and a change to the pins
-  goes to lane openRepoProject-4's lead, since FR-016 and A1:230-232 list
-  four by name.
+  pins and `STATUS_PROBE`, never a literal list. A change that adds a child,
+  a read or a classification input is a re-plan trigger (FR-019, FR-020's
+  `estimated`, the allow-list, FR-026's parity). By reference, kind `status`
+  carries five pins at `41759a4`, while FR-016, the contract and A1:230-232
+  state four until his word: that is O20, open (C-72), and a change to the
+  pins goes to lane openRepoProject-4's lead. The nested `.git` check is
+  `contains-submodule`'s, a gate the batch alone applies (FR-032).
 - **Recorded parity gaps** (research.md R18): a failed ref listing, where
   feature 004 at `d6bac50` makes each present row on a branch
-  `inspection-error` with the listing's error while the overview leaves
-  every class null, as A1 does (O12 (A), a lasting difference); a working
-  directory whose realpath fails (O9 (A), a lasting difference); and, if
-  #24's realization merges first, a cache-only worktree (C-71). Parity
-  tests leave these cases out by name.
+  `inspection-error` with the listing's error while the overview leaves every
+  class null, as A1 does (O12 (A), a lasting difference); a working directory
+  whose realpath fails (O9 (A), a lasting difference); and, if #24's
+  realization merges first, a cache-only worktree (C-71). Parity tests leave
+  these cases out by name. One more is open: a failed merged-set listing, its
+  ref listing read, where feature 004 at `41759a4` makes each present row on a
+  branch `inspection-error` while the overview leaves every class null (O21,
+  whose (A), recommended, names it in the parity tests as a lasting difference,
+  as O12 (A) does); and none of the differences that O17 to O20 hold open is
+  recorded as lasting until his word (research.md R18).
 - **Readings that differ from feature 004's code** (research.md R9): the
   extension read's row error on an exit 1 with a warning, which A1 records
   and feature 004 does not, both counting it true as PR #19's D7 does (A1
@@ -432,8 +460,9 @@ Still before him:
 - The base: `main` after PR #33 (recommended, C-56), or stacked on feature
   004's branch (his word needed; R2).
 - His word on the tasks, then on the implementation.
-- O17 to O20, from #19's round (q), open (C-72; research.md R20): until his
-  word the plan builds A1 as ratified, and the four pins by FR-016.
+- O17 to O20, from #19's round (q), and O21, from feature 004's `41759a4`,
+  open (C-72; research.md R20): until his word the plan builds A1 as
+  ratified, and the four pins by FR-016.
 
 ## Complexity Tracking
 
