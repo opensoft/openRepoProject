@@ -1400,6 +1400,31 @@ Lane: openRepoProject-4
   `e4a30fc`, and `clarify-questions.md` is unchanged. Re-validation: 16 of 16
   items pass, with the checks of iteration 2 re-run by script on the edited
   spec.
+- 2026-10-23, a forty-third pass, by the lead's word, from `68af0ed` (plan
+  revision 10 part 1). Feature 004's `41759a4` (2026-10-23T18:35:26Z; lane
+  openRepoProject-2's report to lane 4 of 2026-10-23), which has `d8724e2` as
+  an ancestor, is recorded in the round (n) record as a later head, as the
+  thirty-ninth pass recorded `d8724e2`: it holds the A-items, Brett Heap's Q1
+  to Q5, Q8 and Q9 (b), built at `703b58c` and merged as `1579c22`, and doc
+  rounds 25 and 26. The record's sentence that the `TEXT` rows this spec names
+  keep their words is corrected, each row compared by syntax tree at `d8724e2`
+  and at `41759a4`: it holds at `d8724e2`, and at `41759a4` for the row-error,
+  `git-too-old`, `git-unavailable` and `target-not-repository-root` texts,
+  while the locked stale text ends with Q3 (b)'s warning, 318 characters, a new
+  row giving the plain stale text the same warning, 305, the texts of O18, and
+  the `unstarted-branch` and `reflog-unavailable` next steps take Q5's words,
+  248 and 243, the texts of O17, each waiting for his word. The record and
+  FR-016 say that `STATUS_PINS` (`project:1156` at `41759a4`) carries `-c
+  core.ignoreCase=false`, O20 staying open, and the record that `41759a4`
+  builds O19's two cases in `project clean`, changes other texts that the
+  overview never shows (C-59) and changes nine of the definitions that the
+  plan's R3 reuses. C-72 is unchanged: no point of this pass needs it, and O17
+  to O20 stay open. #19 stays at `4512441` beside the reading at `2250830` and
+  #27 at `d95eea2`, and no pin moves. No checklist category changes, and the
+  totals below were recounted by script. Traceability is checked against A1's
+  ratified deltas at `e4a30fc` (64 of 64). A1 stays cited at `e4a30fc`, and
+  `clarify-questions.md` is unchanged. Re-validation: 16 of 16 items pass, with
+  the checks of iteration 2 re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -1524,4 +1549,4 @@ to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
 passes of that day, and after the thirteenth to thirty-fourth passes on
-2026-10-22 and the thirty-fifth to forty-second on 2026-10-23.
+2026-10-22 and the thirty-fifth to forty-third on 2026-10-23.

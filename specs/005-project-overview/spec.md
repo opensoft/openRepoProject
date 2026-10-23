@@ -2739,12 +2739,14 @@ and [P] are change 1's requirements as the header names them.
   under `core.ignoreCase=true`; this requirement takes it as feature 004's
   build lands if he chooses O20 (A), A1's re-alignment adding it to its
   requirement 3 and design D13, and until he rules this spec states the four
-  (C-72). No Git child of the overview is exempt: it starts no push child, so
-  feature 004's push-child exception (lead ruling R-28) never applies. A lazy
-  fetch in a partial clone MUST therefore fail locally and be recorded
-  `probe-failed` on its row, a failed status probe leaving its worktree
-  `inspection-error`, with no network call. A Git child is a process the
-  overview starts; processes Git itself starts run in that child's process
+  (C-72). Feature 004's build of it is at its head `41759a4`, whose
+  `STATUS_PINS` (`project:1156` there) carries `-c core.ignoreCase=false`,
+  while O20 stays open. No Git child of the overview is exempt: it starts no
+  push child, so feature 004's push-child exception (lead ruling R-28) never
+  applies. A lazy fetch in a partial clone MUST therefore fail locally and be
+  recorded `probe-failed` on its row, a failed status probe leaving its
+  worktree `inspection-error`, with no network call. A Git child is a process
+  the overview starts; processes Git itself starts run in that child's process
   group and take the pins from Git (POD:200-215; R-23, R-25; Clarifications,
   C-5 and C-34).
 - **FR-017**: The caps MUST be 32 roots, 4,096 entries per root, 128
@@ -5182,11 +5184,32 @@ and [P] are change 1's requirements as the header names them.
   spec neither quotes nor measures and that the overview never shows (C-59),
   the functions of `project` that the overview reuses staying as at `d6bac50`,
   and its `TEXT` table gaining that note's row alone, so that the rows this
-  spec names keep their words: feature 004's row-error texts (FR-022; C-62),
-  its command-neutral `git-too-old` and `git-unavailable` texts (the Feature
-  004 bullet), `project clean`'s two `target-not-repository-root` messages
-  (FR-006) and its locked stale text (FR-028), which #19's Q3 (b), below,
-  extends once feature 004 builds it (O18). #19's round (p) at `e0b1671`, on
+  spec names keep their words at `d8724e2`: feature 004's row-error texts
+  (FR-022; C-62), its command-neutral `git-too-old` and `git-unavailable` texts
+  (the Feature 004 bullet), `project clean`'s two `target-not-repository-root`
+  messages (FR-006) and its locked stale text (FR-028). Its later head
+  `41759a4` (2026-10-23T18:35:26Z; lane openRepoProject-2's report to lane 4 of
+  2026-10-23), which has `d8724e2` as an ancestor, holds the A-items, Brett
+  Heap's Q1 to Q5, Q8 and Q9 (b) of #19's round (q), below, built at `703b58c`
+  and merged as `1579c22`, and doc rounds 25 and 26, its suite giving 516 OK (1
+  skipped) and validate 7 of 7 by that report. There the row-error,
+  `git-too-old`, `git-unavailable` and `target-not-repository-root` texts keep
+  their words, but the locked stale text does not: it ends with Q3 (b)'s
+  warning, 318 characters, as a new `TEXT` row does for the plain stale text,
+  305, the texts of O18; its `NEXT_STEPS` table gives the `unstarted-branch`
+  and `reflog-unavailable` next steps Q5's words, 248 and 243 characters, the
+  texts of O17; its `project clean` excludes O19's two cases as
+  `registration-mismatch`; and its `STATUS_PINS` (`project:1156` there) carries
+  the fifth pin, `-c core.ignoreCase=false`, O20's. The four wait for his word
+  (C-72), and until he rules this spec builds A1 as ratified and the four pins
+  as FR-016 states them. The other `TEXT` and `NEXT_STEPS` rows that `41759a4`
+  adds, removes or changes, its partial-removal notes, its non-drain line, its
+  `inspection-incomplete` and `inspect-cap` remedies and four next steps, are
+  `project clean`'s, texts that the overview never shows, its own remedies
+  being A1's (C-59; FR-035), and it changes nine of the definitions of
+  `project` that the plan's R3 reuses, `STATUS_PINS` and `TEXT` among them, the
+  plan keeping its `project:N` cites at `d6bac50` until tasks are written.
+  #19's round (p) at `e0b1671`, on
   Brett Heap's answers of 2026-10-23 to the lead's R-365 (11:49:16Z, "Yes, warn
   (Recommended)" on F-1's (b) beside an unread row and "Yes, add T9
   (Recommended)" on `project status`'s stale recommendation; with the lead's
