@@ -187,7 +187,8 @@ its `lstat` task: no registration read, no twin decision and no
 `row_evidence`, its status fields and `classification` null (research.md
 R5). Each field's "Null when" keeps every case of the packet's column
 (DI:770-790), as C-40 asks, and adds the overview's own: the cap, a cut,
-the working directory's realpath, and O16 (a)'s bare row.
+the working directory's realpath, and O16 (a)'s bare row (built now, ahead of
+A1's text).
 
 - `path`, `path_valid_utf8`
   - Source: the registry record (the main worktree's realpath where the first
@@ -218,7 +219,7 @@ the working directory's realpath, and O16 (a)'s bare row.
     is never null)
 - `head`
   - Source: the registry record
-  - Null when: a bare entry (O16 (a))
+  - Null when: a bare entry (O16 (a), built now, ahead of A1's text)
 - `upstream`
   - Source: the kept ref records; escaped as `branch` is
   - Null when: none configured; `refs/heads/HEAD` (EC-033); listing failed
@@ -232,7 +233,8 @@ the working directory's realpath, and O16 (a)'s bare row.
 - `merged_into_target`
   - Source: the merged set
   - Null when: a detached head; a missing path; no target; the ref listing
-    or the merged set failed; a bare entry (O16 (a))
+    or the merged set failed; a bare entry (O16 (a), built now, ahead of
+    A1's text)
 - `dirty`, `ignored_files_truncated`
   - Source: the status probe (`StatusParser`)
   - Null when: no probe ran or it failed; past the cap
@@ -343,6 +345,13 @@ fails replaces the housekeeping finding with its own, the class unchanged:
   - Fails when: its registration disagrees (never reached: FR-007 makes it
     `inspection-error`)
   - Finding: `registration-mismatch`
+  - Inputs, CHOSEN (O19 (A)), built now, ahead of A1's text: for #19's two
+    wider cases, the row's `path` against `common_dir`, the main worktree's
+    `path` and every other row's `path` from the registry listing (equal to
+    one, or an ancestor of one), and the mode of the row task's no-follow
+    `lstat` of its registered path (a symbolic link); no new Git child
+    (research.md R9). The outcome for such a row is stated at feature 004's
+    next head (C-72)
 - `locked-worktree`
   - Fails when: it is locked
   - Finding: `locked-worktree`, read-only
@@ -403,7 +412,7 @@ worktree path that is not valid UTF-8 changes no suggestion but its own
 `merged-removable` row's, the row gate replacing that finding; every other
 finding of that worktree keeps its table suggestion and a null
 `suggestion_gate`, since the command names only the root (A1:776-779; A1
-design.md:289-293, :617-618). The items O1, O2, O4 and O11's part 2 that
+design.md:289-293, :617-618). The items O1, O2, O4, O11's part 2 and O17 that
 Brett Heap's word chose (C-72; research.md R20) each change one row of
 these tables once A1's re-alignment lands.
 

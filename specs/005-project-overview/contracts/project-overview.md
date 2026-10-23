@@ -15,16 +15,16 @@ one space. Placeholders are in capitals (`PATH`, `N`, `M`, `CAUSE`), each
 replaced by an escaped value ([P]; FR-038). A row marked **CHOSEN** is an
 item of research.md R20 that Brett Heap's word chose for change 2 (C-72):
 the text above it is the one built until A1's re-alignment lands at PR
-#34, the text after it the one built then. Of R20's items, O1 to O16 are
-chosen; O17 to O20, from #19's round (q), and O21, from feature 004's
-`41759a4`, are open (C-72), a line marked **OPEN** naming one: until his word
-the text above it is built, A1 as ratified, and the four pins by FR-016.
-O11's part 1 is built now, and O15 (A) and O16 (a) now, ahead of A1's text.
-Each item of R20 changes only its own rows. Every warning is in the words of
-PR #19's round (n) (`2250830`, unchanged at `88d0d36` and `e0b1671`, and in
-its unread forms at `818311a` and `4512441`; R-343, his "R-324: yes"); the
-plain stale forms that #19's round (q) ends with Q3 (b)'s warning are O18,
-open.
+#34, the text after it the one built then, but for a line that says it is
+built now. Of R20's items, every one, O1 to O21, is chosen (C-72). O11's
+part 1 is built now, and O15 (A), O16 (a), O19 (A) and O20 (A) now, ahead of
+A1's text; O17 (A) and O18 (A) land with A1's re-alignment, as most do. O19's
+outcome for a row in its two new cases is stated at feature 004's next head
+(C-72). Each item of R20 changes only its own rows. Every warning is in the
+words of PR #19's round (n) (`2250830`, unchanged at `88d0d36` and `e0b1671`,
+and in its unread forms at `818311a` and `4512441`; R-343, his "R-324:
+yes"); the plain stale forms that #19's round (q) ends with Q3 (b)'s warning
+are O18 (A)'s.
 
 ## Invocation
 
@@ -236,10 +236,12 @@ arguments below, in its own process group, standard input from
 `/dev/null`, with the 31 scrubbed names removed, `GIT_TRACE2`,
 `GIT_TRACE2_EVENT` and `GIT_TRACE2_PERF` set to `0` and
 `GIT_OPTIONAL_LOCKS=0` (feature 004's kind `probe`); the status probe adds
-`STATUS_PINS` (four at `d6bac50`, five at feature 004's later head
-`41759a4`, research.md R1; kind `status`). OPEN (O20): #19's round (q) adds a
-fifth, `-c core.ignoreCase=false`; until his word the status probe carries
-the four pins by FR-016. No other argument vector is started.
+feature 004's `STATUS_PINS` by reference (kind `status`): five pins at its
+later head `41759a4`, `-c core.ignoreCase=false` the fifth, as FR-016 states
+them, four at `d6bac50` (research.md R1). CHOSEN (O20 (A)), built now, ahead
+of A1's text: the overview takes the fifth pin, which #19's round (q) adds,
+with feature 004's `STATUS_PINS`, by FR-016's own rule (C-72). No other
+argument vector is started.
 
 - `version`: `--version` (no `-C`), once.
 - `identity`: `rev-parse --path-format=absolute --show-toplevel
@@ -342,15 +344,21 @@ edits only its own entries.
 
 ### Composer (A1 design D5; research.md R12)
 
-`compose_message(own, remedy, warning=None)` returns the message of a finding
-whose suggestion a gate withheld or limited: own text, `; `, remedy, at most
-200 characters; when both do not fit, the own text is cut and ends `...`, the
-remedy whole. The own text is never shorter than `...`: it keeps max(n - 3,
-0) characters, n = 200 - 2 - the remedy's length; where the remedy alone
-leaves fewer than 3 characters (an escaped repository parent of 177
-characters or more in `re-run with --root <repository parent>`), the
+`compose_message(own, remedy, warning=None, whole=False)` returns the message
+of a finding whose suggestion a gate withheld or limited: own text, `; `,
+remedy, at most 200 characters; when both do not fit, the own text is cut and
+ends `...`, the remedy whole. The own text is never shorter than `...`: it
+keeps max(n - 3, 0) characters, n = 200 - 2 - the remedy's length; where the
+remedy alone leaves fewer than 3 characters (an escaped repository parent of
+177 characters or more in `re-run with --root <repository parent>`), the
 message is `...; ` and the remedy, longer than 200 characters in that case
-only (O15 (A), chosen, built now, ahead of A1's text). Every other finding's
+only (O15 (A), chosen, built now, ahead of A1's text) and, once A1's
+re-alignment lands, beside O17 (A)'s two reflog remedies, 253 and 248
+characters (CHOSEN, O17 (A)). CHOSEN (O18 (A)), once A1's re-alignment
+lands: a stale message that is [L]'s warned plain or locked form (305 or 318
+characters) is composed with `whole=True`, the own text and the remedy both
+kept whole, up to 459 and 472 characters beside the redirect remedy (152).
+Every other finding's
 message is its own text alone. Two clauses, both chosen, the second by name,
 apply only with `warning` given (a `stale-worktree` message that carries O6's
 warning, 109 characters with its period), which happens once A1's
@@ -409,11 +417,11 @@ config`, `git for-each-ref`, `git status`), a filesystem call (`lstat`,
 
 ### Findings from the ladder (FR-028; [L], `project:2342-2362`)
 
-The class's recommendation, verbatim (the plain stale text, without an unread
-row, being O18's question, open: until his word the plan builds A1's
-50-character text and, once A1's re-alignment lands, O8 (A)'s 63-character
-locked form, though feature 004's `TEXT` at `41759a4` carries the 305- and
-318-character forms, research.md R12):
+The class's recommendation, verbatim (the stale text without an unread row
+being O18 (A)'s, chosen: once A1's re-alignment lands, [L]'s 305- and
+318-character forms, as feature 004's `TEXT` at `41759a4` carries them, in
+place of A1's 50-character text and O8 (A)'s 63-character locked form; until
+then A1's one text, research.md R12):
 
 - `finding.stale-worktree`: "Review and prune stale worktree metadata
   manually."
@@ -427,10 +435,17 @@ locked form, though feature 004's `TEXT` at `41759a4` carries the 305- and
     could not be read, so do not run git worktree prune, git worktree
     remove or git gc until it can." (#19's T7, `#19
     design.md:1476-1514`), feature 004's locked text as at `d6bac50` and
-    `d8724e2`
-  - OPEN (O18): #19's round (q) ends both forms, plain and locked, with the
-    warning of Q3 (b), 305 and 318 characters, as feature 004's `TEXT` does
-    at `41759a4` (research.md R1); until his word, A1 as ratified.
+    `d8724e2`, 63 characters, which O18 (A) ends with Q3 (b)'s warning
+  - CHOSEN (O18 (A)), without an unread row: [L]'s plain and locked forms,
+    the baseline text and the locked text each with its final period
+    replaced by Q3 (b)'s warning "; git worktree prune also deletes the
+    entry, and so the HEAD reflog, of every other worktree whose path is
+    missing, one moved or on an unmounted drive included, so run git
+    worktree prune --dry-run first and remount or repair any it lists that
+    still exists.", 305 and 318 characters, kept
+    whole (PCL:188-197 at `4512441`; feature 004's `TEXT` at `41759a4`,
+    research.md R1), in place of the 50- and 63-character texts above; the
+    forms under O6's test unchanged.
 - `finding.inspection-error`: "Preserve this worktree; Git could not
   establish its clean state."; its second rung: "Preserve this worktree;
   Git could not establish its ignored-file state."
@@ -496,12 +511,14 @@ locked form, though feature 004's `TEXT` at `41759a4` carries the 305- and
 - `finding.registration-mismatch`: "Git's registration of this worktree
   does not match its directory; review it with git worktree list before
   any cleanup."
-  - OPEN (O19): #19's round (q) widens the class to a worktree whose path is
-    the common directory, the main worktree or another row's path, or an
-    ancestor of one, and to one whose registered path is a symbolic link,
-    which feature 004 builds at `41759a4` in `enclosing_rows()` and in
-    `_read_row()`'s symbolic-link case (research.md R1); until his word the
-    overview checks the gate as A1 is ratified.
+  - CHOSEN (O19 (A)), built now, ahead of A1's text: #19's round (q) widens
+    the class to a worktree whose path is the common directory, the main
+    worktree or another row's path, or an ancestor of one, and to one whose
+    registered path is a symbolic link; the overview evaluates both cases
+    from its own evidence, the paths of the rows the listing gives and
+    FR-007's no-follow `lstat`, with no new Git child, as `project clean`'s
+    classification (research.md R9). The outcome for such a row is stated
+    at feature 004's next head (C-72).
 - `finding.unsupported-path-bytes.worktree`: "This worktree's path is not
   valid UTF-8, so no clean command can name it; rename it to valid UTF-8."
 - `finding.unsupported-path-bytes.repository`: "The repository's root or
@@ -547,7 +564,7 @@ from `limits` when the message is built.
 - `remedy.scan-limit`: "re-run with --root <repository parent>",
   `<repository parent>` the parent of `repository.root`, escaped by [P];
   past an escaped parent of 176 characters the message keeps the remedy
-  whole and passes 200 (O15 (A); the composer)
+  whole and passes 200 (O15 (A), built now, ahead of A1's text; the composer)
 - `remedy.deadline-exceeded`: "re-run with --root <repository parent>",
   its parent escaped and its length as for `remedy.scan-limit`
   - CHOSEN (O2 (A)): also the gate of a row whose reflog read the
@@ -562,9 +579,14 @@ from `limits` when the message is built.
   - CHOSEN (O1 (A)): "the branch's reflog is missing, expired or
     undecidable; review, then git worktree remove yourself (--force if it
     holds a submodule)"
-  - OPEN (O17): #19's round (q) rewords both remedies, to 248 and 243
-    characters, as feature 004's `NEXT_STEPS` does at `41759a4` (research.md
-    R1); until his word, A1 as ratified.
+  - CHOSEN (O17 (A)), for both remedies, in place of O1 (A)'s texts, the two
+    landing together: #19's Q5 next steps, kept whole, 248 and 243
+    characters, each saying after its first clause "its later gates did not
+    run, so check git log -g HEAD, git ls-files -v and git status there, then
+    git worktree remove yourself (--force if it holds a submodule, once its
+    commits are kept)" (`#19 design.md:1397-1403` at `4512441`; feature 004's
+    `NEXT_STEPS` at `41759a4`, research.md R1); beside the finding's own text,
+    cut to `...`, the messages are 253 and 248 characters (the composer).
 - `remedy.target-cap` (limited): "limited to the batch's target limit of M
   per run; re-run to drain the backlog"
 

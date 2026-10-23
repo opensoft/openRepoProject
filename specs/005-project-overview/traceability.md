@@ -122,7 +122,8 @@ changes"); lane 2 or lane openRepoProject-3 reads the diff before feature
 - FR-013: loop; R7 (PN-10).
 - FR-014: collect (manifest task); R7.
 - FR-015: collect; R8 (PN-16).
-- FR-016: runner reuse; R3; contract "Git children".
+- FR-016: runner reuse; R3; contract "Git children"; research.md O20
+  (chosen, built now, ahead of A1's text).
 - FR-017, FR-018: discovery, loop; R6; data model "Root", "Worktree row".
 - FR-019: loop; R6; the concurrency-1 and concurrency-4 runs.
 - FR-020: render; R14 (PN-12); research.md O3 and O4 (chosen).
@@ -131,16 +132,17 @@ changes"); lane 2 or lane openRepoProject-3 reads the diff before feature
 - FR-024, FR-025: collect (change 1's `resolve_merge_target`, reused,
   over the kept records); R3; data model "Repository"; contract "Other
   findings".
-- FR-026: collect (`row_evidence`, `classify`); R3, R18; research.md O9
-  and O12 (chosen).
+- FR-026: collect (`row_evidence`, `classify`); R3, R18; research.md O9,
+  O12 and O21 (chosen).
 - FR-027: contract "The attention table".
 - FR-028: findings; R12 (PN-1); contract "Findings from the ladder";
-  research.md O6 and O8 (chosen).
+  research.md O6, O8 and O18 (chosen).
 - FR-029, FR-030: render; data model "Exit statuses"; contract "Human
   report".
 - FR-031 to FR-035: findings; R12; data model "Gates"; contract
-  "Remedies", "Composer"; research.md O1, O2, O4, O6, O7, O11 and O15
-  (chosen; D5's clause 2 chosen by name).
+  "Remedies", "Composer"; research.md O1, O2, O4, O6, O7, O11, O15, O17 and
+  O19 (chosen, O15 and O19 built now, ahead of A1's text; D5's clause 2
+  chosen by name).
 - FR-036 to FR-038: render; R11, R15 (PN-6, PN-8); contract "JSON".
 - FR-039: render, dispatcher; R15 (PN-2); contract "Exit-2 outputs".
 - FR-040: R3 (the ban), R18 (the wrapper's allow-list), R19.
@@ -367,6 +369,25 @@ what flips.
 - O16 (a), built now, ahead of A1's text: scenario 12's test, "A bare
   repository with a linked worktree", asserts the bare row's `branch`, `head`
   and `merged_into_target` null; nothing flips.
+- O17 (A): scenarios 42's and 43's tests (gates), the five reflog fixtures;
+  flips: A1's remedies, 102 and 97 characters, to #19's Q5 next steps kept
+  whole, 248 and 243, in place of O1 (A)'s texts above, the message `...; `
+  and the remedy, 253 and 248, and the composer's rows.
+- O18 (A): scenario 7's test and `test_overview_a_locked_stale_row`
+  (attention), a stale row with no unread sibling, plain and locked; flips:
+  A1's one 50-character text to [L]'s 305- and 318-character forms, kept
+  whole, and the composer's rows beside each remedy that can follow them, up
+  to 459 and 472; the forms under O6's test do not flip.
+- O19 (A), built now, ahead of A1's text:
+  `test_overview_the_wider_registration_mismatch` (gates) and a unit of its
+  decider, fixtures for #19's two cases (R18); its expected result is stated
+  at feature 004's next head (C-72); nothing flips.
+- O20 (A), built now, ahead of A1's text: the wrapper's assertion of
+  `GIT_KINDS["status"]`'s pins by reference on every status probe (R18);
+  nothing flips.
+- O21 (A), built now: a unit asserts every class null after a failed
+  merged-set listing, its ref listing read; the case is checked against
+  feature 004's next head (C-72); nothing flips.
 
 ## Success criteria
 
@@ -376,7 +397,8 @@ what flips.
   parity tests name the cases left out as lasting differences, a working
   directory whose realpath fails (O9 (A)) and a failed ref listing (O12
   (A)), and, if #24's realization merges first, a cache-only worktree
-  (C-71).
+  (C-71); a failed merged-set listing's rows stand apart too, A1's null class
+  staying (O21 (A); research.md R20).
 - SC-004: `test_overview_gates.py`: the argument vectors, and in every gate
   fixture a helper, `assert_preview_agrees(root, document)`, that runs the
   preview each ungated `--all-safe` suggestion names and asserts every such
