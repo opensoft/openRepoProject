@@ -497,10 +497,11 @@ Lane: openRepoProject-4
   count. The LQ intro and the A1 bullet count four LQ items, the fourth LQ-10's
   stat pins, a restatement, each with the commits it follows, and the merge
   order for PR #34; FR-016 and the LQ-10 bullet quote [E]'s four status pins as
-  A1 restates them (requirement 3, spec:220-222; D13, design.md:690-691), and
-  EC-036 names its reproduction's two pins as those [E] carried before LQ-10.
-  #25 is re-checked at `86324ff` and `2eeaec4`, its pin `05a424a` kept: the
-  cited ranges are byte-identical by `cmp`, except tasks 2.3 and 2.4
+  A1 restates them (requirement 3, spec:220-222; D13, design.md:690-691), #19's
+  round (q) having since added a fifth, O20, open for Brett Heap's word (C-72),
+  and EC-036 names its reproduction's two pins as those [E] carried before
+  LQ-10. #25 is re-checked at `86324ff` and `2eeaec4`, its pin `05a424a` kept:
+  the cited ranges are byte-identical by `cmp`, except tasks 2.3 and 2.4
   (`tasks.md:22-23`), which gain C-51's second diff, and EC-022's D5 residual
   reads the same at `design.md:565-592` there. No pin moves, and
   `clarify-questions.md` is unchanged. In this folder, CHK006 of
@@ -1303,6 +1304,39 @@ Lane: openRepoProject-4
   A1 stays cited at `e4a30fc`, and `clarify-questions.md` is unchanged.
   Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run by
   script on the edited spec.
+- 2026-10-23, a forty-first pass, by the lead's commit 3am decisions. O17 to
+  O20, which #19's round (q) at `818311a` raised and lane openRepoProject-4 put
+  to Brett Heap on 2026-10-23, are recorded in C-72 as open, each with its
+  options and the lane's recommendation, (A): O17, Q5's next steps for the
+  `unstarted-branch` and `reflog-unavailable` gates, past D5's 200 characters
+  beside a finding's own text; O18, Q3 (b)'s warning on the stale
+  recommendation; O19, the wider `registration-mismatch`; and O20, the fifth
+  status pin. Until he rules this spec builds A1 as ratified, and the four
+  status pins as FR-016 states them. Lane openRepoProject-3's W130 read of 3al
+  is taken. MEDIUM-1: C-72's rule sentence names what reaches A1 in the
+  re-alignment commit, O13 (A), A1's records for O12 (A), O14 (A) and O15 (A),
+  with its design Risks entry for O14 (A) and D5's sentence for O15 (A), and an
+  entry for O16 (a)'s null `branch`, `head` and `merged_into_target`, and what
+  this spec builds now, O12 (A) and O14 (A) as A1 is ratified and O15 (A) and
+  O16 (a) ahead of A1's text; and FR-035 says that O15 (A) is built now, since
+  D5's two rules cannot both hold there, D5's sentence reaching A1 as the
+  re-alignment's item 15, as the A1 draft numbers it. LOW-1: C-68's "needs no
+  amendment" excepts the null `branch`, `head` and `merged_into_target`. LOW-2:
+  the records of rounds (g), (h) and (i) name the options chosen, O1 (A), O2
+  (A) and O4 (a). OBS-4: C-72's question keeps its sha-pinned history. FR-008's
+  short line is re-wrapped with the lines after it, no word changing. #25 at
+  its draft PR #29's head `5ba7984`, after round C23, which edits no spec:
+  every pinned and cited range is byte-identical at its lines by `cmp` against
+  `a529310`, as lane openRepoProject-5's line map gives it, and the header,
+  EC-022, the #25 bullet and the LQ-15 bullet record it, its pin `05a424a`
+  kept. The results of security.md's CHK002 and CHK019 and idempotency.md's
+  CHK008, each file's Evaluation recording the re-read, and this file's eighth
+  pass name the fifth status pin, O20, open, no category changing. Feature 004
+  stays at `d8724e2`, and no pin moves. No checklist category changes, and the
+  totals below were recounted by script. Traceability is checked against A1's
+  ratified deltas at `e4a30fc` (64 of 64). A1 stays cited at `e4a30fc`, and
+  `clarify-questions.md` is unchanged. Re-validation: 16 of 16 items pass, with
+  the checks of iteration 2 re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -1427,4 +1461,4 @@ to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
 passes of that day, and after the thirteenth to thirty-fourth passes on
-2026-10-22 and the thirty-fifth to fortieth on 2026-10-23.
+2026-10-22 and the thirty-fifth to forty-first on 2026-10-23.

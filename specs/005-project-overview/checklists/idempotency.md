@@ -30,7 +30,9 @@ Lane: openRepoProject-4
 - [x] CHK008 Is zero mutation protected against Git's optional writes (index refresh, untracked cache, fsmonitor)? [Completeness, Spec FR-016]
   - Result: pass. `GIT_OPTIONAL_LOCKS=0` and the status pins,
     `core.untrackedCache=false` and `core.fsmonitor=false` among [E]'s four
-    (FR-016; LQ-10, pending).
+    (FR-016; LQ-10, pending); #19's round (q) at `818311a` adds a fifth,
+    `core.ignoreCase=false`, which bears on the dirty evidence rather than on
+    Git's optional writes, O20, open for Brett Heap's word (C-72).
 
 ## Requirement Clarity
 
@@ -75,9 +77,11 @@ Lane: openRepoProject-4
 ## Evaluation
 
 Evaluated on 2026-10-19 against `spec.md` at `8f433f7`; CHK008 re-read on
-2026-10-21 after LQ-10 and A1's revision 5 at `3ee860c`, its result still pass.
-17 items: 16 pass, 0 fixed in the spec, 0 open, 1 plan notes, 0 new questions.
-An open item waits on the question or residual its result names; a plan note is
-for the plan, not the spec; a new question is asked in `clarify-questions.md`.
+2026-10-21 after LQ-10 and A1's revision 5 at `3ee860c`, its result still pass,
+and on 2026-10-23 after #19's round (q) at `818311a`, whose fifth status pin is
+O20, open (C-72), its category unchanged. 17 items: 16 pass, 0 fixed in the
+spec, 0 open, 1 plan notes, 0 new questions. An open item waits on the question
+or residual its result names; a plan note is for the plan, not the spec; a new
+question is asked in `clarify-questions.md`.
 
 Plan notes: PN-8 (CHK006), PN-14 (CHK016).
