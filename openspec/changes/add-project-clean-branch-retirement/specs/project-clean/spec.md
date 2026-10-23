@@ -1126,13 +1126,14 @@ order:
   can, HOLD`, where PATH2 is a row of the plan whose path could not be read,
   its `present` null; where PATH2 is the main worktree, which Git refuses to
   remove, `; next: BRANCH is checked out at PATH2, the main worktree; switch
-  it off BRANCH, by checking out another branch there, such as MERGE_TARGET,
-  or by detaching it; BRANCH's reflog was proven merged into MERGE_TARGET only
-  at this run's plan; inspect git -C ROOT reflog show refs/heads/BRANCH before
-  retrying: RETRY`, its `by checking out another branch there, such as
-  MERGE_TARGET, or by detaching it` reading `by checking out MERGE_TARGET
-  there or by detaching it` when the branch's upstream remote-tracking ref is
-  absent, since Git then judges the retry against that worktree's `HEAD`; and
+  it off BRANCH, by detaching it with git -C PATH2 switch --detach, which
+  changes none of its files, or by checking out MERGE_TARGET there; BRANCH's
+  reflog was proven merged into MERGE_TARGET only at this run's plan; inspect
+  git -C ROOT reflog show refs/heads/BRANCH before retrying: RETRY`, whether
+  the branch's upstream remote-tracking ref is present or absent, which names
+  no other branch, since Git judges the retry against that worktree's `HEAD`
+  when that ref is absent, and a checkout of a branch that tracks an ignored
+  file's path overwrites that file; and
   otherwise `; next: BRANCH is checked out at PATH2; HOLD`, HOLD being `save
   its own work, uncommitted, ignored or flagged assume-unchanged or
   skip-worktree, by keeping that worktree and switching it off BRANCH with git
@@ -1374,18 +1375,20 @@ N; branches kept: `; and then the residual-window line.
   path>)`, no branch child runs, the second target's `branch_retirement` is
   `not-attempted` with `branch-in-use`, the result prints `Kept <branch>
   (branch-in-use); next: <branch> is checked out at <holder path>, the main
-  worktree; switch it off <branch>, by checking out another branch there, such
-  as <merge target>, or by detaching it; <branch>'s reflog was proven merged
-  into <merge target> only at this run's plan; inspect git -C <root> reflog
-  show refs/heads/<branch> before retrying: project clean <root> --apply
-  --action delete-branch --branch <branch>`, the holder and the branch remain,
-  and the exit status is 0
+  worktree; switch it off <branch>, by detaching it with git -C <holder path>
+  switch --detach, which changes none of its files, or by checking out <merge
+  target> there; <branch>'s reflog was proven merged into <merge target> only
+  at this run's plan; inspect git -C <root> reflog show refs/heads/<branch>
+  before retrying: project clean <root> --apply --action delete-branch
+  --branch <branch>`, the holder and the branch remain, and the exit status
+  is 0
 - **AND** when the main worktree holds the branch and the branch's upstream
-  remote-tracking ref was deleted before the plan, the result prints `Kept
-  <branch> (branch-in-use); next: <branch> is checked out at <holder path>,
-  the main worktree; switch it off <branch>, by checking out <merge target>
-  there or by detaching it; <branch>'s reflog was proven merged into <merge
-  target> only at this run's plan; inspect git -C <root> reflog show
+  remote-tracking ref was deleted before the plan, the result prints the same
+  `Kept <branch> (branch-in-use); next: <branch> is checked out at <holder
+  path>, the main worktree; switch it off <branch>, by detaching it with git
+  -C <holder path> switch --detach, which changes none of its files, or by
+  checking out <merge target> there; <branch>'s reflog was proven merged into
+  <merge target> only at this run's plan; inspect git -C <root> reflog show
   refs/heads/<branch> before retrying: project clean <root> --apply --action
   delete-branch --branch <branch>`, and either step, then the retry, deletes
   the branch with exit 0, where a checkout there of another branch that
