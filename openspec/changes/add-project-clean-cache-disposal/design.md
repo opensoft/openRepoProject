@@ -33,7 +33,7 @@ in round B12, at `2e819ad` in round B11, at `a664799` in round B10 and at
 `project`, `openspec/specs/` and the directories of change 1 and change 2 equal
 `961c405`'s, `ideation/` differs by PR #16's packet revision (`e45155a`), and
 `openspec/changes/` gains two other changes (L-15). The lane's rulings are L-1
-to L-17 and B-1 to B-109, and A-9, A-23 and A-24 for #23; this change's own
+to L-17 and B-1 to B-117, and A-9, A-23 and A-24 for #23; this change's own
 decisions are CD-1 to CD-18 in `proposal.md`, and the alignment review's
 findings (SA-n, QA-n, G1 to G5) are resolved in its table. The council (P-n,
 S-n and AE-n) read `9ebe9f0`; its VALID verdicts, ruled as B-16 to B-24, are
@@ -252,7 +252,26 @@ whose text `88d0d36` keeps byte for byte, so nothing is re-based; D14 and task
 #19's design, proposal and tasks keeps its bytes there, and every string that
 this change quotes from them is present at `88d0d36`; and W107's one LOW, a
 cell of round B22's record that does not name D3, is corrected by a row of
-round B23's record, round B22's record staying as history.
+round B23's record, round B22's record staying as history. The lane's review
+wave of 2026-10-23 on `288fc34`, RB's and RB2's adversarial read, RE's and
+RE2's read of feature 004 at `f3724fc` against this change, and lane 3's W120
+read of the next steps that Git refuses, with lane 3's W110 read of round B23,
+ruled as B-110 to B-117, are applied in round B24 (proposal, "Re-read and Codex
+Findings (round B24)"), in one stage that changes no block that this change
+carries from PR #19, the eight keeping their bases and their bytes at
+`288fc34`: the line for a `git-failed` removal after a `disposed` stage says
+what Git may have done and names its next step (RB's MEDIUM-1 of that date;
+D11); a read that the removal floor stops after the stage's first removal ends
+the stage as the floor does, exit 1, as the spec already gave it (RB2's
+MEDIUM-2; D8, D12); the plan-time walk checks the identity of the worktree root
+it opens (RB2's LOW-1; D3); `removed` is true only for a removal that the stage
+itself made (RB2's LOW-2; D8, D11); an entry put at a name that the preflight
+fixed is in the window, and a chain reopened with another identity ends the
+removals (RB2's LOW-3 and LOW-4; D7, D8, D13); and D3, D11 and the Migration
+Plan take RE23-4, RE23-5, W120's L-3 and RE2-2. RB2's LOW-5, whose fix lies in
+the carried batch block, RE23-1, which follows Brett Heap's answer to lane
+openRepoProject-2's Q8, and the re-base of the retire block on PR #19's round
+(p) wait for round B25 (B-114, B-116, B-117).
 
 How the packet's contract and the rulings map to the decisions below:
 
@@ -368,6 +387,14 @@ How the packet's contract and the rulings map to the decisions below:
 | B-107 | the lead's ruling: PR #19's round (o) at `88d0d36` (lane openRepoProject-2's R-349 and R-350), which edits four record items of its design, proposal and tasks and no spec text, so that its spec text is `2250830`'s, moves this change's naming of PR #19's current head to `88d0d36` in this change's next round, with lane 3's findings on round B22; each cite of PR #19's design, proposal and tasks is checked by content at `88d0d36`; nothing is re-based, the bases staying where round B22 put them, and no round opens for this alone | key, Context, D4, Migration Plan; proposal, Status, key, Capabilities, Dependencies and Sequencing, Decisions (L-1 and L-15); `tasks.md` 1.4, 2.1 |
 | B-108 | the lead's ruling on lane 3's W107 read of round B22, 0 HIGH, 0 MEDIUM, 1 LOW and nothing departing: its LOW-1, that the "Section edited" cell of round B22's row for B-103 and B-104 does not name D3, whose cite PR19/pc:310-311 at `173d83c` becomes :333-334 at `2250830`, is corrected by a row of round B23's record, round B22's row staying as history; W107's verdict, its checks not done at lane 3's wrap-up and the lead's facts (CI and SonarCloud at `dafe476`, round B22's comment 6352482312, and lane openRepoProject-2's YES as R-348, sent at 22:07:28Z) are rows of that record | proposal, "Re-read and Codex Findings (round B23)" |
 | B-109 | the lead's ruling: lane 3 closed two of W107's checks not done on 2026-10-23 at 03:16:22Z, CI and SonarCloud at `dafe476` with round B22's comment, and the saved stage 1 diff's sha256, the other two folding into its read of round B23, so that round B23's row for those checks records the closures rather than "not yet read" | proposal, "Re-read and Codex Findings (round B23)" |
+| B-110 | the lead's ruling: round B23's writer ran the ruling range to B-109, not the brief's B-108, since that round applies B-109, as B-106's amendment did; it stands | none |
+| B-111 | the lead's ruling on lane 3's W110 read of round B23, 0 HIGH, 0 MEDIUM and 2 LOW: both LOWs are in this change's own records and are record-only, opening no round, and ride with round B24: round B23's rows for B-109 date both closures 03:16:22Z, where lane 3 recomputed the sha256 at 03:14:23Z and made the `gh` read at 03:16:22Z (LOW-1), and round B23's row for B-107 names no `design.md` ruling table in its "Section edited" cell, where that round added rows B-107 to B-109 (LOW-2) | proposal, "Re-read and Codex Findings (round B24)" |
+| B-112 | the lead's ruling: a read-only review wave of six readers on 2026-10-23 (RA to RE and RG), with no writer, RB reading this change at `288fc34` and RE feature 004 at `f3724fc` against the three drafts; a real finding opens each draft's next round, which carries the queued record-only lines | none |
+| B-113 | the lead's ruling: part 2 of that wave, fresh readers RA2, RB2, RD2 and RE2 finishing part 1's lists, appended to the same files; round B24 batches RB's MEDIUM-1 and RE's RE23-1 with part 2's findings | none |
+| B-114 | the lead's ruling: round B24 waits for PR #19's round (p), re-bases the retire block on it with the wave's findings and B-111's record lines, and checks that this change states that change 2 archives first; B-117 moves the re-base to round B25, and round B24 makes the check: Dependencies and Sequencing (Archive order), the Migration Plan's step 8 and `tasks.md` 3.2 and 3.3 state it | proposal, "Re-read and Codex Findings (round B24)" |
+| B-115 | the lead's ruling: round B24 takes RB's MEDIUM-1, RB2's MEDIUM-2 and RE23-1, with the run that combines MEDIUM-1 and RE23-1 as a scenario case, RB2's five LOWs, W120's L-3, RE23-4, RE23-5 and RE2-2, the re-base of the retire block on round (p) and B-111's record lines; B-116 and B-117 move RE23-1, and the combined run with it, and the re-base to round B25 | none (as B-117 narrows it) |
+| B-116 | the lead's ruling: RE23-1, the status child whose standard error warns, follows Brett Heap's answer to lane openRepoProject-2's Q8, which gates PR #19's round (p), so it waits for that round | none (round B25) |
+| B-117 | the lead's ruling: the rounds split, since PR #19's round (p) waits for Brett Heap's answers to lane openRepoProject-2's Q1 to Q9; round B24 runs now, in one stage with no re-base, on RB's MEDIUM-1, RB2's MEDIUM-2 and five LOWs, W120's L-3, RE23-4, RE23-5, RE2-2 and B-111's record lines, and round B25 follows round (p), with its currency, R-365, the re-base of the retire block and RE23-1 | Context, D3, D7, D8, D11, D12, D13, D14, Migration Plan; the two ADDED requirements |
 
 What in `project` shapes the approach:
 
@@ -564,17 +591,28 @@ walk at the first entry that is not allowed, and counts once as blocking. Up to
 
 ### D3. The cache enumeration's child and parser
 
-The child is a D2 handle of change 1's kind `probe`: the scrubbed environment
-with `GIT_OPTIONAL_LOCKS=0`, the seven protocol pins, the four status pins
-that every status probe carries (PR19/cmd:158-164 at `f0bf538`; LQ-10), `-c
+The child is a D2 handle of change 1's read-only kind, which change 1's D2
+calls `probe` (PR19 design.md:177-181 at `4f1c0e0`) and feature 004 builds as
+three kinds, `probe`, `status` and `hidden`, of which only `status` and
+`hidden` carry the four status pins (its `GIT_KINDS`, `project`:1084-1095 at
+`f3724fc`), so that the realization starts it as kind `status` and adds its own
+pin to its arguments, or adds a kind of its own, and never starts it as kind
+`probe`, which carries no status pin (RE23-4): the scrubbed environment with
+`GIT_OPTIONAL_LOCKS=0`, the seven protocol pins, the four status pins that
+every status probe carries (PR19/cmd:158-164 at `f0bf538`; LQ-10), `-c
 core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c
-core.checkStat=default`, its own `-c status.showStash=false`, and `-C
-<worktree>` after the row's identity check, with the argument vector `status
---porcelain=v2 -z --untracked-files=normal --ignored=matching`.
-`--untracked-files=normal` is there because Git refuses `--ignored=matching`
-otherwise (Context; CD-5), as a user's `status.showUntrackedFiles=no` would
-make it. `-c status.showStash=false` is this child's own pin (B-47, RB's
-HIGH-1): under a user's
+core.checkStat=default`, its own `-c status.showStash=false`, and
+`-C <worktree>` only once the row's identity has been verified immediately
+before it, at plan time and at revalidation alike, as the evidence model
+requires of every worktree probe (PR19/cmd:188-190 at `f0bf538`), with the
+argument vector `status --porcelain=v2 -z --untracked-files=normal
+--ignored=matching`. Feature 004 makes that check for its combined probe alone,
+inside its row inspection (`_identity_unchanged()`, its `project`:3386 at
+`f3724fc`), with no seam for a later child, so the realization makes it again
+before this child (RE23-5). `--untracked-files=normal` is there because Git
+refuses `--ignored=matching` otherwise (Context; CD-5), as a user's
+`status.showUntrackedFiles=no` would make it. `-c status.showStash=false` is
+this child's own pin (B-47, RB's HIGH-1): under a user's
 `status.showStash=true`, porcelain v2 prints `# stash N` before the records
 whenever the repository holds a stash, and a stash is repository-wide, so
 without the pin every candidate of such a repository would read another record
@@ -609,7 +647,18 @@ the bare rule would open `..` relative to the root, which is no symbolic link
 and is on the root's device, and so leave the worktree; the row is
 `cache-unverified`, and the walk opens nothing.
 
-The walk then takes the records in canonical order, depth-first: it opens each
+The walk first opens the worktree root by the row's recorded path with
+`O_DIRECTORY | O_NOFOLLOW` and checks the opened directory's device and inode
+against the row's recorded worktree identity, as the stage does (D7): the
+child's run, up to its 5 s budget, lies between the row's identity check and
+the walk, and `O_NOFOLLOW` covers only the last component, so without that
+check an ancestor of the root swapped for a symbolic link in that window would
+let the walk list and `lstat` a tree outside the worktree as the row's caches,
+though the stage would delete nothing there (RB2's LOW-1). A refused open or
+another identity is a failed call of the walk, and the row is
+`cache-unverified`; the check reads the descriptor that the root's open
+returns, as every open of the walk does for its device, so no count of D4
+moves. It then takes the records in canonical order, depth-first: it opens each
 directory it records once, from the worktree root down, relative to its
 parent's descriptor and checking that it is a non-symlink directory on the
 root's device, keeping open only the directories above the current record; it
@@ -1266,22 +1315,22 @@ Descriptor chains. Every directory is reached from the worktree root by a chain
 of `os.open(component, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC,
 dir_fd=parent)`, each opened descriptor checked by `os.fstat` against its
 planned `dev` and `ino`. The root itself is opened by its recorded path with
-`O_DIRECTORY | O_NOFOLLOW` and checked against the target's worktree identity;
-the root's own ancestors are change 1's concern, checked at revalidation through
-the realpath and identity comparison, so `BA:1324-1325`'s "any ancestor" is read
-as any directory between the worktree root and the cache (lane 3's LOW 3). The
-stage handles one directory holding a listed path at a time (B-33): in each
-pass it opens the chain to that directory once, checking every identity on it,
-deals with every listed path in it, reaching a listed cache directory and its
-nested ones from that directory's descriptor, and closes the chain before the
-next, except a descriptor given to a call still outstanding, which stays open
-until `project` exits (D12). So at most that chain's descriptors and those of
-the nesting below it, and those of an outstanding call, are open at once, a
-number the 512-object cap bounds and an ordinary tree keeps far below any
-platform's default descriptor limit; an open that fails, `EMFILE` included, is
-an error like any other (D8). One chain per directory, rather than one per
-listed path, is what bounds the stage's opens by depth times directories with
-removals (D4).
+`O_DIRECTORY | O_NOFOLLOW` and checked against the target's worktree identity,
+as the plan-time walk opens it (D3); the root's own ancestors are change 1's
+concern, checked at revalidation through the realpath and identity comparison,
+so `BA:1324-1325`'s "any ancestor" is read as any directory between the
+worktree root and the cache (lane 3's LOW 3). The stage handles one directory
+holding a listed path at a time (B-33): in each pass it opens the chain to that
+directory once, checking every identity on it, deals with every listed path in
+it, reaching a listed cache directory and its nested ones from that directory's
+descriptor, and closes the chain before the next, except a descriptor given to
+a call still outstanding, which stays open until `project` exits (D12). So at
+most that chain's descriptors and those of the nesting below it, and those of
+an outstanding call, are open at once, a number the 512-object cap bounds and
+an ordinary tree keeps far below any platform's default descriptor limit; an
+open that fails, `EMFILE` included, is an error like any other (D8). One chain
+per directory, rather than one per listed path, is what bounds the stage's
+opens by depth times directories with removals (D4).
 
 The preflight, before any removal: for each directory holding a listed path, in
 canonical order, open its chain once, checking every identity; then for each
@@ -1338,16 +1387,26 @@ whole-list check that PR #2's open thread 3989548481 asked for: no path is
 removed until every path has passed.
 
 The removals: for each directory holding a listed path, in canonical order,
-open its chain again, once, checking every identity again; then for each listed
-cache in it, remove the names fixed at the preflight, depth-first, files by
-`os.unlink(name, dir_fd=directory)` and each emptied nested directory by
-`os.rmdir(name, dir_fd=parent)`, then the listed directory by `os.rmdir`
+open its chain again, once, checking every identity again, an identity that
+differs ending the removals as a failed call does (D8; RB2's LOW-4); then for
+each listed cache in it, remove the names fixed at the preflight, depth-first,
+files by `os.unlink(name, dir_fd=directory)` and each emptied nested directory
+by `os.rmdir(name, dir_fd=parent)`, then the listed directory by `os.rmdir`
 relative to that directory; a listed file by `os.unlink` relative to it.
-Nothing listed after the preflight is removed, and `rmdir` refuses a
-directory that holds anything else, so a file placed in a cache directory at any
-time before that directory's removal survives (Context, `ENOTEMPTY`) and ends
-the stage `partial`, or `refused` when no entry had yet been removed (D8). Each
-unlink and directory removal is handed to the worker
+Nothing listed after the preflight is removed, and `rmdir` refuses a directory
+that holds anything else, so a file placed in a cache directory before that
+directory's removal, under a name that the preflight did not fix, survives
+(Context, `ENOTEMPTY`) and ends the stage `partial`, or `refused` when no entry
+had yet been removed (D8). The stage removes by name, relative to a checked
+directory, so an entry put after the preflight at a name that it fixed is
+removed in the planned entry's place: a file renamed over a fixed `.pyc`, as
+Python's own recompilation lands, is unlinked, a symbolic link there loses only
+itself (D5), and an empty directory made at a planned directory's name, the
+emptied planned one moved aside, is removed while the planned one survives
+elsewhere, empty; a symbolic link or a non-empty directory at a planned
+directory's name makes its `rmdir` fail, and nothing is followed (RB2's LOW-3).
+Such an entry is in the residual window, as the ADDED requirement says (D13).
+Each unlink and directory removal is handed to the worker
 only while more than the removal floor remains and is waited for until it
 returns (D12). No recursive deletion, no `shutil.rmtree`, no path-name
 deletion and no child process is used.
@@ -1357,26 +1416,38 @@ deletion and no child process is used.
 The stage's first removal is the hand-off of its first unlink or directory
 removal to the worker, not the first one completed (B-16). After it, any
 failure (an `OSError` from an unlink, a removal or a chain open, `ENOENT`
-included, since something else is changing the worktree), a read past its
-budget, a removal still outstanding when the 300 s removal ceiling, counted
-from its hand-off, ends its wait, or the removal floor reached at the next
-hand-off ends the removals. A stage that has handed over a removal ends
-`disposed` or `partial`, never `refused`, with one exception: when every
-removal handed over has returned and none removed its entry, as when the first
+included, since something else is changing the worktree, or a chain reopened
+for the removals that opens with another identity, RB2's LOW-4), a read past
+its own 5 s budget, a removal still outstanding when the 300 s removal ceiling,
+counted from its hand-off, ends its wait, or the removal floor, reached at the
+next hand-off or stopping a read, ends the removals. A read that the floor or
+the deadline stops, one past the budget
+`work remaining - removal_floor_seconds` or one that cannot start because no
+more than the floor remains, ends them as the floor does, the later targets
+`not-attempted` with `deadline-exceeded` and exit 1, as the ADDED requirements
+and the exit table's row 2 give it, and never as a failure (RB2's MEDIUM-2;
+D12). A stage that has handed over a removal ends `disposed` or `partial`,
+never `refused`, with one exception: when every removal handed over has
+returned and none removed its entry, as when the first
 unlink meets a sticky directory, an append-only or immutable attribute or a
 filesystem made read-only after the plan, which the plan's access check cannot
 see (B-20, B-51; D3), it ends `refused` with `cache-changed`, nothing
-deleted. Otherwise the stage then rescans each listed cache (B-18): on threads
-of its own, never the stage's worker, each call a reconciliation probe under
-`min(5 s, reserve remaining)`, it opens the chain to the cache's parent as in D7,
-checking every identity, and `lstat`s the cache's name relative to it with
-`follow_symlinks=False`; absent is `removed: true`, present `removed: false`,
-and a chain that no longer opens or carries another identity is `removed:
-null`, while the first call past its budget leaves that cache and every later
-one `removed: null`. A cache with a removal still outstanding is `removed:
-null` whatever the rescan finds, since that call can still complete. Its
-`cache_disposal` is `partial` with `cache-partial`, the planned `entries`, and
-`entries_removed` counting the removals that returned having removed their
+deleted. Otherwise the stage then rescans each listed cache that its own
+removals did not remove (B-18): on threads of its own, never the stage's
+worker, each call a reconciliation probe under `min(5 s, reserve remaining)`,
+it opens the chain to the cache's parent as in D7, checking every identity, and
+`lstat`s the cache's name relative to it with `follow_symlinks=False`; present
+is `removed: false`, absent is `removed: null`, since the stage did not remove
+it, and a chain that no longer opens or carries another identity is
+`removed: null`, while the first call past its budget leaves that cache and
+every later one that it rescans `removed: null`. A cache is `removed: true`
+only when the stage's own removal of it returned having removed it, so that the
+partial line counts only what the stage removed, and a removal that returned
+`ENOENT` or `ENOTDIR` found its name absent, R-208's decided absence, and
+removed nothing (RB2's LOW-2). A cache with a removal still outstanding is
+`removed: null` whatever the rescan finds, since that call can still complete.
+Its `cache_disposal` is `partial` with `cache-partial`, the planned `entries`,
+and `entries_removed` counting the removals that returned having removed their
 entry, as `operations.performed` does; an outstanding removal counts in
 neither. The rescan of the listed paths, beside the target's reconciliation,
 is this change's reading of `BA:1334`'s "the report rescans the worktree"
@@ -1387,9 +1458,10 @@ say which listed path remains.
 | --- | --- | --- | --- | --- |
 | every listed cache removed | `disposed`, null | the sequence goes on to the spawn | as change 1 | as change 1 |
 | preflight difference, error or call past its 5 s budget with no signal received (B-41), either byte cap included (B-26) | `refused`, `cache-changed`; each `removed` false where the preflight found the path, null where it did not | `refused`, `state-changed`, reconciliation, nothing spawned | `not-attempted`, `batch-stopped` | 2 |
-| every removal handed over returned and none removed its entry (B-20) | `refused`, `cache-changed`; each `removed` false | likewise | likewise | 2 |
-| failure after an entry was removed | `partial`, `cache-partial` | likewise | likewise | 2 |
+| every removal handed over returned and none removed its entry (B-20) | `refused`, `cache-changed`; each `removed` false, null for a listed path whose own removal found it absent (`ENOENT` or `ENOTDIR`; RB2's LOW-2) | likewise | likewise | 2 |
+| failure after an entry was removed, a chain reopened with another identity (RB2's LOW-4) or a read past its own 5 s budget included | `partial`, `cache-partial` | likewise | likewise | 2 |
 | the floor reached at a hand-off after the first removal | `partial`, `cache-partial` | likewise | `not-attempted`, `deadline-exceeded` | 1 (the deadline stopped work) |
+| a read after the first removal that the floor or the deadline stops, past the budget `work remaining - removal_floor_seconds` or unable to start with no more than the floor left (RB2's MEDIUM-2) | `partial`, `cache-partial` | likewise | `not-attempted`, `deadline-exceeded` | 1 (the deadline stopped work) |
 | a removal still outstanding at the 300 s removal ceiling (B-16) | `partial`, `cache-partial`; that cache `removed: null` | likewise | `not-attempted`, `deadline-exceeded` | 1 |
 | a signal after the first hand-off, then a finished stage | `disposed`, null | `not-attempted`, `interrupted`, with its reconciliation (B-17) | `not-attempted`, `interrupted`, `reconciliation: null` | 130, 143 or 129 |
 | a finished stage, then less than the floor at the spawn check | `disposed`, null | `not-attempted`, `deadline-exceeded`, with its reconciliation (B-17) | `not-attempted`, `deadline-exceeded` | 1 |
@@ -1570,7 +1642,8 @@ The text is ASCII, pinned by the tests, with `PATH`, `CPATH`, `BPATH`, `DPATH`,
   ahead of them stay kept: K hold ignored files that are not caches (review
   them), C exceed a per-worktree cache cap (delete their caches, then re-run),
   U could not be enumerated (re-run; if it repeats, inspect them), W cannot be
-  changed by this user (fix their ownership or mode, then re-run), G are
+  changed by this user (fix their ownership or mode, or, on a read-only
+  filesystem, remount it writable, then re-run), G are
   excluded after the target cap as REASONS (follow their groups' next
   steps)`, in the form of change 1's index-gate line (CAS design.md:743-746),
   `REASONS` listing each of those rows' reasons once, in gate order, joined by
@@ -1585,9 +1658,10 @@ The text is ASCII, pinned by the tests, with `PATH`, `CPATH`, `BPATH`, `DPATH`,
   (B-56). It never tells the
   person to remove by hand a worktree whose state was not established; a row
   that a gate after the cap excludes has its state established, so its group's
-  next step stands. The `W`
-  part is this design's completion of B-21 for B-20's reason, since 16
-  `cache-unwritable` rows stall the same way. With exactly 16 candidates, each
+  next step stands. The `W` part is this design's completion of B-21 for B-20's
+  reason, since 16 `cache-unwritable` rows stall the same way, and it names
+  both remedies of that row's own line, the remount of a read-only filesystem
+  among them (B-74; lane 3's W120 L-3). With exactly 16 candidates, each
   held for a persistent reason, no row waits behind them, so each row's own
   reason and next step print as usual and no stall line prints (B-45).
 - A stop at a cache stage, before the stop block: `Cache disposal at PATH
@@ -1597,23 +1671,48 @@ The text is ASCII, pinned by the tests, with `PATH`, `CPATH`, `BPATH`, `DPATH`,
   at PATH partial (cache-partial): removed K of N cache paths; remaining: C1,
   C2. A fresh plan lists the rest: project clean ROOT --all-safe`, with `; may
   still be removed: C3` after the remaining paths for a cache whose removal is
-  still outstanding (B-16); or, when the work deadline ended the stage, `Cache
-  disposal at PATH partial (cache-partial): the work deadline ended it after
-  removing K of N cache paths; remaining: C1, C2. A fresh plan lists the rest:
-  project clean ROOT --all-safe` (B-21), so that a deadline does not read as a
-  change of state. The stop block that follows is change 1's, its reason the
-  target's.
+  still outstanding (B-16), and `; not established: C4` after them for a cache
+  whose `removed` is null with no removal outstanding, its rescan not having
+  decided it or its name found absent though the stage did not remove it, K
+  counting only the paths that the stage's own removals removed (RB2's LOW-2);
+  or, when the work deadline ended the stage, the floor reached at a hand-off
+  or stopping a read (RB2's MEDIUM-2), `Cache disposal at PATH partial
+  (cache-partial): the work deadline ended it after removing K of N cache
+  paths; remaining: C1, C2. A fresh plan lists the rest:
+  project clean ROOT --all-safe` (B-21), with the same two tails, so that a
+  deadline does not read as a change of state. The stop block that follows is
+  change 1's, its reason the target's.
 - A stop after a stage that ended `disposed`, before the spawn (B-17) or at
-  that target when Git's removal then ended it `failed` (B-49), before the stop
-  block: `Cache disposal at PATH: removed N cache paths; the worktree was not
-  removed.`; and when that target ended `unknown`, its removal not proven, as
-  after a removal child that exited 0 without evidence or that the removal
-  ceiling killed: `Cache disposal at PATH: removed N cache paths; the
-  worktree's removal is not proven.` (B-49, RB's MEDIUM-2). The end state is
-  B-17's, the caches deleted and the worktree kept or its removal unproven, so
-  the line gives the count deleted, and the stop block that follows gives the
-  target's reason and the next step, with the recovery text of a
-  `partially-removed` target.
+  that target when Git's removal then ended it `failed` with `git-refused` or
+  `spawn-error` (B-49), before the stop block: `Cache disposal at PATH: removed
+  N cache paths; the worktree was not removed.`; when Git's removal ended it
+  `failed` with `git-failed`: `Cache disposal at PATH: removed N cache paths;
+  Git's removal of the worktree failed and may have deleted part of it and its
+  registration; inspect PATH by hand.` (RB's MEDIUM-1 of 2026-10-23); and when
+  that target ended `unknown`, its removal not proven, as after a removal child
+  that exited 0 without evidence or that the removal ceiling killed: `Cache
+  disposal at PATH: removed N cache paths; the worktree's removal is not
+  proven.` (B-49, RB's MEDIUM-2). `git-refused` is Git's refusal with exit 128,
+  which its non-force removal makes before it deletes anything, and
+  `spawn-error` runs nothing, so the worktree is as the stage left it.
+  `git-failed` is every other status, after which Git may have deleted part of
+  the worktree: its non-force removal deletes the worktree's entries in
+  directory order until the first that it cannot delete, then removes the
+  worktree's administrative directory, and so its registration, and exits 255,
+  and a signal that `project` did not send can end it at any point, before that
+  deletion or during it, 128 plus the signal's number. Round B24 reproduced it
+  on Git 2.43.0 and 2.36.6 alike: a worktree holding a tracked directory
+  without write permission, its caches already removed, lost 5 of its 36
+  top-level entries and its registration and kept its path and, in that
+  directory order, its `.git` file, which RB's read saw deleted in another. So
+  the line says what Git may have done, and its next
+  step is change 1's for the orphaned directory that the stop block's
+  `orphaned-directory` note names, which `project` leaves "for the person to
+  inspect" (CAS proposal.md:361-364), naming no prune, removal or `gc`. The end
+  state is B-17's, the caches deleted and the worktree kept, partly deleted or
+  its removal unproven, so the line gives the count deleted, and the stop block
+  that follows gives the target's reason and the next step, with the recovery
+  text of a `partially-removed` target.
 - A stop at a target whose cache stage the floor or the deadline stopped in a
   read before its first removal, no signal having been received by then (B-39,
   B-41), before the stop block: `Cache disposal at PATH not attempted
@@ -1634,13 +1733,18 @@ its removal child.
 - A read (an open, a bounded enumeration, an `lstat`) is waited for by the
   main thread with `min(5 s, work remaining - removal_floor_seconds)`. A read
   past that wait abandons the worker and ends the stage: `partial` after the
-  first removal;
-  before it, the slot is read first (B-39, B-41), and a signal recorded by then
-  ends the stage `not-attempted` with the target `interrupted`, whichever wait
-  it was; otherwise `refused` when 5 s was the wait, which holds when at least
-  10 s of work remained, and `not-attempted` when the wait was the smaller `work
-  remaining - removal_floor_seconds`, which is the deadline's limit, as it is
-  when a read cannot start because no more than the floor remains (B-34).
+  first removal, with the removal floor's outcome, the later targets
+  `not-attempted` with `deadline-exceeded` and exit 1, when the wait was the
+  smaller `work remaining - removal_floor_seconds`, the deadline's limit, as
+  when a read cannot start because no more than the floor remains, and with a
+  failure's outcome, the later targets `batch-stopped` and exit 2, when it was
+  5 s (RB2's MEDIUM-2; D8); before it, the slot is read first (B-39, B-41), and
+  a signal recorded by then ends the stage `not-attempted` with the target
+  `interrupted`, whichever wait it was; otherwise `refused` when 5 s was the
+  wait, which holds when at least 10 s of work remained, and `not-attempted`
+  when the wait was the smaller `work remaining - removal_floor_seconds`, which
+  is the deadline's limit, as it is when a read cannot start because no more
+  than the floor remains (B-34).
 - A removal is handed to the worker only while more than the floor remains,
   and the hand-off of the first one is the stage's first removal for every rule
   of the two ADDED requirements. A removal handed over is waited for until it
@@ -1711,9 +1815,13 @@ which deletes ignored files and refuses only untracked or modified ones
 status check, typically well under a second" (`BA:323-324`); a cache target's
 adds the stage, which took about 0.25 s for 512 entries on this workstation
 (AE-4's measurement, 2026-10-19), and which task 2.3 re-measures. A file placed
-in a listed cache directory is still protected, since `rmdir` refuses a
-directory that holds it (D7), which is the sense in which CD-18 calls the stage
-safer. The window is stated, not closed: one combined status probe after each
+in a listed cache directory under a name that the preflight did not fix is
+still protected, since `rmdir` refuses a directory that holds it (D7), which is
+the sense in which CD-18 calls the stage safer; an entry put after the
+preflight at a name that it fixed is removed in the planned entry's place, and
+is in the window as an ignored file created during the stage, which the ADDED
+requirement states beside the stage's guarantee (RB2's LOW-3). The window is
+stated, not closed: one combined status probe after each
 `disposed` stage would close it at one Git child per cache target, at most 266
 children and 16 removals, 39.9 s + 4.8 s = about 44.7 s at the packet's model
 before any filesystem time, these figures and the counts below being at
@@ -1776,12 +1884,16 @@ cache phase" and "A file placed in a cache directory during the stage".
 - Fixtures write `.pyc` and `.pyo` bytes directly, so no compiler runs, under
   explicit ignore rules (`__pycache__/` with `*.py[co]`, or `*.pyc` alone, or
   `__pycache__` for the symlink case) in the worktree's `.gitignore` or
-  `info/exclude`; the 256 MiB cap uses sparse files made by `os.truncate`.
-- Hooks: between the revalidation and the stage, after the preflight, while
-  the first listed cache's chain is reopened, before the n-th hand-off, and on
-  the n-th unlink, holding it or making it fail, through `patch.object` on the
-  stage's call table, the removal ceiling patched short; `os.close` stubbed to
-  record the numbers the stage closes, so that a test can assert that no
+  `info/exclude`; the 256 MiB cap uses sparse files made by `os.truncate`; a
+  tracked directory made mode 0555 after checkout, the run not root's, makes
+  Git's own removal fail with 255 after a `disposed` stage, as in change 1's
+  "Git leaves an orphaned directory" (RB's MEDIUM-1 of 2026-10-23).
+- Hooks: between the revalidation and the stage, after the preflight, while the
+  first listed cache's chain is reopened, while a later listed cache's chain is
+  opened again for the removals (RB2's MEDIUM-2), before the n-th hand-off, and
+  on the n-th unlink, holding it or making it fail, through `patch.object` on
+  the stage's call table, the removal ceiling patched short; `os.close` stubbed
+  to record the numbers the stage closes, so that a test can assert that no
   number given to an outstanding call is reused; the stage's and the walk's
   call tables counting their opens, so that a test asserts one chain per
   directory holding a listed path in each pass and one open per recorded
@@ -1980,9 +2092,15 @@ cache phase" and "A file placed in a cache directory during the stage".
    `tasks.md` under "Speckit Handoff"; `/opsx:apply` runs only then.
 4. The feature implements D1 to D14 on feature 004's code, merging `main` into
    its branch as `main` moves and never rebasing.
-5. README: the "Clean up Git worktrees" section gains the cache paragraph: what
-   is disposed of and what blocks, the caps, the residual window, the partial
-   phase and its re-run.
+5. README: the "Clean up Git worktrees" section, feature 004's
+   `README.md`:189-573 at `f3724fc`, gains the cache paragraph: what is
+   disposed of and what blocks, the caps, the residual window, the partial
+   phase and its re-run; and the sentences of that section that this change
+   makes untrue as written change with it: "Ignored local files, remote
+   divergence, and an unknown default branch also stop destructive cleanup"
+   (:238-239), the next step of the `ignored-local-files` row in its "Gates and
+   next steps" table (:392), and the list "Five behaviour changes come first"
+   (:191-221), which gains the cache removal (RE2-2).
 6. Tests per D14, the feature 005 exclusion included once feature 005 has
    landed.
 7. The realization PR merges with green checks on every job of the workflow on
