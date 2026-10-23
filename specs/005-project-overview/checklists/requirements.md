@@ -1213,22 +1213,56 @@ Lane: openRepoProject-4
 - 2026-10-23, a thirty-eighth pass, by the lead's commit 3aj decisions: the
   spec no longer lists the plan's revisions by sha, since each new plan
   revision made those lists stale and called for another spec commit. The
-  Status, C-56, the Assumptions and the round (n) record keep the plan at
-  `a80f10b`, its step begun before feature 004's merge on Brett Heap's word,
-  and in place of each list say that later plan revisions, each recorded in the
-  plan's research.md (its "Revision" sections), take the lane readers' findings
-  and re-pin to peer heads, none changing a ruling. A revision that the spec
-  cites for a fact keeps its sha: R20 at `664461f`, "five chosen, six open", as
-  C-72's question has it; O11 added in the plan's revision 3 at `664461f`
-  (C-72, FR-007, the A1 bullet); and R4 at `6fb619c` (the feature 004 bullet).
-  Lane openRepoProject-3's W111 read of 3ai is taken: its LOW-1, C-56's "word
-  for word" for revision 5, goes with C-56's list, and its OBS-A, "is now
-  `2cf34d3`" in the re-check dated 2026-10-21, reads "was then". No pin moves.
-  No checklist category changes, and the totals below were recounted by script.
-  Traceability is checked against A1's ratified deltas at `e4a30fc` (64 of 64).
-  A1 stays cited at `e4a30fc`, and `clarify-questions.md` is unchanged.
-  Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run by
-  script on the edited spec.
+  Status, C-56 and the Assumptions keep the plan at `a80f10b`, its step begun
+  before feature 004's merge on Brett Heap's word (the round (n) record carries
+  the pointer alone), and in place of each list the four say that later plan
+  revisions, each recorded in the plan's research.md (its "Revision" sections),
+  take the lane readers' findings and re-pin to peer heads, none changing a
+  ruling. A revision that the spec cites for a fact keeps its sha: R20 at
+  `664461f`, "five chosen, six open", as C-72's question has it; O11 added in
+  the plan's revision 3 at `664461f` (C-72, FR-007, the A1 bullet); and R4 at
+  `6fb619c` (the feature 004 bullet). Lane openRepoProject-3's W111 read of 3ai
+  is taken: its LOW-1, C-56's "word for word" for revision 5, goes with C-56's
+  list, and its OBS-A, "is now `2cf34d3`" in the re-check dated 2026-10-21,
+  reads "was then". No pin moves. No checklist category changes, and the totals
+  below were recounted by script. Traceability is checked against A1's ratified
+  deltas at `e4a30fc` (64 of 64). A1 stays cited at `e4a30fc`, and
+  `clarify-questions.md` is unchanged. Re-validation: 16 of 16 items pass, with
+  the checks of iteration 2 re-run by script on the edited spec.
+- 2026-10-23, a thirty-ninth pass, by the lead's commit 3ak decisions. Brett
+  Heap's word of 2026-10-23T12:19:11Z, "yes, recommended for O3, O5, O8-O11 and
+  D5 clause 2" (RULED at 12:21:32Z), is recorded in C-72, whose session heading
+  now names both dates: every item from O1 to O11, and D5's clause 2, is
+  chosen, each option in the words of the plan's R20 at `39f4ab6`. The held
+  notes on those items now state the chosen behaviour, which lands with A1's
+  re-alignment, O9 (A) and O10 (A) keeping A1's text: FR-006, FR-007, FR-008,
+  FR-020, FR-026, FR-028, FR-035, FR-043, EC-012, EC-032, User Story 8's first
+  scenario, and the Dependencies' A1 bullet, its records of rounds (h) to (j)
+  and (m) and its LQ-15 bullets. O12 to O16, put to him on 2026-10-23, are
+  recorded in C-72 as open, each with its options, the lane's recommendation
+  and the reading built until he rules, and held at FR-026 and the
+  Dependencies' parity record (O12), FR-006, FR-009 and User Story 8 (O13),
+  User Story 8 and EC-012 (O14), FR-035 (O15), and C-40, C-68 and FR-008 (O16).
+  The triage's FIX-SPEC items are applied: TA's R2-1 (b), the gitfile exception
+  at FR-006 and FR-009, and S5-16, DI:535 cited for the `core.worktree` read's
+  unset exit 1 at FR-007, FR-008 and the Dependencies' two collector-table
+  sites; TB's R3-9 (SC-005, "nor two with one known `common_dir`"), R1-8 (the
+  parity record: feature 004's fix has landed, the classes still differ, and
+  the case is O12) and LANE2-PINS (FR-016 and the LQ-10 bullet); and TC's R7-8
+  rider (FR-038) and W119 (Out of Scope names #36 and #37). Lane
+  openRepoProject-3's W111 read of 3aj is taken: LOW-1, the pointer at its four
+  sites now reads "(R1 and its "Revision" sections)", and LOW-2, the
+  thirty-eighth pass above now says that three of those sites keep the plan at
+  `a80f10b`. Feature 004's `d8724e2` (R-365) is recorded in the round (n)
+  record as a later head, the functions that the spec names being as at
+  `d6bac50`; no pin moves. The results of observability.md's CHK003 (O3),
+  discovery-identity.md's CHK016 (O5) and integration.md's CHK004 (the failed
+  ref listing) keep their earlier words, since this commit edits spec.md and
+  this file alone. No checklist category changes, and the totals below were
+  recounted by script. Traceability is checked against A1's ratified deltas at
+  `e4a30fc` (64 of 64). A1 stays cited at `e4a30fc`, and `clarify-questions.md`
+  is unchanged. Re-validation: 16 of 16 items pass, with the checks of
+  iteration 2 re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -1353,4 +1387,4 @@ to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
 passes of that day, and after the thirteenth to thirty-fourth passes on
-2026-10-22 and the thirty-fifth to thirty-eighth on 2026-10-23.
+2026-10-22 and the thirty-fifth to thirty-ninth on 2026-10-23.

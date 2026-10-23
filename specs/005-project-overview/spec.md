@@ -11,8 +11,8 @@ Lane: openRepoProject-4
 now" (the plan at `a80f10b`); the tasks and the implementation still wait for
 his word, as the implementation does for feature 004's merge into `main`
 (Clarifications, C-56). Later plan revisions, each recorded in the plan's
-research.md (its "Revision" sections), take the lane readers' findings and
-re-pin to peer heads; none changes a ruling.
+research.md (R1 and its "Revision" sections), take the lane readers' findings
+and re-pin to peer heads; none changes a ruling.
 
 **Input**: User description: "Realize the ratified OpenSpec change
 add-project-overview: a read-only `project overview [--root D]...
@@ -543,7 +543,10 @@ added there as Q14 and Q15, for Brett Heap, unanswered then (answered
   `findings` the findings keyed `repair`, `preserve`, `housekeeping` and
   `informational` (DI:792-800). Each worktree-row field is null exactly in
   the case its "Null when" column names (DI:770-790), and the `git` object's
-  fields follow the same rules for the checkout at `path` (DI:760-763). The
+  fields follow the same rules for the checkout at `path` (DI:760-763); a bare
+  repository's main row (C-68) has a null `branch`, `head` and
+  `merged_into_target`, departing from that column, by which `branch` is never
+  null, the reading built until Brett Heap rules (O16 (a); C-72). The
   nulls that mean none, an observation and not an error, are those the
   proposal names: `upstream`, `ahead` and `behind` with no upstream
   configured, and `merged_into_target` on a detached head (proposal, Rules
@@ -682,8 +685,8 @@ that lane agreed on 2026-10-21 to carry it in.
   19:49:51Z (issue #10), the plan step starts before that merge, as C-21's word
   moved the specify step: the plan was committed at `a80f10b`, and the tasks
   and the implementation still wait for his word; later plan revisions, each
-  recorded in the plan's research.md (its "Revision" sections), take the lane
-  readers' findings and re-pin to peer heads; none changes a ruling. Where
+  recorded in the plan's research.md (R1 and its "Revision" sections), take the
+  lane readers' findings and re-pin to peer heads; none changes a ruling. Where
   applied: header, Status; Assumptions; Dependencies.
 - **C-57** Q: Should the overview's tests also run in the Git 2.36 floor job?
   -> A: Q3 B: A small set: the version check accepting Git 2.36, and one
@@ -886,7 +889,10 @@ that lane agreed on 2026-10-21 to carry it in.
   `probe-failed` error row, recorded as EC-030. This follows design D3, as for
   the unnamed gitfile record, and needs no amendment; feature 004's model never
   makes the common directory a worktree row, and its `clean` refuses a bare
-  repository. Where applied: C-54; FR-008; FR-020; FR-034; EC-030; US8 s4.
+  repository. That row's `branch`, `head` and `merged_into_target` are null, a
+  departure from C-40, by which the packet's `branch` is never null, the
+  reading built until Brett Heap rules (O16 (a); C-72). Where applied: C-54;
+  FR-008; FR-020; FR-034; EC-030; US8 s4.
 - **C-69** Q: What does a signal that arrives while the result is being written
   do? -> A: Q15 A: It stops the write. Change 2's "print no result document"
   (POD:778-779, and the packet's rule too, DI:1094-1096) is amended to "start
@@ -942,47 +948,108 @@ that lane agreed on 2026-10-21 to carry it in.
   direction, and no feature 005 test depends on it. Where applied: FR-026;
   FR-049; SC-003; Dependencies; Out of Scope.
 
-### Session 2026-10-22, Brett Heap's word on the plan's held items
+### Sessions 2026-10-22 and 2026-10-23, Brett Heap's word on the held items
 
-- **C-72** Q: Which options of the plan's held items, O1 to O10 (research.md
-  R20 as it stood at `7af798a` when he answered, reworded at `6fb619c` and, at
-  `664461f` as at `464c361`, "five chosen, six open"), does change 2 take? ->
-  A: On Brett Heap's word typed in lane openRepoProject-4's session at
-  2026-10-22T21:24:03Z, "yes, recommended for O1-O10", recorded by lane
-  openRepoProject-4 as a RULED line at 21:30:52Z (issue #10), with three NOTED
-  corrections, at 21:33:31Z (O3), 21:51:17Z (O8 to O10) and 21:54:01Z (O5),
-  which read his "recommended" as choosing only where R20 or the lane's A1
-  re-alignment draft stated a recommendation, change 2 takes five: O1 (A), the
-  draft's item 2, the F-7 clause on the `unstarted-branch` and
-  `reflog-unavailable` remedies (FR-035); O2 (A), item 6, `deadline-exceeded`
-  at the overview's reflog gate (FR-034); O4 (a), item 8,
-  `target-not-repository-root` for a main worktree that its own
+- **C-72** Q: Which options of the plan's held items does change 2 take: O1 to
+  O10 (research.md R20 as it stood at `7af798a` when he answered, reworded at
+  `6fb619c` and, at `664461f` as at `464c361`, "five chosen, six open"), O11,
+  added in the plan's revision 3 at `664461f`, D5's clause 2, and O12 to O16,
+  which the review of the plan at `39f4ab6` raised? -> A: On Brett Heap's word
+  typed in lane openRepoProject-4's session at 2026-10-22T21:24:03Z, "yes,
+  recommended for O1-O10", recorded by lane openRepoProject-4 as a RULED line
+  at 21:30:52Z (issue #10), with three NOTED corrections, at 21:33:31Z (O3),
+  21:51:17Z (O8 to O10) and 21:54:01Z (O5), which read his "recommended" as
+  choosing only where R20 or the lane's A1 re-alignment draft stated a
+  recommendation, change 2 takes five: O1 (A), the draft's item 2, the F-7
+  clause on the `unstarted-branch` and `reflog-unavailable` remedies (FR-035);
+  O2 (A), item 6, `deadline-exceeded` at the overview's reflog gate (FR-034);
+  O4 (a), item 8, `target-not-repository-root` for a main worktree that its own
   `core.worktree` or `core.bare` redirects, with the sub-items (c) and (d) and
   D5's clause 2 case (FR-006); and O6 (A) and O7, item 10's parts 1 and 2, the
   warning beside a row whose path could not be read (FR-028, FR-009, FR-035).
-  D5's clause 2, item 8's case, was taken through O6's recommended text in R20
-  at `7af798a`, which carried it; lane openRepoProject-3 asked, on W105's
-  OBS-1, that he confirm it directly, and the lead has put it to him in lane
-  openRepoProject-4's pane, so that until he answers it rests on that text.
-  Five stay open for his direct word: O3, item 7's count (FR-020, EC-032); O5,
-  item 9, #19 round (j)'s reading of the work-tree probe (FR-007); O8, the
-  locked stale form; O9, the parity case where the working directory's realpath
-  fails (FR-026); and O10, LQ-15's extension (FR-043). A sixth, O11, the
-  `core.worktree` read's exit 1 (A1's held item 11; FR-007, FR-008, EC-012,
-  User Story 8 and the discovery-identity checklist's CHK009), is a plan item
-  added in its revision 3 at `664461f`, after his word, and he has not answered
-  it. They are choices for change 2. A1's ordering rule (its
-  `proposal.md:1278-1284`) is the four LQ items' and reaches O10 (LQ-15's
-  extension) and O5 (item 9, owed under it); O1, O2, O4, O6 and O7 (items 2, 6,
-  8 and 10) rest on his word for change 2 and on #19's rounds, and reach A1 in
-  the same re-alignment commit, which follows #19's ratification, he reviewing
-  the final text before #34 merges; the open O3 and O8 (items 7 and 10), O11's
-  part 2 (item 11) and, should he take (C) (the overview follows feature 004,
-  the plan's R20 O9 (C)), O9 wait on his word for change 2 too, and O11's part
-  1 is a text re-alignment on a lane finding for his review. So this spec
-  records his word and follows A1 as ratified until A1's re-alignment lands,
-  changing no requirement ahead of it. Where applied: FR-006; FR-007; FR-008;
-  FR-009; FR-020; FR-028; FR-034; FR-035; EC-012; EC-020; EC-032; User Story 8;
+  D5's clause 2, item 8's case, was taken then through O6's recommended text in
+  R20 at `7af798a`, which carried it, and lane openRepoProject-3 asked, on
+  W105's OBS-1, that he confirm it directly. On his word typed in the same
+  session at 2026-10-23T12:19:11Z, "yes, recommended for O3, O5, O8-O11 and D5
+  clause 2", recorded by lane openRepoProject-4 as a RULED line at 12:21:32Z
+  (issue #10), which answers the seven items as the lane put them to him in its
+  pane, each with a stated recommendation, and as R20 and this entry recorded
+  them open at `39f4ab6`, change 2 takes the rest: O3, item 7's take,
+  `probes.estimated` counting the identity re-reads, +3 per Git candidate whose
+  identity probe prints other than two lines (FR-020, EC-032); O5, item 9, #19
+  round (j)'s reading of the work-tree probe, its output less its final line
+  feed being one path (FR-007); O8 (A), item 10, `project clean`'s locked text
+  for a locked stale worktree, "Review, unlock it, then prune stale worktree
+  metadata manually.", with the same warning (FR-028); O9 (A), the overview
+  keeping its ratified rule where the working directory's realpath cannot be
+  read, the parity tests leaving that case out (FR-026); O10 (A), LQ-15's
+  extension kept, the relative-path test on `GIT_CONFIG_GLOBAL` and
+  `GIT_CONFIG_SYSTEM` (FR-043); O11, A1's item 11, both parts: part 1 excepting
+  the `core.worktree` read's unset exit 1, nothing printed, from A1's failure
+  table, and part 2 (A), any other failure of that read leaving no root and
+  withholding every clean suggestion as `target-not-repository-root`, with a
+  remedy row of its own, "core.worktree could not be read; repair the
+  repository's config, then run again" (FR-007, FR-008, EC-012, User Story 8
+  and the discovery-identity checklist's CHK009); and D5's clause 2, by name:
+  where the warning and the redirect remedy together pass 200 characters, the
+  warning is kept whole, the recommendation left out and the remedy shortened,
+  reversing D5's "remedy kept whole" for that one case only (FR-006, FR-035).
+  Every item from O1 to O11, and D5's clause 2, is so chosen. They are choices
+  for change 2. A1's ordering rule (its `proposal.md:1278-1284`) is the four LQ
+  items' and reaches O10 (LQ-15's extension) and O5 (item 9, owed under it);
+  the other chosen items that change A1's text, its items 2, 6, 7, 8, 10 and
+  11, rest on his word for change 2 and on #19's rounds; and items 2 and 6 to
+  11 reach A1 in the same re-alignment commit, which follows #19's
+  ratification, he reviewing the final text before #34 merges, while O9 (A) and
+  O10 (A) keep A1's text as ratified and O11's part 1 is a text re-alignment on
+  a lane finding. His word of 2026-10-23 changes no text of A1 itself, and A1's
+  items 1, 3, 4 and 5 and this feature's tasks and implementation still wait
+  for his word. Five more items, O12 to O16, which the review of the plan at
+  `39f4ab6` and its triage raised and the lane put to him on 2026-10-23, each
+  with the lane's recommendation, are open for his word, and until he rules
+  this spec builds the reading named. O12, a repository whose ref listing
+  fails: A1 leaves every worktree row's class null (its
+  `specs/project-overview/spec.md:434-437`), while `project clean` at `d6bac50`
+  makes each present row on a branch `inspection-error` (its
+  `project:3511-3514`), and A1 also asks the two classes to be equal; (A) keep
+  A1's null class, the parity tests naming the case as a lasting difference,
+  (B) `project clean` gives no class, a change to feature 004, or (C) amend
+  change 2 so that the overview follows `project clean`; recommended and built,
+  (A) (FR-026; Dependencies). O13, where the `core.worktree` read runs: in a
+  repository made with `git init --separate-git-dir` whose
+  `extensions.worktreeConfig` is true, reached through a linked worktree, the
+  read returns that worktree's own setting, not the one `project clean` reads,
+  so that the overview suggests a target that clean refuses (measured on Git
+  2.43.0); (A) read it in the shared git directory, which reads the files clean
+  reads with no extra Git child and changes the wording of A1's design D3, case
+  3, (B) keep A1 as ratified and record a known limit, or (C) keep A1 and
+  withhold every suggestion in that layout; recommended, (A), and built until
+  he rules, A1 as ratified, D3's case 3 reading it in the candidate that
+  reached the repository, the defect recorded (FR-006, FR-009, User Story 8).
+  O14, a submodule reached only through a linked worktree of its module
+  directory, outside the superproject: Git prints no superproject line there,
+  so the overview sees no submodule and suggests `project clean` on the
+  submodule checkout, which clean refuses before changing anything; (A) record
+  it as a known limit, like the limits #19 records, (B) one more Git child at
+  the named root to detect the submodule, or (C) a guess from the path, which
+  "named, never guessed" (User Story 8) rules out; recommended and built, (A),
+  with no detection, which is also A1's behaviour as ratified (User Story 8,
+  EC-012). O15, a remedy "re-run with --root <repository parent>" whose escaped
+  parent is 177 characters or more, where D5's "within 200 characters" and
+  "remedy kept whole" cannot both hold; (A) keep the remedy whole and cut the
+  finding's own text to "...", the message passing 200 characters in that case
+  only, (B) shorten the path with "..." so that the message stays at 200, or
+  (C) print the remedy without the path; recommended and built, (A) (FR-035).
+  O16, a bare repository's main row, which C-68 makes a worktree row while C-40
+  copies the packet's rule that `branch` is never null; (a) `branch`, `head`
+  and `merged_into_target` null for that row, recorded against C-40 and in C-68
+  and FR-008, (b) a fixed string such as `bare` for `branch`, a value no text
+  has, or (c) the fields left out, which `schema_version: 1` forbids;
+  recommended and built, (a) (C-40, C-68, FR-008). So this spec records his
+  words and follows A1 as ratified until A1's re-alignment lands, changing no
+  requirement ahead of it, and builds the readings of O12 to O16 until he
+  rules. Where applied: C-40; C-68; FR-006; FR-007; FR-008; FR-009; FR-020;
+  FR-026; FR-028; FR-034; FR-035; FR-043; EC-012; EC-020; EC-032; User Story 8;
   Dependencies; the discovery-identity checklist's CHK009.
 
 ## User Scenarios & Testing *(mandatory)*
@@ -1561,7 +1628,11 @@ never suggests what `project clean` refuses, except for a main worktree that
 its own `core.worktree` redirects: there it names a root that `project clean`
 refuses, or one that reaches another repository, while A1's re-alignment for
 that layout, which Brett Heap's word of 2026-10-22 chose for change 2 (O4 (a);
-C-72), has not landed (FR-006).
+C-72), has not landed (FR-006). Until Brett Heap rules on O13 and O14 (C-72),
+it also names a root that `project clean` refuses where the `core.worktree` it
+reads is a linked worktree's own, under `extensions.worktreeConfig` (FR-009),
+and where a submodule is reached only through a linked worktree of its module
+directory, outside the superproject (EC-012).
 
 **Why this priority**: These layouts are rare, but a wrong root in a
 suggestion would send the person to a refusal or the wrong repository.
@@ -1582,8 +1653,9 @@ directories and the suggestions.
    linked worktree of that repository is a candidate and its checkout is
    not, `repository.root` is null with an `unsupported-layout` repair
    finding of severity error and no suggestion, and the exit status is 1 (the
-   unset `core.worktree`'s exit 1 reads as no value, which A1's held item 11,
-   part 1, would make explicit in its failure table; O11, C-72, FR-008).
+   unset `core.worktree`'s exit 1 reads as no value, which A1's item 11, part
+   1, chosen for change 2, makes explicit in its failure table once A1's
+   re-alignment lands; O11, C-72, FR-008).
 2. **Given** an immediate entry of a root that is a submodule's checkout,
    whose `core.worktree` is relative to its git directory, **When** the
    overview runs, **Then** its row has `repository.root: null` and an
@@ -1837,8 +1909,15 @@ path"; "Non-UTF-8 common directory".
   the direction in which the overview errs (design D9, Risks).
 - **EC-012**: A gitfile repository whose checkout lies outside every root
   reads `unsupported-layout`, an error (its unset `core.worktree` reading as no
-  value, which FR-008 notes against A1's failure table; O11, C-72); adding the
-  checkout's parent with `--root` names it (design, Risks; N-6).
+  value, as A1's item 11, part 1, chosen for change 2, makes explicit; O11,
+  C-72; FR-008); adding the checkout's parent with `--root` names it (design,
+  Risks; N-6). A submodule's repository reached only through a linked worktree
+  of its module directory, outside the superproject, is not seen as a
+  submodule, since Git prints no superproject line there: the gitfile rule
+  names the submodule checkout from `core.worktree`, and the overview's
+  suggestion names that checkout, which `project clean` refuses before any
+  change. Until Brett Heap rules, this is a known limit, with no detection (O14
+  (A); C-72; User Story 8).
 - **EC-013**: A squash merge never puts the branch tip into the merge
   target's ancestry, so squash-merging repositories yield few
   `merged-removable` rows. Open question 2 of `add-project-clean-all-safe`
@@ -2039,14 +2118,15 @@ path"; "Non-UTF-8 common directory".
   there, and FR-020's identity-probe count stands as ratified. PR #19's round
   (h) at `b3228bb` has `project clean`'s `probes.estimated` count those extra
   children (RI-3, its `specs/project-clean/spec.md:1050-1056`); A1's
-  re-alignment of the overview's count, its item 7, stays open for Brett Heap's
-  direct word (O3; C-72; FR-020). PR #19's round (i) at `e0c91bb` has D6 repeat
-  the probe on any count of lines but two, since a submodule checkout's probe
-  prints three lines as a line feed in a path can (its `design.md:353-364`;
-  lane openRepoProject-4's finding), so that, read as D6 now reads it, a
-  submodule candidate's probe is repeated too and `probes.performed` exceeds
-  `probes.estimated` for it; this spec's count follows A1, A1's re-alignment of
-  it held with the line-feed case (FR-020).
+  re-alignment of the overview's count, its item 7, chosen for change 2 by
+  Brett Heap's word of 2026-10-23 (O3; C-72; FR-020), has not landed. PR #19's
+  round (i) at `e0c91bb` has D6 repeat the probe on any count of lines but two,
+  since a submodule checkout's probe prints three lines as a line feed in a
+  path can (its `design.md:353-364`; lane openRepoProject-4's finding), so
+  that, read as D6 now reads it, a submodule candidate's probe is repeated too
+  and `probes.performed` exceeds `probes.estimated` for it; this spec's count
+  follows A1 until A1's re-alignment, chosen with the line-feed case (O3),
+  lands (FR-020).
 - **EC-033**: A present worktree on a branch named `HEAD` (`refs/heads/HEAD`)
   fails closed. Its `branch` and `head` come rightly from the registry, its
   `merged_into_target` from the merged set and its status from its own probe,
@@ -2245,7 +2325,8 @@ and [P] are change 1's requirements as the header names them.
   `core.worktree` naming another directory, is unaffected (Clarifications,
   C-65), making no error row. Where the main worktree's own `core.worktree`
   names another directory, this spec, as A1 does, names that toplevel or the
-  checkout as the root (FR-009), and `project clean` reaches this repository
+  checkout as the root (FR-009) or, in the gitfile layout, the directory
+  `core.worktree` names (FR-008), and `project clean` reaches this repository
   with neither, since an absolute path must be the toplevel that Git reports
   there and that toplevel the repository's main worktree (PR #19's
   `specs/project-clean/spec.md:567-571` and its design D18,
@@ -2261,10 +2342,16 @@ and [P] are change 1's requirements as the header names them.
   repository, as lane openRepoProject-3's W83 found with feature 004 at
   `60631eb` on Git 2.43.0 and 2.36.6. A1's re-alignment for that layout, its
   item 8, which Brett Heap's word of 2026-10-22 chose for change 2, O4 (a) with
-  its sub-items (c) and (d) and D5's clause 2 case (only through O6's text at
-  `7af798a`, until his direct word; C-72), has not landed, and
-  until it does this spec follows A1 as ratified, a suggestion there being an
-  exception to the "never" of C-55 and of User Stories 4 and 8 (Dependencies).
+  its sub-items (c) and (d) and D5's clause 2 case (that clause confirmed by
+  name in his word of 2026-10-23; C-72), has not landed, and until it does this
+  spec follows A1 as ratified, a suggestion there being an exception to the
+  "never" of C-55 and of User Stories 4 and 8 (Dependencies). Two more such
+  suggestions stand until Brett Heap rules on O13 and O14 (C-72): where a
+  linked worktree that reached a gitfile repository whose
+  `extensions.worktreeConfig` is true sets its own `core.worktree`, which is
+  read in place of the one `project clean` reads (FR-009), and where a
+  submodule is reached only through a linked worktree of its module directory
+  (EC-012).
 - **FR-007**: Each registered path MUST fall into exactly one case: `lstat`
   fails with "no such entry" or "not a directory" (`present: false`, no status
   probe); `lstat` fails otherwise, or the row's task, which encloses its
@@ -2364,12 +2451,13 @@ and [P] are change 1's requirements as the header names them.
   normal case after `git init --separate-git-dir`, is `probe-failed` if A1's
   :369 is read literally, against A1's :130-135, its scenario "A separate git
   directory" (:172-175) and its `clarifications.md:79-83`; excepting that exit
-  1 is A1's held item 11, part 1, a text re-alignment on a lane finding for his
-  review, and whether the suggestions withheld on any other failure of that
-  read carry `target-not-repository-root` is its part 2, for his word for
-  change 2, the plan's O11, added in its revision 3 at `664461f` after Brett
-  Heap's O1-O10 word and not yet answered (C-72); until then the unset key
-  reads as no value (FR-008; Dependencies). Where the extension reads or counts
+  1, a third exception departing from DI:535, is A1's item 11, part 1, a text
+  re-alignment on a lane finding, and its part 2 has the suggestions withheld
+  on any other failure of that read carry `target-not-repository-root`: the
+  plan's O11, added in its revision 3 at `664461f` after Brett Heap's O1-O10
+  word, both parts of which his word of 2026-10-23 chose for change 2 (C-72).
+  The unset key reads as no value, as part 1 has it, and part 2 lands with A1's
+  re-alignment (FR-008; Dependencies). Where the extension reads or counts
   as true, each linked row whose registration agrees MUST take `git rev-parse
   --path-format=absolute --show-toplevel` in that worktree, after its identity
   reads and before its re-verification and status probe: a toplevel whose
@@ -2410,9 +2498,10 @@ and [P] are change 1's requirements as the header names them.
   `proposal.md:1377`), so that such a worktree, in a repository whose
   `extensions.worktreeConfig` is true, reads `registration-mismatch` here while
   `project clean` selects it where it is otherwise eligible, a divergence from
-  #19 and feature 004 alike, and A1's re-alignment, its item 9, stays open for
-  Brett Heap's direct word (O5; C-72; Dependencies). Where the extension reads
-  false, no such probe runs. Both children carry FR-016's pins and environment,
+  #19 and feature 004 alike, and A1's re-alignment, its item 9, round (j)'s
+  reading, chosen for change 2 by Brett Heap's word of 2026-10-23, has not
+  landed (O5; C-72; Dependencies). Where the extension reads false, no such
+  probe runs. Both children carry FR-016's pins and environment,
   the rev-parse, which is not a status probe, without the status pins. `project
   clean` re-runs the probe when it revalidates a removal target; the overview,
   which removes nothing, has no revalidation (Dependencies). A probe MUST NOT
@@ -2431,22 +2520,28 @@ and [P] are change 1's requirements as the header names them.
   the main worktree row, as design D3 keeps an unnamed gitfile record: its path
   the common directory, `present` from `lstat`, no status probe, null status
   fields and classification, no finding of its own, and counted toward the caps
-  and the row count (Clarifications, C-68); and where the
-  first registry record's path equals `common_dir`, `repository.root` MUST
-  be the realpath of `core.worktree` (a relative value resolved against the
-  git directory), else the toplevel of a candidate whose identity probe
-  reported this `common_dir` and whose `.git` file names `common_dir`
-  itself, else null with an `unsupported-layout` repair finding of severity
-  error, no suggestion and the remedy "set core.worktree or move the
+  and the row count (Clarifications, C-68), its `branch`, `head` and
+  `merged_into_target` null, the reading built until Brett Heap rules (O16 (a);
+  C-72); and where the first registry record's path equals `common_dir`,
+  `repository.root` MUST be the realpath of `core.worktree` (a relative value
+  resolved against the git directory), else the toplevel of a candidate whose
+  identity probe reported this `common_dir` and whose `.git` file names
+  `common_dir` itself, else null with an `unsupported-layout` repair finding of
+  severity error, no suggestion and the remedy "set core.worktree or move the
   checkout". The git-directory record MUST never be a status-probed row;
   when `repository.root` is named, the main worktree row MUST name it and
   take its status probe there (POD:97-112; design D3, items 1 to 3). An unset
   `core.worktree` there, Git's exit 1 with nothing printed, reads as no value,
   as A1's :130-135 and design D3 have it, though A1's failure table (its :369),
-  read literally, makes that exit `probe-failed`: excepting it is A1's held
-  item 11, part 1, and its part 2 asks whether another failure of that read
-  gives the withheld suggestions `target-not-repository-root`, part 1 for Brett
-  Heap's review and part 2 for his word (O11; C-72; FR-007).
+  read literally, makes that exit `probe-failed`, the packet's DI:535 too ("A
+  Git child exits nonzero | `probe-failed`"), from which reading it as no value
+  departs, as the extension read's exception does (FR-007): excepting it is
+  A1's item 11, part 1, and its part 2 (A) gives any other failure of that read
+  no root and withholds every clean suggestion as `target-not-repository-root`,
+  with a remedy row of its own, "core.worktree could not be read; repair the
+  repository's config, then run again", both parts chosen for change 2 by Brett
+  Heap's word of 2026-10-23 and landing with A1's re-alignment (O11; C-72;
+  FR-007).
 - **FR-009**: In the ordinary layout `repository.root` MUST be the main
   worktree: the identity probe's toplevel when the candidate that reached
   the repository first is the main worktree itself, and otherwise the
@@ -2464,7 +2559,16 @@ and [P] are change 1's requirements as the header names them.
   Brett Heap's word of 2026-10-22 chose for change 2 (O7; C-72), and until A1's
   re-alignment lands this spec follows A1 as ratified (Dependencies). A
   suggestion for a gitfile checkout MUST follow [R] (POD:113-124; design D3,
-  items 4 and 5).
+  items 4 and 5), except, until A1's re-alignment lands, where `core.worktree`
+  names a directory that is not that checkout, as FR-006 states. In a
+  repository made with `git init --separate-git-dir` whose
+  `extensions.worktreeConfig` is true, where the candidate that reached it is a
+  linked worktree whose own `config.worktree` sets `core.worktree`, the read
+  that A1's design D3, case 3, runs in that candidate returns that worktree's
+  setting, not the one `project clean` reads, so that the root named there can
+  be one that `project clean` refuses (measured on Git 2.43.0): where that read
+  runs is O13, and until Brett Heap rules this spec reads it as A1 is ratified,
+  the defect recorded (C-72).
 - **FR-010**: A row's `path` MUST be `repository.root`, or the candidate
   when that is null; its `kind` MUST be the kind of the candidate whose path
   equals that `path`, else that of the canonically first candidate that
@@ -2567,9 +2671,11 @@ and [P] are change 1's requirements as the header names them.
   `specs/project-command/spec.md:140-147`), and the four as amendment A1 at
   `e4a30fc` restates them where change 2 quoted two, in requirement 3 (its
   `specs/project-overview/spec.md:230-232`, amending POD:202-204) and design
-  D13 (its design.md:690-691, amending design.md:650-652), ratified
-  (Dependencies). No Git child of the overview is exempt: it starts no push
-  child, so feature 004's push-child exception (lead ruling R-28) never
+  D13 (its design.md:690-691, amending design.md:650-652), ratified; lane
+  openRepoProject-2's pending safety fixes to feature 004 may change these pins
+  and its status probe, and the overview follows feature 004's head as they
+  land (Dependencies). No Git child of the overview is exempt: it starts no
+  push child, so feature 004's push-child exception (lead ruling R-28) never
   applies. A lazy fetch in a partial clone MUST therefore fail locally and be
   recorded `probe-failed` on its row, a failed status probe leaving its
   worktree `inspection-error`, with no network call. A Git child is a process
@@ -2647,8 +2753,10 @@ and [P] are change 1's requirements as the header names them.
   children for a line feed in such a path (RI-3, its
   `specs/project-clean/spec.md:1050-1056` at `b3228bb`), and A1's re-alignment,
   of its requirement 3's count and of its design D3's "so applying it
-  everywhere adds no child" (its `design.md:167-170`), its item 7, stays open
-  for Brett Heap's direct word (O3; C-72; Dependencies).
+  everywhere adds no child" (its `design.md:167-170`), its item 7, which Brett
+  Heap's word of 2026-10-23 chose for change 2, `estimated` then counting those
+  re-reads (O3; C-72), has not landed, and until it does the count follows A1
+  as ratified (Dependencies).
 
 **Isolation**
 
@@ -2756,7 +2864,16 @@ and [P] are change 1's requirements as the header names them.
   ignored files are Python bytecode caches, is `ignored-local-files` here and
   `merged-removable` in `project clean`, a departure on Brett Heap's word from
   change 2's equality clause (POD:381-386, on DI:620-624) until #24's overview
-  block is archived (Clarifications, C-71; Dependencies).
+  block is archived (Clarifications, C-71; Dependencies). Two more cases stay
+  out of the parity tests, each named there as a lasting difference: a working
+  directory whose realpath cannot be established, where feature 004 gives every
+  present row `inspection-error`, Brett Heap's word of 2026-10-23 keeping the
+  overview's ratified rule above (O9 (A); C-72; Dependencies); and a ref
+  listing that failed, where this requirement's null class meets its equality,
+  A1 leaving every class null (its `specs/project-overview/spec.md:434-437`)
+  while `project clean` at `d6bac50` makes each present row on a branch
+  `inspection-error` (its `project:3511-3514`): which governs there is O12, and
+  until Brett Heap rules this spec keeps A1's null class (C-72; Dependencies).
 
 **Findings and attention**
 
@@ -2794,8 +2911,12 @@ and [P] are change 1's requirements as the header names them.
   The warning, by a rule of A1's own, not #19's by reference, under A1's own
   trigger, a worktree row of the same repository with `present: null`, is A1's
   item 10, part 1, which Brett Heap's word of 2026-10-22 chose for change 2 (O6
-  (A); C-72), and until A1's re-alignment lands this spec follows A1 as
-  ratified (Dependencies).
+  (A); C-72); and that a locked stale worktree's message is `project clean`'s
+  locked form, "Review, unlock it, then prune stale worktree metadata
+  manually.", with that warning under the same trigger, as T7 has it, is item
+  10's too, which his word of 2026-10-23 chose for change 2 (O8 (A); C-72).
+  Until A1's re-alignment lands this spec follows A1 as ratified, the one stale
+  text for every stale row (Dependencies).
 - **FR-029**: A finding of severity `error` MUST make the exit status 1;
   `warning` MUST do so only under `--strict`; and `info` MUST never affect
   it (POD:465-466).
@@ -2940,13 +3061,17 @@ and [P] are change 1's requirements as the header names them.
   Heap's word of 2026-10-22 chose for change 2 (O1 (A); C-72), lands after
   #19's ratification, this spec following A1 as ratified until then
   (Dependencies). Its cut is C-11's, A1's design D5 (its `design.md:386-389`):
-  the finding's own text is shortened with `...` and the remedy kept whole; a
-  rule that keeps the warning of A1's item 10 whole and, beside item 8's
-  redirect remedy, leaves the recommendation out and shortens the remedy, which
-  reverses D5's "remedy kept whole" for that case, was chosen for change 2 with
-  those items (O6 (A) and O4 (a), D5's clause 2 only through O6's text at
-  `7af798a`, until his direct word; C-72) and lands with A1's re-alignment
-  (FR-009, FR-028; Dependencies).
+  the finding's own text is shortened with `...` and the remedy kept whole.
+  Where the remedy names `<repository parent>` and the escaped parent is 177
+  characters or more, D5's 200 characters and its whole remedy cannot both
+  hold: which yields is O15, and until Brett Heap rules this spec keeps the
+  remedy whole, cuts the finding's own text to `...` and lets that message pass
+  200 characters, in that case only (C-72). A rule that keeps the warning of
+  A1's item 10 whole and, beside item 8's redirect remedy, leaves the
+  recommendation out and shortens the remedy, which reverses D5's "remedy kept
+  whole" for that case, was chosen for change 2 with those items (O6 (A) and O4
+  (a), and D5's clause 2 by name in his word of 2026-10-23; C-72) and lands
+  with A1's re-alignment (FR-009, FR-028; Dependencies).
 
 **JSON document**
 
@@ -3003,7 +3128,10 @@ and [P] are change 1's requirements as the header names them.
   not valid UTF-8 and null only beside a null path; and a worktree path,
   root or common directory that is not valid UTF-8 MUST get an
   `unsupported-path-bytes` finding and contribute to no clean suggestion
-  (POD:660-672; design D11). Every path MUST be absolute and canonical, as
+  (POD:660-672; design D11): a worktree path contributes nothing to the
+  `--all-safe` suggestion, as A1's scenario "Non-UTF-8 path" reads it (its
+  `specs/project-overview/spec.md:777-779`), and a root or common directory
+  leaves the row none (FR-031). Every path MUST be absolute and canonical, as
   DI:842-843 has it, with four exceptions: `ignored_samples` paths, relative to
   their worktree, and an absent default root, the two DI:842-843 names; the
   `path` of the scan error for a working directory whose realpath cannot be
@@ -3124,24 +3252,24 @@ and [P] are change 1's requirements as the header names them.
   child, the version check included, and inspecting no repository. The same
   test MUST apply to `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`, as that text
   has it (:103 at `cc000ea`, :119-120 at `9fb22fa`; EC-036): LQ-15's extension,
-  which Brett Heap may strike (Dependencies). PR #19 leaves the overview's code
-  and exit status for this refusal to `add-project-overview` (its
-  `proposal.md:951-956` at `9fb22fa`), whose closed lists give [E]'s text none:
-  amendment A1 at `e4a30fc` proposes `relative-config-path` with exit 2 as an
-  item of its own, on the basis of Brett Heap's LQ-15 word, whose form the lead
-  gave as `clean`, `status`, `doctor` and `update` (lane openRepoProject-2's
-  ruling R-102 (c) 3; `9fb22fa` proposal.md:954-956), in requirement 8's exit-2
-  codes (POD:677-678; its `specs/project-overview/spec.md:753-757`) and in
-  requirement 11's exit rule (POD:765-768; FR-042), with a paragraph after it
-  and the scenario "A relative configuration path" (its :860-876 and :908-912),
-  ratified by Brett Heap in PR #34 (Dependencies). FR-039 and FR-042 restate
-  those two sites, and US10 s5, SC-012 and the Appendix carry the scenario (the
-  lane openRepoProject-4 lead's re-read against A1's ratified text, as A1's
-  `proposal.md:1509-1510` at `e4a30fc` records that this spec does; lane
-  openRepoProject-3's W55 L5). The code departs from the packet's closed list
-  of exit-2 codes (DI:1086-1089); should he strike it, the fallback is
-  `refused` with exit 2, inside change 2's lists, which departs from nothing
-  (Dependencies).
+  which Brett Heap's word of 2026-10-23 keeps for change 2 (O10 (A); C-72;
+  Dependencies). PR #19 leaves the overview's code and exit status for this
+  refusal to `add-project-overview` (its `proposal.md:951-956` at `9fb22fa`),
+  whose closed lists give [E]'s text none: amendment A1 at `e4a30fc` proposes
+  `relative-config-path` with exit 2 as an item of its own, on the basis of
+  Brett Heap's LQ-15 word, whose form the lead gave as `clean`, `status`,
+  `doctor` and `update` (lane openRepoProject-2's ruling R-102 (c) 3; `9fb22fa`
+  proposal.md:954-956), in requirement 8's exit-2 codes (POD:677-678; its
+  `specs/project-overview/spec.md:753-757`) and in requirement 11's exit rule
+  (POD:765-768; FR-042), with a paragraph after it and the scenario "A relative
+  configuration path" (its :860-876 and :908-912), ratified by Brett Heap in PR
+  #34 (Dependencies). FR-039 and FR-042 restate those two sites, and US10 s5,
+  SC-012 and the Appendix carry the scenario (the lane openRepoProject-4 lead's
+  re-read against A1's ratified text, as A1's `proposal.md:1509-1510` at
+  `e4a30fc` records that this spec does; lane openRepoProject-3's W55 L5). The
+  code departs from the packet's closed list of exit-2 codes (DI:1086-1089);
+  should he strike it, the fallback is `refused` with exit 2, inside change 2's
+  lists, which departs from nothing (Dependencies).
 - **FR-044**: On SIGINT, SIGTERM or SIGHUP the overview MUST stop scheduling,
   terminate and reap every child as FR-011 states, abandoning one still
   unreaped 2 s after SIGKILL, start no result document once the signal is read
@@ -3424,7 +3552,7 @@ and [P] are change 1's requirements as the header names them.
   stuck in the kernel is outstanding; no Git child
   is waited for more than 4 s past its budget; and the counting wrapper's
   interval log never shows more than four of the overview's Git children at
-  once, nor two in one repository (Clarifications, C-34).
+  once, nor two with one known `common_dir` (FR-019; Clarifications, C-34).
 - **SC-006**: 100% of runs in which a cap, a budget or the deadline cut work
   report `completeness: "incomplete"`, name each cut in a row or scan error,
   with `omitted` wherever a population was dropped, and exit 1 unless a
@@ -3550,9 +3678,9 @@ and [P] are change 1's requirements as the header names them.
   for the specify step only (header; change `tasks.md` 3.1 and Speckit
   Handoff), and planned before it on his word of 2026-10-22T19:46:57Z, "lane 4
   plans 005 now", for the plan step only, the plan at `a80f10b` (C-56); later
-  plan revisions, each recorded in the plan's research.md (its "Revision"
-  sections), take the lane readers' findings and re-pin to peer heads; none
-  changes a ruling.
+  plan revisions, each recorded in the plan's research.md (R1 and its
+  "Revision" sections), take the lane readers' findings and re-pin to peer
+  heads; none changes a ruling.
 - workBenches' `onp` and any other installed copy of `project` gain the
   overview only when their owners move their pins; this feature edits
   nothing outside this repository (proposal, "What This Repository Does Not
@@ -3660,12 +3788,16 @@ and [P] are change 1's requirements as the header names them.
   `RelayParser`, T077's relay of `git branch -d` (`project:5759`), is new, so
   FR-015's keep-filter is still this feature's own to build. Its scrub still
   removes the seventeen names there, and its draft #33 builds [E]'s list as PR
-  #19 amends it (lead ruling R-99 (b) and (d)). One defect found there reaches
-  a parity case: a failed ref listing makes `project clean` print every row as
+  #19 amends it (lead ruling R-99 (b) and (d)). One defect found there reached
+  a parity case: a failed ref listing made `project clean` print every row as
   `unpublished`, with no row errors (lane openRepoProject-2's plan review,
   finding F3, in its record R-100 (c)), where the overview records the error
-  and runs no ladder (FR-025, FR-026), so that a parity test of that case
-  differs until feature 004's fix, assigned by R-101 (c), lands.
+  and runs no ladder (FR-025, FR-026). Feature 004's fix, assigned by R-101
+  (c), has since landed (merged as `91552e3`): at `d6bac50` each present row on
+  a branch carries the listing's error and is `inspection-error` (its
+  `project:3511-3514`), while the overview leaves every class null, as A1 does
+  (its `specs/project-overview/spec.md:434-437`), so that a parity test of that
+  case still differs, held for Brett Heap as O12 (C-72; FR-026).
 - **Change 1's archive order**: change 2 archives after change 1. This
   feature realizes change 2's MODIFIED `project-review-safety` requirement,
   not change 1's `project-clean-review-safety` (proposal, Capabilities;
@@ -4081,7 +4213,9 @@ and [P] are change 1's requirements as the header names them.
     batch applies (LQ-14 and LQ-13; FR-032), departing from OV:110-113 and
     DI:690-692; LQ-11's counted reads and the change-2 sites that read against
     them (FR-007, FR-013, FR-019, FR-020), departing from DI:506-509 and
-    DI:1193-1201 and, by the collector table's two exceptions, from DI:535 and,
+    DI:1193-1201 and, by the collector table's two exceptions, from DI:535 (a
+    third, the `core.worktree` read's unset exit 1, which O11's part 1 adds,
+    departs from it the same way and lands in A1 with item 11; C-72) and,
     by requirement 2's new case for a check that cannot be completed, from
     DI:251-261; and LQ-10's stat pins, a restatement of [E]'s four status pins
     where change 2 quoted two (FR-016), departing from nothing, since no packet
@@ -4114,14 +4248,15 @@ and [P] are change 1's requirements as the header names them.
     commits they follow: FR-007's LQ-11 parity with FR-013, FR-019, FR-020 and
     US1 s3; FR-032's batch-only gates with SC-004 and EC-007; FR-043's code;
     and FR-016's four status pins. One point A1 leaves to Brett Heap, as this
-    spec does, with no behaviour written (its proposal, "Open point",
+    spec did, with no behaviour written (its proposal, "Open point",
     `proposal.md:1479-1486` at `e4a30fc`): Q7 A is silent on FR-026's parity
     with `project clean` run from the same working directory when that
     directory's realpath cannot be established, and at `2cf34d3` feature 004
     gives every present row `inspection-error` there (its `project:2960-2962`,
     :2887-2888 and :2081), wider than the two classes Q7 A converts (C-61; lane
-    openRepoProject-3's fidelity read of `c54d393`, M1), the plan's O9, which
-    stays open for his direct word (C-72). A second point, found after his
+    openRepoProject-3's fidelity read of `c54d393`, M1), the plan's O9, where
+    his word of 2026-10-23 keeps the ratified rule and the parity tests leave
+    the case out (O9 (A); C-72; FR-026). A second point, found after his
     O1-O10 word, is A1's own conflict in the gitfile layout: its design D3,
     case 3, reads `core.worktree` by one Git child (its `design.md:187-208`),
     whose unset key's exit 1 with nothing printed is the normal case after `git
@@ -4132,19 +4267,20 @@ and [P] are change 1's requirements as the header names them.
     directory" (:172-175) and its `clarifications.md:79-83`; the A1 drafter of
     lane openRepoProject-4 found it and its lead confirmed it at `e4a30fc`, and
     lane openRepoProject-3's W86 confirmed on Git 2.43.0 and 2.36.6 that `git
-    config --get core.worktree` exits 1 there with nothing printed. A1's held
-    item 11 (the plan's O11, at `664461f`) has two parts: part 1 excepts the
-    unset key's exit 1, a text re-alignment of A1 on a lane finding, for his
-    review, its ground A1's own contradiction and its form #19's row 4b
-    (`design.md:511-515` at `2250830`, R-336), which feature 004 at `211e43d`
-    builds; part 2 asks whether, for any other failure of that read, where the
-    plan keeps `probe-failed`, `repository.root` null, no suggestion, no gate
-    code and no `unsupported-layout` finding, the withheld suggestions carry
-    `target-not-repository-root`, as #19 refuses the run, which needs his word
-    for change 2. The plan's revision 3 builds part 1 as its reading of the
-    conflict, and the lane's recommendation, as put to him, is yes to both
-    parts; he has not answered (C-72; FR-007, FR-008, EC-012, User Story 8; the
-    discovery-identity checklist's CHK009).
+    config --get core.worktree` exits 1 there with nothing printed. A1's item
+    11 (the plan's O11, at `664461f`) has two parts: part 1 excepts the unset
+    key's exit 1, a text re-alignment of A1 on a lane finding, its ground A1's
+    own contradiction and its form #19's row 4b (`design.md:511-515` at
+    `2250830`, R-336), which feature 004 at `211e43d` builds; part 2 has the
+    suggestions withheld on any other failure of that read, where the plan
+    keeps `probe-failed`, `repository.root` null, no suggestion and no
+    `unsupported-layout` finding, carry `target-not-repository-root`, as #19
+    refuses the run, with a remedy row of its own, "core.worktree could not be
+    read; repair the repository's config, then run again". The plan's revision
+    3 builds part 1 as its reading of the conflict; the lane recommended yes to
+    both parts, and his word of 2026-10-23 chose both for change 2, part 2
+    landing with A1's re-alignment (C-72; FR-007, FR-008, EC-012, User Story 8;
+    the discovery-identity checklist's CHK009).
   - Change 1's [E], for Q9 B: lane openRepoProject-2 agreed on 2026-10-21 that
     its draft PR #19, which already edits [E]'s Environment paragraph
     (CMD:98-122), carries the trace pins and the trace-variable scrub names
@@ -4505,23 +4641,24 @@ and [P] are change 1's requirements as the header names them.
   then (FR-034; C-22, FR-033, EC-020). A1's `estimated` rule counts one
   identity probe per Git candidate, where round (h) has `project clean` count
   the extra children for a line-feed path; that re-alignment is held with #19's
-  ratification, and this spec's count follows A1 (FR-020, EC-032). The rest
-  reaches the overview through neither [E] nor [G]: it shows no partial-removal
-  note and runs no removal (F-2, F-1), its own `inspection-incomplete` remedy
-  is change 2's (A1's :624) rather than [G]'s (R-258), it has no revalidation
-  (RI-3's review-safety bound), and the AND at :317 is a case of [E]'s
-  unchanged rule, which FR-007 reads as A1 does. The records above that say F-2
-  and F-1 wait on his word are settled by this ruling. #19's round (i),
-  `e0c91bb` (`4204eb9`, `b60f6ac`, `1a4785e` and `e0c91bb`; lane
-  openRepoProject-2's R-271 and R-284, with lane openRepoProject-4's finding on
-  D6's identity probe and lane openRepoProject-3's W70 LOW-3 and W73 M-1),
-  follows, and edits its `project-clean` spec alone, its `project-command` and
-  review-safety specs unchanged (`git diff --quiet`), the scenario counts
-  staying 71 in `project-clean`, 24 in `project-command` and 22 in the
-  review-safety spec. Its three spec sites carry F-1's third text, by lane
-  openRepoProject-2's R-284, which refines how Brett Heap's F-1 ruling applies
-  to a read that fails and which he has since confirmed, in his words "R-284:
-  yes" (lane openRepoProject-2's R-290; round (j), below): where the rescan
+  ratification (since chosen, O3; C-72), and this spec's count follows A1
+  (FR-020, EC-032). The rest reaches the overview through neither [E] nor [G]:
+  it shows no partial-removal note and runs no removal (F-2, F-1), its own
+  `inspection-incomplete` remedy is change 2's (A1's :624) rather than [G]'s
+  (R-258), it has no revalidation (RI-3's review-safety bound), and the AND at
+  :317 is a case of [E]'s unchanged rule, which FR-007 reads as A1 does. The
+  records above that say F-2 and F-1 wait on his word are settled by this
+  ruling. #19's round (i), `e0c91bb` (`4204eb9`, `b60f6ac`, `1a4785e` and
+  `e0c91bb`; lane openRepoProject-2's R-271 and R-284, with lane
+  openRepoProject-4's finding on D6's identity probe and lane
+  openRepoProject-3's W70 LOW-3 and W73 M-1), follows, and edits its
+  `project-clean` spec alone, its `project-command` and review-safety specs
+  unchanged (`git diff --quiet`), the scenario counts staying 71 in
+  `project-clean`, 24 in `project-command` and 22 in the review-safety spec.
+  Its three spec sites carry F-1's third text, by lane openRepoProject-2's
+  R-284, which refines how Brett Heap's F-1 ruling applies to a read that fails
+  and which he has since confirmed, in his words "R-284: yes" (lane
+  openRepoProject-2's R-290; round (j), below): where the rescan
   cannot read a `partially-removed` target's `.git` file, the read failing
   other than for the file's absence or cut at its budget, the recovery text is
   "inspect `<path>` by hand; its `.git` could not be read, so do not run `git
@@ -4583,34 +4720,34 @@ and [P] are change 1's requirements as the header names them.
   ratified until then (FR-006). And D6's repeat on any count but two re-reads a
   submodule candidate's identity probe too, so that `probes.performed` exceeds
   `probes.estimated` for it as for a line-feed path; this spec's count follows
-  A1, A1's re-alignment of it held with the line-feed case (FR-020, EC-032). No
-  requirement of this spec moves. #19's round (j), `e14ada0` (lane
-  openRepoProject-3's W70 read of round (h); lane openRepoProject-2's R-285,
-  R-287 and R-291, with Brett Heap's confirmation of R-284 on 2026-10-22, in
-  his words "R-284: yes", lane openRepoProject-2's R-290), follows, and edits
-  all three of its specs, the scenario counts staying 71 in `project-clean`, 24
-  in `project-command` and 22 in the review-safety spec. In `project-command`,
-  LQ-11's work-tree probe is read "by the lead's R-287, with R-291's
-  refinement, which the evidence model words so", as #19's D7 has it at
-  `ccc52b9` (`design.md:484-485`): "the probe's standard output, less the one
-  line feed Git ends it with, SHALL be read as one path, which may itself hold
-  line feeds; output that is empty, that names no path, or that does not end in
-  a line feed SHALL make the row's registration disagree" (its
-  `specs/project-command/spec.md:224-229`, where :224-227 at `e0c91bb` made
-  output that is not exactly one line disagree), and the scenario "A linked
-  worktree whose work tree is redirected" gains an AND at :320 for a linked
-  worktree whose own path holds a line feed, which is read as its registered
-  path and selected (design D7, :474-493). In the review-safety spec,
-  revalidation reads the probe as planning does, output read as one path other
-  than the target's, even over several lines, being `identity-changed`, and
-  output that is empty, names no path or does not end in a line feed
-  `state-changed` (`Cleanup revalidates destructive actions`, :131-135), and
-  the scenario "A work-tree probe at revalidation" moves a directory whose name
-  holds a line feed to `identity-changed` and pins `state-changed` for a
-  wrapper's output without the line feed Git ends it with (:283-289; D7,
-  :520-528). In `project-clean`, the reason that Git refuses `git worktree
-  remove --force` is narrowed to while the path remains (W70 LOW-1; :329-332
-  and :1172-1174; D18, :1318-1323), F-1's three texts and F-2's
+  A1, A1's re-alignment of it held with the line-feed case (since chosen, O3;
+  C-72; FR-020, EC-032). No requirement of this spec moves. #19's round (j),
+  `e14ada0` (lane openRepoProject-3's W70 read of round (h); lane
+  openRepoProject-2's R-285, R-287 and R-291, with Brett Heap's confirmation of
+  R-284 on 2026-10-22, in his words "R-284: yes", lane openRepoProject-2's
+  R-290), follows, and edits all three of its specs, the scenario counts
+  staying 71 in `project-clean`, 24 in `project-command` and 22 in the
+  review-safety spec. In `project-command`, LQ-11's work-tree probe is read "by
+  the lead's R-287, with R-291's refinement, which the evidence model words
+  so", as #19's D7 has it at `ccc52b9` (`design.md:484-485`): "the probe's
+  standard output, less the one line feed Git ends it with, SHALL be read as
+  one path, which may itself hold line feeds; output that is empty, that names
+  no path, or that does not end in a line feed SHALL make the row's
+  registration disagree" (its `specs/project-command/spec.md:224-229`, where
+  :224-227 at `e0c91bb` made output that is not exactly one line disagree), and
+  the scenario "A linked worktree whose work tree is redirected" gains an AND
+  at :320 for a linked worktree whose own path holds a line feed, which is read
+  as its registered path and selected (design D7, :474-493). In the
+  review-safety spec, revalidation reads the probe as planning does, output
+  read as one path other than the target's, even over several lines, being
+  `identity-changed`, and output that is empty, names no path or does not end
+  in a line feed `state-changed` (`Cleanup revalidates destructive actions`,
+  :131-135), and the scenario "A work-tree probe at revalidation" moves a
+  directory whose name holds a line feed to `identity-changed` and pins
+  `state-changed` for a wrapper's output without the line feed Git ends it with
+  (:283-289; D7, :520-528). In `project-clean`, the reason that Git refuses
+  `git worktree remove --force` is narrowed to while the path remains (W70
+  LOW-1; :329-332 and :1172-1174; D18, :1318-1323), F-1's three texts and F-2's
   text keeping their words. Its proposal says that Brett Heap confirmed R-284
   wherever it said the text was put to him (What Changes, :221-223;
   Capabilities, :506; the amendments list, :1186-1189, whose entry for the
@@ -4656,15 +4793,15 @@ and [P] are change 1's requirements as the header names them.
   a line feed, in a repository whose `extensions.worktreeConfig` is true, is
   `registration-mismatch` in the overview and selected by `project clean`; A1's
   re-alignment is held for Brett Heap's ruling for change 2, and this spec
-  follows A1 as ratified until then (FR-007). The rest reaches it through
-  neither [E] nor [G]: the overview has no revalidation, shows no
-  partial-removal note and runs no removal, and the second group of amendments
-  and the departures entry record standings that this spec already holds, F-7's
-  remedies at A1's six sites (above) and RI-3's count (FR-020), as it already
-  records the lane parts of LQ-11, LQ-13, LQ-14 and LQ-15 as pending #19's
-  ratification (the LQ items below). No requirement of this spec moves. #19's
-  round (k), `173d83c` (lane openRepoProject-3's W80 read of round (i), with
-  the M-1 and L-1 of its W81 read of feature 004 at `2707ff2`; lane
+  follows A1 as ratified until then (FR-007; since chosen, O5; C-72). The rest
+  reaches it through neither [E] nor [G]: the overview has no revalidation,
+  shows no partial-removal note and runs no removal, and the second group of
+  amendments and the departures entry record standings that this spec already
+  holds, F-7's remedies at A1's six sites (above) and RI-3's count (FR-020), as
+  it already records the lane parts of LQ-11, LQ-13, LQ-14 and LQ-15 as pending
+  #19's ratification (the LQ items below). No requirement of this spec moves.
+  #19's round (k), `173d83c` (lane openRepoProject-3's W80 read of round (i),
+  with the M-1 and L-1 of its W81 read of feature 004 at `2707ff2`; lane
   openRepoProject-2's R-294 and R-299), follows, and edits two of its specs at
   one site each, its `project-command` spec unchanged (`git diff --quiet`), the
   scenario counts staying 71 in `project-clean`, 24 in `project-command` and 22
@@ -4857,8 +4994,8 @@ and [P] are change 1's requirements as the header names them.
   keeps the warning whole. Until A1's re-alignment lands this spec follows A1
   as ratified, and FR-009, FR-028 and FR-035 carry held notes, the warning in
   round (n)'s words (below). T7 and T8 do not reach the overview: as ratified,
-  A1 gives every stale row [L]'s one text, the locked form staying open for his
-  direct word (O8; C-72), and its `inspect-cap` remedies (A1's
+  A1 gives every stale row [L]'s one text, the locked form since chosen for
+  change 2 (O8 (A); C-72), and its `inspect-cap` remedies (A1's
   :625-626) name no prune. No other hold moves. No requirement
   of this spec moves. #19's round (n), `2250830`, two commits from `20084cd`
   (`e6b6b16` and `2250830`; lane openRepoProject-3's W91 and W95 reads of
@@ -4906,14 +5043,20 @@ and [P] are change 1's requirements as the header names them.
   `d6bac50` merges its TEXT rows in R-324's phrase (`e8dda2a`), its tests of a
   `config` that is a directory, on real Git, for rows 4c and 4b (`2057c31`) and
   its doc round 23, and its `f3724fc`, doc round 24, changes its documents
-  alone, `project` and its tests as at `d6bac50`; this spec keeps #19 at
-  `2250830` and its feature 004 pins as they stand; later plan revisions, each
-  recorded in the plan's research.md (its "Revision" sections), take the lane
-  readers' findings and re-pin to peer heads; none changes a ruling. So PR #34
-  does not merge before #19's ratification of those commits; should Brett Heap
-  want #34 sooner, the four items move to a later amendment of change 2, and A1
-  lands without them (its :1281-1284), the parts of this spec that follow them
-  following that amendment instead.
+  alone, `project` and its tests as at `d6bac50`, and its `d8724e2` (lane
+  openRepoProject-2's R-365, ruled by Brett Heap; merged on 2026-10-23) gives
+  `project clean`'s partial-removal note and `project status`'s stale
+  recommendation the no-prune warning beside an unread row, texts that this
+  spec neither quotes nor measures and that the overview never shows (C-59),
+  the functions of `project` that this spec names and the `TEXT` rows it reads
+  staying as at `d6bac50`; this spec keeps #19 at `2250830` and its feature 004
+  pins as they stand; later plan revisions, each recorded in the plan's
+  research.md (R1 and its "Revision" sections), take the lane readers' findings
+  and re-pin to peer heads; none changes a ruling. So PR #34 does not merge
+  before #19's ratification of those commits; should Brett Heap want #34
+  sooner, the four items move to a later amendment of change 2,
+  and A1 lands without them (its :1281-1284), the parts of this spec that
+  follow them following that amendment instead.
   - LQ-10, on PR #19 at `ea697ba`, pending its ratification: every status
     probe, the hidden-state probe and the removal pass `-c core.trustctime=true
     -c core.checkStat=default` after `-c core.fsmonitor=false`, four status
@@ -4943,7 +5086,12 @@ and [P] are change 1's requirements as the header names them.
     now runs that filter once per probe, which widens the clean-filter residual
     that LQ-16 leaves open (requirement 9's sentence after POD:717; its
     :1443-1452), as EC-022 and FR-040 record (lane openRepoProject-3's W25
-    L10).
+    L10). Lane openRepoProject-2's pending safety fixes to feature 004, a
+    `core.ignoreCase` pin and a check for a nested `.git` inside a tracked
+    directory (2026-10-23), may change its status pins and its status probe;
+    feature 005 follows feature 004's head as they land, and a change to the
+    four pins, which FR-016 and A1 list by name, comes back to this spec
+    (FR-016, FR-026).
   - LQ-11, on PR #19 at `addd346`, pending its ratification: a linked row whose
     effective work tree is not its registered path, such as one whose
     per-worktree `core.worktree` names a decoy under
@@ -5104,16 +5252,17 @@ and [P] are change 1's requirements as the header names them.
     `proposal.md:1286-1312`), ratified by Brett Heap in PR #34 (Amendment A1,
     above): the code departs from the packet's closed list of exit-2 codes
     (DI:1086-1089), and the fallback, should he strike it, is `refused` with
-    exit 2, inside change 2's lists, which departs from nothing. If he strikes
-    LQ-15's extension, A1's sentence on `GIT_CONFIG_GLOBAL` and
-    `GIT_CONFIG_SYSTEM` is struck with PR #19's sites.
-  - LQ-15's extension, in a sentence of its own that Brett Heap may strike: the
-    same test applies to `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM` (:103 at
-    `cc000ea`, :119-120 at `9fb22fa`, whose design D11 lists every site a
-    strike touches, design.md:753-777 there), lane openRepoProject-2's own
-    addition (R-102 (c) 3), since a relative `GIT_CONFIG_GLOBAL` runs a
-    candidate's filter as a relative `HOME` does (EC-036). It is the plan's
-    O10, open for Brett Heap's direct word (C-72).
+    exit 2, inside change 2's lists, which departs from nothing. His word of
+    2026-10-23 keeps LQ-15's extension for change 2 (O10 (A); C-72), so that
+    A1's sentence on `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM` stays, landing
+    with PR #19's ratification of LQ-15's commits.
+  - LQ-15's extension, in a sentence of its own, which Brett Heap's word of
+    2026-10-23 keeps for change 2: the same test applies to `GIT_CONFIG_GLOBAL`
+    and `GIT_CONFIG_SYSTEM` (:103 at `cc000ea`, :119-120 at `9fb22fa`, whose
+    design D11 lists every site a strike touches, design.md:753-777 there),
+    lane openRepoProject-2's own addition (R-102 (c) 3), since a relative
+    `GIT_CONFIG_GLOBAL` runs a candidate's filter as a relative `HOME` does
+    (EC-036). It is the plan's O10, chosen (A) (C-72).
   - LQ-12, on PR #19 at `eae1a79`, `update`'s owner-tool environment, every
     owner tool of `update --apply` running with the push child's scrub, does
     not reach the overview, which starts no owner tool.
@@ -5153,8 +5302,10 @@ extension needing its own proposal (OQ-27):
   overview's `--remote` is proposed as
   `add-project-overview-remote-merge-status` (#25), realized in its own feature
   after this one (Dependencies; Clarifications, C-71).
-- Family traversal and relationships beyond `relationships: []`; bench,
-  container and park integrations.
+- Family traversal and relationships beyond `relationships: []`, proposed as
+  `add-project-overview-family-relationships` (issue #36, draft PR #37) and
+  realized in its own feature after this one and after change 2's archive,
+  never in this one; bench, container and park integrations.
 - Patch-equivalence retirement of squash-merged branches (LQ-2, still before
   Brett Heap), which the lead recommends as a follow-on change.
 - An estate-wide destructive batch, merge or branch reconciliation, a lock
