@@ -1309,6 +1309,25 @@ written".
   person past the next steps of the groups those 16 rows are in, "keep it on a
   branch or tag" and "finish or abort it" among them. The requirement's text
   stands as written.
+  Note, 2026-10-23: Brett Heap's M3 (a), ruled on 2026-10-23T21:10:31Z, "yes,
+  recommended for M1 and M3" (lead R-413; lane 3's W133 MEDIUM-3; #19's round
+  (t) at `54e869b`, design D18 at `design.md:1477-1492` and the scenario "A
+  worktree whose path holds the main worktree"), changes the next step of one
+  kind of `registration-mismatch` row. A row whose path is, or holds, the main
+  worktree, the common directory or another worktree (Q2 (1)), or that shares
+  its path with another row (R-57 L3, R-67 (c)), takes its own next step in
+  place of the class's, whose "or remove the row by hand", followed for such a
+  row, deletes what it holds: `its path is or holds the main worktree, the
+  common directory or another worktree, so do not delete it by hand or with git
+  worktree remove; review its registration with git worktree list --porcelain`
+  (`next_step_registration_mismatch_holds`, 197 characters). It names no `git
+  worktree prune`, so it carries no Q3 (b) warning and has no unread form: it is
+  the same in every mode and beside any row. The preview prints these rows in a
+  group of their own under `registration-mismatch`, first, ahead of the class's
+  group; every other row of the reason (a row whose registration disagrees, a
+  `core.worktree` or `core.bare` redirect, or Q9 (b)'s symbolic link) keeps the
+  class's step, in its unread form where any path of the plan could not be read
+  (writer's `d640539`). The requirement's text stands as written.
 - **FR-029**: Each `project clean` invocation MUST set one monotonic deadline
   60 s after it starts and hold back a 10 s reconciliation reserve, so that
   work stops 50 s after start, both moving later by the time spent blocked at
@@ -1545,8 +1564,10 @@ written".
   entry, counted in the filesystem budget (`nested_git_check()`; Brett Heap's Q2
   (2), ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380;
   lane 3's W133 MEDIUM-2, lead R-391 and R-395; #19's round (r) at `4512441`,
-  the `project-clean-review-safety` delta's `spec.md:110-112`; writers' `5eeaedd`
-  and `703b58c`). It is no Git child, so the at most six, or seven, children
+  the `project-clean-review-safety` delta's `spec.md:112-114` at `54e869b`,
+  where round (s) added "directly or below it, other than the worktree's own
+  top level" after "holding an index entry"; writers' `5eeaedd` and `703b58c`).
+  It is no Git child, so the at most six, or seven, children
   stand, and FR-047's note states what a difference gives. The requirement's
   text above stands as written, and this note adds one read to its list.
 - **FR-047**: A difference MUST refuse the target, spawn nothing, attempt no
@@ -1591,11 +1612,13 @@ written".
   directory after the plan (Brett Heap's Q2 (2), ruled on 2026-10-23T13:30:27Z,
   "yes, recommended for Q1-Q9"; lead R-380; lane 3's W133 MEDIUM-2, lead R-391
   and R-395; writers' `5eeaedd` and `703b58c`). #19's round (r) at `4512441`
-  words it in the `project-clean-review-safety` delta: the hidden-state probe
-  runs "with the `lstat` of `<dir>/.git` for every directory that its listing
-  shows holding an index entry" (`spec.md:110-112`), and the reason is
-  "`contains-submodule` for a new gitlink, `modules` entry or `.git` entry"
-  (`:131-132`), with the scenario "A nested repository made after the plan": a
+  words it in the `project-clean-review-safety` delta, as it stands at `54e869b`
+  after round (s): the hidden-state probe runs "with the `lstat` of `<dir>/.git`
+  for every directory that its listing shows holding an index entry directly or
+  below it, other than the worktree's own top level" (`spec.md:112-114`), and
+  the reason is "`contains-submodule` for a new gitlink, `modules` entry or
+  `.git` entry" (`:133-134`), with the scenario "A nested repository made after
+  the plan": a
   repository that `git init` makes in a tracked directory after the plan, which
   neither the status probe nor Git's own check reports, refuses the target with
   `contains-submodule`, and the nested repository and its commit remain. An
@@ -1744,26 +1767,49 @@ written".
   (e)).
   Traces: "Repository inspection requires Git 2.36 and shares one evidence
   model"; design D6 and D7.
-  Note, 2026-10-23: a present linked row whose path, raw or realpath, is, or is
-  an ancestor of, the common directory, the main worktree, another registry
-  entry's raw path or another row's realpath is `registration-mismatch` too,
-  unprobed and `inspection-error`, as a shared path is (`enclosing_rows()`, a
-  pure function of values already read; Brett Heap's Q2 (1), ruled on
+  Note, 2026-10-23: in `clean`'s plan, a present linked row whose path, raw or
+  realpath, is, or is an ancestor of, the common directory, the main worktree,
+  another registry entry's raw path or another row's realpath is
+  `registration-mismatch` too, unprobed and `inspection-error`, as a shared
+  path is (`enclosing_rows()`, a pure function of values already read, called
+  by `worktree_rows(..., for_clean=True)`; Brett Heap's Q2 (1), ruled on
   2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; lane 2's wave
   22 triage T2; sr-evidence H-3; writer's `5eeaedd`). Where the main worktree
   sat in a tracked directory of a linked worktree, as `git worktree repair` can
   leave it, that worktree read clean and its removal deleted the whole
   repository; now the plan is incomplete and nothing is removed. The
   requirement's text stands as written.
-  Note, 2026-10-23: a linked row whose registered path is a symbolic link is
-  `registration-mismatch` too, unprobed and `inspection-error` (`_read_row()`,
-  from the `lstat` it makes already; Brett Heap's Q9 (b), ruled on
+  Note, 2026-10-23: in `clean`'s plan, a linked row whose registered path is a
+  symbolic link is `registration-mismatch` too, unprobed and `inspection-error`
+  (`_read_row(..., for_clean=True)`, from the `lstat` it makes already; Brett
+  Heap's Q9 (b), ruled on
   2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; lane 2's wave
   22 triage T12, sr-removal F7; writer's `338edb0`). Its registration agrees
   through the link and its status prints nothing, but `git worktree remove`
   empties the link's target, fails to remove the link and still deletes the
   administrative directory; now the plan is incomplete and nothing is removed.
   The requirement's text stands as written.
+  Note, 2026-10-23, corrected in doc round 28 (lane 3's W139 MEDIUM-1; lead
+  R-409): the two notes above are `clean`'s alone. Q2 (1) and Q9 (b) are Brett
+  Heap's rulings on `clean`'s review safety, which #19 states in its
+  `project-clean-review-safety` delta (`spec.md:13-17` at `54e869b`), and not
+  in the evidence model that this requirement shares with `status`, `doctor`
+  and `update`: the `project-command` delta states neither, so its parity rule
+  (`spec.md:311-312`, "Values SHALL equal those of the inspection this model
+  replaces, except where a requirement states a change.") keeps those three
+  commands at the baseline's values, as #19's design says (`design.md:591-598`
+  at `54e869b`, round (s); the lead's R-409). `worktree_rows()` and
+  `_read_row()` take `for_clean`, which only `clean`'s plan sets
+  (`match_target()`, `build_plan()` and `registry_twin()`, revalidation's
+  step 5 re-read); `repo_state()` leaves it false, so `status`, `doctor` and
+  `update` read an enclosing row and a symbolic-link row as the baseline does:
+  probed, `dirty` read, no `inspection-error`, and `doctor` exiting 0.
+  `project` at `41759a4` applied both rules in all three commands, where
+  `f3724fc` read both rows; the code round's `455773a`, merged with `d640539`,
+  confines them, and `clean` still excludes both rows as
+  `registration-mismatch`. A path that two registry entries share, or that two
+  spellings of one worktree give (R-67 (c)), stays `registration-mismatch` in
+  every command, as at `f3724fc`. The requirement's text stands as written.
 - **FR-056**: Once per common directory, the model MUST run the identity
   probe, the registry listing, row 4c's read of `extensions.worktreeConfig`
   from the common directory's own `config` (LQ-11, draft PR #19), one ref
@@ -1891,12 +1937,19 @@ written".
   baseline's, byte for byte, and its omission of unlocking for a locked entry
   stays the known residual above. The requirement's text stands as written.
   Note, 2026-10-23: Q3 (b)'s dry-run warning (FR-028's note) is not given to
-  `status`'s text, which names pruning but not the command; it is left to the
-  same follow-on change. That is the lane's reading of Q3 (b), whose list names
-  `clean`'s texts only, under lead R-380, and not Brett Heap's word: whether
-  that plain text takes the warning is the lane's question M1, put to him on
-  2026-10-23T15:11:48Z and still open, with the recommendation that it does not
-  (M1 (a)). R-365's T9 note above stands.
+  `status`'s text, which names pruning but not the command. Brett Heap ruled it
+  on 2026-10-23T21:10:31Z, answering the lane's question M1, put to him on
+  2026-10-23T15:11:48Z, in his words "yes, recommended for M1 and M3" (lead
+  R-413), which takes M1 (a), the recommendation: where no row's path is
+  unread, `status`, `doctor` and `update` keep the baseline's `Review the stale
+  worktree metadata before pruning it manually.` with no Q3 (b) suffix, and
+  T9's unread form above stands. His ruling replaces what this note said until
+  doc round 28, that this was the lane's reading of Q3 (b), whose list names
+  `clean`'s texts only (lead R-380), with M1 open. No code changes, since
+  `repo_state()` already prints that text. #19 records the ruling and its
+  reason in `design.md:1732-1733` and `:2589-2605` at `54e869b` (round (t)).
+  The omission of unlocking for a locked entry stays the known residual above.
+  R-365's T9 note above stands.
 - **FR-065**: The README's "Clean up Git worktrees" section MUST open with
   the five behaviour changes users will notice: plain `project clean`
   exiting 1 on an incomplete report; `clean` refusing below Git 2.36;
