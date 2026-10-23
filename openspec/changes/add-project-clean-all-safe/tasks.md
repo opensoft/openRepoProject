@@ -107,9 +107,14 @@ duplicate them, and nothing here is an implementation step.
   round (n), one unread condition, W91 and W95 items, R-324: yes (R-341,
   R-343)'); and round (o), lane 3's W103 read of round (n), under the lead's
   R-349 (the commit titled 'Amend change 1: round (o), W103's four record items
-  (R-349)'); verified by the table "Questions Resolved by the Alignment Review"
-  in `proposal.md` and the later-rulings list under it, which name the section
-  each ruling edited.
+  (R-349)'); and round (p), Brett Heap's answers of 2026-10-23 to the lead's
+  R-365, "Yes, warn (Recommended)" on F-1's (b) beside an unread row and "Yes,
+  add T9 (Recommended)" on `project status`'s stale recommendation, with lane
+  5's RD2 M1 and the landing of feature 004's `tasks.md` hunks, under the lead's
+  R-377 (the commit titled 'Amend change 1: round (p), Brett Heap's answers on
+  F-1's (b) and T9, landing hunks, RD2 M1 (R-365, R-377)'); verified by the
+  table "Questions Resolved by the Alignment Review" in `proposal.md` and the
+  later-rulings list under it, which name the section each ruling edited.
 - [x] 1.3 Council resolved: every concern is VALID, none dismissed, the verdicts
   V1 to V12 applied to `proposal.md` (`ea9c73b`) and the five NOTED constraints
   recorded as N1 to N5 in `clarifications.md` (`1d4ed5b`); verified by
@@ -136,7 +141,9 @@ duplicate them, and nothing here is an implementation step.
   the V5 deferral and the squash-merge open question of `design.md` before him;
   verified by that quote. No implementation starts before it. Done: his word to
   lane openRepoProject-2 on 2026-10-09, verbatim: "ratify, merge #11 and run the
-  runbook".
+  runbook", recorded on PR #11 in its landing comment at
+  https://github.com/opensoft/openRepoProject/pull/11#issuecomment-6087170840,
+  PR #11 having landed by squash as 0050f3e.
 - [ ] 1.7 The push-child exception ratified by Brett Heap's word on the pull
   request that amends this change, quoted with its link here, the `design.md`
   Open Questions entry before him; verified by that quote. Feature 004 plans
@@ -186,7 +193,9 @@ duplicate them, and nothing here is an implementation step.
   deferral's motivating repository, 20 rows pass every gate before
   `deferred-target-cap` and all are `contains-submodule` after it, so it yields
   no removable row each run and its deferred count never drains (design Risks,
-  R-24). Results posted on PR #11; the caps stand as measured. LQ-20's step (i)
+  R-24). Results posted on PR #11 at
+  https://github.com/opensoft/openRepoProject/pull/11#issuecomment-6086983930;
+  the caps stand as measured. LQ-20's step (i)
   (Brett Heap, 2026-10-22; the lead's R-236) measured, by the same protocol, the
   two children that LQ-11 and LQ-13 added, in the same container, on a
   10,001-file fixture with `extensions.worktreeConfig` true, eight linked
@@ -206,7 +215,8 @@ duplicate them, and nothing here is an implementation step.
   captures; rows 1 to 6 identical; row 7's extra variable,
   `GIT_INTERNAL_SUPER_PREFIX`, scrubbed under R-21, the floor kept at 2.36
   rather than raised to 2.40 (a departure listed in `proposal.md`, ratified with
-  the merge of PR #11); results posted on PR #11 on 2026-10-09.
+  the merge of PR #11); results posted on PR #11 on 2026-10-09 at
+  https://github.com/opensoft/openRepoProject/pull/11#issuecomment-6082230232.
 - [ ] 2.3 Dependent change noted: `add-project-overview` (issue #10, PR #12)
   depends on this change and reconciles its deltas against this change's final
   requirement headers after this change lands, then is ratified after it;
@@ -222,11 +232,13 @@ Implementation is tracked exclusively in one Speckit feature, to be created by
 #8, and `003-parent-obstacle-wording` is lane openRepoProject-1's feature, PR
 #17, so this change's feature is the next free number, 004.
 
-- Feature identifier: 004-project-clean-all-safe (to be created by
-  /speckit.specify after ratification)
+- Feature identifier: 004-project-clean-all-safe
 - Branch: 004-project-clean-all-safe
-- Tasks: specs/004-project-clean-all-safe/tasks.md (reserved; created by
+- Tasks: specs/004-project-clean-all-safe/tasks.md (created by
   /speckit.tasks)
+- Created: specs/004-project-clean-all-safe/spec.md created 2026-10-09 by
+  /speckit.specify after ratification, PR #11 squash 0050f3e, branch
+  004-project-clean-all-safe
 
 `/opsx:apply` is not run until this section names exactly one feature and that
 feature exists.

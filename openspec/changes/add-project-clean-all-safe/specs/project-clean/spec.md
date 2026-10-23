@@ -351,7 +351,14 @@ entry and path are gone, and otherwise `unknown` with the note
 registry entry present, and "inspect, then `git worktree prune` and delete
 `<path>` by hand" otherwise, as where either is gone, Git refusing `git worktree
 remove --force` while the path remains; the reason SHALL be `removal-ceiling` in
-both cases. Where the rescan cannot read that `.git` file, the read failing
+both cases. Where any row of the plan has a path whose planning `lstat` failed
+other than for the path's absence, or was cut at its budget, a row whose `lstat`
+the deadline stopped included, so that its `present` is null, the second of
+those texts SHALL instead be "inspect, then delete `<path>` by hand; a row's
+path could not be read, so do not run `git worktree prune`, `git worktree
+remove` or `git gc` until it can", since `git worktree prune` acts on the whole
+repository and so deletes that row's administrative directory, whichever row it
+is run for. Where the rescan cannot read that `.git` file, the read failing
 other than for the file's absence or cut at its budget, the recovery text SHALL
 instead be "inspect `<path>` by hand; its `.git` could not be read, so do not
 run `git worktree prune`, `git worktree remove` or `git gc` until it can", since
@@ -368,9 +375,9 @@ from the row cap.
 It SHALL remove a local branch only as a separate, explicit action after the
 worktree is gone and the branch is verified merged.
 It MUST never use a force removal, reset, or deletion of unmerged work.
-Branch deletion SHALL refuse, before its plan is shown, with exit status 2,
-no code, a message after `REFUSED: ` on standard error and no `git branch
--d`: the default branch; a branch that a present linked worktree holds; a
+The `delete-branch` action SHALL refuse, before its plan is shown, with exit
+status 2, no code, a message after `REFUSED: ` on standard error and no `git
+branch -d`: the default branch; a branch that a present linked worktree holds; a
 branch that the main worktree holds; and a branch that the plan's evidence
 does not show merged into the merge target, by its ref listing and its merged
 set, so that a branch merged only into the current branch is refused, where
@@ -530,6 +537,14 @@ target there, and then retrying.
   remain, and "inspect, then `git worktree prune` and delete `<path>` by hand"
   once the `.git` file is gone, its path and registry entry remaining, or once
   the registry entry is gone, its path remaining
+- **AND** in `mode: "single"`, where the removal of the one named worktree is
+  cut at the ceiling beside another row whose path could not be read, as when a
+  directory above it denies search, and the rescan, having read the target's
+  `.git` file, finds that file gone or the registry entry gone, the recovery
+  text is instead "inspect, then delete `<path>` by hand; a row's path could not
+  be read, so do not run `git worktree prune`, `git worktree remove` or `git gc`
+  until it can", since `git worktree prune` acts on the whole repository and so
+  would delete that row's administrative directory, whichever row it is run for
 - **AND** where the rescan cannot read the target's `.git` file, as when a
   directory above it denies search, the recovery text is instead "inspect
   `<path>` by hand; its `.git` could not be read, so do not run `git worktree
@@ -1199,7 +1214,15 @@ the recovery text "inspect, then `git worktree remove --force <path>` by hand"
 where the rescan finds both its `.git` file and its registry entry present, and
 "inspect, then `git worktree prune` and delete `<path>` by hand" otherwise, as
 where either is gone, Git refusing `git worktree remove --force` while the path
-remains. The rescan SHALL read the `.git` file by one `lstat`, a filesystem call
+remains. Where any row of the plan has a path whose planning `lstat` failed
+other than for the path's absence, or was cut at its budget, a row whose `lstat`
+the deadline stopped included, so that its `present` is null, the second of
+those texts SHALL instead be "inspect, then delete `<path>` by hand; a row's
+path could not be read, so do not run `git worktree prune`, `git worktree
+remove` or `git gc` until it can", since `git worktree prune` acts on the whole
+repository and so deletes that row's administrative directory, whichever row
+it is run for.
+The rescan SHALL read the `.git` file by one `lstat`, a filesystem call
 that starts no Git child. Where that `lstat` fails other than for the file's
 absence, or is cut at its budget, the recovery text SHALL instead be "inspect
 `<path>` by hand; its `.git` could not be read, so do not run `git worktree
