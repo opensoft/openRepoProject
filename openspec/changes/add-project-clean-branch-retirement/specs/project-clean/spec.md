@@ -1067,6 +1067,14 @@ run and `budget.probe_timeout_seconds` bounds each; no `limits` or `budget`
 member is added. A run with no removal in flight SHALL still end within 64 s of
 its start, not counting the time blocked at the confirmation question.
 
+A flagged `--apply`, single or batch, is a removal apply: on a standard input
+that is not a terminal and without `--yes` it SHALL refuse with
+`confirmation-required` and exit status 2 before any mutation, as "Clean hands
+off work requiring review" states for a removal apply, so that no branch stage
+starts; any refusal that requirement keeps for branch deletion is the explicit
+`delete-branch` action's, with which the flag is refused as
+`invalid-arguments`.
+
 The confirmation SHALL be the one default-No question that "Clean previews and
 applies a batch of eligible worktree removals in one repository" states,
 reading `Remove N worktrees and retire their M local branches? [yes/N]` when
@@ -1085,10 +1093,13 @@ order:
 - `Retired BRANCH (was SHA); restore: git -C ROOT branch BRANCH SHA`, or, for
   a name that `git branch` refuses to create, one that begins with `-` or that
   equals `HEAD`, `Retired BRANCH (was SHA); restore: git -C ROOT update-ref
-  refs/heads/BRANCH SHA ''`, a form only defensive for `HEAD`: every status
-  probe of a repository that holds `refs/heads/HEAD` exits 0 and warns
+  refs/heads/BRANCH SHA ''`, a form only defensive where BRANCH is `HEAD` and
+  Git's `core.warnAmbiguousRefs` has its default: every status probe of a
+  repository that holds `refs/heads/HEAD` then exits 0 and warns
   `refname 'HEAD' is ambiguous.`, which makes every row of it
-  `inspection-error`, so that no run retires such a branch; each followed,
+  `inspection-error`, so that no run retires such a branch, while with that
+  setting false the probe exits 0 with nothing on standard error, a run can
+  retire it, and this form is the restore that works; each followed,
   for every local branch BRANCH2 that the run did not retire and whose
   configured upstream the plan's ref
   listing gives as `refs/heads/BRANCH`, by `Note: BRANCH2 tracks BRANCH as its
@@ -1301,6 +1312,9 @@ N; branches kept: `; and then the residual-window line.
   end with `branch_retirement` `retired` with reason null, and both exit 0
 - **AND** run without `--yes` at a terminal, the single-target form asks
   `Remove 1 worktree and retire its local branch? [yes/N]`
+- **AND** run without `--yes` on a standard input that is not a terminal,
+  each form refuses with `confirmation-required` and exit 2, nothing removed
+  and no branch child spawned
 
 #### Scenario: A branch moved after removal is retained and can be retried
 
@@ -1926,9 +1940,13 @@ N; branches kept: `; and then the residual-window line.
   run by a POSIX shell recreates the ref, and with the refusing test `git` the
   retry it prints passes `--branch=-f`; and where one is instead written by
   hand as `refs/heads/HEAD` the same way, a name that `git branch HEAD <sha>`
-  refuses to create, every status probe of the repository exits 0 and warns
-  `refname 'HEAD' is ambiguous.`, every row is `inspection-error`, and the run
-  removes no worktree and prints no `Retired HEAD` line
+  refuses to create, under Git's default `core.warnAmbiguousRefs` every status
+  probe of the repository exits 0 and warns `refname 'HEAD' is ambiguous.`,
+  every row is `inspection-error`, and the run removes no worktree and prints
+  no `Retired HEAD` line, while with `core.warnAmbiguousRefs` set to false in
+  the repository's configuration the branch is retired and the result prints
+  `Retired HEAD (was <sha>); restore: git -C '<root>' update-ref
+  refs/heads/HEAD <sha> ''`, which run by a POSIX shell recreates the ref
 - **AND** for an eligible branch whose name is `topic`, U+202E and `x`, a name
   Git accepts that holds a code point to escape, the result prints `Retired
   $'topic\u202ex' (was <sha>); restore: git -C '<root>' branch $'topic\u202ex'
