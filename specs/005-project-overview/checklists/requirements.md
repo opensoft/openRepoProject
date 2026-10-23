@@ -498,13 +498,13 @@ Lane: openRepoProject-4
   stat pins, a restatement, each with the commits it follows, and the merge
   order for PR #34; FR-016 and the LQ-10 bullet quote [E]'s four status pins as
   A1 restates them (requirement 3, spec:220-222; D13, design.md:690-691), #19's
-  round (q) having since added a fifth, O20, open for Brett Heap's word (C-72),
-  and EC-036 names its reproduction's two pins as those [E] carried before
-  LQ-10. #25 is re-checked at `86324ff` and `2eeaec4`, its pin `05a424a` kept:
-  the cited ranges are byte-identical by `cmp`, except tasks 2.3 and 2.4
-  (`tasks.md:22-23`), which gain C-51's second diff, and EC-022's D5 residual
-  reads the same at `design.md:565-592` there. No pin moves, and
-  `clarify-questions.md` is unchanged. In this folder, CHK006 of
+  round (q) having since added a fifth, which FR-016 now quotes on Brett Heap's
+  word (O20 (A); C-72), and EC-036 names its reproduction's two pins as those
+  [E] carried before LQ-10. #25 is re-checked at `86324ff` and `2eeaec4`, its
+  pin `05a424a` kept: the cited ranges are byte-identical by `cmp`, except
+  tasks 2.3 and 2.4 (`tasks.md:22-23`), which gain C-51's second diff, and
+  EC-022's D5 residual reads the same at `design.md:565-592` there. No pin
+  moves, and `clarify-questions.md` is unchanged. In this folder, CHK006 of
   `deployment.md`, CHK012 and CHK020 of `integration.md`, CHK012 of `ux.md`,
   CHK003 and CHK011 of `observability.md`, CHK002, CHK003 and CHK019 of
   `security.md`, CHK016 of `discovery-identity.md`, CHK008 of `idempotency.md`,
@@ -1489,6 +1489,44 @@ Lane: openRepoProject-4
   `e4a30fc`, and `clarify-questions.md` is unchanged. Re-validation: 16 of 16
   items pass, with the checks of iteration 2 re-run by script on the edited
   spec.
+- 2026-10-23, a forty-seventh pass, by the lead's commit 3as decisions, from
+  `dd69a2b` (plan revision 10 part 3). Brett Heap's word typed in lane
+  openRepoProject-4's session at 2026-10-23T21:10:35Z, "yes, recommended for
+  O17-O21", recorded by lane openRepoProject-4 as a RULED line at 21:11:44Z
+  (issue #10), is recorded in C-72, which takes all five as (A), each as the
+  lane recommended it: O17 (A), Q5's two next steps kept whole past 200
+  characters; O18 (A), Q3 (b)'s warning on the stale message kept whole, a gate
+  remedy after it too; O19 (A), the wider `registration-mismatch` evaluated
+  from the overview's own evidence with no new Git child, SC-004 taking no new
+  exclusion; O20 (A), the fifth status pin; and O21 (A), A1's null class kept
+  where the merged-set listing fails. C-72's rule sentence builds O19 (A) and
+  O20 (A) now, ahead of A1's text, and O21 (A) now, as A1 is ratified, while
+  O17 (A) and O18 (A) land with A1's re-alignment; O19's outcome for a row and
+  O21's case wait for feature 004's next head, which confines O19's two cases
+  to `project clean`'s plan (lane openRepoProject-2's report to lane 4 of
+  2026-10-23); and every held item, O1 to O21 and D5's clause 2, is chosen. The
+  held notes resolve to the chosen behaviour: FR-016 quotes the five status
+  pins, and the LQ-10 bullet and the Amendment A1 record follow it; FR-026 and
+  the Dependencies' parity record keep A1's null class for O21's case; FR-028
+  says that [L] states the plan-dependent stale forms at #19's `4512441` and
+  that the overview's stale message follows them, with Q3 (b)'s warning, once
+  A1's re-alignment lands; FR-032 and SC-004 record O19 (A); FR-035 keeps Q5's
+  two remedies whole with that re-alignment; SC-003 names O21's case; and the
+  round (n) record says that his word chooses the five. The round (r) record
+  adds his M1 (a) and M3 (a) of 21:10:31Z (lane openRepoProject-2's report, its
+  R-413), texts that the overview never shows (C-59). The header and the
+  Assumptions name every head of feature 004 whose `project` lines the spec
+  cites, `96a08d4`, `2cf34d3`, `d6bac50`, `41759a4` and `3bc1d68`, with the
+  dated records' commits, `d8724e2` being named with no line cited.
+  security.md's CHK002 and CHK019 and idempotency.md's CHK008, each file's
+  Evaluation recording the re-read, and this file's record of FR-016's pins say
+  five pins, no category changing. C-72 is now spec.md:960-1112, 153 lines,
+  sha256 `9e3e09f0...`. #19 stays at `4512441` and #27 at `d95eea2`, and no pin
+  moves. No checklist category changes, and the totals below were recounted by
+  script. Traceability is checked against A1's ratified deltas at `e4a30fc` (64
+  of 64). A1 stays cited at `e4a30fc`, and `clarify-questions.md` is unchanged.
+  Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run by
+  script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -1613,4 +1651,4 @@ to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
 passes of that day, and after the thirteenth to thirty-fourth passes on
-2026-10-22 and the thirty-fifth to forty-sixth on 2026-10-23.
+2026-10-22 and the thirty-fifth to forty-seventh on 2026-10-23.

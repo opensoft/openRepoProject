@@ -72,11 +72,15 @@ and signal slot of its "Invocation" entity, and its evidence model (tasks T027
 to T033), merged into that branch as `cce8dbd`; none of it is on `main`. The
 change pins its code citations at `da33d92`; this spec cites no line of
 `project`, `README.md` or `.github/workflows/tests.yml` as `main` has them, its
-only lines of feature 004's `project` being those of EC-031, EC-033 and the
-Dependencies, at `96a08d4`, and those that EC-031 and the Dependencies cite for
-the re-check below, at `2cf34d3`; the plan and, after feature 004's merge, the
-implementation re-pin every citation against the `main` of its day (proposal,
-"Dependencies and Sequencing").
+lines of feature 004's `project` being those of EC-031, EC-033 and the
+Dependencies, at `96a08d4`, those that EC-031 and the Dependencies cite for the
+re-check below, at `2cf34d3`, those of the parity cases at `d6bac50` (C-72,
+FR-026, the Dependencies), those of C-72, EC-033, FR-016, FR-026 and the
+Dependencies at `41759a4`, FR-007's at `3bc1d68`, and those of the dated
+records, each at the commit it names, `d8724e2` being named as a head with no
+line of it cited; the plan and, after feature 004's merge, the implementation
+re-pin every citation against the `main` of its day (proposal, "Dependencies
+and Sequencing").
 
 **Re-checked on 2026-10-21**: Every pin above stays. Feature 004's branch head
 was then `2cf34d3`, which changes the documents after `96a08d4` by doc rounds 7
@@ -1051,71 +1055,61 @@ that lane agreed on 2026-10-21 to carry it in.
   (A) now, as A1 is ratified, as for O9 (A), and O15 (A) and O16 (a) now, ahead
   of A1's text, declared at FR-035, C-40, C-68 and FR-008; otherwise it records
   his words and follows A1 as ratified until A1's re-alignment lands, O13 (A)
-  included. Four more items, O17 to O20, which #19's round (q) at `818311a`
-  raised from Brett Heap's "yes, recommended for Q1-Q9" for change 1 (lane
-  openRepoProject-2's R-380) and which lane openRepoProject-4 put to him on
-  2026-10-23, each with the lane's recommendation, are open for his word, and
-  until he rules this spec builds A1 as ratified, and the four status pins as
-  FR-016 states them. O17, Q5's next steps for the `unstarted-branch` and
-  `reflog-unavailable` gates, 248 and 243 characters in #19, which O1 (A) has
-  the overview show once A1's re-alignment lands, where a gated message is the
-  finding's own text, `; ` and the remedy within D5's 200 characters, so that
-  even with the own text cut to "..." they come to 253 and 248, O15 (A) letting
-  a message pass 200 for the `--root` remedy alone; (A) keep #19's wording
-  whole, cut the own text to "..." and let the message pass 200 for these two
-  remedies too, (B) keep the wording that O1 (A) quoted, #19's at `3dcd2d8`,
-  136 and 131 characters, the difference from `project clean` recorded as
-  lasting, or (C) keep A1's ratified wording, 102 and 97, and take these two
-  out of O1 (A); recommended, (A), and built until he rules, A1 as ratified
-  (FR-035, User Story 4). O18, Q3 (b)'s warning, which #19 appends to `project
-  clean`'s plain stale recommendation and its locked form, making them 305 and
-  318 characters, where the overview's stale message is [L]'s 50-character text
-  or, under O8 (A), the 63-character locked form; (A) take the warning, the
-  stale message equal to clean's text and kept whole past 200 characters in
-  that case, and where a gate's remedy also follows the stale message, that
-  remedy kept whole too, as D5 keeps every remedy, the longest case being
-  beside the redirect remedy, at 459 and 472 characters, the warning not cut,
-  or (B) keep the 50- and 63-character texts, the difference from clean
-  recorded as lasting, A1 then naming the short text explicitly, since #19's
-  round (r) has `project clean`'s ladder requirement state the warned texts
-  itself (its `specs/project-clean/spec.md:188-212` at `4512441`), which A1
-  reaches by reference, these two clauses being added to the question at
-  18:27Z, before his word; recommended, (A), the forms for a row whose path
-  could not be read (O6 (A)) unchanged either way, and built until he rules, A1
-  as ratified (FR-028). O19, `registration-mismatch`, which #19 widens to a
-  worktree whose path is the common directory, the main worktree or another
-  row's path, or an ancestor of one, and to one whose registered path is a
-  symbolic link, cases that the overview's evaluation of that gate from its own
-  evidence does not check, so that it can suggest `--all-safe` for a worktree
-  that the batch then excludes, an exclusion that SC-004 does not allow; (A)
-  check the new cases in the overview, the paths compared among the rows the
-  listing gives and the link tested by FR-007's no-follow `lstat`, with no new
-  Git child, or (B) keep the older gate and add `registration-mismatch` to
-  SC-004's list of exclusions as a known limit; recommended, (A), and built
-  until he rules, A1 as ratified (FR-032, SC-004). O20, the fifth status pin,
-  `-c core.ignoreCase=false`, which #19 adds to every status probe, where
-  FR-016 quotes the four that A1 restates, ratified, and the overview reuses
-  feature 004's pin list by name; (A) take it as feature 004's build of it
-  lands, by FR-016's own rule, A1's re-alignment adding it to its requirement 3
-  and design D13, or (B) keep four pins until A1's re-alignment lands, the
-  overview carrying its own copy of them until then; recommended, (A), and
-  built until he rules, the four pins as FR-016 states them (FR-016). A fifth
-  item, O21, which feature 004's `41759a4` raised and which lane
-  openRepoProject-4 added to its questions for him at 19:34Z on 2026-10-23,
-  with the lane's recommendation, is open for his word in the same way. O21,
-  the sibling of O12, which O12 (A) does not cover: a repository whose
-  merged-set listing fails, its ref listing read, where A1 leaves every
-  worktree row's class null (its `specs/project-overview/spec.md:434-437`)
-  while `project clean` at `41759a4` makes each present row on a branch
-  `inspection-error` (its `project:3685-3692` and :3727-3728 there; not at
-  `d8724e2`), A1 also asking the two classes to be equal; (A) keep A1's null
-  class, the parity tests naming the case as a lasting difference, as O12 (A)
-  does, or (B) amend change 2 so that the overview follows `project clean`
-  there; recommended, (A), which needs no amendment, and built until he rules,
-  A1 as ratified (FR-026, SC-003). Where applied: C-40; C-68; FR-006; FR-007;
-  FR-008; FR-009; FR-016; FR-020; FR-026; FR-028; FR-032; FR-034; FR-035;
-  FR-043; EC-012; EC-020; EC-032; SC-003; SC-004; User Story 8; Key Entities,
-  Repository identity; Dependencies; the discovery-identity checklist's CHK009.
+  included. On his word typed in lane openRepoProject-4's session at
+  2026-10-23T21:10:35Z, "yes, recommended for O17-O21", recorded by lane
+  openRepoProject-4 as a RULED line at 21:11:44Z (issue #10), change 2 takes
+  the five items that #19's round (q) at `818311a` raised from Brett Heap's
+  "yes, recommended for Q1-Q9" for change 1 (lane openRepoProject-2's R-380),
+  O17 to O20, and that feature 004's `41759a4` raised, O21, and that lane
+  openRepoProject-4 put to him on 2026-10-23, O18 as refined at 18:27Z and O21
+  added at 19:34Z, each as that lane recommended it, (A). O17 (A), Q5's next
+  steps for the `unstarted-branch` and `reflog-unavailable` gates, 248 and 243
+  characters in #19, which O1 (A) has the overview show once A1's re-alignment
+  lands, where a gated message is the finding's own text, `; ` and the remedy
+  within D5's 200 characters, so that even with the own text cut to "..." they
+  come to 253 and 248: #19's wording is kept whole, the own text cut to "..."
+  and the message passing 200 characters for these two remedies too, as for O15
+  (A)'s `--root` remedy (FR-035, User Story 4). O18 (A), Q3 (b)'s warning,
+  which #19 appends to `project clean`'s plain stale recommendation and its
+  locked form, making them 305 and 318 characters, where the overview's stale
+  message is [L]'s 50-character text or, under O8 (A), the 63-character locked
+  form: the overview takes the warning, its stale message equal to clean's text
+  and kept whole past 200 characters, and where a gate's remedy also follows
+  the stale message, that remedy is kept whole too, as D5 keeps every remedy,
+  the longest case being beside the redirect remedy, at 459 and 472 characters,
+  the warning not cut, the forms for a row whose path could not be read (O6
+  (A)) unchanged (FR-028, FR-026). O19 (A), `registration-mismatch`, which #19
+  widens to a worktree whose path is the common directory, the main worktree or
+  another row's path, or an ancestor of one, and to one whose registered path
+  is a symbolic link: the overview evaluates the two new cases from its own
+  evidence, the paths of the rows the listing gives and FR-007's no-follow
+  `lstat`, with no new Git child, as clean's classification, and SC-004 takes
+  no new exclusion (FR-032, SC-004). O20 (A), the fifth status pin, `-c
+  core.ignoreCase=false`, which #19 adds to every status probe: the overview
+  takes it with feature 004's `STATUS_PINS`, five at `41759a4`, by FR-016's own
+  rule, A1's re-alignment adding it to its requirement 3 and design D13
+  (FR-016). O21 (A), the sibling of O12, a repository whose merged-set listing
+  fails, its ref listing read, where A1 leaves every worktree row's class null
+  (its `specs/project-overview/spec.md:434-437`) while `project clean` at
+  `41759a4` makes each present row on a branch `inspection-error` (its
+  `project:3685-3692` and :3727-3728 there; not at `d8724e2`), A1 also asking
+  the two classes to be equal: A1's null class stands (FR-026, SC-003). This
+  spec builds O19 (A) and O20 (A) now, ahead of A1's text, declared at FR-016,
+  FR-032 and SC-004, and O21 (A) now, as A1 is ratified; O17 (A) and O18 (A)
+  land with A1's re-alignment, which carries O17 to O20's texts and O21's
+  record (the lane's A1 re-alignment draft, its items 17 to 21), and until then
+  this spec follows A1 as ratified, the two next steps at 102 and 97 characters
+  and one stale text for every stale row. Two points wait for feature 004's
+  next head, which confines O19's two cases to `project clean`'s plan and may
+  change its merged-set block (lane openRepoProject-2's report to lane 4 of
+  2026-10-23): O19's outcome for such a row is stated at that head, and O21's
+  case is checked against it. With these, every held item of this feature, O1
+  to O21 and D5's clause 2, is chosen. Where applied: C-40; C-68; FR-006;
+  FR-007; FR-008; FR-009; FR-016; FR-020; FR-026; FR-028; FR-032; FR-034;
+  FR-035; FR-043; EC-012; EC-020; EC-032; SC-003; SC-004; User Story 4; User
+  Story 8; Key Entities, Repository identity; Dependencies; the
+  discovery-identity checklist's CHK009; the security checklist's CHK002 and
+  CHK019; the idempotency checklist's CHK008.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -2750,26 +2744,25 @@ and [P] are change 1's requirements as the header names them.
   and with `GIT_OPTIONAL_LOCKS=0` and `GIT_TRACE2`, `GIT_TRACE2_EVENT` and
   `GIT_TRACE2_PERF` set to `0`, which overrides `trace2.*` targets in the
   system and global configuration (:119-124 there; Clarifications, C-63), and
-  every status probe MUST also carry [E]'s four status pins, `-c
+  every status probe MUST also carry [E]'s five status pins, `-c
   core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c
-  core.checkStat=default`, the last two as PR #19 adds them to [E] at `ea697ba`
-  for lane openRepoProject-2's LQ-10, pending #19's ratification (its
-  `specs/project-command/spec.md:140-147`), and the four as amendment A1 at
-  `e4a30fc` restates them where change 2 quoted two, in requirement 3 (its
-  `specs/project-overview/spec.md:230-232`, amending POD:202-204) and design
-  D13 (its design.md:690-691, amending design.md:650-652), ratified; lane
-  openRepoProject-2's pending safety fixes to feature 004 may change these pins
-  and its status probe, and the overview follows feature 004's head as they
-  land (Dependencies). Brett Heap's Q1 of 2026-10-23, in #19's round (q), adds
-  a fifth status pin, `-c core.ignoreCase=false` (its
-  `specs/project-command/spec.md:158-168` at `4512441`), so that an untracked
-  file whose name differs only in case from a tracked one stays in the records
-  under `core.ignoreCase=true`; this requirement takes it as feature 004's
-  build lands if he chooses O20 (A), A1's re-alignment adding it to its
-  requirement 3 and design D13, and until he rules this spec states the four
-  (C-72). Feature 004's build of it is at its head `41759a4`, whose
-  `STATUS_PINS` (`project:1156` there) carries `-c core.ignoreCase=false`,
-  while O20 stays open. No Git child of the overview is exempt: it starts no
+  core.checkStat=default -c core.ignoreCase=false`: the third and fourth as PR
+  #19 adds them to [E] at `ea697ba` for lane openRepoProject-2's LQ-10, pending
+  #19's ratification (its `specs/project-command/spec.md:140-147`), the first
+  four as amendment A1 at `e4a30fc` restates them where change 2 quoted two, in
+  requirement 3 (its `specs/project-overview/spec.md:230-232`, amending
+  POD:202-204) and design D13 (its design.md:690-691, amending
+  design.md:650-652), ratified, and the fifth as Brett Heap's Q1 of 2026-10-23,
+  in #19's round (q), adds it (its `specs/project-command/spec.md:158-168` at
+  `4512441`), so that an untracked file whose name differs only in case from a
+  tracked one stays in the records under `core.ignoreCase=true`. Lane
+  openRepoProject-2's safety fixes to feature 004 may change these pins and its
+  status probe, and the overview follows feature 004's head as they land
+  (Dependencies): it takes the fifth pin with feature 004's build of it, at its
+  head `41759a4`, whose `STATUS_PINS` (`project:1156` there) carries `-c
+  core.ignoreCase=false`, on Brett Heap's word of 2026-10-23 for O20 (A), built
+  now, ahead of A1's text, A1's re-alignment adding the pin to its requirement
+  3 and design D13 (C-72). No Git child of the overview is exempt: it starts no
   push child, so feature 004's push-child exception (lead ruling R-28) never
   applies. A lazy fetch in a partial clone MUST therefore fail locally and be
   recorded `probe-failed` on its row, a failed status probe leaving its
@@ -2973,10 +2966,11 @@ and [P] are change 1's requirements as the header names them.
   leaves every class null there too (its :434-437), while `project clean` at
   feature 004's `41759a4` makes each present row on a branch `inspection-error`
   (its `project:3685-3692` and :3727-3728 there), which `d8724e2` did not;
-  whether the parity tests name it as a lasting difference is O21, open for
-  Brett Heap's word, and until he rules this spec keeps A1's null class (C-72).
-  The ladder's `stale-worktree` text, which #19's round (q) extends by Q3 (b),
-  is A1's until Brett Heap rules on O18 (FR-028; C-72).
+  Brett Heap's word of 2026-10-23 keeps A1's null class there too (O21 (A)),
+  the case being checked against feature 004's next head (C-72). The
+  ladder's `stale-worktree` text, which #19's round (q) extends by Q3 (b), is
+  A1's until A1's re-alignment lands, and then takes Q3 (b)'s warning whole, on
+  his word (O18 (A); FR-028; C-72).
 
 **Findings and attention**
 
@@ -3005,10 +2999,12 @@ and [P] are change 1's requirements as the header names them.
   remove or git gc until it can" before that text's final period while any row
   of its plan has `present: null`, an override of the plan applied after the
   row's text is chosen (T6; its `design.md:1347-1362`), so that the ladder's
-  recommendation text stays the
-  plain one. The labels of the texts that carry that warning are #19's own (its
-  `proposal.md:2581-2586`, :2867-2872 at `4512441`): T1, the next step of an
-  `inspection-error` row whose path could not be read; T2 and T3, the plan's
+  recommendation text stayed the plain one; at its round (r), `4512441`, [L]
+  states the plan-dependent forms itself (:188-213 there), and the overview's
+  stale message follows them once A1's re-alignment lands (O6 (A), O8 (A), O18
+  (A); C-72). The labels of the texts that carry that warning are #19's own
+  (its `proposal.md:2581-2586`, :2867-2872 at `4512441`): T1, the next step of
+  an `inspection-error` row whose path could not be read; T2 and T3, the plan's
   `inspection-incomplete` remedy in its plain form and in its redirect variant;
   T4 and T5, the next steps of the other `inspection-error` rows and of the
   `registration-mismatch` rows; T6 and T7, the recommendation of a
@@ -3031,9 +3027,12 @@ and [P] are change 1's requirements as the header names them.
   :1476-1490), and round (r) states the four forms, these two and T6 and T7, as
   a `stale-worktree` row's recommendation in [L] itself (its
   `specs/project-clean/spec.md:188-213` at `4512441`; lane openRepoProject-3's
-  W133 MEDIUM-4, the lead's R-391): whether the overview's stale message takes
-  that warning, kept whole past 200 characters, is O18, open for Brett Heap's
-  word, and until he rules this spec keeps A1's text (C-72).
+  W133 MEDIUM-4, the lead's R-391): on Brett Heap's word of 2026-10-23 the
+  overview's stale message takes that warning whole, past 200 characters, a
+  gate remedy after it staying whole too, up to 459 and 472 characters beside
+  the redirect remedy, and the forms for a row whose path could not be read (O6
+  (A)) unchanged, which lands with A1's re-alignment, this spec keeping A1's
+  text until then (O18 (A); FR-035; C-72).
 - **FR-029**: A finding of severity `error` MUST make the exit status 1;
   `warning` MUST do so only under `--strict`; and `info` MUST never affect
   it (POD:465-466).
@@ -3102,11 +3101,13 @@ and [P] are change 1's requirements as the header names them.
   cover a worktree whose path is the common directory, the main worktree or
   another row's path, or an ancestor of one, and one whose registered path is a
   symbolic link (its `specs/project-clean-review-safety/spec.md:12-16` at
-  `4512441`), cases that the overview's evaluation of that gate does not check:
-  whether it checks them, from the listing's paths and FR-007's no-follow
-  `lstat`, is O19, open for his word, and until he rules the gate is evaluated
-  as above (C-72; SC-004). Its `contains-submodule` also excludes a worktree a
-  tracked directory of which holds an entry named `.git` (its
+  `4512441`), cases that the overview evaluates too, on Brett Heap's word of
+  2026-10-23 (O19 (A); C-72), from its own evidence, the paths of the rows the
+  listing gives and FR-007's no-follow `lstat`, with no new Git child, as
+  `project clean`'s classification, built now, ahead of A1's text, so that
+  SC-004 takes no new exclusion; the outcome for such a row is stated at
+  feature 004's next head (C-72). Its `contains-submodule` also excludes a
+  worktree a tracked directory of which holds an entry named `.git` (its
   `specs/project-clean/spec.md:809-815` at `4512441`), an index gate that the
   batch alone applies, as above.
 - **FR-033**: For every row that gate checks, the branch's reflog,
@@ -3193,23 +3194,26 @@ and [P] are change 1's requirements as the header names them.
   did not run and naming `git log -g HEAD`, `git ls-files -v` and `git status`
   before the removal (its `design.md:1397-1403` at `4512441`), so that beside
   the finding's own text, even cut to `...`, the message passes 200 characters:
-  whether the overview keeps them whole and lets the message pass 200 for these
-  two remedies too is O17, open for his word, and until he rules this spec, and
-  US4 s5 and s6 with it, follow A1 as ratified (C-72). Its cut is C-11's, A1's
-  design D5 (its `design.md:386-389`): the finding's own text is shortened with
-  `...` and the remedy kept whole. Where the remedy names `<repository parent>`
-  and the escaped parent is 177 characters or more, D5's 200 characters and its
-  whole remedy cannot both hold: on Brett Heap's word of 2026-10-23 (O15 (A);
-  C-72) this spec keeps the remedy whole, cuts the finding's own text to `...`
-  and lets that message pass 200 characters, in that case only, built now,
-  ahead of A1's text, since D5's two rules cannot both hold there, D5's
-  sentence in A1 being re-aligned in the re-alignment commit, its item 15. A
-  rule that keeps the warning of A1's item 10 whole and, beside item 8's
-  redirect remedy, leaves the recommendation out and shortens the remedy, which
-  reverses D5's "remedy kept whole" for that case, was chosen for change 2 with
-  those items (O6 (A) and O4 (a), and D5's clause 2 by name in his word of
-  2026-10-23; C-72) and lands with A1's re-alignment (FR-009, FR-028;
-  Dependencies).
+  on Brett Heap's word of 2026-10-23 the overview keeps them whole, cuts the
+  finding's own text to `...` and lets the message pass 200 characters, at 253
+  and 248, for these two remedies too, which lands with A1's re-alignment, and
+  until then this spec, and US4 s5 and s6 with it, follow A1 as ratified, at
+  102 and 97 characters (O17 (A); C-72). Its cut is C-11's, A1's design D5 (its
+  `design.md:386-389`): the finding's own text is shortened with `...` and the
+  remedy kept whole. Where the remedy names `<repository parent>` and the
+  escaped parent is 177 characters or more, D5's 200 characters and its whole
+  remedy cannot both hold: on Brett Heap's word of 2026-10-23 (O15 (A); C-72)
+  this spec keeps the remedy whole, cuts the finding's own text to `...` and
+  lets that message pass 200 characters, in that case only and, once A1's
+  re-alignment lands, beside O17 (A)'s two remedies and after O18 (A)'s warned
+  stale text too, built now, ahead of A1's text, since D5's two rules cannot
+  both hold there, D5's sentence in A1 being re-aligned in the re-alignment
+  commit, its item 15. A rule that keeps the warning of A1's item 10 whole and,
+  beside item 8's redirect remedy, leaves the recommendation out and shortens
+  the remedy, which reverses D5's "remedy kept whole" for that case, was chosen
+  for change 2 with those items (O6 (A) and O4 (a), and D5's clause 2 by name
+  in his word of 2026-10-23; C-72) and lands with A1's re-alignment (FR-009,
+  FR-028; Dependencies).
 
 **JSON document**
 
@@ -3674,10 +3678,10 @@ and [P] are change 1's requirements as the header names them.
   lasting differences that the parity tests name, the rows of a run whose
   working directory's realpath cannot be established (O9 (A)) and those of a
   repository whose ref listing failed (O12 (A); FR-026; Clarifications, C-72),
-  and, while O21 is open, those of a repository whose merged-set listing
-  failed, its ref listing read (O21; FR-026; Clarifications, C-72), and for
-  100% of repositories with a merge target its name equals the one clean
-  reports.
+  and those of a repository whose merged-set listing failed, its ref listing
+  read, A1's null class staying there (O21 (A); FR-026; Clarifications, C-72),
+  and for 100% of repositories with a merge target its name equals the one
+  clean reports.
 - **SC-004**: 0 suggestions carry `--apply` or `--yes` or name a project by
   bare name; 0 rows with a null root, or a root or common directory that is not
   valid UTF-8, carry a clean suggestion; and in every fixture, each worktree
@@ -3694,9 +3698,9 @@ and [P] are change 1's requirements as the header names them.
   `inspection-error` in a preview that is then incomplete (CLN:800-803; for the
   two gates, PR #19's `specs/project-clean/spec.md:650-666` and :668-690 at
   `1ebdd90`, after R-124 at `2b86a5f`, and :719-722 and :741-746 at `9267303`,
-  after its round (d), pending). A worktree in a case that #19's round (q) adds
-  to `registration-mismatch`, which the preview then excludes as that gate,
-  waits on Brett Heap's word on O19 (FR-032; C-72).
+  after its round (d), pending). The overview evaluates the cases that #19's
+  round (q) adds to `registration-mismatch` from its own evidence, on Brett
+  Heap's word (O19 (A); FR-032; C-72), so that the list takes no new exclusion.
 - **SC-005**: Every run ends within 64 s of the moment its deadline is set,
   plus rendering (Clarifications, C-48), except while a filesystem call
   stuck in the kernel is outstanding; no Git child
@@ -3779,12 +3783,16 @@ and [P] are change 1's requirements as the header names them.
   `project` and the tests after it, and the CI change of `e9d6711` (#32) moved
   the two workflow lines the change cites, `.github/workflows/tests.yml:10` and
   `:18`, to lines 9 and 17, so this spec cites no line of `project`,
-  `README.md` or the workflow as `main` has them, its only lines of feature
-  004's `project` being those of EC-031, EC-033 and the Dependencies, at
-  `96a08d4`, and those that EC-031 and the Dependencies cite for the re-check
-  of 2026-10-21, at `2cf34d3` (header); the plan and, after feature 004's
-  merge, the implementation re-pin every citation against the `main` of its day
-  (proposal, "Dependencies and Sequencing").
+  `README.md` or the workflow as `main` has them, its lines of feature 004's
+  `project` being those of EC-031, EC-033 and the Dependencies, at `96a08d4`,
+  those that EC-031 and the Dependencies cite for the re-check of 2026-10-21,
+  at `2cf34d3`, those of the parity cases at `d6bac50` (C-72, FR-026, the
+  Dependencies), those of C-72, EC-033, FR-016, FR-026 and the Dependencies at
+  `41759a4`, FR-007's at `3bc1d68`, and those of the dated records, each at the
+  commit it names, `d8724e2` being named as a head with no line of it cited
+  (header); the plan and, after feature 004's merge, the implementation re-pin
+  every citation against the `main` of its day (proposal, "Dependencies and
+  Sequencing").
 - Feature 004's names (classifications, gate and refusal codes, row error
   codes, `schema_version`, exit statuses, the shared constants) are taken from
   its spec, data model and contract at `d81b3d9`, apart from EC-031 and EC-033,
@@ -3952,9 +3960,8 @@ and [P] are change 1's requirements as the header names them.
   004's `41759a4` a failed merged-set listing, the ref listing read, also makes
   each present row on a branch `inspection-error` (its `project:3685-3692` and
   :3727-3728 there), which `d8724e2` did not, while the overview leaves every
-  class null there too, as A1 does: O21, open for Brett Heap's word, its (A),
-  recommended, naming the case in the parity tests as a lasting difference, as
-  O12 (A) does (C-72; FR-026).
+  class null there too, as A1 does, Brett Heap's word of 2026-10-23 keeping
+  A1's null class (O21 (A); C-72; FR-026).
 - **Change 1's archive order**: change 2 archives after change 1. This
   feature realizes change 2's MODIFIED `project-review-safety` requirement,
   not change 1's `project-clean-review-safety` (proposal, Capabilities;
@@ -4423,20 +4430,20 @@ and [P] are change 1's requirements as the header names them.
     A1's four items of its own, which also wait for #19's ratification of the
     commits they follow: FR-007's LQ-11 parity with FR-013, FR-019, FR-020 and
     US1 s3; FR-032's batch-only gates with SC-004 and EC-007; FR-043's code;
-    and FR-016's four status pins. One point A1 leaves to Brett Heap, as this
-    spec did, with no behaviour written (its proposal, "Open point",
-    `proposal.md:1479-1486` at `e4a30fc`): Q7 A is silent on FR-026's parity
-    with `project clean` run from the same working directory when that
-    directory's realpath cannot be established, and at `2cf34d3` feature 004
-    gives every present row `inspection-error` there (its `project:2960-2962`,
-    :2887-2888 and :2081), wider than the two classes Q7 A converts (C-61; lane
-    openRepoProject-3's fidelity read of `c54d393`, M1), the plan's O9, where
-    his word of 2026-10-23 keeps the ratified rule and the parity tests leave
-    the case out (O9 (A); C-72; FR-026). A second point, found after his
-    O1-O10 word, is A1's own conflict in the gitfile layout: its design D3,
-    case 3, reads `core.worktree` by one Git child (its `design.md:187-208`),
-    whose unset key's exit 1 with nothing printed is the normal case after `git
-    init --separate-git-dir`, yet its failure table (its
+    and the four status pins that FR-016 quotes as A1 restates them. One point
+    A1 leaves to Brett Heap, as this spec did, with no behaviour written (its
+    proposal, "Open point", `proposal.md:1479-1486` at `e4a30fc`): Q7 A is
+    silent on FR-026's parity with `project clean` run from the same working
+    directory when that directory's realpath cannot be established, and at
+    `2cf34d3` feature 004 gives every present row `inspection-error` there (its
+    `project:2960-2962`, :2887-2888 and :2081), wider than the two classes Q7 A
+    converts (C-61; lane openRepoProject-3's fidelity read of `c54d393`, M1),
+    the plan's O9, where his word of 2026-10-23 keeps the ratified rule and the
+    parity tests leave the case out (O9 (A); C-72; FR-026). A second point,
+    found after his O1-O10 word, is A1's own conflict in the gitfile layout:
+    its design D3, case 3, reads `core.worktree` by one Git child (its
+    `design.md:187-208`), whose unset key's exit 1 with nothing printed is the
+    normal case after `git init --separate-git-dir`, yet its failure table (its
     `specs/project-overview/spec.md:369`) excepts only the extension read's
     exit 1 and the effective-work-tree read, so that, read literally, that exit
     is `probe-failed`, against its :130-135, its scenario "A separate git
@@ -5245,18 +5252,20 @@ and [P] are change 1's requirements as the header names them.
   `registration-mismatch`, and makes each present row on a branch
   `inspection-error` where the merged-set listing fails, O21's case (FR-026);
   and its `STATUS_PINS` (`project:1156` there) carries the fifth pin, `-c
-  core.ignoreCase=false`, O20's. The five wait for his word (C-72), and until
-  he rules this spec builds A1 as ratified and the four pins as FR-016 states
-  them. The other `TEXT` and `NEXT_STEPS` rows that `41759a4`
-  adds, removes or changes, its partial-removal notes, its non-drain line, its
-  `inspection-incomplete` and `inspect-cap` remedies and four next steps, are
-  `project clean`'s, texts that the overview never shows, its own remedies
-  being A1's (C-59; FR-035), and it changes nine of the definitions of
-  `project` that the plan's R3 reuses, `STATUS_PINS`, `TEXT` and
-  `status_warned` among them, the last counting a blank line inside the kept
-  head as a warning line, which at `d6bac50` (`project:3012`) it did not (Q8;
-  EC-033), the plan keeping its `project:N` cites at `d6bac50` until tasks are
-  written. #19's round (p) at `e0b1671`, on
+  core.ignoreCase=false`, O20's. His word of 2026-10-23T21:10:35Z chooses all
+  five (C-72): O17 and O18 land with A1's re-alignment, O20 is taken now with
+  this `STATUS_PINS` (FR-016), and O19's outcome and O21's case wait for
+  feature 004's next head, which confines O19's two cases to `project clean`'s
+  plan (lane openRepoProject-2's report to lane 4 of 2026-10-23). The other
+  `TEXT` and `NEXT_STEPS` rows that `41759a4` adds, removes or changes, its
+  partial-removal notes, its non-drain line, its `inspection-incomplete` and
+  `inspect-cap` remedies and four next steps, are `project clean`'s, texts that
+  the overview never shows, its own remedies being A1's (C-59; FR-035), and it
+  changes nine of the definitions of `project` that the plan's R3 reuses,
+  `STATUS_PINS`, `TEXT` and `status_warned` among them, the last counting a
+  blank line inside the kept head as a warning line, which at `d6bac50`
+  (`project:3012`) it did not (Q8; EC-033), the plan keeping its `project:N`
+  cites at `d6bac50` until tasks are written. #19's round (p) at `e0b1671`, on
   Brett Heap's answers of 2026-10-23 to the lead's R-365 (11:49:16Z, "Yes, warn
   (Recommended)" on F-1's (b) beside an unread row and "Yes, add T9
   (Recommended)" on `project status`'s stale recommendation; with the lead's
@@ -5270,9 +5279,9 @@ and [P] are change 1's requirements as the header names them.
   form of F-1's (b) by Q3 (a), rewords the partial-removal note by Q4 and puts
   T9 in [E], as `project status`'s own text, texts that the overview never
   shows (C-59), states in [E] the warned-probe rule that EC-033 reads (Q8), and
-  changes four texts or checks that reach this spec, each open for his word in
-  C-72: Q5's two next steps (O17; FR-035), Q3 (b)'s warning on the stale
-  recommendation and its locked form (O18; FR-028), the wider
+  changes four texts or checks that reach this spec, each chosen since by his
+  word in C-72: Q5's two next steps (O17; FR-035), Q3 (b)'s warning on the
+  stale recommendation and its locked form (O18; FR-028), the wider
   `registration-mismatch` (O19; FR-032, SC-004) and the fifth status pin (O20;
   FR-016). Its round (r) at `4512441`, on the lead's R-391, which takes lane
   openRepoProject-3's W133 MEDIUM-2, MEDIUM-4 and LOW-1, from its read of round
@@ -5291,11 +5300,17 @@ and [P] are change 1's requirements as the header names them.
   its meaning unchanged (its `specs/project-clean/spec.md:585-586`; LOW-1); and
   puts W133's MEDIUM-1 and MEDIUM-3 to Brett Heap as its open questions M1 and
   M3, on the plain stale text of `project status`, `doctor` and `update` and on
-  `project clean`'s next step for a row that Q2 (1) excludes, texts that the
+  `project clean`'s next step for a row that Q2 (1) excludes, which Brett Heap
+  ruled at 2026-10-23T21:10:31Z, M1 (a), `project status`, `doctor` and
+  `update` keeping the baseline's plain stale text with no Q3 (b) warning, and
+  M3 (a), `project clean` printing a new 197-character next step for an
+  enclosing or shared-path `registration-mismatch` row (lane
+  openRepoProject-2's report to lane 4, its R-413; #19's round (t), not on
+  origin, records both, so this spec keeps #19 at `4512441`), texts that the
   overview never shows (C-59). The texts of O17 to O20 stand unchanged at
-  `4512441`, O18's also in [L]'s new paragraph and scenario, and the four stay
-  open (C-72). At `4512441` the cites of the round (n) record above and of
-  round (o)'s stand at new lines where their text stands,
+  `4512441`, O18's also in [L]'s new paragraph and scenario, and his word
+  chooses all four (C-72). At `4512441` the cites of the round (n) record above
+  and of round (o)'s stand at new lines where their text stands,
   `specs/project-clean/spec.md:166`, the third text at :400-404 and :1268-1273
   and the ceiling's AND at :587-592, and design :550-554 (row 4b) and :73,
   while the rest change: F-1's (b) beside the third text (Q3 (a)), T6 and T7's
@@ -5331,14 +5346,14 @@ and [P] are change 1's requirements as the header names them.
     restores its mtime" (:285) brings that delta to 21 scenarios. The
     overview's status probe carries the same pins (FR-016), so that by FR-026
     its dirty evidence stays at parity with `project clean`'s, a parity that,
-    at #19's round (q), holds only once the overview takes the fifth pin (O20;
-    C-72), since under `core.ignoreCase=true` an untracked file whose name
-    differs only in case from a tracked one is in `project clean`'s records and
-    not in a four-pin probe's. Amendment A1 at `e4a30fc` restates the four
-    where change 2 quoted [E]'s two older status pins, as an item of its own, a
-    restatement following `ea697ba` and the pointer that #19 adds at `93f3194`
-    (its `proposal.md:1423-1452`), ratified by Brett Heap in PR #34 (Amendment
-    A1, above): requirement 3's quote (POD:202-204; its
+    at #19's round (q), holds since the overview takes the fifth pin, on his
+    word for O20 (A) (C-72), since under `core.ignoreCase=true` an untracked
+    file whose name differs only in case from a tracked one is in `project
+    clean`'s records and not in a four-pin probe's. Amendment A1 at `e4a30fc`
+    restates the four where change 2 quoted [E]'s two older status pins, as an
+    item of its own, a restatement following `ea697ba` and the pointer that #19
+    adds at `93f3194` (its `proposal.md:1423-1452`), ratified by Brett Heap in
+    PR #34 (Amendment A1, above): requirement 3's quote (POD:202-204; its
     `specs/project-overview/spec.md:230-232`) and design D13's
     (design.md:650-652; its :690-691) each now read `-c
     core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true
@@ -5347,22 +5362,23 @@ and [P] are change 1's requirements as the header names them.
     disarm a `core.fsmonitor` hook; no packet line quotes the two older pins,
     the packet giving the status probe's argv with no `-c` pin (DI:396,
     DI:1181), so A1 declares no departure. FR-016 quotes the four as A1
-    restates them. A1 also records #19's design Risk that, where a repository
-    defines a clean filter, a ctime-only change under `core.trustctime=false`
-    now runs that filter once per probe, which widens the clean-filter residual
-    that LQ-16 leaves open (requirement 9's sentence after POD:717; its
-    :1443-1452), as EC-022 and FR-040 record (lane openRepoProject-3's W25
-    L10). Lane openRepoProject-2's safety fixes to feature 004, a
-    `core.ignoreCase` pin and a check for a nested `.git` inside a tracked
-    directory (2026-10-23), became Brett Heap's Q1 and Q2 in #19's round (q)
-    (its `specs/project-command/spec.md:158-168` and
+    restates them, and the fifth beside them (O20 (A)). A1 also records #19's
+    design Risk that, where a repository defines a clean filter, a ctime-only
+    change under `core.trustctime=false` now runs that filter once per probe,
+    which widens the clean-filter residual that LQ-16 leaves open (requirement
+    9's sentence after POD:717; its :1443-1452), as EC-022 and FR-040 record
+    (lane openRepoProject-3's W25 L10). Lane openRepoProject-2's safety fixes
+    to feature 004, a `core.ignoreCase` pin and a check for a nested `.git`
+    inside a tracked directory (2026-10-23), became Brett Heap's Q1 and Q2 in
+    #19's round (q) (its `specs/project-command/spec.md:158-168` and
     `specs/project-clean/spec.md:809-815` at `4512441`), so that the change to
     the four pins, which FR-016 and A1 list by name, came back to this spec as
-    O20, open for his word (C-72), the nested `.git` being
-    `contains-submodule`'s, a gate the batch alone applies (FR-032), and the
-    same round's widening of `registration-mismatch` (Q2, Q9 (b)) came back as
-    O19 (C-72); feature 005 follows feature 004's head as its build lands, as
-    FR-016 states, the fifth pin waiting on O20 (FR-016, FR-026, FR-032).
+    O20, the nested `.git` being `contains-submodule`'s, a gate the batch alone
+    applies (FR-032), and the same round's widening of `registration-mismatch`
+    (Q2, Q9 (b)) came back as O19, both chosen, (A), by his word of
+    2026-10-23T21:10:35Z (C-72); feature 005 follows feature 004's head as its
+    build lands, as FR-016 states, taking the fifth pin with feature 004's
+    `41759a4` (FR-016, FR-026, FR-032).
   - LQ-11, on PR #19 at `addd346`, pending its ratification: a linked row whose
     effective work tree is not its registered path, such as one whose
     per-worktree `core.worktree` names a decoy under

@@ -23,9 +23,9 @@ Lane: openRepoProject-4
     #19 adds them at `ea697ba` for LQ-10, pending its ratification, and the
     four as amendment A1 at `e4a30fc` restates them, ratified (FR-016; C-63).
     Re-read on 2026-10-23: #19's round (q) at `818311a` adds a fifth status
-    pin, `-c core.ignoreCase=false`; whether FR-016 takes it as feature 004's
-    build lands is O20, open for Brett Heap's word, and until he rules FR-016
-    quotes the four (C-72).
+    pin, `-c core.ignoreCase=false`; FR-016 takes it with feature 004's
+    `STATUS_PINS` at `41759a4` and now quotes the five, on Brett Heap's word of
+    2026-10-23T21:10:35Z (O20 (A); C-72).
 - [x] CHK003 Are the residuals beyond the pins and the scrub recorded (remote-helper protocols, configuration files, trace targets, attribute filters)? [Completeness, Spec EC-006, EC-022]
   - Result: fixed in spec.md, EC-036 (2026-10-21): a relative `HOME` or
     `XDG_CONFIG_HOME` makes a file inside a candidate act as the user's
@@ -115,9 +115,11 @@ Lane: openRepoProject-4
     `specs/project-overview/spec.md:230-232` and design.md:690-691), character
     for character, the last two as PR #19 adds them at `ea697ba`, pending its
     ratification. #19's round (q) at `818311a` adds a fifth, `-c
-    core.ignoreCase=false`, which neither FR-016 nor A1 quotes, O20 being open
-    for Brett Heap's word (C-72), so that FR-016's four still agree with their
-    pinned texts character for character.
+    core.ignoreCase=false`, which FR-016 now quotes after the four, on Brett
+    Heap's word for O20 (A) (C-72), so that FR-016's five agree with [E]'s at
+    `4512441` (`specs/project-command/spec.md:159-161`) character for
+    character, and its first four with A1's, whose re-alignment adds the fifth
+    to requirement 3 and design D13.
 - [x] CHK020 Does no requirement exempt any Git child of the overview from the pins or the scrub? [Consistency, Spec FR-016, Clarifications C-5]
   - Result: pass; re-read on 2026-10-21 for LQ-11's two children, the extension
     read and the effective-work-tree probe, which FR-007 gives FR-016's pins
@@ -167,9 +169,10 @@ revision 7 at `0394be4` and #29's `6b5bf8f`, and after its revisions 8, 9 and
 10 at `177eadf`, `4261ff8` and `c193f7b`, and after its ratification at
 `e4a30fc`, CHK003 also after #29's `2ab3743`, `e1a9f84`, `a6080a7`, `a529310`
 and `5ba7984`, and CHK002 and CHK019 after #19's round (q) at `818311a`, whose
-fifth status pin is O20, open (C-72), their categories unchanged. 25 items: 23
-pass, 1 fixed in the spec, 0 open, 1 plan notes, 0 new questions. An open item
-waits on the question or residual its result names; a plan note is for the
-plan, not the spec; a new question is asked in `clarify-questions.md`.
+fifth status pin is O20, and again after Brett Heap's word for O20 (A) on
+2026-10-23, FR-016 now quoting five pins (C-72), their categories unchanged. 25
+items: 23 pass, 1 fixed in the spec, 0 open, 1 plan notes, 0 new questions. An
+open item waits on the question or residual its result names; a plan note is
+for the plan, not the spec; a new question is asked in `clarify-questions.md`.
 
 Plan notes: PN-15 (CHK005).
