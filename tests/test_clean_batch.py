@@ -320,7 +320,7 @@ class BatchTests(clean_support.CleanCase):
                 TEXT["excluded_group"].format(REASON="locked-worktree", K=1, NEXT_STEP=steps["locked-worktree"]),
                 TEXT["excluded_row"].format(PATH=locked, BRANCH="003-locked"),
                 TEXT["excluded_group"].format(REASON="stale-worktree", K=1,
-                                              NEXT_STEP=project.RECOMMENDATIONS["stale-worktree"]),
+                                              NEXT_STEP=TEXT["recommendation_stale_worktree"]),
                 TEXT["excluded_row"].format(PATH=stale, BRANCH="002-stale"),
                 TEXT["residual_window_line"]]) + "\n")
             document = self.run_json("clean", root, "--all-safe", "--json").document

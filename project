@@ -670,6 +670,19 @@ NOTE_CODES = {
     "row": ("partially-removed",),
 }
 
+# The warning that Brett Heap's Q3 (b) appends to the plain form of every text
+# that names `git worktree prune` ("yes, recommended for Q1-Q9", lead R-380;
+# lane 2's wave 22 triage T3, sr-removal F2, sr-evidence M-1): prune acts on
+# the whole repository with an expiry of now, and deletes the administrative
+# directory, and with it the HEAD reflog and the worktree-only commits, of
+# every unlocked entry whose path is missing, a worktree moved or on a drive
+# not mounted among them. The plain forms are the ones printed where no row of
+# the plan has a path that could not be read; the forms beside such a row keep
+# their own warning, unchanged. A recommendation ends in "." after it.
+PRUNE_DRY_RUN = ("; git worktree prune also deletes the entry, and so the HEAD reflog, of every other worktree whose "
+                 "path is missing, one moved or on an unmounted drive included, so run git worktree prune --dry-run "
+                 "first and remount or repair any it lists that still exists")
+
 # Human text: every new line of design.md D14 and D18, the lines the contract
 # fixes beyond D18 (plan review M8), and three baseline texts kept. Each
 # placeholder is a str.format field named as the docs spell it, so a line with
@@ -720,23 +733,17 @@ TEXT = {
     # `.git` and its registry entry present, and made no `.git` read that
     # failed (partial_removal_text()): Git then refuses `git worktree
     # remove --force` ("validation failed" with the `.git` file gone, "is not
-    # a working tree" with the entry gone) and accepts `git worktree prune`
-    # (lane 3's W52 F-1; Brett Heap's ruling "F-1: prune-then-delete", lead
-    # ruling R-263, amending ratified 0050f3e pcl:922-926).
+    # a working tree" with the entry gone) (lane 3's W52 F-1; Brett Heap's
+    # ruling "F-1: prune-then-delete", lead ruling R-263). It names the
+    # target's own administrative directory, {ADMIN},
+    # `<common_dir>/worktrees/<admin_id>` escaped as paths are, in place of
+    # `git worktree prune`, which acts on the whole repository, in every mode
+    # and beside any row (Brett Heap's Q3 (a), "yes, recommended for Q1-Q9",
+    # lead R-380). Q3 (a) supersedes R-365's form beside an unread row,
+    # `partial_removal_note_prune_unread`, which this replaces; the key keeps
+    # its name.
     "partial_removal_note_prune":
-        "Probable partial removal: inspect, then git worktree prune and delete {PATH} by hand.",
-    # The prune note's form where any row of the plan has a path that could
-    # not be read, its planning lstat having failed (`present` null;
-    # unread_paths(), partial_removal_text()): it advises no `git worktree
-    # prune` and warns against it, since prune acts on the whole repository
-    # and deletes the admin directory of a live worktree whose path Git
-    # cannot stat (EACCES), whichever worktree the note is about. Its
-    # warning also names `git worktree remove` and `git gc`, as the other
-    # no-prune texts do (lane 3's W52 F-1 (b) beside an unread row; lead
-    # R-365, ruled by Brett Heap on 2026-10-23, "Yes, warn (Recommended)").
-    "partial_removal_note_prune_unread":
-        "Probable partial removal: inspect, then delete {PATH} by hand; a row's path could not be read, "
-        "so do not run git worktree prune, git worktree remove or git gc until it can.",
+        "Probable partial removal: inspect, then delete {PATH} and its administrative directory {ADMIN} by hand.",
     # The ceiling's note where the rescan's lstat of the target's `.git`
     # failed other than for its absence or was cut, whatever it found of the
     # registry entry: `git worktree prune` deletes the admin directory of a
@@ -749,21 +756,24 @@ TEXT = {
         "so do not run git worktree prune, git worktree remove or git gc until it can.",
     # D18's note for a locked worktree's row, which `git worktree remove
     # --force` refuses (#19 at 4f1c0e0; lane 3's W52 F-2, R-248). It replaces
-    # ratified text, so it waits on Brett Heap's word, in a commit of its own.
+    # ratified text; Brett Heap ruled it on 2026-10-22, "F-2: yes" (the lead's
+    # R-263; traceability.md:253-255), and it is in its own commit, 64ad453.
     "partial_removal_note_locked":
         "Probable partial removal: inspect, unlock it, then git worktree remove --force {PATH} by hand.",
     # D18: the gate refusal and the remedies of the plan-blocking refusals.
     "target_excluded_gate": "Worktree is excluded: {REASON}; {NEXT_STEP}",
+    # Each plain remedy that names `git worktree prune` carries Q3 (b)'s
+    # warning (PRUNE_DRY_RUN; lead R-380), in either mode.
     "remedy_inspection_incomplete":
         "repair or remove the inspection-error rows first: git worktree repair, git worktree prune, "
-        "or remove the row by hand after review",
+        "or remove the row by hand after review" + PRUNE_DRY_RUN,
     # The variant where any row the refusal counts is excluded as
     # `registration-mismatch`, a linked worktree redirected by core.worktree or
     # core.bare (#19's round (h) at b3228bb, design.md D18; lane 2's R-258).
     "remedy_inspection_incomplete_redirect":
         "repair or remove the inspection-error rows first: git worktree repair, git worktree prune, "
         "unset core.worktree and core.bare in the repository's config or in a worktree's config.worktree, "
-        "or remove the row by hand after review",
+        "or remove the row by hand after review" + PRUNE_DRY_RUN,
     # The two remedies above where any row of the plan, a deadline-stopped row
     # included, has a path that could not be read, its planning lstat having
     # failed (`present` null; unread_paths()), the redirect's where that
@@ -814,11 +824,12 @@ TEXT = {
     # cannot stat (EACCES), on Git 2.43.0 and 2.36.6 (lane 3's W86 NM-1;
     # R-320, ruled by Brett Heap, "R-320: yes", lead R-321). The warning also
     # names `git worktree remove` and `git gc` (R-324, ruled by Brett Heap,
-    # "R-324: yes", lead R-343).
+    # "R-324: yes", lead R-343). It carries Q3 (b)'s warning too
+    # (PRUNE_DRY_RUN; lead R-380).
     "remedy_inspect_cap":
         "{N} rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale entries by hand; if a "
         "worktree's path cannot be read, do not run git worktree prune, git worktree remove or git gc until it "
-        "can",
+        "can" + PRUNE_DRY_RUN,
     "remedy_deadline_exceeded": "the run ran out of time; remove worktrees explicitly or re-run",
     # The contract beyond D18 (plan review M8): progress, kept branches and the
     # message of each refusal code that has no baseline message.
@@ -884,9 +895,14 @@ TEXT = {
     # The report's recommendation for the main worktree's row where the
     # ladder says merged-removable or merged-current, and for a locked stale
     # row: feature 004's own texts, which #19 at 4f1c0e0 does not carry (lane
-    # 3's W52 F-6 and F-10).
+    # 3's W52 F-6 and F-10). The stale row's, `recommendation_stale_worktree`
+    # (RECOMMENDATIONS's text) and the locked form carry Q3 (b)'s warning,
+    # ending in "." (PRUNE_DRY_RUN; lead R-380).
     "recommendation_main_worktree": "The main worktree is never removed by project clean.",
-    "recommendation_stale_locked": "Review, unlock it, then prune stale worktree metadata manually.",
+    "recommendation_stale_worktree":
+        "Review and prune stale worktree metadata manually" + PRUNE_DRY_RUN + ".",
+    "recommendation_stale_locked":
+        "Review, unlock it, then prune stale worktree metadata manually" + PRUNE_DRY_RUN + ".",
     # RECOMMENDATIONS's `stale-worktree` text and the locked form above where
     # any row of the plan has a path that could not be read, its planning
     # lstat having failed (`present` null; unread_paths()): each with the
@@ -956,15 +972,20 @@ NEXT_STEPS = {
         "or tag, or review, then git worktree remove yourself",
     # LQ-11 (the lead's R-125; #19 at 2e819ad, D18), naming both files from
     # which Git applies the redirect (#19 at 4f1c0e0; W52 F-3, R-248).
+    # Each carries Q3 (b)'s warning (PRUNE_DRY_RUN; lead R-380).
     "registration-mismatch":
         "review, then git worktree repair or git worktree prune, unset core.worktree and core.bare in the "
-        "repository's config, or in that worktree's config.worktree, or remove the row by hand",
-    "inspection-error": "review, then git worktree repair or git worktree prune, or remove the row by hand",
+        "repository's config, or in that worktree's config.worktree, or remove the row by hand" + PRUNE_DRY_RUN,
+    "inspection-error":
+        "review, then git worktree repair or git worktree prune, or remove the row by hand" + PRUNE_DRY_RUN,
     "locked-worktree": "unlock it yourself if it should go",
     # The contract's next steps for the three reasons D18 gives none (T052;
     # lead rulings R-57 H1, R-58 (b) and R-62 (b)).
     "main-worktree": "never removed by project clean",
-    "unsupported-path-bytes": "rename the path to valid UTF-8",
+    # A plain mv leaves the registry entry stale, so the step names the two
+    # moves that mend it (lane 3's W120 L-1; lane 2's wave 22 triage T14).
+    "unsupported-path-bytes":
+        "move it to a valid UTF-8 path with git worktree move, or mv it and then git worktree repair NEWPATH",
     "not-requested": "name it with --worktree to plan its removal",
 }
 # endregion contracts
@@ -1089,12 +1110,19 @@ PROTOCOL_PINS = (
 )
 
 # The status pins, on the status and hidden-state probes and the removal: the
-# untracked cache and fsmonitor off (D11), and every stat field compared, so
+# untracked cache and fsmonitor off (D11); every stat field compared, so
 # that an edit which keeps a file's size and restores its mtime still shows by
 # its ctime under a repository's core.trustctime=false or core.checkStat=minimal
-# (lead ruling R-102: LQ-10, approved by Brett Heap; lane 3's F1 H-3).
+# (lead ruling R-102: LQ-10, approved by Brett Heap; lane 3's F1 H-3); and
+# core.ignoreCase off, since under core.ignoreCase=true on a case-sensitive
+# file system Git leaves out of the status records an untracked file whose
+# name differs only in case from a tracked one, and `git worktree remove PATH`
+# can resolve PATH to another worktree whose path differs only in case (Brett
+# Heap's Q1, "yes, recommended for Q1-Q9", lead R-380; lane 2's wave 22 triage
+# T1). On a file system that is truly case-insensitive the pin can only add
+# records, so it fails closed.
 STATUS_PINS = ("-c", "core.untrackedCache=false", "-c", "core.fsmonitor=false",
-               "-c", "core.trustctime=true", "-c", "core.checkStat=default")
+               "-c", "core.trustctime=true", "-c", "core.checkStat=default", "-c", "core.ignoreCase=false")
 
 # Per kind of Git child: whether it is a read-only probe, which sets
 # GIT_OPTIONAL_LOCKS=0; the -c pins it carries before the protocol pins;
@@ -2243,13 +2271,18 @@ class HiddenStateParser(RecordStream):
     bound is the first entry of mode 160000, a gitlink, which sets `gitlink`;
     before it, a lowercase tag (assume-unchanged) or `S` (skip-worktree) sets
     `hidden`. finish() returns {gitlink, hidden, entries}, `entries` counting
-    the entries read before the bound."""
+    the entries read before the bound. `directories` holds, as relative
+    bytes, every directory of the worktree that holds an entry read before
+    the bound, directly or below it, the worktree's own top level aside: the
+    directories whose `.git` nested_git_check() looks for (Brett Heap's Q2
+    (2), lead R-380)."""
 
     def __init__(self):
         super().__init__()
         self.entries = 0
         self.gitlink = False
         self.hidden = False
+        self.directories = set()
 
     def _take(self, field):
         match = INDEX_ENTRY.fullmatch(field)
@@ -2261,6 +2294,12 @@ class HiddenStateParser(RecordStream):
         self.entries += 1
         if match[1].islower() or match[1] == b"S":
             self.hidden = True
+        directory = match[5]
+        while True:  # each directory above the entry, nearest first, until one already held
+            directory = directory.rpartition(b"/")[0]
+            if not directory or directory in self.directories:
+                break
+            self.directories.add(directory)
 
     def _result(self):
         return {"gitlink": self.gitlink, "hidden": self.hidden, "entries": self.entries}
@@ -2389,15 +2428,21 @@ def classify(row, merge_target):
     `merged-current` when current, if it is merged into the target, and
     `remote-gone` otherwise. `review-required` stays a defensive rung that no
     row of the evidence model reaches, and so does the second
-    `inspection-error` rung, for an unknown ignored-file count."""
+    `inspection-error` rung, for an unknown ignored-file count.
+
+    A detached HEAD is the row's `detached` flag, a literal row's key or a
+    WorktreeRow's attribute (False where neither is set), never the text
+    `detached` of its `branch`: a branch may be named `detached`, and a merge
+    target of that name must not protect every detached row (T10)."""
     present = row.get("present")
     if present is None or row.get("errors") or (present and row.get("dirty") is None):
         return "inspection-error", RECOMMENDATIONS["inspection-error"]
-    branch = row.get("branch", "detached")
+    branch = row.get("branch")
+    detached = row.get("detached", getattr(row, "detached", False))
     merged = row.get("merged_into_target")
     if not present:
         name = "stale-worktree"
-    elif branch == merge_target:
+    elif not detached and branch == merge_target:
         name = "protected-default"
     elif row.get("dirty") is None:
         name = "inspection-error"
@@ -2407,7 +2452,7 @@ def classify(row, merge_target):
         return "inspection-error", SECOND_RECOMMENDATIONS["inspection-error"]
     elif row.get("ignored_files"):
         name = "ignored-local-files"
-    elif branch == "detached":
+    elif detached:
         name = "detached"
     elif not row.get("upstream"):
         name = "unpublished"
@@ -2543,7 +2588,13 @@ def resolve_merge_target(refs, declared):
     heads = {ref["refname"]: ref["objectname"] for ref in refs}
 
     def head(name):
-        return heads.get(b"refs/heads/" + name.encode("utf-8", "surrogateescape")) if name else None
+        if not name:
+            return None
+        try:
+            raw = name.encode("utf-8", "surrogateescape")
+        except UnicodeEncodeError:  # a lone surrogate no ref holds (a manifest's "\ud800"): no local branch (T7)
+            return None
+        return heads.get(b"refs/heads/" + raw)
 
     candidates = []
     if isinstance(declared, str):
@@ -2611,12 +2662,16 @@ class WorktreeRow(dict):
     `admin_id` (D7), None until established; `registered`, the two-way
     registration (None when it was not read); `upstream_oid`, the upstream's
     object, None when it is gone or none is configured; `status`, the combined
-    probe's result, None when it did not run or failed; and `unprobed`, the
+    probe's result, None when it did not run or failed; `detached`, whether the
+    registry record has no branch (`record["branch"] is None`), which the text
+    `detached` in the `branch` field cannot tell from a branch named
+    `detached` (T10; lane 2's wave 22 triage); and `unprobed`, the
     marker that a read not finished within its filesystem budget sets (T066;
     analyze M6), never serialized and unset here."""
 
     raw_path = None
     main = False
+    detached = False
     dev = ino = admin_id = None
     registered = None
     upstream_oid = None
@@ -2682,21 +2737,28 @@ def probe_error(outcome, operation, budget):
 
 def os_error(operation, exc):
     """The `os-error` row error {code, message} of the OSError exc that a
-    filesystem call raised; operation is OPERATION: lstat, realpath or read."""
+    filesystem call raised; operation is OPERATION: lstat, realpath or read.
+    exc may also be the ValueError that a path holding a NUL byte raises, which
+    has no `strerror`: its own text then stands (T7; lane 2's wave 22 triage,
+    sr-evidence M-2)."""
     return {"code": "os-error",
-            "message": TEXT["row_error_os_error"].format(OPERATION=operation, STRERROR=exc.strerror or str(exc))}
+            "message": TEXT["row_error_os_error"].format(
+                OPERATION=operation, STRERROR=getattr(exc, "strerror", None) or str(exc))}
 
 
 def _fs(operation, fn, *args):
     """fn(*args) through fs_call() (D6): its value. An OSError raises
-    EvidenceError with an `os-error` and the error number; a call past its
-    budget raises EvidenceError with `probe-timeout` or `deadline-exceeded`.
-    operation is OPERATION: lstat, realpath or read."""
+    EvidenceError with an `os-error` and the error number; so does a ValueError,
+    which a path holding a NUL byte raises (a `.git` file or a `commondir` file
+    that a worktree's own content makes so), with no error number (T7; sr-evidence
+    M-2), so that the row is `inspection-error` and never a traceback; a call
+    past its budget raises EvidenceError with `probe-timeout` or
+    `deadline-exceeded`. operation is OPERATION: lstat, realpath or read."""
     budget, _ = current_invocation().child_budget("probe")
     try:
         value = fs_call(fn, *args)
-    except OSError as exc:
-        raise EvidenceError(os_error(operation, exc), exc.errno) from None
+    except (OSError, ValueError) as exc:
+        raise EvidenceError(os_error(operation, exc), getattr(exc, "errno", None)) from None
     if isinstance(value, DriverOutcome):
         raise EvidenceError(probe_error(value, operation, budget))
     return value
@@ -2706,11 +2768,13 @@ def _direct(operation, fn, *args):
     """fn(*args) called at once, as _fs() calls it but with no fs_call() of
     its own: for reads that already run together inside one fs_call() (its
     one thread and one budget; _identity_now()). An OSError raises
-    EvidenceError with its `os-error` for operation and its error number."""
+    EvidenceError with its `os-error` for operation and its error number, and
+    a ValueError (a NUL byte in a path) with its `os-error` and no number, as
+    _fs() does (T7)."""
     try:
         return fn(*args)
-    except OSError as exc:
-        raise EvidenceError(os_error(operation, exc), exc.errno) from None
+    except (OSError, ValueError) as exc:
+        raise EvidenceError(os_error(operation, exc), getattr(exc, "errno", None)) from None
 
 
 def _lstat(path):
@@ -3045,8 +3109,8 @@ def status_warned(outcome):
 
 def status_probe(path, run):
     """The combined status probe in the worktree at path (D6, D11; FR-056,
-    FR-057): STATUS_PROBE with `-C path`, a `status` child (the two status
-    pins and GIT_OPTIONAL_LOCKS=0), read by StatusParser. Returns (outcome,
+    FR-057): STATUS_PROBE with `-C path`, a `status` child (the status pins,
+    STATUS_PINS, and GIT_OPTIONAL_LOCKS=0), read by StatusParser. Returns (outcome,
     error): outcome.result is the parser's result for a complete outcome, one
     stopped at its bound included; error the row error of a failed one. A
     complete outcome whose standard error status_warned() names has not
@@ -3260,6 +3324,40 @@ def shared_identities(reads):
     return frozenset(at for group in groups.values() if len(group) > 1 for at in group)
 
 
+def _encloses(path, other):
+    """Whether the path other is path or lies inside it, as bytes: equal, or
+    beginning with path and a slash; `/` encloses every absolute path."""
+    return other == path or other.startswith(path.rstrip(b"/") + b"/")
+
+
+def enclosing_rows(built, identity, registry):
+    """The positions in built, the (index, record, raw, read) of the rows one
+    worktree_rows() call builds, of the present linked rows whose path is the
+    common directory, the main worktree or another row's path, or an ancestor
+    of one (Brett Heap's Q2 (1), "yes, recommended for Q1-Q9", lead R-380;
+    lane 2's wave 22 triage T2, sr-evidence H-3): each is
+    registration-mismatch, as a shared path is, since a removal of it deletes
+    what it encloses, the whole repository where the main worktree or the
+    common directory sits in one of its tracked directories. A pure function
+    of values already read, nothing read again: the row's raw path and its
+    realpath (`tree`) against identity's common directory and main worktree,
+    the raw path of every other entry of registry (row 4), an entry this call
+    builds no row for included, and the realpath of every other row built.
+    The main worktree's own row is never one, gate 1 keeping it."""
+    fixed = [value for value in (identity.get("common_dir"), identity.get("root")) if value is not None]
+    trees = [read["tree"] for _, _, _, read in built]
+    found = set()
+    for at, (index, _, raw, read) in enumerate(built):
+        if index == 0 or read["present"] is not True:
+            continue
+        own = [value for value in (raw, read["tree"]) if value is not None]
+        others = fixed + [entry["path"] for number, entry in enumerate(registry) if number != index]
+        others += [tree for spot, tree in enumerate(trees) if spot != at and tree is not None]
+        if any(_encloses(path, other) for path in own for other in others):
+            found.add(at)
+    return frozenset(found)
+
+
 def _registry_entries(registry, records):
     """(index, record) for each registry entry worktree_rows() builds a row
     for: every entry of registry, in its order, when records is None; else
@@ -3278,12 +3376,15 @@ def row_evidence(record, raw, main, read, refs, merged, target):
     returning the WorktreeRow, its document fields in WORKTREE_ROW_KEYS's
     order with `prunable` only on a stale row whose record says so (M11),
     then classify()'s class and partial_removal_note()'s notes. classify()'s
-    recommendation stands but in two cases (lane 3's W52 F-6 and F-10): the
+    recommendation stands but in three cases (lane 3's W52 F-6 and F-10): the
     main worktree's row, where the ladder says merged-removable or
     merged-current, takes TEXT's `recommendation_main_worktree`, since no
-    removal of it can succeed, and a locked stale row takes
+    removal of it can succeed; a locked stale row takes
     `recommendation_stale_locked`, since `git worktree prune` keeps a locked
-    entry. The class is unchanged in both. A plan then gives each stale row
+    entry; and any other stale row `recommendation_stale_worktree`,
+    RECOMMENDATIONS's text with Q3 (b)'s warning, since prune acts on the
+    whole repository (Brett Heap's Q3 (b), lead R-380). The class is
+    unchanged in all three. A plan then gives each stale row
     the form of its text that warns against `git worktree prune` wherever
     any of its rows' paths could not be read, which no one row's evidence
     shows (stale_recommendations(); R-320). record is
@@ -3317,7 +3418,8 @@ def row_evidence(record, raw, main, read, refs, merged, target):
     current = None if active is None or tree is None else (
         active == tree or tree == b"/" or active.startswith(tree + b"/"))
     branch_ref = record["branch"]
-    branch = "detached" if branch_ref is None else _evidence_text(branch_ref.removeprefix(b"refs/heads/"))
+    detached = row.detached = branch_ref is None  # not the text `detached`: a branch may be so named (T10)
+    branch = "detached" if detached else _evidence_text(branch_ref.removeprefix(b"refs/heads/"))
     upstream = remote_present = ahead = behind = merged_into_target = None
     ref = refs.get(branch_ref) if present and branch_ref is not None else None
     if ref is not None:
@@ -3340,13 +3442,15 @@ def row_evidence(record, raw, main, read, refs, merged, target):
         "ignored_files_truncated": None if status is None else status["ignored_files_truncated"],
         "ignored_samples": None if status is None else [
             dict(zip(("path", "path_valid_utf8"), json_path(sample))) for sample in status["ignored_samples"]],
-        "path_valid_utf8": valid, "errors": errors,
+        "path_valid_utf8": valid, "errors": errors, "detached": detached,
     }
     values["classification"], values["recommendation"] = classify(values, target)
     if main and values["classification"] in ("merged-removable", "merged-current"):
         values["recommendation"] = TEXT["recommendation_main_worktree"]  # W52 F-6: never removed
     elif values["classification"] == "stale-worktree" and values["locked"]:
         values["recommendation"] = TEXT["recommendation_stale_locked"]  # W52 F-10: prune keeps a locked entry
+    elif values["classification"] == "stale-worktree":
+        values["recommendation"] = TEXT["recommendation_stale_worktree"]  # Q3 (b): prune's dry run first
     values["notes"] = partial_removal_note(values, status, main)
     if present is False and record["prunable"]:
         values["prunable"] = True
@@ -3480,7 +3584,10 @@ def worktree_rows(repo, run, records=None):
     and L3, R-59 D5). Among the present rows one call builds, rows with one
     realpath, or one admin id, are registration-mismatch too, two spellings
     of one worktree passing the two-way check with one admin id
-    (shared_identities(); lead ruling R-67 (c)). They are compared once every
+    (shared_identities(); lead ruling R-67 (c)), and so is a linked row
+    whose path is the common directory, the main worktree or another row's
+    path, or an ancestor of one (enclosing_rows(); Brett Heap's Q2 (1), lead
+    R-380). They are compared once every
     row of the call is read and before any status probe, so that none of
     them gets one; an entry the call does not build is never read for it,
     so a row past the cap stays uninspected, while match_target() builds P's
@@ -3504,10 +3611,14 @@ def worktree_rows(repo, run, records=None):
     branch named HEAD (HEAD_BRANCH_REF) taking none: its `upstream`,
     `remote_present`, `ahead` and `behind` stay null and its row carries a
     `probe-failed` error for `git for-each-ref`, so it is inspection-error
-    (lead ruling R-61 (b)); `merged_into_target` from row 7; then classify()
-    and partial_removal_note(). Each failed outcome or call becomes an entry
-    of the row's `errors`. A value not established is null, and a stale or
-    unreadable row carries no branch evidence, as the baseline gave none.
+    (lead ruling R-61 (b)); `merged_into_target` from row 7, where row 7
+    failed with row 6 read, each present row on a branch carrying row 7's
+    error as it carries row 6's, so it is inspection-error and never
+    `review-required` (pcl:178-179; W121 MEDIUM-2, lead ruling R-374); then
+    classify() and partial_removal_note(). Each failed outcome or call becomes
+    an entry of the row's `errors`. A value not established is null, and a
+    stale or unreadable row carries no branch evidence, as the baseline gave
+    none.
 
     The reader of row_evidence(): the working directory's realpath once;
     per row _read_row(); shared_identities() over those reads; then per row,
@@ -3524,6 +3635,14 @@ def worktree_rows(repo, run, records=None):
     # evidence is established, so each present row on a branch carries the
     # failed probe's error and is inspection-error (plan review F3).
     unlisted = [] if repo["refs"] is not None else (list(repo["errors"]) or [unparseable_error("for-each-ref")])
+    # No merged set (row 7 failed, with row 6's listing read and the merge
+    # target named): no row's merge state is established, so each present row
+    # on a branch carries row 7's error and is inspection-error, never the
+    # defensive `review-required` that no value of the evidence model reaches
+    # (pcl:178-179; lane 3's W121 MEDIUM-2, lead ruling R-374), as `status`
+    # already reads the same failure.
+    unmerged = ([] if repo["refs"] is None or repo["merge_target"] is None or repo["merged"] is not None
+                else (list(repo["errors"]) or [unparseable_error("for-each-ref")]))
     redirectable = repo.get("worktree_config") is not False  # row 4c true, or not read (LQ-11)
     shared = shared_paths(registry)
     entries = _registry_entries(registry, records)
@@ -3543,9 +3662,10 @@ def worktree_rows(repo, run, records=None):
         built.append((index, record, raw,
                       _read_row(raw, index == 0, common_dir, active, active_error, record["path"] in shared)))
     twins = shared_identities([read for _, _, _, read in built])
+    enclosing = enclosing_rows(built, identity, registry)  # Q2 (1), lead R-380
     rows = []
     for at, (index, record, raw, read) in enumerate(built):
-        if at in twins:  # registration-mismatch, as a shared path is (R-67 (c))
+        if at in twins or at in enclosing:  # registration-mismatch, as a shared path is (R-67 (c))
             read["registered"], read["admin_id"] = registration_verdict(
                 index == 0, common_dir, None, shared=True)
         elif read["registered"] and not read["errors"] and (
@@ -3557,8 +3677,8 @@ def worktree_rows(repo, run, records=None):
             # With no work time left no probe starts, and the row keeps that probe's
             # own deadline-exceeded, as the work deadline's rows always have (T099).
             _read_status(read, raw, run)
-        if unlisted and read["present"] is True and record["branch"] is not None:
-            read["errors"].extend(dict(error) for error in unlisted)
+        if (unlisted or unmerged) and read["present"] is True and record["branch"] is not None:
+            read["errors"].extend(dict(error) for error in (unlisted or unmerged))
         rows.append(row_evidence(record, raw, index == 0, read, refs, repo["merged"], target))
     return rows
 # endregion evidence
@@ -4415,7 +4535,7 @@ def stale_recommendations(plan):
     planning (unread_paths()), give each `stale-worktree` row of plan.rows
     TEXT's `recommendation_stale_worktree_unread` as its recommendation, or
     `recommendation_stale_locked_unread` for a locked row, in place of
-    RECOMMENDATIONS's text or `recommendation_stale_locked`, the one
+    `recommendation_stale_worktree` or `recommendation_stale_locked`, the one
     row_evidence() chose: each the same advice with a warning against `git
     worktree prune` appended, since prune deletes the admin directory of a
     live worktree whose path Git cannot stat (EACCES), and acts on the whole
@@ -5039,7 +5159,12 @@ def gate_rows(rows, plan, run):
 
 def next_step(reason):
     """D18's next step for an exclusion reason: NEXT_STEPS's, else the class's
-    recommendation (RECOMMENDATIONS); None for a reason with neither."""
+    recommendation (RECOMMENDATIONS), the `stale-worktree` class's being the
+    form a stale row's own recommendation takes, TEXT's
+    `recommendation_stale_worktree`, with Q3 (b)'s warning (lead R-380);
+    None for a reason with neither."""
+    if reason == "stale-worktree":
+        return TEXT["recommendation_stale_worktree"]
     return NEXT_STEPS.get(reason) or RECOMMENDATIONS.get(reason)
 
 
@@ -5338,6 +5463,56 @@ def modules_check(common_dir, admin_id, run):
     return "contains-submodule", None
 
 
+def nested_git_entry(path, directories):
+    """The first of directories, relative paths of the worktree at path, as
+    bytes, in which an lstat of `<directory>/.git` finds an entry of any
+    type, or None where none does; an lstat that fails other than with
+    ENOENT or ENOTDIR raises its OSError. Every lstat runs in the one
+    fs_call() that nested_git_check() makes."""
+    for directory in directories:
+        try:
+            os.lstat(os.path.join(path, directory, b".git"))
+        except OSError as exc:
+            if exc.errno in (errno.ENOENT, errno.ENOTDIR):
+                continue
+            raise
+        return directory
+    return None
+
+
+def nested_git_check(path, directories, run):
+    """Gate 9's third half for one target (Brett Heap's Q2 (2), "yes,
+    recommended for Q1-Q9", lead R-380; lane 2's wave 22 triage T2,
+    sr-classification H-1, sr-evidence H-3), shared with the revalidation
+    through hidden_state_probe(). Git's directory walk skips every entry
+    named `.git` and recurses into a directory the index tracks without
+    asking whether it holds a repository, so a repository nested in a
+    tracked directory, or any `.git` entry there, shows in no status record
+    and passes Git's own check, and the removal deletes it.
+
+    Signature: nested_git_check(path, directories, run) -> (result,
+    row_error). path is the worktree's raw path; directories the directories
+    of its index that hold an entry, from gate 10's listing
+    (HiddenStateParser's `directories`); run the Invocation in force, whose
+    per-child budget bounds the call. One fs_call() (through _fs(),
+    OPERATION `lstat`), counted in the filesystem budget, makes an lstat of
+    `<directory>/.git` for each, in byte order (nested_git_entry()), never a
+    Git child:
+
+    - an entry of any type for any of them: ("contains-submodule", None);
+    - ENOENT or ENOTDIR for every one, or no directory: (None, None);
+    - any other error: (None, its `os-error`), the row inspection-error;
+    - the call cut at its budget: (None, a `probe-timeout` row error), or
+      `deadline-exceeded` where the work deadline was the limit."""
+    if not directories:
+        return None, None
+    try:
+        found = _fs("lstat", nested_git_entry, path, sorted(directories))
+    except EvidenceError as exc:
+        return None, exc.error
+    return ("contains-submodule" if found is not None else None), None
+
+
 def hidden_state_probe(path, run):
     """Gates 9's index half and gate 10 for one target (T067; D2, D11, D12,
     FR-023; lead ruling R-56 Q-6), shared with US4's revalidation (T084).
@@ -5346,11 +5521,14 @@ def hidden_state_probe(path, run):
     the target's worktree, the row's raw path bytes; run is the Invocation
     that bounds and counts the child. One Git child of kind `hidden`,
     git_argv("hidden", ["-C", path, "ls-files", "-v", "--stage", "-z"]): the
-    two status pins, then the protocol pins, run through run_bounded() with
+    status pins (STATUS_PINS), then the protocol pins, run through run_bounded() with
     HiddenStateParser, so that the index read is the worktree's own:
 
     - a gitlink (mode 160000), where the parser stops at its bound:
       ("contains-submodule", None);
+    - else nested_git_check() over the directories the listing names (Q2
+      (2), lead R-380): a `.git` entry in one of them, ("contains-submodule",
+      None), and its read failing or cut, (None, its row error);
     - else an entry flagged assume-unchanged (a lowercase tag) or
       skip-worktree (`S`): ("hidden-local-state", None);
     - else (None, None), the gates pass;
@@ -5358,12 +5536,18 @@ def hidden_state_probe(path, run):
       error), `probe-failed`, `probe-timeout` or `deadline-exceeded` by T024's
       map as built (OUTCOME_ERRORS, probe_error()), OPERATION `git ls-files`.
 
-    Interrupted passes, as from any probe."""
-    outcome, error = _git(run, path, list(HIDDEN_STATE_PROBE), "ls-files", HiddenStateParser(), kind="hidden")
+    Gate 9 comes before gate 10, so a `.git` entry, as a gitlink, names the
+    row's reason even beside a flagged entry. Interrupted passes, as from
+    any probe."""
+    parser = HiddenStateParser()
+    outcome, error = _git(run, path, list(HIDDEN_STATE_PROBE), "ls-files", parser, kind="hidden")
     if error is not None:
         return None, error
     if outcome.result["gitlink"]:
         return "contains-submodule", None
+    reason, error = nested_git_check(path, parser.directories, run)
+    if reason is not None or error is not None:
+        return reason, error
     if outcome.result["hidden"]:
         return "hidden-local-state", None
     return None, None
@@ -5377,7 +5561,9 @@ def index_gates(row, plan, run):
     passed gates 1 to 8 only. Through the per-target helpers T067 adds,
     modules_check(common_dir, admin_id, run) and hidden_state_probe(path, run),
     each (result, row_error): `contains-submodule` for a `modules` entry in the
-    row's admin directory or a gitlink in its own index; `hidden-local-state`
+    row's admin directory, a gitlink in its own index, or a `.git` entry in a
+    directory that holds an index entry (nested_git_check(); Brett Heap's Q2
+    (2), lead R-380); `hidden-local-state`
     for an index entry flagged assume-unchanged or skip-worktree; and
     `inspection-error`, after putting the check's row error in row["errors"]
     and setting row["classification"] to inspection-error, for a check that
@@ -5845,7 +6031,10 @@ def narrowed_ref_patterns(plan, declared=None):
     names = [plan.merge_target["name"].encode("utf-8", "surrogateescape")] if plan.merge_target else []
     for value in (evidence.get("declared"), declared):
         if isinstance(value, str):
-            names.append(value.removeprefix("origin/").encode("utf-8", "surrogateescape"))
+            try:
+                names.append(value.removeprefix("origin/").encode("utf-8", "surrogateescape"))
+            except UnicodeEncodeError:
+                pass  # a lone surrogate names no ref, as resolve_merge_target()'s head() reads it (T7)
     origin_head = planned.get(ORIGIN_HEAD_REF)
     if origin_head is not None and (origin_head["symref"] or b"").startswith(ORIGIN_REFS):
         names.append(origin_head["symref"][len(ORIGIN_REFS):])
@@ -6113,7 +6302,9 @@ def revalidation_difference(plan, target, run, part, seen):
     6. The combined status probe in the target, which must print no record,
        else `state-changed`.
     7. The hidden-state probe in the target: its own reason
-       (`contains-submodule` or `hidden-local-state`).
+       (`contains-submodule` or `hidden-local-state`), the lstats of
+       nested_git_check() over its listing's directories included (Q2 (2),
+       lead R-380).
     8. Gate 12's check in the target (worktree_only_check(); D21, LQ-13):
        logs/HEAD read again and the reachability probe run again, with the
        non-zero objects that the plan's branch reflog named taken as they
@@ -6138,10 +6329,11 @@ def revalidation_difference(plan, target, run, part, seen):
     every filesystem call of these steps that fails other than with ENOENT
     or ENOTDIR, or runs past its own budget (the lead's R-208; #19 at
     9267303): step 1's identity reads, step 5's lstat, registration reads,
-    twin reads, `modules` check, admin directory listing and read of
-    logs/HEAD. ENOENT or ENOTDIR decides that the path is absent, which
-    keeps the step's reason: an absent target, `.git` or admin directory is
-    `identity-changed`. A `timeout` stays such a difference (T084).
+    twin reads, `modules` check and admin directory listing, step 7's
+    nested `.git` lstats and step 8's read of logs/HEAD. ENOENT or ENOTDIR
+    decides that the path is absent, which keeps the step's reason: an
+    absent target, `.git` or admin directory is `identity-changed`. A
+    `timeout` stays such a difference (T084).
 
     A read the work deadline cut gives `deadline-exceeded` instead, never a
     difference (T099; lead ruling R-80, P-2): its row error's code says so
@@ -6859,20 +7051,18 @@ def branch_not_confirmed(target):
     return present is False or (present is None and target["stage"] in RESCANNED_STAGES)
 
 
-def partial_removal_text(target, plan_unread):
+def partial_removal_text(target):
     """The TEXT key of the partial-removal note of a target noted
     `partially-removed` at its removal ceiling (lane 3's W52 F-1; Brett
     Heap's ruling "F-1: prune-then-delete", lead ruling R-263), a pure
-    function; plan_unread says whether any row of the plan has a path that
-    could not be read at planning (bool(unread_paths(plan)), which
-    print_result() passes). First, `partial_removal_note_unread`, which
-    advises no prune, wherever the rescan made its `.git` lstat
-    (`git_file_read` true) and it gave no value (`git_file_present` None: it
-    failed other than for the file's absence, was cut at its budget, or met a
-    second SIGINT), whatever the rescan found of the registry entry, since
-    `git worktree prune` deletes the admin directory of a live worktree whose
-    `.git` Git cannot stat (#19's round (i) at 1a4785e; lane 3's W73 M-1,
-    lead ruling R-284). The `.git` is as unread where the rescan's lstat of the target's own
+    function. First, `partial_removal_note_unread`, which advises no prune,
+    wherever the rescan made its `.git` lstat (`git_file_read` true) and it
+    gave no value (`git_file_present` None: it failed other than for the
+    file's absence, was cut at its budget, or met a second SIGINT), whatever
+    the rescan found of the registry entry, since `git worktree prune`
+    deletes the admin directory of a live worktree whose `.git` Git cannot
+    stat (#19's round (i) at 1a4785e; lane 3's W73 M-1, lead ruling R-284).
+    The `.git` is as unread where the rescan's lstat of the target's own
     path failed other than for absence (`path_present` null in the
     reconciliation record, as where a directory above the target denies
     search), since the rescan then makes no `.git` read: the same note,
@@ -6882,31 +7072,39 @@ def partial_removal_text(target, plan_unread):
     remove --force` Git accepts, only where the rescan showed both the
     registry entry (`registry_entry_present` true) and the target's `.git`
     (`git_file_present` true) present, and `partial_removal_note_prune`
-    otherwise: the `.git` shown absent, or the entry gone with the `.git` shown
-    absent or not reached, since Git refuses that command once the `.git`
-    file is gone ("validation failed") or the entry is gone ("is not a
-    working tree"), and a value not established never shows both present.
-    That last note, where plan_unread is true, is
-    `partial_removal_note_prune_unread` instead: `git worktree prune` acts on
-    the whole repository and deletes the admin directory of a live worktree
-    whose path Git cannot stat (EACCES), whichever worktree this note is
-    about, so it advises deleting the target's path by hand and warns against
-    prune, as the plan's unread-row texts do (lane 3's W52 F-1 (b) beside an
-    unread row; lead R-365, ruled by Brett Heap, "Yes, warn (Recommended)").
-    `partial_removal_note_unread` and `partial_removal_note` do not change:
-    `git worktree remove --force P` acts on P alone, and the first already
-    advises no prune. A target that is a plain dict carries no `.git` read.
-    print_result()'s alone; a report row's note is partial_removal_note()'s
-    and keeps its own text."""
+    otherwise: the `.git` shown absent, or the entry gone with the `.git`
+    shown absent or not reached, since Git refuses that command once the
+    `.git` file is gone ("validation failed") or the entry is gone ("is not
+    a working tree"), and a value not established never shows both present.
+    That note names the target's own administrative directory, never `git
+    worktree prune`, which acts on the whole repository, so it is the same
+    in every mode and beside any row of the plan (Brett Heap's Q3 (a), "yes,
+    recommended for Q1-Q9", lead R-380, superseding R-365's form beside a
+    row whose path could not be read, which needed the plan). A target that
+    is a plain dict carries no `.git` read. print_result()'s alone; a report
+    row's note is partial_removal_note()'s and keeps its own text."""
     git_file = getattr(target, "git_file_present", None)
     record = target["reconciliation"] or {}
     unread = getattr(target, "git_file_read", False) or ("path_present" in record and record["path_present"] is None)
     if unread and git_file is None:
         return "partial_removal_note_unread"
-    entry = record.get("registry_entry_present")
-    if entry is True and git_file is True:
+    if record.get("registry_entry_present") is True and git_file is True:
         return "partial_removal_note"
-    return "partial_removal_note_prune_unread" if plan_unread else "partial_removal_note_prune"
+    return "partial_removal_note_prune"
+
+
+def partial_removal_admin(target):
+    """ADMIN of the ceiling's `partial_removal_note_prune` (Brett Heap's Q3
+    (a), lead R-380): the target's administrative directory,
+    `<common_dir>/worktrees/<admin_id>`, as bytes, from the plan's
+    repository identity and the target's row, both verified again at its
+    revalidation (steps 1 and 5), nothing read; None for a target that
+    carries neither, a plain dict."""
+    identity = getattr(target, "identity", None) or {}
+    admin_id = getattr(getattr(target, "row", None), "admin_id", None)
+    if identity.get("common_dir") is None or admin_id is None:
+        return None
+    return os.path.join(identity["common_dir"], b"worktrees", admin_id)
 
 
 def print_result(plan, targets, run):
@@ -6916,9 +7114,10 @@ def print_result(plan, targets, run):
     write recorded, never raised. First, D18's partial-removal note for each
     target noted `partially-removed`, in canonical order, its PATH in the
     command form (lead ruling R-83, P-2), its text partial_removal_text()'s
-    (W52 F-1, R-263), given whether any row of the plan has a path that could
-    not be read (unread_paths(); R-365). Then, when every target is
-    `removed` with reason null, `Removed N; branches kept: B1, B2.`, naming
+    (W52 F-1, R-263), its ADMIN partial_removal_admin()'s in the same form,
+    or `unknown` where none is carried (Q3 (a), lead R-380). Then, when
+    every target is `removed` with reason null, `Removed N; branches kept:
+    B1, B2.`, naming
     every selected target's branch, since the apply phase deletes no branch;
     otherwise D18's stop block at the first target that is not, its `Not
     attempted:` naming the `not-attempted` targets (`none` when there is
@@ -6931,8 +7130,10 @@ def print_result(plan, targets, run):
     their command form."""
     for target in targets:
         if "partially-removed" in (target["notes"] or ()):
-            key = partial_removal_text(target, bool(unread_paths(plan)))  # R-365: any row of the plan
-            say(run, TEXT[key].format(PATH=human_path(target["path"], command=True)))
+            admin = partial_removal_admin(target)
+            say(run, TEXT[partial_removal_text(target)].format(
+                PATH=human_path(target["path"], command=True),
+                ADMIN="unknown" if admin is None else human_path(admin, command=True)))
     stop = next((target for target in targets
                  if not (target["stage"] == "removed" and target["reason"] is None)), None)
     if stop is None:
@@ -7051,7 +7252,8 @@ def push_or_delete(repo, run):
     else:
         if branch == target:
             raise Refused("The default branch is protected and cannot be deleted.")
-        holders = [row for row in rows if row.get("present") and row.get("branch") == branch]
+        holders = [row for row in rows
+                   if row.get("present") and row.get("branch") == branch and not row.detached]  # T10
         if any(not row.main for row in holders):
             raise Refused("Remove the linked worktree first; branch deletion is a separate action.")
         if holders:  # the main worktree alone holds it, which Git never removes (W52 F-5, RI-4)

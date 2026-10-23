@@ -30,14 +30,14 @@ TEXT = clean_support.TEXT_FIXTURES
 # XDG_CONFIG_HOME. Striking it here is this one line, made `()`.
 EXTENSION = ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM")
 
-# The seven protocol pins and the four status pins, as the contract writes them
+# The seven protocol pins and the five status pins, as the contract writes them
 # (contracts/project-clean.md, "Git children").
 PINS = ["-c", "protocol.allow=never", "-c", "protocol.file.allow=never",
         "-c", "protocol.ssh.allow=never", "-c", "protocol.git.allow=never",
         "-c", "protocol.http.allow=never", "-c", "protocol.https.allow=never",
         "-c", "protocol.ext.allow=never"]
 STATUS_PINS = ["-c", "core.untrackedCache=false", "-c", "core.fsmonitor=false",
-               "-c", "core.trustctime=true", "-c", "core.checkStat=default"]
+               "-c", "core.trustctime=true", "-c", "core.checkStat=default", "-c", "core.ignoreCase=false"]
 
 # The status, doctor and update texts this change keeps or adds outside TEXT.
 CANCELLED = "Cancelled."

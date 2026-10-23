@@ -47,13 +47,14 @@ RECONCILIATION_KEYS = ["registry_entry_present", "path_present", "branch_present
 OBSERVED_AT = re.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z")
 
 # The removal child's pins, as the contract writes them ("Git children"): the
-# five status pins, then the seven protocol pins, before `-C ROOT`.
+# six status pins, then the seven protocol pins, before `-C ROOT`.
 PROTOCOL_PINS = ["-c", "protocol.allow=never", "-c", "protocol.file.allow=never",
                  "-c", "protocol.ssh.allow=never", "-c", "protocol.git.allow=never",
                  "-c", "protocol.http.allow=never", "-c", "protocol.https.allow=never",
                  "-c", "protocol.ext.allow=never"]
 REMOVAL_PINS = ["-c", "status.showUntrackedFiles=normal", "-c", "core.untrackedCache=false",
                 "-c", "core.fsmonitor=false", "-c", "core.trustctime=true", "-c", "core.checkStat=default",
+                "-c", "core.ignoreCase=false",
                 *PROTOCOL_PINS]
 # The rescan's three children after `-C ROOT` (design D6, rows 3, 4 and 6).
 ROW_3 = ["rev-parse", "--path-format=absolute", "--show-toplevel", "--git-common-dir",
@@ -510,6 +511,30 @@ class ApplyTests(clean_support.CleanCase):
             self.assertEqual(project.revalidate(plan, entry, run),
                              ("state-changed", record(True, True, True, heads["004-identity"])))
 
+    def test_clean_revalidate_refuses_a_repository_nested_after_the_plan(self):
+        # Brett Heap's Q2 (2), "yes, recommended for Q1-Q9" (lead R-380): step
+        # 7's hidden-state probe also lstats `<dir>/.git` for every directory
+        # of its listing, so a repository `git init`-ed in a tracked directory
+        # after the plan, which no status record shows, refuses its target as
+        # contains-submodule, as a gitlink there would; the other target passes.
+        root = self.repo()
+        self.bare_remote()
+
+        def setup(tree):  # the second worktree holds tools/ already, from the first's merge
+            (tree / "tools").mkdir(exist_ok=True)
+            (tree / "tools" / "run.sh").write_text("v1\n")
+
+        trees = {name: self.merged_worktree(name, setup=setup) for name in ("001-a", "002-b")}
+        with self.in_process() as run:
+            plan = self.plan_of(root, run, trees.values())
+            entries = {Path(os.fsdecode(row.raw_path)).name: project.make_target(plan, row) for row in plan.selected}
+            self.git(trees["001-a"] / "tools", "init", "-q")
+            self.assertEqual(self.git(trees["001-a"], "status", "--porcelain", "--ignored"), "")
+            self.assertEqual(project.revalidate(plan, entries["001-a-tree"], run),
+                             ("contains-submodule", record(True, True, True, self.head(trees["001-a"]))))
+            self.assertIsNone(project.revalidate(plan, entries["002-b-tree"], run))
+        self.assertTrue((trees["001-a"] / "tools" / ".git").is_dir(), "nothing removed")
+
     def test_clean_revalidate_records_a_refused_path_after_the_work_deadline(self):
         # Lead ruling R-101 (d), apply review F3: a difference found just as the
         # work deadline passes still records the planned path's presence, since
@@ -783,7 +808,7 @@ class ApplyTests(clean_support.CleanCase):
             killed = project.DriverOutcome(["git"], "timeout", status=-signal.SIGKILL)
             self.assertEqual(project.decide_stage(held, killed, found),
                              ("unknown", "removal-ceiling", ["partially-removed"]))
-            self.assertEqual(project.partial_removal_text(held, False), "partial_removal_note_unread",
+            self.assertEqual(project.partial_removal_text(held), "partial_removal_note_unread",
                              "the third note: no prune advice where the path could not be read")
         found, _, _ = rescan()
         self.assertEqual((found, entry.git_file_present), (kept, True), "the fixture is restored")

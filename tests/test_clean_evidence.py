@@ -16,6 +16,7 @@ from pathlib import Path
 import shlex
 import shutil
 import subprocess
+import types
 import unittest
 from unittest import mock
 
@@ -24,14 +25,14 @@ import clean_support
 project = clean_support.load_project()
 TEXT = clean_support.TEXT_FIXTURES
 
-# The seven protocol pins and the four status pins, as the contract writes them
+# The seven protocol pins and the five status pins, as the contract writes them
 # (contracts/project-clean.md, "Git children").
 PINS = ["-c", "protocol.allow=never", "-c", "protocol.file.allow=never",
         "-c", "protocol.ssh.allow=never", "-c", "protocol.git.allow=never",
         "-c", "protocol.http.allow=never", "-c", "protocol.https.allow=never",
         "-c", "protocol.ext.allow=never"]
 STATUS_PINS = ["-c", "core.untrackedCache=false", "-c", "core.fsmonitor=false",
-               "-c", "core.trustctime=true", "-c", "core.checkStat=default"]
+               "-c", "core.trustctime=true", "-c", "core.checkStat=default", "-c", "core.ignoreCase=false"]
 
 # The children of design D6's table, after `-C DIR` (contracts/project-clean.md).
 ROW_3 = ["rev-parse", "--path-format=absolute", "--show-toplevel", "--git-common-dir",
@@ -113,6 +114,11 @@ RECOMMENDATIONS = {
     "pushed-unmerged": "Continue through the repository's normal pull-request or merge process.",
 }
 IGNORED_STATE = "Preserve this worktree; Git could not establish its ignored-file state."
+# Brett Heap's Q3 (b), "yes, recommended for Q1-Q9" (lead R-380): the warning the
+# plain form of every text that names `git worktree prune` ends in.
+PRUNE_DRY_RUN = ("; git worktree prune also deletes the entry, and so the HEAD reflog, of every other worktree "
+                 "whose path is missing, one moved or on an unmounted drive included, so run git worktree prune "
+                 "--dry-run first and remount or repair any it lists that still exists")
 MERGE_STATE = "Merge state could not be established from local refs; preserve it for review."
 
 # A clean, pushed, unmerged row of branch `f`: the ladder's last rung.
@@ -289,8 +295,15 @@ class EvidenceTests(clean_support.CleanCase):
             ("dirty", {"dirty": True}, "dirty", None),
             ("ignored files", {"ignored_files": 3}, "ignored-local-files", None),
             ("ignored state unknown", {"ignored_files": None}, "inspection-error", IGNORED_STATE),
-            ("detached", {"branch": "detached", "upstream": None, "remote_present": None,
+            ("detached", {"branch": "detached", "detached": True, "upstream": None, "remote_present": None,
                           "ahead": None, "behind": None, "merged_into_target": None}, "detached", None),
+            # T10 (lane 2's wave 22 triage; sr-classification L-2, sr-evidence L-1): a detached HEAD is
+            # the row's flag, never the text `detached` of its `branch`. A branch may be named so.
+            ("a branch named detached, merged", {"branch": "detached", "detached": False,
+                                                 "merged_into_target": True}, "merged-removable", None),
+            ("a branch named detached, no upstream", {"branch": "detached", "detached": False, "upstream": None,
+                                                      "remote_present": None, "ahead": None, "behind": None},
+             "unpublished", None),
             ("no upstream", {"upstream": None, "remote_present": None, "ahead": None, "behind": None},
              "unpublished", None),
             ("upstream deleted, unmerged", {"remote_present": False, "ahead": None, "behind": None},
@@ -328,6 +341,13 @@ class EvidenceTests(clean_support.CleanCase):
                     reached.add(expected)
         self.assertEqual(sorted(reached), sorted(CLASSES))
         self.assertEqual(project.RECOMMENDATIONS, RECOMMENDATIONS)
+        with self.subTest("a merge target named detached"):
+            headless = {**BASE_ROW, "branch": "detached", "detached": True, "upstream": None,
+                        "remote_present": None, "ahead": None, "behind": None, "merged_into_target": None}
+            named = {**BASE_ROW, "branch": "detached", "detached": False}
+            self.assertEqual(project.classify(headless, "detached")[0], "detached", "a detached HEAD is no target")
+            self.assertEqual(project.classify(named, "detached")[0], "protected-default", "the branch of that name is")
+            self.assertEqual(project.classify(named, "main")[0], "pushed-unmerged")
 
     def test_clean_partial_removal_note_rules(self):
         # D4, FR-009: after the ladder and apart from it, judged on the records read.
@@ -819,10 +839,16 @@ class EvidenceTests(clean_support.CleanCase):
             ("registration disagrees", record(), b"/w/f", False,
              read(registered=False, admin_id=None, status=None), merged,
              {"dirty": None, "errors": [], "classification": "inspection-error"}),
-            ("row 7 not run", record(), b"/w/f", False, read(), None,
-             {"merged_into_target": None, "classification": "review-required"}),
+            # pcl:178-179 (lane 3's W121 MEDIUM-2; lead ruling R-374): a row 7 that failed gives each
+            # present row on a branch its error (worktree_rows(), as for row 6), so no row of the evidence
+            # model is review-required; the test below runs it on real Git.
+            ("row 7 failed, its error on the row", record(), b"/w/f", False, read(errors=[failed]), None,
+             {"merged_into_target": None, "errors": [failed], "classification": "inspection-error"}),
             ("detached", record(None), b"/w/f", False, read(), merged,
              {"branch": "detached", "upstream": None, "merged_into_target": None, "classification": "detached"}),
+            # T10: the flag is the record's lack of a branch; the text `detached` is also a branch's name.
+            ("a branch named detached", record(b"refs/heads/detached"), b"/w/f", False, read(), merged,
+             {"branch": "detached", "upstream": None, "merged_into_target": None, "classification": "unpublished"}),
             ("the main worktree on the target", record(b"refs/heads/main"), b"/r", True, read(tree=b"/r"), merged,
              {"path": "/r", "classification": "protected-default"}),
             ("a path not valid UTF-8", record(), b"/w/\xff", False, read(), merged,
@@ -837,7 +863,14 @@ class EvidenceTests(clean_support.CleanCase):
                     keys = ROW_KEYS[:14] + (["prunable"] if "prunable" in expected else []) + ROW_KEYS[14:]
                     self.assertEqual(list(row), keys)
                     self.assertEqual({key: row[key] for key in expected}, expected)
-                    self.assertEqual(row["recommendation"], project.classify(row, "main")[1])
+                    # classify()'s text but on an unlocked stale row, which takes the
+                    # baseline's text with Q3 (b)'s dry-run warning (lead R-380).
+                    self.assertEqual(row["recommendation"],
+                                     TEXT["recommendation_stale_worktree"]
+                                     if row["classification"] == "stale-worktree"
+                                     else project.classify(row, "main")[1])
+                    self.assertIs(row.detached, entry["branch"] is None, "the flag, not the text of `branch`")
+                    self.assertNotIn("detached", row, "a document never writes the flag")
                     self.assertEqual([getattr(row, name) for name in ("raw_path", "main", "dev", "ino", "registered",
                                                                       "admin_id", "status")],
                                      [raw, main, reads["dev"], reads["ino"], reads["registered"],
@@ -893,12 +926,18 @@ class EvidenceTests(clean_support.CleanCase):
             ("the main worktree on the target", record(b"refs/heads/main"), True, read(),
              ("protected-default", RECOMMENDATIONS["protected-default"])),
             ("a locked stale row", record(locked=True), False, stale, ("stale-worktree", locked_text)),
-            ("an unlocked stale row", record(), False, stale, ("stale-worktree", RECOMMENDATIONS["stale-worktree"])),
+            ("an unlocked stale row", record(), False, stale,
+             ("stale-worktree", TEXT["recommendation_stale_worktree"])),
             ("a locked present row", record(locked=True), False, read(),
              ("merged-removable", RECOMMENDATIONS["merged-removable"])),
         ]
         self.assertEqual((main_text, locked_text), ("The main worktree is never removed by project clean.",
-                                                    "Review, unlock it, then prune stale worktree metadata manually."))
+                                                    "Review, unlock it, then prune stale worktree metadata manually"
+                                                    + PRUNE_DRY_RUN + "."))
+        # Brett Heap's Q3 (b) (lead R-380): the stale row's plain text and its
+        # locked form end in the dry-run warning; classify() keeps the baseline's.
+        self.assertEqual(TEXT["recommendation_stale_worktree"],
+                         RECOMMENDATIONS["stale-worktree"].removesuffix(".") + PRUNE_DRY_RUN + ".")
         with self.no_io():
             for label, entry, main, reads, expected in cases:
                 with self.subTest(label):
@@ -912,8 +951,10 @@ class EvidenceTests(clean_support.CleanCase):
         # in the report and its JSON row; the explicit removal the baseline
         # text invited refuses (main-worktree, exit 2). A locked worktree whose
         # directory was moved away reads stale-worktree with
-        # recommendation_stale_locked, while an unlocked one keeps the
-        # baseline's text; `git worktree prune` keeps the locked entry until
+        # recommendation_stale_locked, while an unlocked one takes the
+        # baseline's text with Q3 (b)'s dry-run warning,
+        # recommendation_stale_worktree (lead R-380); `git worktree prune`
+        # keeps the locked entry until
         # `git worktree unlock`, then prunes it.
         root = self.repo()
         self.bare_remote()
@@ -942,7 +983,7 @@ class EvidenceTests(clean_support.CleanCase):
                           advice(outside, f"STALE-WORKTREE: {locked} [002-locked] "),
                           advice(outside, f"STALE-WORKTREE: {gone} [003-gone] ")],
                          ["  " + main_text, "  " + main_text, "  " + locked_text,
-                          "  " + RECOMMENDATIONS["stale-worktree"]], "\n" + clean_support.transcript(outside))
+                          "  " + TEXT["recommendation_stale_worktree"]], "\n" + clean_support.transcript(outside))
         rows = {row["path"]: row for row in self.run_json("clean", root, "--json").document["worktrees"]}
         self.assertEqual([(rows[str(path)]["classification"], rows[str(path)]["recommendation"])
                           for path in (root, locked)],
@@ -1323,6 +1364,44 @@ class EvidenceTests(clean_support.CleanCase):
                          [str(tree), str(tree)], "read in planning and again in revalidation")
         self.assertTrue((tree / "local.env").exists(), "W and its ignored file survive")
         self.assertIn(tree.name, self.git(root, "worktree", "list", "--porcelain"))
+
+    def test_clean_a_work_tree_probe_that_exits_128_at_revalidation_on_real_git(self):
+        # Row 111, "A work-tree probe at revalidation" (rs:274-293; lane 3's W115 LOW-3, its
+        # spot check (c) in W121): where the plan's row 4c read true, revalidation reads each
+        # target's effective work tree, and a probe that exits 128 is `state-changed`. Here
+        # real Git is the child: a fake git at the second registry listing, revalidation's,
+        # writes core.bare=true into P's config.worktree, so that Git's own
+        # `rev-parse --show-toplevel` in P exits 128 ("this operation must be run in a work
+        # tree"). P is refused, nothing is removed, the run exits 2, and Q, the second target,
+        # is `not-attempted` with `batch-stopped`.
+        root = self.repo()
+        self.bare_remote()
+        first = self.merged_worktree("001-p")
+        second = self.merged_worktree("002-q")
+        self.git(root, "config", "extensions.worktreeConfig", "true")
+        config = self.common_dir() / "worktrees" / first.name / "config.worktree"
+        count = self.base / "listings"
+        quoted = {name: shlex.quote(str(path)) for name, path in
+                  (("count", count), ("config", config), ("git", clean_support.REAL_GIT))}
+        fake = self.fake_script("bare", (
+            'case " $* " in *" worktree list "*)\n'
+            f'  n=$(( $(cat {quoted["count"]} 2>/dev/null || echo 0) + 1 )); echo "$n" > {quoted["count"]}\n'
+            f'  if [ "$n" = 2 ]; then {quoted["git"]} config --file {quoted["config"]} core.bare true; fi;;\nesac'))
+        result, records = self.counted("clean", root, "--all-safe", "--apply", "--yes", "--json", real=fake)
+        self.assert_status(result, 2)
+        self.assertEqual(count.read_text().strip(), "2", "planned, then revalidated")
+        self.assertEqual([(Path(target["path"]).name, target["stage"], target["reason"])
+                          for target in result.document["targets"]],
+                         [(first.name, "refused", "state-changed"), (second.name, "not-attempted", "batch-stopped")])
+        self.assertEqual([command(record)[1] for record in records if command(record)[2:] == WORK_TREE_PROBE],
+                         [str(first), str(second), str(first)],
+                         "planning's two probes, then P's at revalidation, which stopped the batch")
+        probe = subprocess.run([clean_support.REAL_GIT, "-C", str(first), *WORK_TREE_PROBE], env=self.env,
+                               capture_output=True, text=True, timeout=clean_support.TIMEOUT)
+        self.assertEqual(probe.returncode, 128, probe.stderr)
+        listed = self.git(root, "worktree", "list", "--porcelain")
+        self.assertTrue(first.is_dir() and second.is_dir(), "nothing was removed")
+        self.assertTrue(f"worktree {first}\n" in listed and f"worktree {second}\n" in listed)
 
     def test_clean_effective_work_tree_reads_its_output_as_one_path(self):
         # Lead ruling R-287 (lane 3's W70 M-2): the work-tree probe's standard
@@ -2032,6 +2111,199 @@ class EvidenceTests(clean_support.CleanCase):
                 self.assertEqual(self.status_dirs(records), [str(clone)])
                 self.assert_pinned(records)
                 self.assertFalse(ran.exists(), "the upload-pack script never ran")
+
+    # T7 (lane 2's wave 22 triage; sr-evidence M-2 and M-3, regressions against 961c405):
+    # content a repository or a worktree carries made `status` crash with a
+    # traceback and `clean` refuse `internal-error`. FR-050 and pc:13-18 say a root,
+    # leg or worktree row that cannot be inspected is a row-level `inspection-error`,
+    # never exit 2, and FR-018 reads a name no ref can hold as no branch.
+
+    def status_entries(self, root, *, env=None):
+        """`status ROOT --json`, which must exit 0 with no traceback: the root's
+        worktree entries by directory name."""
+        result = self.run_json("status", root, "--json", env=env)
+        self.assert_status(result, 0)
+        self.assertNotIn("Traceback", result.stderr)
+        return {Path(item["path"]).name: item for item in result.document["repository"]["worktrees"]}
+
+    def test_clean_a_nul_byte_in_a_worktree_s_git_file_or_commondir_makes_its_row_inspection_error(self):
+        # M-2: a NUL byte in a linked worktree's `.git` file, or in its admin
+        # `commondir` file, which Git reads as a C string, reached
+        # os.path.realpath(), whose ValueError no reader caught: `status` ended
+        # in a traceback, exit 1, and every `clean` was refused `internal-error`.
+        # _fs() and _direct() now give the read an `os-error`, so that one row
+        # is unread and the others are planned.
+        root = self.repo()
+        self.bare_remote()
+        bad = self.merged_worktree("001-bad")
+        good = self.merged_worktree("002-good")
+        admin = self.common_dir() / "worktrees" / bad.name
+        gitfile, commondir = bad / ".git", admin / "commondir"
+        cases = (
+            ("the .git file", gitfile, b"gitdir: " + os.fsencode(admin) + b"\0junk\n"),
+            ("the commondir file", commondir, b"../..\0junk\n"),
+        )
+        for label, path, content in cases:
+            with self.subTest(label):
+                written = path.read_bytes()
+                self.addCleanup(path.write_bytes, written)
+                path.write_bytes(content)
+                entries = self.status_entries(root)
+                self.assertEqual([entries[bad.name][key] for key in ("dirty", "classification")],
+                                 [None, "inspection-error"])
+                [error] = entries[bad.name]["errors"]
+                self.assertEqual(error["code"], "os-error")
+                self.assertIn("embedded null", error["message"])
+                self.assertNotIn("classification", entries[good.name], "the other row is inspected")
+
+                result, records = self.report(root, "--all-safe")  # incomplete: exit 1
+                self.assertEqual((result.document["completeness"], [r["code"] for r in result.document["refusals"]]),
+                                 ("incomplete", ["inspection-incomplete"]))
+                rows = by_name(result.document)
+                self.assertEqual([rows[bad.name][key] for key in ("present", "dirty", "classification")],
+                                 [True, None, "inspection-error"])
+                self.assertEqual([entry["code"] for entry in rows[bad.name]["errors"]], ["os-error"])
+                self.assertEqual(rows[good.name]["classification"], "merged-removable")
+                self.assertEqual([entry["path"] for entry in result.document["selected"]], [str(good)])
+                self.assertNotIn(str(bad), self.status_dirs(records), "no probe in the unread row")
+
+                applied = self.run_json("clean", root, "--all-safe", "--apply", "--yes", "--json")
+                self.assert_status(applied, 2)
+                self.assertEqual([r["code"] for r in applied.document["refusals"]], ["inspection-incomplete"])
+                self.assertNotIn("internal-error", applied.stdout + applied.stderr)
+                self.assertTrue(bad.is_dir() and good.is_dir(), "nothing was removed")
+                path.write_bytes(written)
+
+    def test_clean_a_tracking_branch_no_ref_can_hold_names_no_local_branch(self):
+        # M-3: a committed project.yaml whose tracking_branch is "\ud800" (valid
+        # YAML, a lone surrogate) reached `name.encode("utf-8", "surrogateescape")`
+        # in resolve_merge_target(), which cannot encode it: `status` ended in a
+        # traceback and `clean` was refused `internal-error`. FR-018: the merge
+        # target is the first candidate that exists as a local branch; such a name
+        # names none, so the target falls to `main`. The apply's revalidation
+        # encodes the manifest's name again (narrowed_ref_patterns()) and does the same.
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-merged")
+        (root / "project.yaml").write_text('kind: project-manifest\ntracking_branch: "' + chr(92) + 'ud800"\n')
+        head = self.commit(root)
+        entries = self.status_entries(root)
+        self.assertNotIn("classification", entries[tree.name])
+        text = self.run_cli("status", root)
+        self.assert_status(text, 0)
+        self.assertNotIn("Traceback", text.stderr)
+
+        result, _ = self.report(root, "--all-safe")
+        self.assertEqual(result.document["merge_target"], {"name": "main", "source": "main", "sha": head})
+        self.assertEqual([entry["path"] for entry in result.document["selected"]], [str(tree)])
+        human = self.run_cli("clean", root, "--all-safe")
+        self.assert_status(human, 0)
+        self.assertNotIn("Traceback", human.stderr)
+
+        applied = self.run_json("clean", root, "--all-safe", "--apply", "--yes", "--json")
+        self.assert_status(applied, 0)
+        self.assertEqual([(target["path"], target["stage"]) for target in applied.document["targets"]],
+                         [(str(tree), "removed")])
+        self.assertFalse(tree.exists())
+
+    def test_clean_a_manifest_name_with_a_lone_surrogate_is_no_candidate_and_no_ref_pattern(self):
+        # M-3's two sites, in process: head() of resolve_merge_target(), and the
+        # encode of the manifest's name in narrowed_ref_patterns() (revalidation).
+        surrogate = chr(0xD800)
+        refs = [{"refname": b"refs/heads/main", "objectname": "a" * 40, "symref": None}]
+        for declared in (surrogate, "origin/" + surrogate):
+            with self.subTest(declared=declared):
+                target = project.resolve_merge_target(refs, declared)
+                self.assertEqual((target["name"], target["source"], target["notes"]), ("main", "main", []))
+        plan = types.SimpleNamespace(evidence={"declared": surrogate, "refs": []}, merge_target={"name": "main"},
+                                     selected=[])
+        self.assertEqual(project.narrowed_ref_patterns(plan, declared=surrogate),
+                         [b"refs/heads/main", b"refs/heads/master", project.ORIGIN_HEAD_REF])
+
+    # T19 (lane 3's W121 MEDIUM-2; lead ruling R-374): pcl:178-179 says
+    # `review-required` is a defensive rung no value of the evidence model
+    # reaches, and a row whose evidence could not be established is
+    # `inspection-error`. A failed row 7 (the merged set) gave a row
+    # `review-required` with no row error, where `status` read the same failure
+    # as `inspection-error`, and the refusal then named inspection-error rows
+    # that the plan did not hold.
+
+    def test_clean_a_failed_row_7_makes_each_present_row_on_a_branch_inspection_error(self):
+        root = self.repo()
+        self.bare_remote()
+        merged = self.merged_worktree("001-merged")
+        pushed = self.unpushed_ahead("002-pushed")  # pushed and unmerged: review-required before this fix
+        headless = self.add("headless", "--detach")
+        fake = self.fake_script("row-7", (
+            'case " $* " in *" --merged="*) echo "fatal: merged listing failed (fake)" >&2; exit 128;; esac'))
+        error = {"code": "probe-failed", "message": git_message(
+            "for-each-ref", "row_error_probe_failed", DETAIL=TEXT["row_error_probe_failed_exit"].format(N=128))}
+        result, records = self.report(root, "--all-safe", real=fake)
+        rows = by_name(result.document)
+        for name in ("repo", merged.name, pushed.name):
+            with self.subTest(row=name):
+                self.assertEqual([rows[name][key] for key in ("merged_into_target", "errors", "classification")],
+                                 [None, [error], "inspection-error"])
+        self.assertEqual([rows[headless.name][key] for key in ("errors", "classification")], [[], "detached"],
+                         "a detached row needs no merged set")
+        self.assertNotIn("review-required", [row["classification"] for row in result.document["worktrees"]])
+        self.assertEqual((result.document["completeness"], [r["code"] for r in result.document["refusals"]],
+                          result.document["selected"]), ("incomplete", ["inspection-incomplete"], []))
+        self.assertEqual(sorted(self.status_dirs(records)), sorted(map(str, (root, merged, pushed, headless))),
+                         "the status probes still ran")
+
+        human, _ = self.counted("clean", root, real=fake)
+        self.assert_status(human, 1)
+        lines = human.stdout.splitlines()
+        self.assertFalse([line for line in lines if line.startswith("REVIEW-REQUIRED")])
+        self.assertEqual(sum(line.startswith("INSPECTION-ERROR: ") for line in lines), 3)
+
+        with self.subTest("status reads the same failure as inspection-error"):
+            document = self.run_json("status", root, "--json", env=self.path_first(fake.parent)).document
+            self.assertEqual((document["repository"]["classification"], document["repository"]["errors"],
+                              document["repository"]["worktrees"]), ("inspection-error", [error], None))
+
+    def unpushed_ahead(self, branch):
+        """A linked worktree of branch, published, with a commit of its own that
+        main does not hold: pushed, in step with its upstream, merged nowhere."""
+        tree = self._tree(branch, None)
+        self.git(self.root, "worktree", "add", "-q", "-b", branch, tree)
+        (tree / f"work-{branch}").write_text("own")
+        self.commit(tree)
+        self.git(tree, "push", "-q", "-u", "origin", branch)
+        return tree
+
+    # T10 (lane 3's cls L-2 and ev L-1; lane 2's wave 22 triage): `row_evidence()`
+    # wrote the text `detached` for a detached HEAD, which a branch of that name
+    # also carries. classify() compared it with the merge target before its
+    # detached rung, and the delete-branch holders check compared it with the
+    # branch. Both fail closed, and both now read the flag of the registry record.
+
+    def test_clean_a_branch_named_detached_is_classified_by_its_upstream(self):
+        root = self.repo()
+        self.bare_remote()
+        named = self.merged_worktree("detached")
+        headless = self.add("headless", "--detach")
+        result, _ = self.report(root, "--all-safe")
+        rows = by_name(result.document)
+        self.assertEqual([rows[named.name][key] for key in ("branch", "upstream", "classification")],
+                         ["detached", "origin/detached", "merged-removable"])
+        self.assertEqual([rows[headless.name][key] for key in ("branch", "upstream", "classification")],
+                         ["detached", None, "detached"], "the JSON `branch` stays as printed")
+        self.assertEqual([entry["path"] for entry in result.document["selected"]], [str(named)])
+
+    def test_clean_a_merge_target_named_detached_protects_no_detached_row(self):
+        root = self.repo()
+        (root / "project.yaml").write_text("kind: project-manifest\ntracking_branch: detached\n")
+        head = self.commit(root)
+        self.git(root, "branch", "detached", head)
+        headless = self.add("headless", "--detach")
+        result = self.run_json("clean", root, "--json")
+        self.assert_status(result, 0)
+        self.assertEqual(result.document["merge_target"], {"name": "detached", "source": "manifest", "sha": head})
+        rows = by_name(result.document)
+        self.assertEqual([rows[headless.name][key] for key in ("branch", "classification")],
+                         ["detached", "detached"], "not protected-default")
 
 
 if __name__ == "__main__":

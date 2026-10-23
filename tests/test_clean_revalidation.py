@@ -649,10 +649,11 @@ class RevalidationTests(clean_support.CleanCase):
         result = self.apply(root, env=env)
         self.assert_git_refused_first(result, trees, late)
         [removal] = [record for record in clean_support.child_log(log) if is_removal(record)]
-        self.assertEqual(strip_pins(removal.argv)[0][:10], ["-c", "status.showUntrackedFiles=normal",
+        self.assertEqual(strip_pins(removal.argv)[0][:12], ["-c", "status.showUntrackedFiles=normal",
                                                              "-c", "core.untrackedCache=false",
                                                              "-c", "core.fsmonitor=false",
-                                                             "-c", "core.trustctime=true", "-c", "core.checkStat=default"])
+                                                             "-c", "core.trustctime=true", "-c", "core.checkStat=default",
+                                                             "-c", "core.ignoreCase=false"])
 
     def test_clean_ignored_file_in_the_residual_window(self):
         root, trees = self.batch("residual")
