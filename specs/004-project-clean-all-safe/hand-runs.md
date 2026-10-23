@@ -23,17 +23,22 @@ e48de37 on 2026-10-21 from about 09:15Z to 09:36Z, matched every run
   - the push fix, Q9 B's trace names, Brett Heap's rulings LQ-10 to LQ-15,
     and the fix lanes.
 
-Note, 2026-10-23 (lead rulings R-360 and R-365): the walk recorded here is at
-`project` e69f6ef. Since then `project` has changed (`git diff --shortstat
-e69f6ef d8724e2 -- project`: 1 file changed, 711 insertions(+), 118
-deletions(-)): R-284's note; T1 to T8, the no-prune texts (R-319, R-321); the
-closed-stdout refusal (R-322); W90's fix (R-329, R-335); rows 4b and 4c
-(R-332, R-336); R-324's texts (R-343); and R-365's two texts, the ceiling's
-prune note beside an unread row and status's stale recommendation beside one
-(ruled by Brett Heap on 2026-10-23). The hand runs are therefore owed again at
-feature 004's landing head. As T132 and R-50 require, the lead walks them
-through tmux, or Brett Heap does; no subagent dispatches them. The record of
-the earlier walk above and below is unchanged.
+Note, 2026-10-23 (lead rulings R-360, R-365, R-373, R-374 and R-380): the walk
+recorded here is at `project` e69f6ef. Since then `project` has changed (`git
+diff --shortstat e69f6ef da5502d -- project`: 1 file changed, 960
+insertions(+), 165 deletions(-)): R-284's note; T1 to T8, the no-prune texts
+(R-319, R-321); the closed-stdout refusal (R-322); W90's fix (R-329, R-335);
+rows 4b and 4c (R-332, R-336); R-324's texts (R-343); R-365's status
+recommendation beside an unread row (ruled by Brett Heap on 2026-10-23), and
+its ceiling note beside one, which Q3 (a) replaced; the A-items (R-373, R-374),
+`unsupported-path-bytes`' next step among them; and Brett Heap's Q1 to Q3
+(ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; R-380): the fifth
+status pin, the nested `.git` and the enclosing row, the ceiling's note that
+names the administrative directory, and the dry-run warning on the plain prune
+texts. The hand runs are therefore owed again at feature 004's landing head. As
+T132 and R-50 require, the lead walks them through tmux, or Brett Heap does; no
+subagent dispatches them. The record of the earlier walk above and below is
+unchanged.
 
 - Terminal: a tmux pane (a pseudo-terminal) in the py-bench container,
   window `openRepoProject-2-pyBench:handruns`. Pane 0 ran the commands;

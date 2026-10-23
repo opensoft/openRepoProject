@@ -220,7 +220,8 @@ p clean "$R" --all-safe --apply --yes --json 2>/dev/null | python3 -m json.tool
 
 Expected: the tab path printed as `$'.../tab\u0009here'` and selected; the
 `\377` path shown with `\xff`, excluded as `unsupported-path-bytes` under the
-group line `  unsupported-path-bytes (1): rename the path to valid UTF-8`
+group line `  unsupported-path-bytes (1): move it to a valid UTF-8 path with git
+worktree move, or mv it and then git worktree repair NEWPATH`
 (lead ruling R-59 D8), with `path_valid_utf8: false` in the JSON, and still
 present after the apply; standard output of the apply parses as exactly one
 JSON document.

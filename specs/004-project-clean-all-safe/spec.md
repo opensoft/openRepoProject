@@ -924,6 +924,20 @@ written".
   that no evidence reaches. Traces: "Clean classifies preservation and
   cleanup actions"; design D6; Brett Heap's ruling of 2026-10-09 on open
   question 1, "yes, local ancestry proof outranks remote-gone, apply it".
+  Note, 2026-10-23: a detached HEAD is the row's `detached` flag, set where the
+  registry record has no branch, and not the text `detached` of its `branch`,
+  which a branch of that name also carries. A branch named `detached` is
+  classified by its upstream like any other, a merge target of that name
+  protects no detached row, and `delete-branch --branch detached` is not held
+  by an unrelated detached worktree (T10; lane 3's cls L-2 and ev L-1; lane 2's
+  wave 22 triage; lead R-373 and R-385, writer's `e702a65`). And a failed row
+  7, the merged set, gave each present row on a branch `review-required` with
+  no row error, where a row whose evidence could not be established MUST be
+  `inspection-error` and `review-required` stays a rung that no evidence
+  reaches: such a row now carries row 7's error, as it carries row 6's, and is
+  `inspection-error`, as `status` already read it (T19; lane 3's W121 MEDIUM-2;
+  lead R-374 and R-385, writer's `e702a65`). The requirement's text stands as
+  written.
 - **FR-008**: Every class other than `merged-removable` MUST be preserved
   with an actionable human handoff, and a merged row whose upstream was
   deleted MUST carry its class's recommendation. A clean branch pushed but
@@ -967,6 +981,13 @@ written".
   the first target whose result is not a plain `removed`, with no
   continuation, rollback or automatic retry. Traces: "Clean can explicitly
   retire verified worktrees"; design D9.
+  Note, 2026-10-23: the removal child carries a fifth pin,
+  `core.ignoreCase=false`, after `core.checkStat=default`, so that `git
+  worktree remove PATH` resolves PATH to the worktree of exactly that spelling
+  and never to another whose path differs only in case (Brett Heap's Q1, ruled
+  on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; lane 2's
+  wave 22 triage T1; writer's `9d5c2fb`; FR-054's note). The list above is the
+  one the delta spelled, and this note adds to it.
 - **FR-012**: Once spawned, a removal child MUST NOT be signalled on SIGINT,
   SIGTERM, SIGHUP or the work deadline, and MUST be waited for, the wait line
   fixed in `design.md` D18 printed at most once. Only a hard ceiling 300 s
@@ -1029,6 +1050,13 @@ written".
   `manifest-invalid`. Every refusal of FR-016 to FR-018 MUST exit 2 before any
   mutation and, under `--json`, print the extended error object. Traces: "Clean
   resolves its target Git-first"; design D8.
+  Note, 2026-10-23: a `tracking_branch` that no ref can hold, such as the lone
+  surrogate of a manifest's `"\ud800"` (valid YAML), names no local branch and
+  is no candidate, so the next candidate is taken, as for any name that is not
+  a local branch: `status` exits 0 and `clean` is not refused `internal-error`,
+  and the revalidation's narrowed ref listing leaves the name out (T7; lane 2's
+  wave 22 triage, sr-evidence M-3; lead R-373 and R-385, writer's `e702a65`).
+  The requirement's text stands as written.
 - **FR-019**: `project clean <root> --all-safe [--json] [--apply [--yes]
   [--expect-plan D]]` MUST plan every eligible linked worktree of one
   resolved repository, and never of a sibling, family member, mounted leg,
@@ -1110,6 +1138,19 @@ written".
   worktree removals in one repository"; "Cleanup preserves all local work not
   proven disposable"; PR #19's "An operation in progress", "A squash merge
   that holds an autostash" and "A commit held only by the worktree".
+  Note, 2026-10-23: gate 9's `contains-submodule` also covers an entry of any
+  type named `.git` in a directory of the worktree that holds an index entry,
+  found by one `lstat` of `<dir>/.git` for each such directory, counted in the
+  filesystem budget and made for the rows that reach gate 9, again at
+  revalidation inside the hidden-state probe (Brett Heap's Q2 (2), ruled on
+  2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; lane 2's wave
+  22 triage T2; sr-classification H-1, sr-evidence H-3; writer's `5eeaedd`).
+  Git's directory walk skips every `.git` and recurses into a tracked directory
+  without asking whether it holds a repository, so a nested repository showed
+  in no status record and its removal deleted it; an `lstat` that fails other
+  than with `ENOENT` or `ENOTDIR` makes the row `inspection-error` and the plan
+  incomplete. The requirement's text above stands as written, and this note
+  adds to its list of what `contains-submodule` covers.
 - **FR-024**: `selected` and `excluded` MUST be in canonical order by raw
   path bytes, which is also the execution order. Once a plan is built, an
   incomplete plan MUST be refused first (a preview or report exits 1, and
@@ -1200,6 +1241,32 @@ written".
   can.` (`partial_removal_note_prune_unread`), its two other forms unchanged;
   and `status`'s stale recommendation ends with the same warning beside an
   unread row (FR-064's note below). The requirement's text stands as written.
+  Note, 2026-10-23: Brett Heap's Q3 (a) (ruled on 2026-10-23T13:30:27Z, "yes,
+  recommended for Q1-Q9"; lead R-380; lane 2's wave 22 triage T3, sr-removal
+  F2; writer's `da5502d`) changes the ceiling note again. `git worktree prune`
+  acts on the whole repository with an expiry of now and deletes the
+  administrative directory, and with it the HEAD reflog, of every other
+  worktree whose path is missing, one moved or on a drive not mounted, a stale
+  sibling that R-307 to R-365 did not cover. The note's prune form is `Probable
+  partial removal: inspect, then delete PATH and its administrative directory
+  ADMIN by hand.` in every mode and beside any row, ADMIN being the target's
+  own administrative directory, `<common_dir>/worktrees/<admin_id>`; it
+  supersedes R-365's form beside an unread row,
+  `partial_removal_note_prune_unread` (the note above), which `project` no
+  longer has, and R-365's record stands as superseded. Q3 (b) (the same ruling;
+  writer's `da5502d`) ends the plain form of each text that names `git worktree
+  prune` (the `registration-mismatch` and `inspection-error` next steps, both
+  `inspection-incomplete` remedies, the `inspect-cap` remedy and the
+  `stale-worktree` recommendation, locked or not) with `; git worktree prune
+  also deletes the entry, and so the HEAD reflog, of every other worktree whose
+  path is missing, one moved or on an unmounted drive included, so run git
+  worktree prune --dry-run first and remount or repair any it lists that still
+  exists`, the two recommendations ending in `.` after it; the unread forms are
+  unchanged. The next step for `unsupported-path-bytes`, the contract's own
+  (D18 gives that reason none), is `move it to a valid UTF-8 path with git
+  worktree move, or mv it and then git worktree repair NEWPATH`, a plain `mv`
+  having left the registry entry stale (T14; lane 3's W120 L-1; lead R-373 and
+  R-385, writer's `e702a65`). The requirement's text stands as written.
 - **FR-029**: Each `project clean` invocation MUST set one monotonic deadline
   60 s after it starts and hold back a 10 s reconciliation reserve, so that
   work stops 50 s after start, both moving later by the time spent blocked at
@@ -1500,6 +1567,13 @@ written".
   failed or timed-out status probe included, MUST be a row-level
   `inspection-error`, never an exit 2. Traces: "Inspect and diagnose"; design
   D16.
+  Note, 2026-10-23: a NUL byte in a linked worktree's `.git` file or its admin
+  `commondir` file raised a `ValueError` that no reader caught, so `status`
+  ended in a traceback and every `clean` was refused `internal-error`; the read
+  is now an `os-error` row error with Python's own text and no error number,
+  the row is `inspection-error`, `status` exits 0 and `clean` is incomplete
+  (T7; lane 2's wave 22 triage, sr-evidence M-2; lead R-373 and R-385, writer's
+  `e702a65`). The requirement's text stands as written.
 - **FR-051**: In status and doctor JSON, which stays unversioned, a root or
   leg that could not be inspected MUST carry `classification:
   "inspection-error"` and an `errors` list of refusal-shaped objects, with
@@ -1553,6 +1627,20 @@ written".
   and `ext`), so that a lazy fetch in a partial clone fails locally and its row
   is `inspection-error`, never a network call. Traces: "Repository inspection
   requires Git 2.36 and shares one evidence model"; design D6 and D11.
+  Note, 2026-10-23: every status probe, the hidden-state probe and the removal
+  also pin `core.ignoreCase=false`, a fifth status pin after
+  `core.checkStat=default` (Brett Heap's Q1, ruled on 2026-10-23T13:30:27Z,
+  "yes, recommended for Q1-Q9"; lead R-380; lane 2's wave 22 triage T1;
+  sr-classification H-2, sr-evidence H-1 and H-2, sr-removal F1; writer's
+  `9d5c2fb`). Under `core.ignoreCase=true` on a case-sensitive file system Git
+  left out of the status records an untracked file whose name differs only in
+  case from a tracked one, so that the worktree read clean and its removal
+  deleted the file, and `git worktree remove PATH` resolved PATH to another
+  worktree whose path differs only in case, one that gate 12 had excluded; on a
+  file system that is truly case-insensitive the pin can only add records, so
+  it fails closed. The acceptance scenario of User Story 9 that reads "the four
+  status pins" reads five. The requirement's text above stands as written, and
+  this note adds to its list.
 - **FR-055**: A worktree probe MUST run in that worktree, against its own
   index, only after its identity was verified immediately before;
   repository-wide probes MUST run in the main worktree, except the identity
@@ -1582,6 +1670,17 @@ written".
   (e)).
   Traces: "Repository inspection requires Git 2.36 and shares one evidence
   model"; design D6 and D7.
+  Note, 2026-10-23: a present linked row whose path, raw or realpath, is, or is
+  an ancestor of, the common directory, the main worktree, another registry
+  entry's raw path or another row's realpath is `registration-mismatch` too,
+  unprobed and `inspection-error`, as a shared path is (`enclosing_rows()`, a
+  pure function of values already read; Brett Heap's Q2 (1), ruled on
+  2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; lane 2's wave
+  22 triage T2; sr-evidence H-3; writer's `5eeaedd`). Where the main worktree
+  sat in a tracked directory of a linked worktree, as `git worktree repair` can
+  leave it, that worktree read clean and its removal deleted the whole
+  repository; now the plan is incomplete and nothing is removed. The
+  requirement's text stands as written.
 - **FR-056**: Once per common directory, the model MUST run the identity
   probe, the registry listing, row 4c's read of `extensions.worktreeConfig`
   from the common directory's own `config` (LQ-11, draft PR #19), one ref
@@ -1684,6 +1783,9 @@ written".
   `update`") and ruled by Brett Heap; with every path readable the text is the
   baseline's, byte for byte, and its omission of unlocking for a locked entry
   stays the known residual above. The requirement's text stands as written.
+  Note, 2026-10-23: Q3 (b)'s dry-run warning (FR-028's note) is not given to
+  `status`'s text, which names pruning but not the command; it is left to the
+  same follow-on change (lead R-380). R-365's T9 note above stands.
 - **FR-065**: The README's "Clean up Git worktrees" section MUST open with
   the five behaviour changes users will notice: plain `project clean`
   exiting 1 on an incomplete report; `clean` refusing below Git 2.36;
