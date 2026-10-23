@@ -473,6 +473,48 @@ class SingleTests(clean_support.CleanCase):
         self.assert_status(deleted, 0)
         self.assertEqual(self.git(root, "branch", "--list", "001-feature"), "")
 
+    # Main's review-safety requirement "Cleanup protects the process worktree"
+    # (openspec/specs/project-clean-review-safety/spec.md:9-17): the current
+    # worktree is named from the working directory, "including a directory
+    # nested within it" (lane 3's W140 LOW-2, lead R-409). The scenario's own
+    # test, test_clean_never_removes_the_worktree_containing_the_current_directory
+    # in tests/test_project.py, runs from the worktree's top level.
+
+    def test_clean_cleanup_inspects_main_from_a_feature_worktree_from_a_directory_nested_in_it(self):
+        # The working directory is sub/deeper inside a merged, clean, published
+        # worktree (empty directories, which Git's status does not show), and
+        # clean targets the main checkout. The report shows the worktree
+        # current and merged-current; --all-safe selects nothing and excludes
+        # it as merged-current; and the explicit removal refuses with the
+        # current worktree's text, exit 2, in human and JSON output. Nothing
+        # is removed.
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-feature")
+        nested = tree / "sub" / "deeper"
+        nested.mkdir(parents=True)
+        before = self.snapshot(root)
+        report = self.run_json("clean", root, "--json", cwd=nested)
+        self.assert_status(report, 0)
+        [row] = [row for row in report.document["worktrees"] if row["path"] == str(tree)]
+        self.assertEqual((row["current"], row["classification"]), (True, "merged-current"))
+        preview = self.run_json("clean", root, "--all-safe", "--json", cwd=nested)
+        self.assert_status(preview, 0)
+        self.assertEqual(preview.document["selected"], [])
+        self.assertIn({"path": str(tree), "path_valid_utf8": True, "branch": "001-feature",
+                       "classification": "merged-current", "reason": "merged-current"}, preview.document["excluded"])
+        words = ("clean", root, "--apply", "--action", "remove", "--worktree", tree, "--yes")
+        refused = self.run_cli(*words, cwd=nested)
+        self.assert_status(refused, 2)
+        self.assertEqual(refused.stderr, "REFUSED: " + TEXT["target_excluded_current"] + "\n")
+        refused = self.run_json(*words, "--json", cwd=nested)
+        self.assert_status(refused, 2)
+        self.assertEqual(refused.document["refusals"],
+                         [{"code": "target-excluded", "message": TEXT["target_excluded_current"], "path": str(tree),
+                           "path_valid_utf8": True, "reason": "merged-current"}])
+        self.assertEqual(self.snapshot(root), before, "nothing removed")
+        self.assertTrue(nested.is_dir())
+
 
     # Lead ruling R-72 (c): a rule match_target() has (R-67 (b), R-69 (2)).
 

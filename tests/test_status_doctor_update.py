@@ -173,6 +173,24 @@ class StatusDoctorUpdateTests(clean_support.CleanCase):
                         "    stream.write(' '.join(sys.argv[1:]) + '\\n')\n")
         return record
 
+    def report_env(self):
+        """The environment of a report run that must spawn no owner tool:
+        self.env (HOME, PROJECTS_DIR and WORKBENCHES_ROOT already fixtures)
+        with XDG_CONFIG_HOME and TMPDIR inside the test's temporary directory
+        too, and a recording tool first on PATH for each owner tool and
+        delegate a report could reach (setup-openspeckit, openRepoShape, park,
+        resume, docker and gh), beside one at the fixture workBenches'
+        setup.sh, as test_update_default_report has them. Returns (env, the
+        tools' records), none of which may exist after the run."""
+        for name in ("xdg", "tmp"):
+            (self.base / name).mkdir(exist_ok=True)
+        bin_dir = self.fake_bin()
+        records = [self.recording_tool(bin_dir / name)
+                   for name in ("setup-openspeckit", "openRepoShape", "park", "resume", "docker", "gh")]
+        records.append(self.recording_tool(self.wb / "setup.sh"))
+        env = dict(self.env, XDG_CONFIG_HOME=str(self.base / "xdg"), TMPDIR=str(self.base / "tmp"))
+        return self.path_first(bin_dir, env), records
+
     def assert_one_document(self, result):
         self.assertIsNotNone(result.document, clean_support.transcript(result))
         return result.document
@@ -815,7 +833,9 @@ class StatusDoctorUpdateTests(clean_support.CleanCase):
         # row's recommendation also warns against prune, git worktree remove
         # and git gc; where none has, it is the baseline text, byte for byte.
         # The unread row's own path denies search through its parent, as
-        # clean's W73 layout does. status and doctor read one state.
+        # clean's W73 layout does. status, doctor and update (its report,
+        # with no --apply; pc:391-395 names all three, lane 3's W139 LOW-2,
+        # lead R-409) read one state.
         root = self.repo()
         stale = self.base / "stale-tree"
         self.git(root, "worktree", "add", "-b", "001-stale", stale)
@@ -829,9 +849,11 @@ class StatusDoctorUpdateTests(clean_support.CleanCase):
         self.assertEqual(STALE_UNREAD, STALE[:-1] + "; a row's path could not be read, so do not run git worktree "
                                                     "prune, git worktree remove or git gc until it can.")
 
+        env, tools = self.report_env()
+
         def rows(name):
-            """status or doctor's worktree entries, by path, with their exit status."""
-            result = self.run_json(name, root, "--json")
+            """status, doctor or update's worktree entries, by path, with their exit status."""
+            result = self.run_json(name, root, "--json", env=env)
             repository = result.document["repository"]
             return result.returncode, {entry["path"]: entry for entry in repository["worktrees"]}
 
@@ -839,7 +861,7 @@ class StatusDoctorUpdateTests(clean_support.CleanCase):
                                     ("a row unread", lambda: parent.chmod(0o000), STALE_UNREAD),
                                     ("the row readable again", lambda: parent.chmod(mode), STALE)):
             change()
-            for name in ("status", "doctor"):
+            for name in ("status", "doctor", "update"):
                 with self.subTest(state, command=name):
                     code, found = rows(name)
                     entry = found[str(stale)]
@@ -855,6 +877,73 @@ class StatusDoctorUpdateTests(clean_support.CleanCase):
                         self.assertEqual((found[str(unread)]["present"], found[str(unread)]["dirty"]), (True, False))
                         self.assertNotIn("recommendation", found[str(unread)])
                     self.assertNotIn("recommendation", found[str(root)])
+        for record in tools:
+            self.assertFalse(record.exists(), f"{record.name}: no owner tool ran")
+
+    def test_status_an_enclosing_worktree_and_a_symbolic_link_path_keep_the_baseline_s_values(self):
+        # Lane 3's W139 MEDIUM-1, lead R-409. Brett Heap's Q2 (1) (a linked
+        # row whose path is, or encloses, the common directory, the main
+        # worktree or another row's path is registration-mismatch) and Q9 (b)
+        # (so is one whose registered path is a symbolic link) are clean's
+        # review safety (rs:13-16 at 4512441). pc's evidence model states
+        # neither, so its parity rule (pc:311-312: the values of the
+        # inspection it replaces, except where a requirement states a change)
+        # keeps status, doctor and update at f3724fc's values: both rows
+        # probed, `dirty` read, no classification, and doctor exiting 0,
+        # where 41759a4 made both inspection-error with `dirty` null and
+        # doctor exit 1. W139's fixture: wt-a moved to elsewhere/wt-a with a
+        # symbolic link left at its registered path, and w1 holding a second
+        # linked worktree at w1/sub/w2, so w1's own status shows sub/. Report
+        # runs only, no --apply, every owner tool a recording stand-in. clean,
+        # on the same fixture, still excludes both rows as
+        # registration-mismatch.
+        root = self.repo()
+        head = self.git(root, "rev-parse", "HEAD").strip()
+        linked = self.base / "wt-a"
+        self.git(root, "worktree", "add", "-q", "-b", "001-a", linked)
+        moved = self.base / "elsewhere" / "wt-a"
+        moved.parent.mkdir()
+        linked.rename(moved)
+        linked.symlink_to(moved, target_is_directory=True)
+        outer = self.base / "w1"
+        self.git(root, "worktree", "add", "-q", "-b", "002-w1", outer)
+        inner = outer / "sub" / "w2"
+        self.git(root, "worktree", "add", "-q", "-b", "003-w2", inner)
+        self.assertTrue(linked.is_symlink())
+        self.assertIn(f"worktree {linked}\n", self.git(root, "worktree", "list", "--porcelain"),
+                      "Git keeps the registered path")
+        env, tools = self.report_env()
+
+        def entry(path, branch, dirty):
+            """A worktree entry as f3724fc reports it: probed, its status read."""
+            return {"path": str(path), "path_valid_utf8": True, "present": True, "head": head, "branch": branch,
+                    "dirty": dirty, "ignored_files": 0, "ignored_samples": [], "current": False,
+                    "upstream": None, "ahead": None, "behind": None}
+
+        expected = {str(root): entry(root, "main", False), str(linked): entry(linked, "001-a", False),
+                    str(outer): entry(outer, "002-w1", True), str(inner): entry(inner, "003-w2", False)}
+        for name in ("status", "doctor", "update"):
+            with self.subTest(command=name):
+                result = self.run_json(name, root, "--json", env=env)
+                self.assert_status(result, 0)
+                repository = result.document["repository"]
+                self.assertEqual({entry["path"]: entry for entry in repository["worktrees"]}, expected)
+                self.assertEqual([repository[key] for key in ("present", "branch", "head", "dirty")],
+                                 [True, "main", head, False])
+                self.assertNotIn("classification", repository)
+                if name == "doctor":
+                    self.assertEqual(checks(result.document, "error"), [])
+        with self.subTest("clean still excludes both rows"):
+            result = self.run_json("clean", root, "--all-safe", "--json", env=env)
+            self.assert_status(result, 1)
+            reasons = {item["path"]: item["reason"] for item in result.document["excluded"]}
+            rows = {row["path"]: row for row in result.document["worktrees"]}
+            for path in (linked, outer):
+                self.assertEqual((reasons[str(path)], rows[str(path)]["classification"], rows[str(path)]["dirty"]),
+                                 ("registration-mismatch", "inspection-error", None), path)
+            self.assertEqual(result.document["selected"], [])
+        for record in tools:
+            self.assertFalse(record.exists(), f"{record.name}: no owner tool ran")
 
     def test_status_a_submodule_checkout_is_reported(self):
         # FR-055, analyze H4, lead ruling R-42: status and doctor report what

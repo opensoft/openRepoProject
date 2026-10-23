@@ -836,6 +836,19 @@ TEXT = {
         "review, then git worktree repair, unset core.worktree and core.bare in the repository's config, or in "
         "that worktree's config.worktree, or remove the row by hand; a row's path could not be read, so do not "
         "run git worktree prune, git worktree remove or git gc until it can",
+    # The next step of a `registration-mismatch` row whose path is, or holds,
+    # the main worktree, the common directory or another row (Q2 (1),
+    # enclosing_rows()), or that shares its path with another row (R-57 L3,
+    # R-67 (c)): WorktreeRow.holds. The class's step, followed for such a row,
+    # "or remove the row by hand", deletes what it holds, so the preview gives
+    # these rows a group of their own (excluded_groups()). Brett Heap's M3
+    # (a), "yes, recommended for M1 and M3" (lead R-413; lane 3's W133
+    # MEDIUM-3; #19's Open Questions at 4512441, 197 characters). It names no
+    # `git worktree prune`, so it takes no PRUNE_DRY_RUN and has no unread
+    # form: it is the same in every mode.
+    "next_step_registration_mismatch_holds":
+        "its path is or holds the main worktree, the common directory or another worktree, so do not delete it "
+        "by hand or with git worktree remove; review its registration with git worktree list --porcelain",
     # The inspect-cap remedy, with a warning against `git worktree prune`
     # always, not only where a row's path could not be read, since the rows
     # past the cap are never read, so no run can tell whether their paths can
@@ -2697,13 +2710,19 @@ class WorktreeRow(dict):
     probe's result, None when it did not run or failed; `detached`, whether the
     registry record has no branch (`record["branch"] is None`), which the text
     `detached` in the `branch` field cannot tell from a branch named
-    `detached` (T10; lane 2's wave 22 triage); and `unprobed`, the
+    `detached` (T10; lane 2's wave 22 triage); `holds`, whether the row's
+    path is, or holds, the main worktree, the common directory or another
+    row (enclosing_rows(), clean's plan alone), or is a path or a realpath
+    that another row shares (shared_paths(), shared_identities()), which
+    gives a `registration-mismatch` row Brett Heap's M3 (a) next step (lead
+    R-413); and `unprobed`, the
     marker that a read not finished within its filesystem budget sets (T066;
     analyze M6), never serialized and unset here."""
 
     raw_path = None
     main = False
     detached = False
+    holds = False
     dev = ino = admin_id = None
     registered = None
     upstream_oid = None
@@ -3375,9 +3394,12 @@ def enclosing_rows(built, identity, registry):
     common directory, the main worktree or another row's path, or an ancestor
     of one (Brett Heap's Q2 (1), "yes, recommended for Q1-Q9", lead R-380;
     lane 2's wave 22 triage T2, sr-evidence H-3): each is
-    registration-mismatch, as a shared path is, since a removal of it deletes
-    what it encloses, the whole repository where the main worktree or the
-    common directory sits in one of its tracked directories. A pure function
+    registration-mismatch in clean's plan, as a shared path is, since a
+    removal of it deletes what it encloses, the whole repository where the
+    main worktree or the common directory sits in one of its tracked
+    directories. Only clean's plan applies it (worktree_rows(for_clean=True);
+    lead R-409): it is clean's review safety (rs:13-15), which the evidence
+    model of status, doctor and update does not state. A pure function
     of values already read, nothing read again: the row's raw path and its
     realpath (`tree`) against identity's common directory and main worktree,
     the raw path of every other entry of registry (row 4), an entry this call
@@ -3497,17 +3519,21 @@ def row_evidence(record, raw, main, read, refs, merged, target):
     return row
 
 
-def _read_row(raw, main, common_dir, active, active_error, shared):
+def _read_row(raw, main, common_dir, active, active_error, shared, for_clean=False):
     """The reads of one worktree row for row_evidence() before its status
     probe, in D6's order: the lstat; for a present row, its realpath, the
     working directory's failure (active_error) if it failed, and the
     registration, a shared path's verdict taken with nothing read (lead
-    rulings R-57 L2 and L3), as is a linked row's whose registered path the
+    rulings R-57 L2 and L3). For clean's plan and its revalidation alone
+    (for_clean; lead R-409), so is a linked row's whose registered path the
     lstat shows to be a symbolic link: it disagrees, so the row is
     registration-mismatch and unprobed, since Git empties the link's target,
     fails to remove the link, and still deletes the administrative
     directory (Brett Heap's Q9 (b), "yes, recommended for Q1-Q9", lead
-    R-380; wave 22's triage T12, sr-removal F7). A failed read becomes an
+    R-380; wave 22's triage T12, sr-removal F7). That is clean's review
+    safety (rs:15-16), which the evidence model of status, doctor and
+    update does not state, so they read such a row's registration through
+    the link as the baseline did (pc:311-312). A failed read becomes an
     entry of `errors`, and what follows it in the same step is not read.
     _read_status() runs the probe once worktree_rows() has compared the rows
     (shared_identities()) and read the row's identity again
@@ -3528,8 +3554,8 @@ def _read_row(raw, main, common_dir, active, active_error, shared):
             errors.append(active_error)
         if shared:
             read["registered"], read["admin_id"] = registration_verdict(main, common_dir, None, shared=True)
-        elif not main and stat.S_ISLNK(found.st_mode):
-            read["registered"], read["admin_id"] = False, None  # Q9 (b): a symbolic link disagrees
+        elif for_clean and not main and stat.S_ISLNK(found.st_mode):
+            read["registered"], read["admin_id"] = False, None  # Q9 (b), clean only (R-409): a symbolic link disagrees
         else:
             read["registered"], read["admin_id"] = verify_registration(raw, common_dir, main)
     except EvidenceError as exc:
@@ -3610,11 +3636,15 @@ def _read_status(read, raw, run):
     return read
 
 
-def worktree_rows(repo, run, records=None):
+def worktree_rows(repo, run, records=None, for_clean=False):
     """One WorktreeRow per registry entry of repo (inspect_repository()), in
     the registry's order; or, when records is given, one per entry of records,
     which are entries of repo's registry (`repo["records"]`), in the order
-    given (lead ruling R-53 (d)). The bare entry, and a first entry that is the
+    given (lead ruling R-53 (d)). for_clean is true in clean's plan alone
+    (match_target() and build_plan()), whose review safety adds Brett Heap's
+    Q2 (1) and Q9 (b) below; repo_state() leaves it false, so status, doctor
+    and update read an enclosing row and a symbolic-link path as the baseline
+    did (pc:311-312's parity rule; lane 3's W139 MEDIUM-1, lead R-409). The bare entry, and a first entry that is the
     common directory when the main worktree cannot be named, are no rows (D8),
     and where it can, that row's path is the main worktree's realpath; the
     registry's first entry is the main worktree in any order given.
@@ -3631,10 +3661,12 @@ def worktree_rows(repo, run, records=None):
     and L3, R-59 D5). Among the present rows one call builds, rows with one
     realpath, or one admin id, are registration-mismatch too, two spellings
     of one worktree passing the two-way check with one admin id
-    (shared_identities(); lead ruling R-67 (c)), and so is a linked row
-    whose path is the common directory, the main worktree or another row's
-    path, or an ancestor of one (enclosing_rows(); Brett Heap's Q2 (1), lead
-    R-380). They are compared once every
+    (shared_identities(); lead ruling R-67 (c)), in every command; and, in
+    clean's plan alone, so is a linked row whose path is the common
+    directory, the main worktree or another row's path, or an ancestor of
+    one (enclosing_rows(); Brett Heap's Q2 (1), lead R-380), and one whose
+    registered path is a symbolic link (_read_row(); his Q9 (b)). They are
+    compared once every
     row of the call is read and before any status probe, so that none of
     them gets one; an entry the call does not build is never read for it,
     so a row past the cap stays uninspected, while match_target() builds P's
@@ -3706,10 +3738,11 @@ def worktree_rows(repo, run, records=None):
             if identity["root"] is None:
                 continue
             raw = identity["root"]
-        built.append((index, record, raw,
-                      _read_row(raw, index == 0, common_dir, active, active_error, record["path"] in shared)))
+        built.append((index, record, raw, _read_row(raw, index == 0, common_dir, active, active_error,
+                                                    record["path"] in shared, for_clean)))
     twins = shared_identities([read for _, _, _, read in built])
-    enclosing = enclosing_rows(built, identity, registry)  # Q2 (1), lead R-380
+    # Q2 (1), lead R-380: clean's plan alone (R-409), as pc states no such rule for status, doctor and update.
+    enclosing = enclosing_rows(built, identity, registry) if for_clean else frozenset()
     rows = []
     for at, (index, record, raw, read) in enumerate(built):
         if at in twins or at in enclosing:  # registration-mismatch, as a shared path is (R-67 (c))
@@ -3726,7 +3759,10 @@ def worktree_rows(repo, run, records=None):
             _read_status(read, raw, run)
         if (unlisted or unmerged) and read["present"] is True and record["branch"] is not None:
             read["errors"].extend(dict(error) for error in (unlisted or unmerged))
-        rows.append(row_evidence(record, raw, index == 0, read, refs, repo["merged"], target))
+        row = row_evidence(record, raw, index == 0, read, refs, repo["merged"], target)
+        # M3 (a), lead R-413: a path that is, holds or shares another's takes its own next step.
+        row.holds = at in twins or at in enclosing or record["path"] in shared
+        rows.append(row)
     return rows
 # endregion evidence
 
@@ -4508,7 +4544,8 @@ def match_target(plan, run, entries, cap):
     if not decided:
         matches = list(entries[:cap])
     path = found if found is not None else wanted
-    plan.target_rows = worktree_rows(plan.evidence, run, records=[record for _, record in matches]) if matches else []
+    plan.target_rows = (worktree_rows(plan.evidence, run, records=[record for _, record in matches], for_clean=True)
+                        if matches else [])
     if len(matches) == 1 and decided and len(plan.target_rows) == 1:
         plan.target = plan.target_rows[0]
     elif not matches:
@@ -4979,7 +5016,7 @@ def build_plan(repo, run):
     room = cap if exempt else max(0, cap - len(matched))  # an undecided P takes its rows from the cap
     rows = list(plan.target_rows)
     if others[:room]:
-        rows += worktree_rows(evidence, run, records=others[:room])
+        rows += worktree_rows(evidence, run, records=others[:room], for_clean=True)
     plan.omitted = {"count": max(0, len(others) - room), "exactness": "exact"}
     plan.rows = sorted(rows, key=lambda row: (not row.main, row.raw_path))
     first = {id(row) for row in plan.target_rows}
@@ -5791,10 +5828,20 @@ def excluded_groups(reason, rows, unread):
     takes `recommendation_stale_worktree_unread`, which warns against it, as
     the rows' own recommendations do (stale_recommendations(); a locked stale
     row is excluded as `locked-worktree`, gate 4; R-320, ruled by Brett Heap,
-    "R-320: yes", lead R-321)."""
+    "R-320: yes", lead R-321). A `registration-mismatch` row whose path is,
+    holds or shares another row's (WorktreeRow.holds) takes TEXT's
+    `next_step_registration_mismatch_holds` whether or not any path was
+    unread, so such rows form a group of their own under the reason, first,
+    the reason's other rows following with the class's step (Brett Heap's M3
+    (a), lead R-413)."""
     step = next_step(reason) or ""
     if unread and reason in UNREAD_NEXT_STEPS:
         step = TEXT[UNREAD_NEXT_STEPS[reason]]
+    if reason == "registration-mismatch":
+        held = [row for row in rows if getattr(row, "holds", False)]
+        rest = [row for row in rows if not getattr(row, "holds", False)]
+        return [(text, part) for text, part in ((TEXT["next_step_registration_mismatch_holds"], held),
+                                                (step, rest)) if part]
     if reason != "inspection-error":
         return [(step, rows)]
     own = [row for row in rows if path_unread(row)]
@@ -5826,7 +5873,8 @@ def preview_lines(plan):
     in raw path byte order. In mode single, P is the one selected row and the
     other eligible rows form the `not-requested` group. Each group's NEXT
     STEP is excluded_groups()'s, which splits off the `inspection-error`
-    rows whose paths could not be read and names `git worktree prune` only
+    rows whose paths could not be read, and the `registration-mismatch` rows
+    whose paths are, hold or share another's (M3 (a), lead R-413), and names `git worktree prune` only
     to warn against it while any row of the plan has such a path (R-307,
     R-310 and R-320)."""
     lines = []
@@ -6251,9 +6299,11 @@ def _absence_error(error, operation):
 def registry_twin(evidence, records, rows, common_dir, unread=frozenset()):
     """A twin made after planning, the step 5 check of revalidation_difference()
     (lead ruling R-81 (a); R-67 (c)): each entry of records, the fresh registry
-    listing, read as worktree_rows() reads a row (_read_row(): its lstat, its
-    realpath and its two-way registration), with the entries worktree_rows()
-    builds no row for skipped, then compared by shared_identities().
+    listing, read as worktree_rows() reads a row for clean's plan (_read_row()
+    with for_clean, lead R-409: its lstat, its realpath and its two-way
+    registration, a symbolic-link path disagreeing), with the entries
+    worktree_rows() builds no row for skipped, then compared by
+    shared_identities().
     Returns `identity-changed` when a present entry shares a checked row's
     realpath or admin id, since two spellings of one worktree both pass the
     two-way check; `state-changed` when an entry's lstat or realpath decided
@@ -6290,7 +6340,7 @@ def registry_twin(evidence, records, rows, common_dir, unread=frozenset()):
             raw = identity.get("root")
             if raw is None:
                 continue
-        read = _read_row(raw, index == 0, common_dir, None, None, False)
+        read = _read_row(raw, index == 0, common_dir, None, None, False, for_clean=True)
         if any(read_cut(error) for error in read["errors"]):
             return "deadline-exceeded"
         lstat_failed = read["present"] is None and raw not in unread
@@ -7411,7 +7461,10 @@ def repo_state(root):
     entry (hold_git_for_config_paths(); LQ-15), with no Git child at all.
     Then inspect_repository() and worktree_rows(), memoized per common
     directory, with the 15 s budget per Git child and per filesystem call that
-    the invocation gives every command but `clean`, no deadline and no row cap.
+    the invocation gives every command but `clean`, no deadline and no row cap,
+    and without clean's Q2 (1) and Q9 (b) (for_clean false; lead R-409): an
+    enclosing row and a symbolic-link path are probed as the baseline probed
+    them (pc:311-312), while R-67 (c)'s shared rows stay registration-mismatch.
     root's own row gives its branch, head, dirty, upstream, ahead and behind,
     so a linked worktree reports its own (lead ruling R-56); a deleted
     upstream keeps its configured short name with ahead and behind null.

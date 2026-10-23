@@ -789,7 +789,9 @@ class GatesTests(clean_support.CleanCase):
         # common directory: every branch and the repository. W encloses the
         # main worktree and the common directory, so it is registration-mismatch,
         # unprobed and inspection-error: the plan is incomplete, and nothing
-        # is removed, in batch and in single mode.
+        # is removed, in batch and in single mode. W's group prints Brett
+        # Heap's M3 (a) next step (lead R-413), never the class's "or remove
+        # the row by hand", which here deletes the repository.
         main = self.base / "M"
         self._init_repo(main, "other")
         (main / "README").write_text("hello\n")
@@ -833,6 +835,12 @@ class GatesTests(clean_support.CleanCase):
                 self.assertTrue(result.stderr.startswith("REFUSED: The plan is incomplete (inspection-incomplete)"),
                                 result.stderr)
                 self.assertEqual(removals(records), [])
+                lines = result.stdout.splitlines()
+                step = TEXT["excluded_group"].format(
+                    REASON="registration-mismatch", K=1, NEXT_STEP=TEXT["next_step_registration_mismatch_holds"])
+                self.assertIn(step, lines, "\n" + result.stdout)
+                self.assertEqual(lines[lines.index(step) + 1], TEXT["excluded_row"].format(PATH=tree, BRANCH="feat"))
+                self.assertNotIn("remove the row by hand", result.stdout)
         self.assertEqual(self.snapshot(root), before, "nothing removed")
         self.assertTrue((root / ".git").is_dir(), "the common directory remains")
         self.assertEqual(self.git(root, "rev-parse", "refs/heads/secret").strip(), secret)
@@ -915,6 +923,112 @@ class GatesTests(clean_support.CleanCase):
         with self.subTest("an entry the call builds no row for"):
             self.assertEqual(project.enclosing_rows([built[1]], identity, registry + [{"path": b"/r/a/b"}]),
                              frozenset({0}))
+
+    # Brett Heap's M3 (a), "yes, recommended for M1 and M3" (lead R-413; lane
+    # 3's W133 MEDIUM-3; #19's Open Questions at 4512441). The class's next
+    # step ends "or remove the row by hand", which, for a row whose path is or
+    # holds the main worktree, the common directory or another worktree,
+    # deletes what it holds. Such a row, Q2 (1)'s, and one that shares its path
+    # with another row (R-57 L3, R-67 (c)), takes its own step instead, in
+    # every mode, with no unread form; every other registration-mismatch row
+    # keeps the class's step. test_clean_the_main_worktree_inside_a_linked_worktree
+    # pins the step for a row holding the main worktree.
+
+    def test_clean_a_row_whose_path_is_or_holds_another_worktree_takes_its_own_next_step(self):
+        # One repository: w1 holding a second worktree at w1/sub/w2 (Q2 (1)); a
+        # worktree listed twice under one path by a copied admin directory
+        # (R-57 L3); one listed under two spellings, its copy's gitdir naming
+        # it through a symbolic link to the base (R-67 (c)); and wt-a, moved
+        # with a symbolic link left at its registered path (Q9 (b)), which
+        # keeps the class's step. The first four print the M3 group, first,
+        # and wt-a the class's group after it: in the --all-safe preview, in
+        # --all-safe --apply --json's human text on standard error, and in
+        # single mode naming w1. With a row whose path cannot be read, the
+        # class's step takes its unread form and M3's stays as it is. No step
+        # over these rows says "remove the row by hand", and nothing is
+        # removed.
+        root = self.repo()
+        outer = self.base / "w1"
+        self.git(root, "worktree", "add", "-q", "-b", "001-w1", outer)
+        inner = outer / "sub" / "w2"
+        self.git(root, "worktree", "add", "-q", "-b", "002-w2", inner)
+        admin = self.common_dir(root) / "worktrees"
+        shared = self.base / "shared"
+        self.git(root, "worktree", "add", "-q", "-b", "003-shared", shared)
+        shutil.copytree(admin / "shared", admin / "shared-copy")
+        spelled = self.base / "spelled"
+        self.git(root, "worktree", "add", "-q", "-b", "004-spelled", spelled)
+        link = self.base / "twin-link"
+        link.symlink_to(self.base, target_is_directory=True)
+        shutil.copytree(admin / "spelled", admin / "spelled-copy")
+        (admin / "spelled-copy" / "gitdir").write_text(f"{link / 'spelled' / '.git'}\n")
+        linked = self.base / "wt-a"
+        self.git(root, "worktree", "add", "-q", "-b", "005-a", linked)
+        moved = self.base / "elsewhere" / "wt-a"
+        moved.parent.mkdir()
+        linked.rename(moved)
+        linked.symlink_to(moved, target_is_directory=True)
+        holds = TEXT["next_step_registration_mismatch_holds"]
+        self.assertEqual(len(holds), 197)
+        group = TEXT["excluded_group"]
+
+        def rows(*items):
+            """excluded_row lines for (path, branch) items, in raw path byte order."""
+            return [TEXT["excluded_row"].format(PATH=path, BRANCH=branch)
+                    for path, branch in sorted(items, key=lambda item: os.fsencode(item[0]))]
+
+        held = rows((outer, "001-w1"), (shared, "003-shared"), (shared, "003-shared"), (spelled, "004-spelled"),
+                    (link / "spelled", "004-spelled"))
+
+        def assert_groups(text, class_step):
+            """The two registration-mismatch groups in text: M3's first, over
+            the five rows above, then the class's over wt-a."""
+            lines = text.splitlines()
+            first = group.format(REASON="registration-mismatch", K=5, NEXT_STEP=holds)
+            self.assertIn(first, lines, "\n" + "\n".join(line for line in lines if "registration-mismatch" in line))
+            at = lines.index(first)
+            expected = held + [group.format(REASON="registration-mismatch", K=1, NEXT_STEP=class_step),
+                               *rows((linked, "005-a"))]
+            self.assertEqual(lines[at + 1:at + 1 + len(expected)], expected)
+            self.assertNotIn("remove the row by hand", lines[at])
+
+        before = self.snapshot(root)
+        with self.subTest("the --all-safe preview"):
+            result = self.run_cli("clean", root, "--all-safe")
+            self.assert_status(result, 1)
+            assert_groups(result.stdout, STEPS["registration-mismatch"])
+        with self.subTest("--all-safe --apply --json, its human text on standard error"):
+            result, records = self.run_counted("clean", root, "--all-safe", "--apply", "--yes", "--json")
+            self.assert_status(result, 2)
+            assert_groups(result.stderr, STEPS["registration-mismatch"])
+            self.assertEqual(removals(records), [])
+            excluded = {(entry["path"], entry["reason"]) for entry in self.load_json(result)["excluded"]}
+            self.assertLessEqual({(str(path), "registration-mismatch") for path in (outer, shared, spelled,
+                                                                                   link / "spelled", linked)},
+                                 excluded)
+        with self.subTest("single mode naming w1"):
+            result, records = self.run_counted("clean", root, "--apply", "--action", "remove", "--worktree", outer,
+                                               "--yes")
+            self.assert_status(result, 2)
+            assert_groups(result.stdout, STEPS["registration-mismatch"])
+            self.assertEqual(removals(records), [])
+        self.assertEqual(self.snapshot(root), before, "nothing removed")
+
+        @clean_support.not_root
+        def unread():
+            parent = self.base / "par"
+            parent.mkdir()
+            self.git(root, "worktree", "add", "-q", "-b", "006-unread", parent / "u")
+            parent.chmod(0o000)
+            self.addCleanup(parent.chmod, 0o700)
+            result = self.run_cli("clean", root, "--all-safe")
+            self.assert_status(result, 1)
+            assert_groups(result.stdout, TEXT["next_step_registration_mismatch_unread"])
+            parent.chmod(0o700)
+
+        with self.subTest("a row whose path cannot be read"):
+            unread()
+        self.assertTrue(linked.is_symlink() and inner.is_dir() and shared.is_dir() and spelled.is_dir())
 
     # T064: "A merged worktree whose upstream was deleted"; "A deleted upstream
     # is remote-gone". They pin T032, T049 and T057.
