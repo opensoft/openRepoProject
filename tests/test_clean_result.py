@@ -776,7 +776,10 @@ class ResultTests(clean_support.CleanCase):
                 # first in the result, before the stop block (pcl:925-926; lead
                 # rulings R-79 P-11 and R-83 P-2); none once both are gone.
                 lines = result.stderr.splitlines()
-                note = TEXT["partial_removal_note"].format(PATH=quoted(trees[0]))
+                # The ceiling's first note, which keeps --force with no check,
+                # since the target was clean at its revalidation (Brett Heap's
+                # Q4, lead R-380).
+                note = TEXT["partial_removal_note_ceiling"].format(PATH=quoted(trees[0]))
                 stop = TEXT["stop_block"].format(PATH=trees[0], REASON="removal-ceiling",
                                                  K=0 if mode == "hang" else 1, N=2, NOT_ATTEMPTED=trees[1],
                                                  ROOT=quoted(root))
@@ -811,7 +814,7 @@ class ResultTests(clean_support.CleanCase):
         # sr-removal F2).
         table = clean_support.timing_table(removal_ceiling=1.5, term_grace=0.5, reap_wait=0.5)
         for mode, entry, git_file, key, refused in (
-                ("hang", True, True, "partial_removal_note", None),
+                ("hang", True, True, "partial_removal_note_ceiling", None),
                 ("unlink-git", True, False, "partial_removal_note_prune", "validation failed"),
                 ("unregister", False, True, "partial_removal_note_prune", "is not a working tree")):
             with self.subTest(mode):
@@ -885,7 +888,7 @@ class ResultTests(clean_support.CleanCase):
         self.assertNotIn("partial_removal_note_prune_unread", TEXT)
         for mode, entry, key in (("unlink-git", True, "partial_removal_note_prune"),
                                  ("unregister", False, "partial_removal_note_prune"),
-                                 ("hang", True, "partial_removal_note")):
+                                 ("hang", True, "partial_removal_note_ceiling")):
             for beside in (True, False):
                 with self.subTest(mode=mode, unread_sibling=beside):
                     root, trees = self.batch(f"single-{mode}-{'unread' if beside else 'read'}", count=2,

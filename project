@@ -728,7 +728,19 @@ TEXT = {
     "stop_block":
         "Stopped at {PATH} ({REASON}). Removed {K} of {N}. Not attempted: {NOT_ATTEMPTED}. "
         "Next: project clean {ROOT} --all-safe",
-    "partial_removal_note": "Probable partial removal: inspect, then git worktree remove --force {PATH} by hand.",
+    # D4's note under a report row's `dirty` advice, its check first, since
+    # the note is judged on the status records read: one stopped at its bound
+    # leaves untracked and modified files unread, and an ignored record leaves
+    # the flag alone, so --force could delete either (Brett Heap's Q4 (a) and
+    # (b), "yes, recommended for Q1-Q9", lead R-380; wave 22's triage T4,
+    # sr-removal F3 and F4).
+    "partial_removal_note":
+        "Probable partial removal: check that git -C {PATH} status --short --ignored lists only deleted files, "
+        "then git worktree remove --force {PATH} by hand.",
+    # The ceiling's first note, where the rescan shows the target's `.git`
+    # and its registry entry both present (partial_removal_text()): no check,
+    # since the target was clean at its revalidation (Q4, lead R-380).
+    "partial_removal_note_ceiling": "Probable partial removal: inspect, then git worktree remove --force {PATH} by hand.",
     # The ceiling's note where the rescan does not show both the target's
     # `.git` and its registry entry present, and made no `.git` read that
     # failed (partial_removal_text()): Git then refuses `git worktree
@@ -758,8 +770,11 @@ TEXT = {
     # --force` refuses (#19 at 4f1c0e0; lane 3's W52 F-2, R-248). It replaces
     # ratified text; Brett Heap ruled it on 2026-10-22, "F-2: yes" (the lead's
     # R-263; traceability.md:253-255), and it is in its own commit, 64ad453.
+    # Its check comes first, as in the plain note (Brett Heap's Q4 (a) and (b),
+    # lead R-380).
     "partial_removal_note_locked":
-        "Probable partial removal: inspect, unlock it, then git worktree remove --force {PATH} by hand.",
+        "Probable partial removal: check that git -C {PATH} status --short --ignored lists only deleted files, "
+        "unlock it, then git worktree remove --force {PATH} by hand.",
     # D18: the gate refusal and the remedies of the plan-blocking refusals.
     "target_excluded_gate": "Worktree is excluded: {REASON}; {NEXT_STEP}",
     # Each plain remedy that names `git worktree prune` carries Q3 (b)'s
@@ -946,14 +961,21 @@ NEXT_STEPS = {
     # Gate 7 precedes contains-submodule, and Git refuses a plain removal of a
     # worktree that holds a submodule (#19's round (g) as the lead corrected
     # it, short for change 2's 200-character rule; lane 3's W52 F-7, R-248).
+    # The parenthetical keeps the submodule's commits first (Brett Heap's Q4
+    # (c), "yes, recommended for Q1-Q9", lead R-380).
     "unstarted-branch":
         "no commit was made on this branch here since it was created; review, then git worktree remove yourself "
-        "(--force if it holds a submodule)",
+        "(--force if it holds a submodule, once its commits are kept)",
     "reflog-unavailable":
         "the branch's reflog is missing, expired or undecidable; review, then git worktree remove yourself "
-        "(--force if it holds a submodule)",
-    # W52 F-8, R-248.
-    "contains-submodule": "review, then git worktree remove --force yourself",
+        "(--force if it holds a submodule, once its commits are kept)",
+    # W52 F-8, R-248; a submodule initialized in a linked worktree keeps its
+    # repository under that worktree's administrative directory, `modules/`,
+    # which --force deletes with any commit not pushed (Brett Heap's Q4 (c),
+    # lead R-380; wave 22's triage T4, sr-removal F5, sr-classification M-3).
+    "contains-submodule":
+        "push or otherwise keep each submodule's commits first, since --force deletes its repository with this "
+        "worktree's git directory, then git worktree remove --force yourself",
     "hidden-local-state": "review, then remove the worktree yourself",
     # LQ-14 (lead rulings R-126, R-146 and R-171; #19 at 2e819ad, lane 3's W26
     # F-1), and the --quit clause for a marker left with nothing in progress
@@ -7068,8 +7090,11 @@ def partial_removal_text(target):
     search), since the rescan then makes no `.git` read: the same note,
     whatever the record shows of the registry entry (#19's ceiling scenario,
     "as when a directory above it denies search"; lane 3's W90 M-1, lead
-    ruling R-329). Otherwise `partial_removal_note`, whose `git worktree
-    remove --force` Git accepts, only where the rescan showed both the
+    ruling R-329). Otherwise `partial_removal_note_ceiling`, whose `git
+    worktree remove --force` Git accepts, with no check first, since the
+    target was clean at its revalidation, unlike a report row's
+    `partial_removal_note` (Brett Heap's Q4, lead R-380), only where the
+    rescan showed both the
     registry entry (`registry_entry_present` true) and the target's `.git`
     (`git_file_present` true) present, and `partial_removal_note_prune`
     otherwise: the `.git` shown absent, or the entry gone with the `.git`
@@ -7089,7 +7114,7 @@ def partial_removal_text(target):
     if unread and git_file is None:
         return "partial_removal_note_unread"
     if record.get("registry_entry_present") is True and git_file is True:
-        return "partial_removal_note"
+        return "partial_removal_note_ceiling"
     return "partial_removal_note_prune"
 
 

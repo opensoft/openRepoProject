@@ -648,6 +648,27 @@ class GatesTests(clean_support.CleanCase):
         result = self.run_json("clean", root, "--apply", "--action", "remove", "--worktree", tree, "--yes", "--json")
         self.assert_refused_target(result, tree, "contains-submodule", message)
         self.assertEqual(self.snapshot(root), before)
+        # The step names what --force deletes and keeps the submodule's commits
+        # first (Brett Heap's Q4 (c), "yes, recommended for Q1-Q9", lead R-380;
+        # lane 2's wave 22 triage T4, sr-removal F5, sr-classification M-3).
+        # Its repository is under this worktree's administrative directory,
+        # modules/, so a commit made in it and not pushed lives there alone;
+        # followed as worded, the commit is kept first, then --force deletes
+        # that repository with the worktree.
+        self.assertEqual(STEPS["contains-submodule"],
+                         "push or otherwise keep each submodule's commits first, since --force deletes its "
+                         "repository with this worktree's git directory, then git worktree remove --force yourself")
+        modules = self.common_dir(root) / "worktrees" / tree.name / "modules" / "sub"
+        self.assertTrue(modules.is_dir())
+        (tree / "sub" / "unpushed.txt").write_text("submodule work, nowhere else\n")
+        unpushed = self.commit(tree / "sub", "submodule work")
+        self.assertEqual(os.path.realpath(self.git(tree / "sub", "rev-parse", "--absolute-git-dir").strip()),
+                         os.path.realpath(modules))
+        source = self.base / "sub-source"
+        self.git(tree / "sub", "push", "-q", str(source), "HEAD:refs/heads/kept")
+        self.git(root, "worktree", "remove", "--force", tree)
+        self.assertFalse(modules.exists() or tree.exists(), "--force deleted the submodule's repository")
+        self.assertEqual(self.git(source, "cat-file", "-t", unpushed).strip(), "commit", "the kept commit remains")
 
     # Brett Heap's Q2, "yes, recommended for Q1-Q9" (lead R-380; lane 2's wave
     # 22 triage T2; sr-classification H-1, sr-evidence H-3). Git's directory
