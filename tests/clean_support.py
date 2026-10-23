@@ -673,6 +673,13 @@ TEXT_FIXTURES = {
     # gc (R-324, ruled by Brett Heap, "R-324: yes", lead R-343).
     "next_step_inspection_error_unread": "review, then git worktree repair, or remove the row by hand; a row's path could not be read, so do not run git worktree prune, git worktree remove or git gc until it can",
     "next_step_registration_mismatch_unread": "review, then git worktree repair, unset core.worktree and core.bare in the repository's config, or in that worktree's config.worktree, or remove the row by hand; a row's path could not be read, so do not run git worktree prune, git worktree remove or git gc until it can",
+    # The next step of a registration-mismatch row whose path is, or holds, the main worktree, the
+    # common directory or another row (Q2 (1)), or that shares its path with another row (R-57 L3,
+    # R-67 (c)), in place of the class's, whose "or remove the row by hand" deletes what it holds:
+    # Brett Heap's M3 (a), "yes, recommended for M1 and M3" (lead R-413), copied exactly from #19's
+    # Open Questions at 4512441 (design.md, M3 (a)) and the lead's message. It names no git
+    # worktree prune, so it has no unread form and no Q3 (b) suffix.
+    "next_step_registration_mismatch_holds": "its path is or holds the main worktree, the common directory or another worktree, so do not delete it by hand or with git worktree remove; review its registration with git worktree list --porcelain",
     # The inspect-cap remedy always warns against git worktree prune, since the rows past the
     # cap are never read (lane 3's W86 NM-1; R-320, ruled by Brett Heap, "R-320: yes", lead
     # R-321), copied exactly from the lead's brief. The warning also names git worktree remove and

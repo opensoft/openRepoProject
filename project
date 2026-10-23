@@ -836,6 +836,19 @@ TEXT = {
         "review, then git worktree repair, unset core.worktree and core.bare in the repository's config, or in "
         "that worktree's config.worktree, or remove the row by hand; a row's path could not be read, so do not "
         "run git worktree prune, git worktree remove or git gc until it can",
+    # The next step of a `registration-mismatch` row whose path is, or holds,
+    # the main worktree, the common directory or another row (Q2 (1),
+    # enclosing_rows()), or that shares its path with another row (R-57 L3,
+    # R-67 (c)): WorktreeRow.holds. The class's step, followed for such a row,
+    # "or remove the row by hand", deletes what it holds, so the preview gives
+    # these rows a group of their own (excluded_groups()). Brett Heap's M3
+    # (a), "yes, recommended for M1 and M3" (lead R-413; lane 3's W133
+    # MEDIUM-3; #19's Open Questions at 4512441, 197 characters). It names no
+    # `git worktree prune`, so it takes no PRUNE_DRY_RUN and has no unread
+    # form: it is the same in every mode.
+    "next_step_registration_mismatch_holds":
+        "its path is or holds the main worktree, the common directory or another worktree, so do not delete it "
+        "by hand or with git worktree remove; review its registration with git worktree list --porcelain",
     # The inspect-cap remedy, with a warning against `git worktree prune`
     # always, not only where a row's path could not be read, since the rows
     # past the cap are never read, so no run can tell whether their paths can
@@ -2697,13 +2710,19 @@ class WorktreeRow(dict):
     probe's result, None when it did not run or failed; `detached`, whether the
     registry record has no branch (`record["branch"] is None`), which the text
     `detached` in the `branch` field cannot tell from a branch named
-    `detached` (T10; lane 2's wave 22 triage); and `unprobed`, the
+    `detached` (T10; lane 2's wave 22 triage); `holds`, whether the row's
+    path is, or holds, the main worktree, the common directory or another
+    row (enclosing_rows(), clean's plan alone), or is a path or a realpath
+    that another row shares (shared_paths(), shared_identities()), which
+    gives a `registration-mismatch` row Brett Heap's M3 (a) next step (lead
+    R-413); and `unprobed`, the
     marker that a read not finished within its filesystem budget sets (T066;
     analyze M6), never serialized and unset here."""
 
     raw_path = None
     main = False
     detached = False
+    holds = False
     dev = ino = admin_id = None
     registered = None
     upstream_oid = None
@@ -3740,7 +3759,10 @@ def worktree_rows(repo, run, records=None, for_clean=False):
             _read_status(read, raw, run)
         if (unlisted or unmerged) and read["present"] is True and record["branch"] is not None:
             read["errors"].extend(dict(error) for error in (unlisted or unmerged))
-        rows.append(row_evidence(record, raw, index == 0, read, refs, repo["merged"], target))
+        row = row_evidence(record, raw, index == 0, read, refs, repo["merged"], target)
+        # M3 (a), lead R-413: a path that is, holds or shares another's takes its own next step.
+        row.holds = at in twins or at in enclosing or record["path"] in shared
+        rows.append(row)
     return rows
 # endregion evidence
 
@@ -5806,10 +5828,20 @@ def excluded_groups(reason, rows, unread):
     takes `recommendation_stale_worktree_unread`, which warns against it, as
     the rows' own recommendations do (stale_recommendations(); a locked stale
     row is excluded as `locked-worktree`, gate 4; R-320, ruled by Brett Heap,
-    "R-320: yes", lead R-321)."""
+    "R-320: yes", lead R-321). A `registration-mismatch` row whose path is,
+    holds or shares another row's (WorktreeRow.holds) takes TEXT's
+    `next_step_registration_mismatch_holds` whether or not any path was
+    unread, so such rows form a group of their own under the reason, first,
+    the reason's other rows following with the class's step (Brett Heap's M3
+    (a), lead R-413)."""
     step = next_step(reason) or ""
     if unread and reason in UNREAD_NEXT_STEPS:
         step = TEXT[UNREAD_NEXT_STEPS[reason]]
+    if reason == "registration-mismatch":
+        held = [row for row in rows if getattr(row, "holds", False)]
+        rest = [row for row in rows if not getattr(row, "holds", False)]
+        return [(text, part) for text, part in ((TEXT["next_step_registration_mismatch_holds"], held),
+                                                (step, rest)) if part]
     if reason != "inspection-error":
         return [(step, rows)]
     own = [row for row in rows if path_unread(row)]
@@ -5841,7 +5873,8 @@ def preview_lines(plan):
     in raw path byte order. In mode single, P is the one selected row and the
     other eligible rows form the `not-requested` group. Each group's NEXT
     STEP is excluded_groups()'s, which splits off the `inspection-error`
-    rows whose paths could not be read and names `git worktree prune` only
+    rows whose paths could not be read, and the `registration-mismatch` rows
+    whose paths are, hold or share another's (M3 (a), lead R-413), and names `git worktree prune` only
     to warn against it while any row of the plan has such a path (R-307,
     R-310 and R-320)."""
     lines = []
