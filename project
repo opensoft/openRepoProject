@@ -3502,10 +3502,16 @@ def _read_row(raw, main, common_dir, active, active_error, shared):
     probe, in D6's order: the lstat; for a present row, its realpath, the
     working directory's failure (active_error) if it failed, and the
     registration, a shared path's verdict taken with nothing read (lead
-    rulings R-57 L2 and L3). A failed read becomes an entry of `errors`, and
-    what follows it in the same step is not read. _read_status() runs the
-    probe once worktree_rows() has compared the rows (shared_identities())
-    and read the row's identity again (_identity_unchanged())."""
+    rulings R-57 L2 and L3), as is a linked row's whose registered path the
+    lstat shows to be a symbolic link: it disagrees, so the row is
+    registration-mismatch and unprobed, since Git empties the link's target,
+    fails to remove the link, and still deletes the administrative
+    directory (Brett Heap's Q9 (b), "yes, recommended for Q1-Q9", lead
+    R-380; wave 22's triage T12, sr-removal F7). A failed read becomes an
+    entry of `errors`, and what follows it in the same step is not read.
+    _read_status() runs the probe once worktree_rows() has compared the rows
+    (shared_identities()) and read the row's identity again
+    (_identity_unchanged())."""
     read = {"present": None, "dev": None, "ino": None, "active": active, "tree": None,
             "registered": None, "admin_id": None, "status": None, "errors": []}
     errors = read["errors"]
@@ -3522,6 +3528,8 @@ def _read_row(raw, main, common_dir, active, active_error, shared):
             errors.append(active_error)
         if shared:
             read["registered"], read["admin_id"] = registration_verdict(main, common_dir, None, shared=True)
+        elif not main and stat.S_ISLNK(found.st_mode):
+            read["registered"], read["admin_id"] = False, None  # Q9 (b): a symbolic link disagrees
         else:
             read["registered"], read["admin_id"] = verify_registration(raw, common_dir, main)
     except EvidenceError as exc:

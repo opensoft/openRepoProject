@@ -837,6 +837,52 @@ class GatesTests(clean_support.CleanCase):
         self.assertTrue((root / ".git").is_dir(), "the common directory remains")
         self.assertEqual(self.git(root, "rev-parse", "refs/heads/secret").strip(), secret)
 
+    def test_clean_a_registered_path_that_is_a_symbolic_link(self):
+        # Brett Heap's Q9 (b), "yes, recommended for Q1-Q9" (lead R-380; lane
+        # 2's wave 22 triage T12, sr-removal F7): a merged, pushed worktree
+        # moved by hand and a symbolic link left at its registered path. Its
+        # registration agrees through the link and its status prints nothing,
+        # so it was selected, and Git emptied the link's target, failed to
+        # remove the link, exit 255, and still deleted the administrative
+        # directory. The row is now registration-mismatch, unprobed and
+        # inspection-error: the plan is incomplete and nothing is removed, in
+        # batch and in single mode, the control beside it included.
+        root = self.repo()
+        self.bare_remote()
+        linked = self.merged_worktree("001-linked", path=self.base / "wt-a")
+        control = self.merged_worktree("002-control", path=self.base / "control")
+        elsewhere = self.base / "elsewhere"
+        elsewhere.mkdir()
+        moved = elsewhere / "wt-a"
+        linked.rename(moved)
+        linked.symlink_to(moved, target_is_directory=True)
+        self.assertTrue(linked.is_symlink())
+        admin = self.common_dir(root) / "worktrees" / "wt-a"
+        self.assertIn(f"worktree {linked}\n", self.git(root, "worktree", "list", "--porcelain"),
+                      "Git keeps the registered path")
+        self.assertEqual(self.git(linked, "status", "--porcelain=v1", "--untracked-files=normal", "--ignored",
+                                  env=dict(self.env, GIT_OPTIONAL_LOCKS="0")), "", "its status prints nothing")
+        before = self.snapshot(root)
+        result = self.preview(root)
+        self.assert_status(result, 1)
+        document = result.document
+        self.assertEqual([entry["path"] for entry in document["selected"]], [str(control)])
+        self.assertEqual(by_path(document), {str(root): "main-worktree", str(linked): "registration-mismatch"})
+        self.assertEqual((row_of(document, linked)["classification"], row_of(document, linked)["dirty"]),
+                         ("inspection-error", None))
+        self.assertEqual([refusal["code"] for refusal in document["refusals"]], ["inspection-incomplete"])
+        for words in (("--all-safe", "--apply", "--yes"),
+                      ("--apply", "--action", "remove", "--worktree", linked, "--yes")):
+            with self.subTest(words=words[:2]):
+                result, records = self.run_counted("clean", root, *words)
+                self.assert_status(result, 2)
+                self.assertTrue(result.stderr.startswith("REFUSED: The plan is incomplete (inspection-incomplete)"),
+                                result.stderr)
+                self.assertEqual(removals(records), [])
+        self.assertEqual(self.snapshot(root), before, "nothing removed")
+        self.assertTrue(linked.is_symlink() and admin.is_dir() and control.is_dir())
+        self.assertTrue((moved / "work-001-linked").is_file(), "the link's target keeps its files")
+
     def test_clean_enclosing_rows_decides_on_literal_values(self):
         # enclosing_rows() is a pure function of values already read: a linked
         # row's raw path and realpath against the common directory, the main
