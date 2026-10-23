@@ -153,14 +153,18 @@ Keyed by the `(dev, ino)` of the no-follow `lstat` of `common_dir`.
   set (D9, `A1 design.md:526-528`)
 - `merge_target`: `{name, source, sha}` from change 1's
   `resolve_merge_target` (`project:2517`) over `refs` and the manifest's
-  `tracking_branch`, less its `notes`; or null (FR-024, FR-025)
+  `tracking_branch`, less its `notes`; or null (FR-024, FR-025); `name`
+  written through `json_path` (JSON) or `human_path` (human), never as the
+  resolver's str is (research.md R15)
 - `merged`: the merged set at `merge_target.sha` (`MergedSetParser`), or null
 - `errors`: the project row's errors, in step order
 - `rows`: its worktree rows, main first
 
 `root` is null for a bare repository, a submodule checkout, an unnamed
 gitfile checkout, a gitfile checkout whose `core.worktree` read failed
-other than as unset (R20's O11, parts 1 and 2, chosen), and a missing main
+other than as unset (R20's O11, parts 1 and 2, chosen), a gitfile checkout
+whose read `core.worktree` value has no strict realpath (`os-error`,
+OPERATION `realpath`, or the task's cut; research.md R9), and a missing main
 worktree (FR-008, FR-009); and, once A1's re-alignment lands, for a main
 worktree that O4 (a)'s detector finds redirected (R20's O4 (a), chosen;
 "Gates", below).
@@ -172,7 +176,9 @@ unnamed git-directory record and a submodule checkout's main row are rows
 with no status probe (C-68; A1 design D3, items 1 to 3), each taking only
 its `lstat` task: no registration read, no twin decision and no
 `row_evidence`, its status fields and `classification` null (research.md
-R5).
+R5). Each field's "Null when" keeps every case of the packet's column
+(DI:770-790), as C-40 asks, and adds the overview's own: the cap, a cut,
+the working directory's realpath, and O16 (a)'s bare row.
 
 - `path`, `path_valid_utf8`
   - Source: the registry record (the main worktree's realpath where the first
@@ -195,21 +201,40 @@ R5).
   - Source: the working directory lies inside `path`
   - Null when: `present` null; the working directory's realpath failed
 - `branch`
-  - Source: the registry record; `"detached"` for a detached head
+  - Source: the registry record; `"detached"` for a detached head; written
+    through `json_path` or `human_path`, from the record's bytes or
+    `row_evidence`'s surrogateescape str alike (research.md R15)
   - Null when: a bare entry (O16 (a), chosen, built now: C-68 and FR-008,
     departing from C-40's packet rule that `branch` is never null)
 - `head`
   - Source: the registry record
   - Null when: a bare entry (O16 (a))
-- `upstream`, `upstream_oid`, `ahead`, `behind`, `remote_present`
-  - Source: the kept ref records
+- `upstream`
+  - Source: the kept ref records; escaped as `branch` is
   - Null when: none configured; `refs/heads/HEAD` (EC-033); listing failed
+- `upstream_oid`, `ahead`, `behind`
+  - Source: the kept ref records
+  - Null when: none configured; the upstream ref is gone; `refs/heads/HEAD`;
+    listing failed
+- `remote_present`
+  - Source: the kept ref records
+  - Null when: none configured; `refs/heads/HEAD`; listing failed
 - `merged_into_target`
   - Source: the merged set
-  - Null when: no target; listing failed; a bare entry (O16 (a))
-- `dirty`, `ignored_files`, `ignored_files_truncated`, `ignored_samples`
+  - Null when: a detached head; a missing path; no target; the ref listing
+    or the merged set failed; a bare entry (O16 (a))
+- `dirty`, `ignored_files_truncated`
   - Source: the status probe (`StatusParser`)
   - Null when: no probe ran or it failed; past the cap
+- `ignored_files`
+  - Source: the status probe
+  - Null when: as for `dirty`, or the stream stopped before any ignored
+    record (US6 s11: `dirty: true` with `ignored_files` null at 4,097
+    untracked files)
+- `ignored_samples`
+  - Source: the status probe
+  - Null when: as for `dirty`; `[]`, never null, when the probe ran and
+    found none
 - `classification`
   - Source: [L]'s ladder through `row_evidence` and `classify`
   - Null when: past the cap; registry, ref listing or merged set failed; no
@@ -388,7 +413,12 @@ whatever `--attention` shows.
   (research.md R7), the candidates are sorted, deduplicated (the first
   spelling wins), capped at 128 and ranked; then `collecting`
 - `collecting`: phase 1 and phase 2 per repository (research.md R6); deadline:
-  terminate every child, stop starting; then `settling`
+  terminate every running child, a terminating one keeping its outcome, stop
+  starting, answer every pending request with a `deadline` result (each
+  collector stopping at its first, one `deadline-exceeded` error on its row)
+  and make the not-started candidates their rows; then `settling` once no
+  child runs or terminates, no task wait is pending and every collector has
+  ended (research.md R4)
 - `settling`: every child reaped or abandoned; then `rendering`
 - `rendering`: the whole report in memory; then `writing`
 - `writing`: inside the raising span; then exit 0 or 1

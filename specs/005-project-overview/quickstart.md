@@ -69,7 +69,9 @@ worktree; a dirty one; an unstarted branch; 17 merged worktrees (the
 target cap); 257 registered rows (the report cap); a failed status probe
 and a held one (fake Gits); a reflog read and a status probe cut by the
 deadline through `tests/launch_project.py --timing=...` (the
-deadline-stopped marker); a bare repository. Commands: `clean ROOT --json`,
+deadline-stopped marker); a bare repository; a `git` that cannot be spawned
+(a non-executable `git` first on `PATH`); and a child reached with no time
+left under the launcher's shortened table. Commands: `clean ROOT --json`,
 `clean ROOT --all-safe --json`, `clean ROOT --all-safe --apply --yes
 --json`, and the same three without `--json`. Compared: exit statuses,
 `probes` and `operations`, each document with every `observed_at` masked,

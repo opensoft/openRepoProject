@@ -341,10 +341,26 @@ suggestions lead to `project clean`.
   check, status pins, extension read, work-tree probe and
   configuration-path test as pending #19; a different ruling there changes
   the reused constants and deciders, which the overview takes as they land.
-- **Recorded parity gaps** (research.md R18): a failed ref listing, until
-  feature 004's R-101 (c) fix; a working directory whose realpath fails
-  (O9); and, if #24's realization merges first, a cache-only worktree
-  (C-71). Parity tests leave these cases out by name.
+- **Lane openRepoProject-2's open safety fixes to feature 004**
+  (2026-10-23: a `core.ignoreCase` pin missing from the status and removal
+  probes; a nested `.git` inside a tracked directory unseen) may change
+  `STATUS_PINS`, `STATUS_PROBE`, `StatusParser`, `status_warned` or
+  `status_probe()`. The overview takes the first four by reference and so
+  inherits a fix there; it mirrors `status_probe()`'s composition
+  (research.md R3), so each re-cite diffs that function and carries any
+  change over. The wrapper and the contract assert `GIT_KINDS["status"]`'s
+  pins and `STATUS_PROBE`, never a literal list. A fix that adds a child, a
+  read or a classification input is a re-plan trigger (FR-019, FR-020's
+  `estimated`, the allow-list, FR-026's parity), and a change to the pins
+  goes to lane openRepoProject-4's lead, since FR-016 and A1:230-232 list
+  four by name.
+- **Recorded parity gaps** (research.md R18): a failed ref listing, where
+  feature 004 at `d6bac50` makes each present row on a branch
+  `inspection-error` with the listing's error while the overview leaves
+  every class null, as A1 does (O12 (A), a lasting difference); a working
+  directory whose realpath fails (O9 (A), a lasting difference); and, if
+  #24's realization merges first, a cache-only worktree (C-71). Parity
+  tests leave these cases out by name.
 - **Readings that differ from feature 004's code** (research.md R9): the
   extension read's row error on an exit 1 with a warning, which A1 records
   and feature 004 does not, both counting it true as PR #19's D7 does (A1

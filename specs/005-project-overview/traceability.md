@@ -225,7 +225,11 @@ own readings of R9.
 
 - SC-001, SC-008: `test_overview_isolation.py`, `test_overview_identity.py`.
 - SC-002: the wrapper's assertions and the snapshot, in every module.
-- SC-003: `test_overview_classifier.py` (parity runs, `local.env`).
+- SC-003: `test_overview_classifier.py` (parity runs, `local.env`); the
+  parity tests name the cases left out as lasting differences, a working
+  directory whose realpath fails (O9 (A)) and a failed ref listing (O12
+  (A)), and, if #24's realization merges first, a cache-only worktree
+  (C-71).
 - SC-004: `test_overview_gates.py` (argument vectors only).
 - SC-005, SC-006: `test_overview_bounds.py`; the hand timing in
   [quickstart.md](quickstart.md).

@@ -65,6 +65,10 @@ No other option, variable or file changes a limit or a time (FR-047).
 
 1. Parse the arguments (above); the invocation's deadline is set as it is
    entered (60 s, no reserve).
+   1a. `signal_scope()` is entered (record-only handlers, FR-044) before
+   step 2 and held to the end of step 7; after step 7, and again after the
+   scope has exited, a recorded signal decides the status (research.md R4,
+   R15).
 2. The configuration-path test of [E] (feature 004's
    `relative_config_paths`, `project:977`): a variable that fails it
    refuses with `relative-config-path`, exit 2, before any Git child.
@@ -184,7 +188,9 @@ hidden within it, every scan error is shown, and the `next` line stays.
 The `next` line names the first gate, in the gate table's order, among
 the findings whose suggestion fed the row's command or would have:
 `withheld` for every gate but `target-cap` and `inspect-cap` over the
-report's row cap, which read `limited`.
+report's row cap, which read `limited`, except that a repository over both
+caps shows the batch remedy as `withheld` (C-14; A1 design D10,
+`design.md:581-583`).
 
 ```text
 atlas  /projects/atlas
@@ -203,20 +209,33 @@ arguments below, in its own process group, standard input from
 `/dev/null`, with the 31 scrubbed names removed, `GIT_TRACE2`,
 `GIT_TRACE2_EVENT` and `GIT_TRACE2_PERF` set to `0` and
 `GIT_OPTIONAL_LOCKS=0` (feature 004's kind `probe`); the status probe adds
-the four status pins (kind `status`). No other argument vector is started.
+`STATUS_PINS` (four at `d6bac50`; kind `status`). No other argument vector
+is started.
 
 - `version`: `--version` (no `-C`), once.
 - `identity`: `rev-parse --path-format=absolute --show-toplevel
   --git-common-dir --show-superproject-working-tree`, per Git candidate;
-  on a line count other than two, `rev-parse --path-format=absolute
-  OPTION` once per option (EC-032).
+  when it exits 0 and its output is not two non-empty lines, `rev-parse
+  --path-format=absolute OPTION` once per option, in order, stopping at the
+  first that fails or is cut, that child's error being the row's (EC-032).
 - `registry`: `worktree list --porcelain -z`, per repository.
-- `core-worktree`: `config --get core.worktree`, where the first registry
-  record is `common_dir` (A1 design D3, case 3). Its exit 1 with nothing
+- `core-worktree`: `config --get core.worktree`, where no candidate of the
+  repository seen so far reported a superproject working tree, the first
+  registry record is not marked `bare`, and its path is `common_dir` (A1
+  design D3, items 1 to 3, in that order), run in the candidate that
+  reached the repository, as A1 is ratified. Its exit 1 with nothing
   on either stream is the key unset, with no error (O11, part 1, the
   plan's reading of a conflict in ratified A1; research.md R9); any other
   failure records the row error and leaves the root null, with no
-  suggestion and no gate code.
+  suggestion and no gate code. A value read names the root only through
+  its strict realpath, a relative value joined to `common_dir`; where that
+  fails, the row records `os-error` with OPERATION `realpath` (or the
+  task's cut) and the root stays null, as for a failed read (research.md
+  R9).
+  - CHOSEN (O13 (A)): the child runs in the shared git directory, `-C
+    COMMON_DIR`, reading what `project clean` reads; run in a linked
+    candidate under `extensions.worktreeConfig` it reads that worktree's own
+    value, a defect recorded in research.md R9.
   - CHOSEN (O11, part 2 (A)): the findings that would suggest a clean command
     carry `suggested_command: null` and `suggestion_gate:
     target-not-repository-root`, with the remedy of its own row,
@@ -230,8 +249,9 @@ the four status pins (kind `status`). No other argument vector is started.
 - `work-tree`: `rev-parse --path-format=absolute --show-toplevel`, in each
   linked row whose registration agrees, where the extension is taken as
   true.
-- `status`: `status --porcelain=v1 -z --untracked-files=normal
-  --ignored=matching`, in each row FR-007's last case reaches.
+- `status`: `STATUS_PROBE` (`status --porcelain=v1 -z
+  --untracked-files=normal --ignored=matching` at `d6bac50`), in each row
+  FR-007's last case reaches.
 - CHOSEN (O4 (a)): `main-toplevel`, `rev-parse --path-format=absolute
   --show-toplevel` in the main worktree where it is no Git candidate. It
   serves the first of O4 (a)'s two tests (research.md R20): in the ordinary
@@ -286,7 +306,13 @@ edits only its own entries.
 `compose_message(own, remedy, warning=None)` returns the message of a finding
 whose suggestion a gate withheld or limited: own text, `; `, remedy, at most
 200 characters; when both do not fit, the own text is cut and ends `...`, the
-remedy whole. Every other finding's message is its own text alone. Two clauses,
+remedy whole. The own text is never shorter than `...`: it keeps max(n - 3,
+0) characters, n = 200 - 2 - the remedy's length; where the remedy alone
+leaves fewer than 3 characters (an escaped repository parent of 177
+characters or more in `re-run with --root <repository parent>`), the
+message is `...; ` and the remedy, longer than 200 characters in that case
+only (O15 (A), chosen, built now). Every other finding's message is its own
+text alone. Two clauses,
 both chosen, the second by name, apply only with `warning` given (a
 `stale-worktree` message that carries O6's warning, 109 characters with its
 period), which happens once A1's re-alignment lands:
@@ -454,9 +480,16 @@ from `limits` when the message is built.
   of M; remove explicitly"
 - `remedy.inspect-cap.report` (limited): "N rows exceed the report's row
   cap of M; the report would be incomplete"
+  - Over the report's row cap (N above 256) every finding whose suggestion
+    is the read-only form, a `merged-removable` finding whose `--all-safe`
+    the batch cap withheld included, carries `remedy.inspect-cap.report`;
+    from 129 to 256 rows, `remedy.inspect-cap.batch` (C-14; A1:655-658)
 - `remedy.scan-limit`: "re-run with --root <repository parent>",
-  `<repository parent>` the parent of `repository.root`, escaped by [P]
-- `remedy.deadline-exceeded`: "re-run with --root <repository parent>"
+  `<repository parent>` the parent of `repository.root`, escaped by [P];
+  past an escaped parent of 176 characters the message keeps the remedy
+  whole and passes 200 (O15 (A); the composer)
+- `remedy.deadline-exceeded`: "re-run with --root <repository parent>",
+  its parent escaped and its length as for `remedy.scan-limit`
   - CHOSEN (O2 (A)): also the gate of a row whose reflog read the
     deadline cut, in place of `inspection-incomplete`
 - `remedy.unstarted-branch`: "no commit was made on this branch here since
