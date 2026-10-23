@@ -231,7 +231,21 @@ Scope).
   warn that `git worktree prune` deletes the entry, and so the HEAD reflog, of
   every other worktree whose path is missing, one moved or on an unmounted
   drive included, and say to run `git worktree prune --dry-run` first (design
-  D18; Brett Heap's Q3 (b) of 2026-10-23, the lead's R-380). F-1's (b), the
+  D18; Brett Heap's Q3 (b) of 2026-10-23, the lead's R-380). A
+  `registration-mismatch` row whose path is, or holds, the main worktree, the
+  common directory or another worktree, or which shares its path with another
+  row, has instead its own next step, the same in every mode, "its path is or
+  holds the main worktree, the common directory or another worktree, so do not
+  delete it by hand or with git worktree remove; review its registration with
+  git worktree list --porcelain", which names no prune and so takes no warning,
+  since the class's step would have such a row removed by hand, and that deletes
+  the main worktree and the repository, or the other worktree (design D18; the
+  delta `Clean reports local worktree state`, its scenario "A worktree whose
+  path holds the main worktree"; Brett Heap's M3 (a) of 2026-10-23, the lead's
+  R-413). The stale recommendation of `project status`, `project doctor` and
+  `project update` names no command, so where no row's path is unread it stays
+  the baseline's, without that warning (design D18 and Open Questions; his M1
+  (a) of the same day). F-1's (b), the
   ceiling's recovery text for a target whose `.git` file or registry entry is
   gone, names no prune at all, in every mode (the seam below; his Q3 (a), which
   supersedes the form for a plan with an unread row that he gave the same day,
@@ -503,7 +517,13 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     `present: null` and an `os-error`, not a whole-command exit 2;
     `ignored_files` counts ignored records observed, at least, beside
     `ignored_files_truncated`; `root` names the command directory. The
-    staleness sentence (`:16`) and the audit scenario stay.
+    staleness sentence (`:16`) and the audit scenario stay. The added scenario
+    "A worktree whose path holds the main worktree" gives a
+    `registration-mismatch` row whose path is, or holds, the main worktree, the
+    common directory or another worktree, or which shares its path with another
+    row, its own next step, the same in every mode, beside the scenario "An
+    unreadable worktree is one row", which states the class's next steps (Brett
+    Heap's M3 (a) of 2026-10-23, the lead's R-413; design D18).
   - MODIFIED (`:25`):
     `### Requirement: Clean classifies preservation and cleanup actions`.
     `:27-28` names 7 classes and the ladder has 15 (`project:418-468`); the
@@ -1313,11 +1333,13 @@ ratified, on Brett Heap's word of 2026-10-22, "F-2: yes; F-1: prune-then-delete;
 O-1: deadline-exceeded" (the lead's R-263), and on his "R-284: yes" (the lead's
 R-290), "R-307: yes; R-310: yes" (the lead's R-319), "R-320: yes" (the lead's
 R-321) and "R-324: yes" (the lead's R-343) of the same day, and on his "Yes,
-warn (Recommended)" of 2026-10-23 (the lead's R-365) and his "yes, recommended
-for Q1-Q9" of the same day (the lead's R-380); the entry for R-365 records his
+warn (Recommended)" of 2026-10-23 (the lead's R-365), his "yes, recommended
+for Q1-Q9" of the same day (the lead's R-380) and his "yes, recommended for M1
+and M3" of that day too (the lead's R-413); the entry for R-365 records his
 "Yes, add T9 (Recommended)" of that day as well, though it replaces no sentence,
-none stating its text, and the last entry records the answers of R-380, some of
-which add text that replaces no sentence:
+none stating its text, the entry for R-380 records the answers of R-380, some of
+which add text that replaces no sentence, and the last entry records the answers
+of R-413, of which M1's replaces no sentence:
 
 - **A locked worktree's recovery text** (lane openRepoProject-3's W52 F-2;
   amends `0050f3e` pcl:135-138): a locked linked worktree whose status records
@@ -1331,8 +1353,8 @@ which add text that replaces no sentence:
   tracked-file deletions"; design D4, D18; for the ceiling target, lane
   openRepoProject-3's W80 M-1 and W87 LOW-3 and the lead's R-294). Brett
   Heap's Q4 (a) and (b) of 2026-10-23 put a check before this text and before
-  the ratified one that every other such row shows, in the last entry of this
-  group.
+  the ratified one that every other such row shows, in this group's entry for
+  R-380.
 - **The ceiling's recovery text** (W52 F-1; amends `0050f3e` pcl:253-256 and
   pcl:922-926): a `partially-removed` target shows "inspect, then `git worktree
   remove --force <path>` by hand" only where the rescan finds both its `.git`
@@ -1349,8 +1371,8 @@ which add text that replaces no sentence:
   hard ceiling", and `Clean records a reconcilable result for every removal
   target`; design D9, D18). The second of its two texts read otherwise where
   any row of the plan had a path whose planning `lstat` failed, as Brett Heap
-  ruled on 2026-10-23, in the next-to-last entry of this group, until his Q3 (a)
-  of the same day, in the last entry, gave it in every mode as "inspect, then
+  ruled on 2026-10-23, in this group's entry for R-365, until his Q3 (a) of
+  the same day, in its entry for R-380, gave it in every mode as "inspect, then
   delete `<path>` and its administrative directory
   `<common_dir>/worktrees/<admin_id>` by hand", naming no prune.
 - **The ceiling's recovery text where the `.git` file cannot be read** (lane
@@ -1442,7 +1464,7 @@ which add text that replaces no sentence:
   yes" (the lead's R-343) extended it, in the entry "The warnings also name `git
   worktree remove` and `git gc`" below. Their plain forms, the `0050f3e` texts
   quoted above and round (h)'s variant of the remedy, end with the warning that
-  his Q3 (b) of 2026-10-23 appends, in the last entry of this group.
+  his Q3 (b) of 2026-10-23 appends, in this group's entry for R-380.
 - **No prune advice in the stale recommendations or the cap remedy** (lane
   openRepoProject-3's W86 NM-1, through lane openRepoProject-4; the lead's
   R-320; amends `0050f3e` design:777-779, the remedy of `inspect-cap`, "N rows
@@ -1487,8 +1509,8 @@ which add text that replaces no sentence:
   names `git worktree prune`, `git worktree remove` and `git gc`, as his "R-324:
   yes" (the lead's R-343) extended it, in the next entry. The two stale
   recommendations where every row's path was read, and the cap remedy, end with
-  the warning that his Q3 (b) of 2026-10-23 appends, in the last entry of this
-  group.
+  the warning that his Q3 (b) of 2026-10-23 appends, in this group's entry for
+  R-380.
 - **The warnings also name `git worktree remove` and `git gc`** (lane
   openRepoProject-3's W91 MEDIUM-2 and W95, and its W80 L-6 and E6; the lead's
   R-324 and R-343; amends the third ceiling text above and the eight texts of
@@ -1688,6 +1710,43 @@ which add text that replaces no sentence:
     keep the baseline's refusal, `Type yes to run this plan: Supply explicit
     options when stdin is not a terminal.`, with exit status 2 and no code
     (amends `0050f3e` pcl:422-424).
+- **Brett Heap's answers to M1 and M3** (lane openRepoProject-3's W133 MEDIUM-1
+  and MEDIUM-3 on round (q), which the lead put to him as M1 and M3 in R-391;
+  his words of 2026-10-23, given at 21:10:31Z in lane openRepoProject-2's
+  session, "yes, recommended for M1 and M3", the lead's R-413; each question
+  stated a lean, so each is taken as its (a)): design D18 and Open Questions
+  carry both, and the `project-clean` delta carries M3's step, as round (t)'s
+  entry lists.
+  - **M1** (replaces no sentence): where no row's path is unread, `project
+    status`, `project doctor` and `project update` keep the baseline's stale
+    recommendation, "Review the stale worktree metadata before pruning it
+    manually.", without Q3 (b)'s warning, and T9's unread form stands, as the
+    `project-command` delta's T9 clause (pc:299-309) and its scenario (pc:394)
+    already state, so that delta is unchanged: the text names no command and
+    already says to review the stale metadata first; the warning matters most in
+    `clean`, where the prune advice sits beside one target row and reads as
+    being about that row alone; keeping the text adds no second departure,
+    across three commands, from the evidence model's parity rule (pc:311-312);
+    and the status rules that lane openRepoProject-4's 005 reads are untouched.
+  - **M3** (amends, for such a row, the next step of `registration-mismatch`,
+    `0050f3e` design:757-758, as the T1 to T5 entry and Q3 (b) above left it): a
+    `registration-mismatch` row whose path is, or holds, the main worktree, the
+    common directory or another worktree (his Q2 (1)), or which shares its path
+    with another row (R-67 (c)), prints its own next step, the same in every
+    mode, "its path is or holds the main worktree, the common directory or
+    another worktree, so do not delete it by hand or with git worktree remove;
+    review its registration with git worktree list --porcelain", 197 characters,
+    inside lane openRepoProject-4's 200-character rule, since the class's step,
+    which includes "... or remove the row by hand" and ends with Q3 (b)'s
+    warning, deletes, if followed literally for such a row, the main worktree
+    and the repository, or the other worktree, as plain Git confirmed in wave
+    22's triage (its T2); the step names no `git worktree prune`, so it takes no
+    Q3 (b) warning, and every other `registration-mismatch` row keeps the
+    class's step. Feature 004's code round builds it (the lead's R-413). The
+    delta states it in the added scenario "A worktree whose path holds the main
+    worktree" of `Clean reports local worktree state`, which lane
+    openRepoProject-5's #27 does not carry (What Changes; Capabilities `:10`;
+    design D18 and Open Questions).
 
 Amendments of ratified text on lane rulings, waiting on his ratification of #19:
 each replaces a sentence that the merge of PR #11 ratified, on a ruling of the
@@ -1723,7 +1782,7 @@ amendment (lane openRepoProject-3's W70 M-1, the lead's R-285):
   that holds a submodule)" (What Changes, first bullet; design D18 and the
   Migration Plan). Brett Heap's Q4 (c) and Q5 of 2026-10-23 (the lead's R-380)
   replace all three next steps and the non-drain line's closing clause, in the
-  last entry of the first group, so that these texts no longer wait on his
+  first group's entry for R-380, so that these texts no longer wait on his
   ratification and stay here as the record of the lane's rulings.
 - **The cap's re-run** (lane openRepoProject-3's W31 L-7; the lead's R-187 and
   R-190, in `2e819ad`; amends `0050f3e` pcl:810-811): the ratified "re-running
@@ -3319,6 +3378,54 @@ the old line breaks resume, with no other change of words (What Changes;
 Capabilities; Decisions, amendments; this list; design Context, D7, D18 and
 Open Questions; `tasks.md` 1.2 and 1.4; the `project-clean` and
 `project-clean-review-safety` deltas).
+
+Round (t), Brett Heap's answer of 2026-10-23 to M1 and M3, the questions that
+lane openRepoProject-3's W133 MEDIUM-1 and MEDIUM-3 raised on round (q) and that
+the lead put to him (R-391): "yes, recommended for M1 and M3" (the lead's R-413;
+given at 21:10:31Z in lane openRepoProject-2's session) (validate 9 of 9, its
+output as at `dab8a64`; the scenario counts 75, 25 and 26). Each question stated
+a lean, so he took M1 (a) and M3 (a). M1 (a): where no row's path is unread,
+`project status`, `project doctor` and `project update` keep the baseline's
+stale recommendation, "Review the stale worktree metadata before pruning it
+manually.", without Q3 (b)'s warning, and T9's unread form stands; the
+`project-command` delta's T9 clause and its scenario already say so, and that
+delta is unchanged, byte for byte. Design D18's T9 sentence, which said that the
+warning was before him, now gives the ruling, and M1 leaves design Open
+Questions for the record of his rulings there, with his words, the time and the
+question's reasons: the text names no command; the warning matters most in
+`clean`; keeping the text adds no second departure from the parity rule; and the
+status rules that lane openRepoProject-4's 005 reads are untouched. M3 (a): a
+`registration-mismatch` row whose path is, or holds, the main worktree, the
+common directory or another worktree (his Q2 (1)), or which shares its path with
+another row (R-67 (c)), prints the next step "its path is or holds the main
+worktree, the common directory or another worktree, so do not delete it by hand
+or with git worktree remove; review its registration with git worktree list
+--porcelain", 197 characters, copied by script from the question as put to him,
+the same in every mode; it names no `git worktree prune`, so it takes no Q3 (b)
+warning, and every other `registration-mismatch` row, a redirect by
+`core.worktree` or `core.bare` and Q9 (b)'s symbolic link among them, keeps the
+class's step. Design D18 states it beside the class's step, where it had said
+that such a row's step was before him, the preview printing such rows in a group
+of their own under `registration-mismatch`, as it prints the `inspection-error`
+rows whose path could not be read (feature 004's `excluded_groups()` at
+`41759a4`); the delta states it in the added scenario "A worktree whose path
+holds the main worktree", placed in `Clean reports local worktree state`, whose
+scenario "An unreadable worktree is one row" already states the next steps of
+`registration-mismatch` rows, so that no block that lane openRepoProject-5's #27
+carries changes; and feature 004's code round builds it (the lead's R-413), its
+key to be named later. M3 leaves design Open Questions for the same record, and
+the preamble's ", except M3, whose recommended step is in no delta and waits on
+his word" is dropped. The amendments list's first group records both answers in
+an entry of their own, its heading line naming his words; five pointers of that
+group, which called the entry for R-380 the group's last entry, now name it, and
+so does the one that called the entry for R-365 the next-to-last. Every text
+that Brett Heap ruled, and every other text of the triage's section 3, is
+unchanged, byte for byte; the one new text is M3's step. `tasks.md` 1.2 names
+this round, and 1.4 gives the new scenario counts. This round's commit also
+re-wrapped the lines after each of its edits, up to where the old line breaks
+resume, with no other change of words (What Changes; Capabilities `:10`;
+Decisions, amendments; this list; design Context, D18 and Open Questions;
+`tasks.md` 1.2 and 1.4; the `project-clean` delta).
 
 ### Council Verdicts
 

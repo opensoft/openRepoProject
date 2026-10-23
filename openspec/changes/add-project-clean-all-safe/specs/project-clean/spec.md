@@ -109,6 +109,25 @@ resolved repository.
   could not be read, so do not run git worktree prune, git worktree remove or
   git gc until it can", since `git worktree prune` acts on the whole repository
 
+#### Scenario: A worktree whose path holds the main worktree
+
+- **WHEN** the main worktree sits inside a tracked directory of an otherwise
+  eligible linked worktree W, whose registration agrees in both directions,
+  beside a linked worktree R whose `config.worktree` sets `core.worktree` to
+  another directory under `extensions.worktreeConfig`, and a preview of
+  `--all-safe` runs
+- **THEN** the preview lists W under `registration-mismatch` with the next step
+  "its path is or holds the main worktree, the common directory or another
+  worktree, so do not delete it by hand or with git worktree remove; review its
+  registration with git worktree list --porcelain", which names no `git
+  worktree prune` and so ends there, and lists R under `registration-mismatch`
+  with the class's next step, which names unsetting `core.worktree` and
+  `core.bare`
+- **AND** W's next step is the same where a third linked worktree's path cannot
+  be read because its parent directory denies search permission, and it is the
+  next step of a linked worktree whose path holds the common directory or
+  another linked worktree, or which shares its path with another row
+
 #### Scenario: A failed status probe on the merge-target checkout
 
 - **WHEN** the status probe of the worktree checked out on the merge-target

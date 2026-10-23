@@ -84,7 +84,10 @@ D4, D7, D9, D11, D18, Risks, the Migration Plan and Open Questions; and round
 the lead's R-391, with W133's MEDIUM-1 and MEDIUM-3 before Brett Heap, Context,
 D1, D7, D18 and Open Questions; and round (s), lane openRepoProject-3's W141
 read of round (r) and its W139 LOW-1 and MEDIUM-1, under the lead's R-396, R-408
-and R-409, Context, D7, D18 and Open Questions.
+and R-409, Context, D7, D18 and Open Questions; and round (t), Brett Heap's
+answer of 2026-10-23 to M1 and M3, lane openRepoProject-3's W133 MEDIUM-1 and
+MEDIUM-3, "yes, recommended for M1 and M3" (the lead's R-413), Context, D18 and
+Open Questions.
 Brett Heap's ruling of 2026-10-09 on open question 1, that a local ancestry
 proof outranks `remote-gone` for worktree rows, is in `proposal.md` Decisions
 and edited Context, D6, D7, D20, Risks, the Migration Plan and Open Questions
@@ -1466,13 +1469,28 @@ hand; git worktree prune also deletes the entry, and so the HEAD reflog, of
 every other worktree whose path is missing, one moved or on an unmounted drive
 included, so run git worktree prune --dry-run first and remount or repair any
 it lists that still exists" (LQ-11, R-125), naming both files from which Git
-applies the redirect (W52 F-3, R-248), the step of a Q2 (1) row being before
-Brett Heap (Open Questions, M3), and, where any row of the plan has a path
+applies the redirect (W52 F-3, R-248), and, where any row of the plan has a path
 that could not be read, as below, "review, then git worktree repair, unset
 core.worktree and core.bare in the repository's config, or in that worktree's
 config.worktree, or remove the row by hand; a row's path could not be read, so
 do not run git worktree prune, git worktree remove or git gc until it can" in
-its place (W87 M-1; the lead's R-310); `inspection-error` "review, then git
+its place (W87 M-1; the lead's R-310), both for every row of the class but one
+whose path is, or holds, the main worktree, the common directory or another
+worktree (Brett Heap's Q2 (1)), or which shares its path with another row (R-67
+(c)): such a row has its own next step, the same in every mode, "its path is or
+holds the main worktree, the common directory or another worktree, so do not
+delete it by hand or with git worktree remove; review its registration with git
+worktree list --porcelain", which names no `git worktree prune` and so takes no
+Q3 (b) warning, and which the preview prints for such rows in a group of their
+own under `registration-mismatch`, since the class's step, followed literally
+for such a row, deletes the main worktree and the repository, or the other
+worktree, as plain Git confirmed in wave 22's triage (its T2), the step being
+197 characters, inside lane openRepoProject-4's 200-character rule (Brett Heap's
+M3 (a) of 2026-10-23, the lead's R-413; lane openRepoProject-3's W133
+MEDIUM-3), while every other row of the class keeps the class's step, a row
+whose registration disagrees, whose work tree `core.worktree` or `core.bare`
+redirects, or whose registered path is a symbolic link (Q9 (b)) among them;
+`inspection-error` "review, then git
 worktree repair or git worktree prune, or remove the row by hand; git worktree
 prune also deletes the entry, and so the HEAD reflog, of every other worktree
 whose path is missing, one moved or on an unmounted drive included, so run git
@@ -1711,8 +1729,9 @@ it manually; a row's path could not be read, so do not run git worktree prune,
 git worktree remove or git gc until it can.", since `git worktree prune`, run
 for a stale entry's sake, deletes the administrative directory of a worktree
 whose path Git cannot stat too, as T6's reasons give; with no such row it prints
-unchanged (whether it then takes Q3 (b)'s warning is before Brett Heap, Open
-Questions, M1). The `project-command` delta states it in its evidence model, for
+unchanged, without Q3 (b)'s warning, since it names no command (Brett Heap's M1
+(a) of 2026-10-23, the lead's R-413; Open Questions). The `project-command`
+delta states it in its evidence model, for
 `project status`, `project doctor` and `project update`, which share that
 inspection, since the model's parity rule, "Values SHALL equal those of the
 inspection this model replaces, except where a requirement states a change.",
@@ -2412,8 +2431,7 @@ last, F-1's (b) beside an unread row, which he ruled on 2026-10-23, in his
 answer "Yes, warn (Recommended)" (the lead's R-365), and which stays below as
 the record of the question, his Q3 (a) of the same day having since superseded
 the text he ruled there (the lead's R-380); for the others, the deltas implement
-the reading stated, and a different ruling edits the deltas before the archive,
-except M3, whose recommended step is in no delta and waits on his word.
+the reading stated, and a different ruling edits the deltas before the archive.
 
 - Squash-merged branches never put their tip into the target's ancestry
   (BA:195-199). Recommendation: a local patch-equivalence proof (`git cherry` or
@@ -2427,62 +2445,6 @@ except M3, whose recommended step is in no delta and waits on his word.
   follow-up change after the archive, as `fix-parent-obstacle-wording` followed
   `prefer-triad-in-project-new`, which costs a second archive and leaves the
   archived spec wrong in between.
-- M1, lane openRepoProject-3's W133 MEDIUM-1 (the lead's R-391): does the
-  plain stale advice of status, doctor and update take Q3 (b)'s dry-run
-  warning? Where no row's path is unread, `project status`, `doctor` and
-  `update` print the baseline's stale-worktree recommendation: "Review the
-  stale worktree metadata before pruning it manually." #19 now states that text
-  (pc:308-309) and pins it in T9's scenario (pc:394). His Q3 (b) added the
-  dry-run warning to the plain form of each of clean's texts that names `git
-  worktree prune`. This status text names no command, so Q3 (b) did not reach
-  it. Lane 3 calls this a gap that needs his word, not a departure.
-  - (a) Recommended: no. Keep the baseline text. It names no command, and it
-    already says to review the stale metadata first. The warning matters most
-    in clean, where the prune advice sits beside one target row and reads as
-    being about that row alone. Keeping it adds no second departure, across
-    three commands, from the evidence model's parity rule (baseline values stay,
-    except where a requirement states a change), and no change to the status
-    rules that lane 4's 005 reads. #19 records the reason in design.
-  - (b) Yes. All three commands print "Review the stale worktree metadata
-    before pruning it manually; git worktree prune also deletes the entry, and
-    so the HEAD reflog, of every other worktree whose path is missing, one
-    moved or on an unmounted drive included, so run git worktree prune
-    --dry-run first and remount or repair any it lists that still exists."
-    That is a second departure from the parity rule. It changes 004's code and
-    tests, #19's pc:308-309 and :394 and D18, lane 4's pin and lane 5's #29
-    block.
-
-  Until he answers, the `project-command` delta and D18 keep the baseline text,
-  the reading of (a). Feature 004's spec records T9's change to that text as a
-  departure from its FR-064, a requirement of feature 004's that keeps the
-  baseline's functions unchanged, and leaves Q3 (b)'s warning out of it, as (a)
-  does; this entry named FR-064 in place of the parity rule until round (s)
-  (lane openRepoProject-3's W141 LOW-2; the lead's R-396 and R-399).
-- M3, lane openRepoProject-3's W133 MEDIUM-3 (the lead's R-391): a next step
-  for a worktree whose path is, or holds, the main worktree, the common
-  directory or another worktree. Under his Q2 (1), a linked worktree whose
-  registered path is, or holds, the main worktree, the common directory or
-  another worktree is excluded as `registration-mismatch`. It then prints that
-  class's next step, which includes "... or remove the row by hand", followed by
-  Q3 (b)'s dry-run warning. Followed literally for such a row, that step deletes
-  the main worktree and the repository, or the other worktree. Plain Git
-  confirmed that loss in the triage (T2).
-  - (a) Recommended: such a row gets its own next step: "its path is or holds
-    the main worktree, the common directory or another worktree, so do not
-    delete it by hand or with git worktree remove; review its registration with
-    git worktree list --porcelain". That is 197 characters, inside lane 4's
-    200-character rule. The wording covers a row that shares its path with
-    another row (R-67 (c)), which carries the same hazard. Such a row takes the
-    same step. It is a new next-step text in 004 (code and tests) and in #19's
-    D18.
-  - (b) No next step is printed for such a row, and D18 says why. This is
-    simpler, but the row gives no guidance.
-  - (c) Keep the class's step. Not recommended, because it is unsafe as
-    worded.
-
-  Until he answers, D18 gives such a row the class's step, as round (q) left
-  it, and no text changes; neither (a) nor (b) is in the deltas, D18 or
-  feature 004.
 - LQ-20, the fit where `extensions.worktreeConfig` is true (D14, Risks).
   RESOLVED on 2026-10-22: Brett Heap chose step (i), in his words to lane
   openRepoProject-2, "LQ-20: go with (i), measure first" (the lead's R-236). The
@@ -2624,7 +2586,37 @@ before `--force` (D4, D18); Q5 has gate 7's next steps name the checks of the
 gates that did not run, and the non-drain line defer to each group's next step
 (D18, the Migration Plan); Q6, Q7 and Q9 (a) accept three residuals (Risks); Q8
 makes a status probe that exits 0 with a warning a failed one (D1); and Q9 (c)
-scopes `confirmation-required` to the removal apply. Five more amendments of
+scopes `confirmation-required` to the removal apply. His answer of the same day,
+given at 21:10:31Z in lane openRepoProject-2's session, to the two questions
+that lane openRepoProject-3's W133 MEDIUM-1 and MEDIUM-3 raised on round (q),
+which the lead put to him as M1 and M3 (R-391), "yes, recommended for M1 and M3"
+(the lead's R-413), takes each question's lean, its (a). By M1 (a), where no
+row's path is unread, `project status`, `project doctor` and `project update`
+keep the baseline's stale recommendation, "Review the stale worktree metadata
+before pruning it manually.", without Q3 (b)'s warning, and T9's unread form
+stands, as the `project-command` delta already states, so that delta is
+unchanged: the text names no command and already says to review the stale
+metadata first; the warning matters most in `clean`, where the prune advice sits
+beside one target row and reads as being about that row alone; keeping the text
+adds no second departure, across three commands, from the evidence model's
+parity rule (baseline values stay, except where a requirement states a change);
+and the status rules that lane openRepoProject-4's 005 reads are untouched.
+Feature 004's spec, whose FR-064 keeps the baseline's functions unchanged,
+already leaves the warning out of that text (D18). By M3 (a), a
+`registration-mismatch` row whose path is, or holds, the main worktree, the
+common directory or another worktree (his Q2 (1)), or which shares its path with
+another row (R-67 (c)), has its own next step, the same in every mode, "its path
+is or holds the main worktree, the common directory or another worktree, so do
+not delete it by hand or with git worktree remove; review its registration with
+git worktree list --porcelain", 197 characters, inside lane openRepoProject-4's
+200-character rule, since the class's step, which includes "... or remove the
+row by hand" and ends with Q3 (b)'s warning, deletes, if followed literally for
+such a row, the main worktree and the repository, or the other worktree, as
+plain Git confirmed in wave 22's triage (T2); the step names no `git worktree
+prune`, so it takes no Q3 (b) warning, every other `registration-mismatch` row
+keeps the class's step, and feature 004's code round builds it (the lead's
+R-413; D18 and the `project-clean` delta's scenario "A worktree whose path holds
+the main worktree"). Five more amendments of
 ratified sentences rest on lane rulings and findings rather than his word, and
 wait on his ratification of this amendment: the line-feed exception to the
 bounds (D7, D14), the cap's re-run and the count split (`proposal.md`

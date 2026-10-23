@@ -125,7 +125,12 @@ duplicate them, and nothing here is an implementation step.
   LOW-1 and MEDIUM-1, under the lead's R-396, R-408 and R-409, with M1 and M3
   still open before Brett Heap (the commit titled 'Amend change 1: round (s),
   W141's MEDIUM-1, LOW-1 to LOW-3 and OBS, W139's LOW-1 and MEDIUM-1 (R-408,
-  R-409)'); verified by the
+  R-409)'); and round (t), Brett Heap's answer of 2026-10-23 to M1 and M3, "yes,
+  recommended for M1 and M3" (R-413), M1 (a) keeping the baseline's stale text
+  in status, doctor and update and M3 (a) giving a row whose path is, or holds,
+  the main worktree, the common directory or another worktree its own next step
+  (the commit titled 'Amend change 1: round (t), Brett Heap's M1 (a) and M3 (a)
+  (R-413)'); verified by the
   table "Questions Resolved by the Alignment Review" in `proposal.md` and the
   later-rulings list under it, which name the section each ruling edited.
 - [x] 1.3 Council resolved: every concern is VALID, none dismissed, the verdicts
@@ -133,9 +138,9 @@ duplicate them, and nothing here is an implementation step.
   recorded as N1 to N5 in `clarifications.md` (`1d4ed5b`); verified by
   `design.md`, whose D1 to D5 answer N1 to N5 one for one.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md` modifies
-  five requirements and adds six (74 scenarios, one added under each of Brett
-  Heap's rulings LQ-15, LQ-13 and LQ-14 and his Q1, one under the lead's R-126,
-  two under R-147, one under R-391 and one under R-408),
+  five requirements and adds six (75 scenarios, one added under each of Brett
+  Heap's rulings LQ-15, LQ-13 and LQ-14 and his Q1 and M3, one under the lead's
+  R-126, two under R-147, one under R-391 and one under R-408),
   `specs/project-clean-review-safety/spec.md` modifies two and adds one (25
   scenarios, one added under R-22, one under each
   of LQ-13 and LQ-14, one under R-146, one under R-190, two under his Q2 and one
