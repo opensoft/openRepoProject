@@ -1,0 +1,3638 @@
+Lane: openRepoProject-5
+
+# Proposal: add-project-clean-cache-disposal
+
+Status: draft; alignment review and council resolved on PR #27; ratification
+by Brett Heap pending; lane openRepoProject-3's re-read and Codex's findings of
+2026-10-20 resolved in round B3 (B-25 to B-28), lane openRepoProject-4's
+re-align step and wording, lane 3's delta read and Codex's re-review of
+`cf57956` resolved in round B4 (B-29 to B-33), and Codex's re-review of
+`e1049b2` with the lead's rulings of 2026-10-20 resolved in round B5 (B-34 to
+B-37), lane 4's byte check of B-30's overview commit recorded in `tasks.md`
+2.2, lane 3's folded read of `cf57956..fffc194` with Codex's finding on
+`fffc194` resolved in round B6 (B-38 to B-42), lane 3's confirm read of round
+B6 with Codex's two findings on `e399309` resolved in round B7 (B-43 to B-45),
+lane 3's confirm read of B7 in round B8 (B-46), and the lane's review wave of
+2026-10-21 on `fe5b245`, RB's adversarial read and RD's M2, in round B9 (B-47
+to B-52), and lane 3's confirm read of B9 with reader RF's composition read at
+the final heads, whose H1 moves this change's two blocks written on PR #19's
+text to that text at `a664799`, its round (b), and restates the fit, and whose
+M1 adds a second diff to every re-base check, with the lead's rulings on that
+round's drafts and on round (b)'s R-171 and lane openRepoProject-2's check of
+the two blocks, in round B10 (B-53 to B-55), and Codex's finding on `d4e960b`,
+verified and widened by reader RG, with the two blocks re-based on PR #19's
+round (c) at `2e819ad` and lane openRepoProject-2's check of them, with its two
+corrections, in round B11 (B-56), and PR #19's round (d) at `9267303`, the
+lead's R-208, with the revalidation block re-based on it and lane
+openRepoProject-2's check of both blocks, in round B12 (B-57 to B-59), and
+PR #19's round (e) at `f0bf538`, with the revalidation block re-based on it,
+and lane openRepoProject-3's W33 read of rounds B10 to B12, with lane
+openRepoProject-2's check of the three held blocks, the two written on PR #19's
+text and the ADDED requirement, in round B13 (B-60 to B-62), and lane
+openRepoProject-3's W44 read of round B13, with its three wording LOWs, in
+round B14 (B-63 and B-64), and Codex's three findings on `69cb7a1` with reader
+RH's and RI's composition reads, the six blocks written on change 1's text
+re-based on PR #19's text at `f0bf538` and lane openRepoProject-2's check of the
+held blocks, lane 3's W56 note, W52's two LOWs on the `cache-unwritable` step
+and W53's four departure rows, in round B15 (B-67 to B-69 and B-72 to B-75),
+and PR #19's rounds (g), (g3) and (h) at `4f1c0e0`, `6bf9f77` and `b3228bb`,
+the blocks they changed re-based with lane openRepoProject-2's check of the
+held set, this change's own fit on PR #19's measured costs with both costs of
+the enumeration's child, lane openRepoProject-4's YES to the Archive order
+sentence, and lane 3's W62 sums and W63 read of round B15, in round B16 (B-76
+to B-85), and PR #19's round (i) at `e0c91bb`, the retire and
+reconcilable-result blocks re-based on it with lane openRepoProject-2's check
+of the held set, and lane 3's W79 read of round B16, in round B17 (B-86 and
+B-87), and PR #19's round (j) at `e14ada0`, the retire, reconcilable-result and
+revalidation blocks re-based on it with lane openRepoProject-2's check of the
+held set, Brett Heap's confirmation of R-284, and lane 3's W85 read of round
+B17, in round B18 (B-88 to B-92), and PR #19's round (k) at `173d83c`, the
+retire and revalidation blocks re-based on it with lane openRepoProject-2's
+check of the held set, in round B19 (B-93), and PR #19's round (l) at
+`ccc52b9`, which changes none of the eight blocks, Brett Heap's confirmation of
+its T1 to T5, and lane 3's W92 read of rounds B18 and B19, in round B20 (B-94
+to B-98), and PR #19's round (m) at `20084cd`, the bounds block re-based on it
+with lane openRepoProject-2's check of the held set, and Brett Heap's
+confirmation of T1 to T8, in round B21 (B-99), and PR #19's round (n) at
+`2250830`, the retire, reconcilable-result and bounds blocks re-based on it
+with lane openRepoProject-2's check of the held set, Brett Heap's "R-324: yes",
+and lane 3's W97 read of rounds B20 and B21, in round B22 (B-100 to B-106), and
+PR #19's round (o) at `88d0d36`, which changes none of the eight blocks, and
+lane 3's W107 read of round B22, in round B23 (B-107 to B-109), and the lane's
+review wave of 2026-10-23 on `288fc34`, RB's and RB2's adversarial read and
+RE's and RE2's read of feature 004 at `f3724fc`, with lane 3's W120 read of
+next steps and its W110 read of round B23, in round B24 (B-110 to B-117), which
+changes the two ADDED requirements and no block carried from PR #19, and PR
+#19's rounds (p), (q) and (r) at `e0b1671`, `818311a` and `4512441`, the seven
+blocks that they change re-based, three on `4512441` and four on `818311a`,
+with lane openRepoProject-2's check of the held set, Brett Heap's Q1 and Q8 of
+2026-10-23 in this change's own cache enumeration, RB2's LOW-5, and lane 3's
+W128 read of round B24 and its W133 read of PR #19's round (q), in round B25
+(B-118 to B-130), and PR #19's rounds (s) and (t) at `dab8a64` and `54e869b`,
+the four blocks that round (s) changes, the classification, batch, preservation
+and revalidation blocks, re-based on `dab8a64` with lane openRepoProject-2's
+check of the held set, round (t) changing none of the eight, Brett Heap's "yes,
+recommended for M1 and M3" of 2026-10-23 on PR #19's M1 and M3, and lane 3's
+W146 read of PR #19's round (s), in round B26 (B-131 to B-142); nothing here is
+ratified.
+Governing issue: opensoft/openRepoProject#24, claimed by lane openRepoProject-5
+(comment 6111257933); refs #6, the record of the project maintenance design
+packet. Proposed on Brett Heap's word "usage reset, resume all. read handoff
+and resume and fan out wide and do as much as possible in parallel"
+(2026-10-11), read by lanes openRepoProject-4 and openRepoProject-5 as a go for
+the candidate list they put to him.
+
+Citations are `file:line` at `da33d92`, which equals `961c405` for
+`ideation/`. `BA`, `SY`, `OV` and `DI` are the packet's `project-maintenance-`
+files `batch-cleanup.md`, `synthesis-inspect-and-retire.md`, `overview.md` and
+`project-discovery.md`, and `HO` is its
+`next-session-project-maintenance-fix-handoff.md`. `CAS` is
+`openspec/changes/add-project-clean-all-safe/` (change 1) and `APO` is
+`openspec/changes/add-project-overview/` (change 2), both ratified and
+unarchived at `961c405`; at `origin/main` `15504f1`, `project`,
+`openspec/specs/` and the directories of change 1 and change 2 equal
+`961c405`'s, `ideation/` differs by PR #16's packet revision (`e45155a`), and
+`openspec/changes/` gains two other changes (L-15). `CAS/pc`, `CAS/rs`,
+`CAS/cmd` and `APO/ov` are their `project-clean`, `project-clean-review-safety`,
+`project-command` and `project-overview` deltas. `PR19/pc` is `CAS/pc` as draft
+PR #19 amends it (branch `change/amend-clean-all-safe-push-pins`), at
+`dab8a64`, lane openRepoProject-2's round (s), which lane 2 accepted (R-412),
+within the classification and batch requirements, since round B26 (B-135); at
+`4512441`, its round (r), within the retire requirement, since round B25
+(B-126); at `818311a`, its round (q), within the bounds and reconcilable-result
+requirements, since round B25 (B-122); and elsewhere at `f0bf538`, its round
+(e); `54e869b`, its round (t) and PR #19's head, which lane 2 accepted (R-415),
+keeps byte for byte the text of each of these (B-135, B-139; in round B25 the
+classification requirement at `4512441`, its round (r) and PR #19's head then,
+B-126, and the batch requirement at `818311a`, B-122; in rounds B22 to B24 the
+retire, bounds and reconcilable-result requirements at `2250830`, its round
+(n), B-104, `88d0d36`, its round (o) and PR #19's head in rounds B23 and B24,
+keeping their text,
+B-107, in rounds B16 to B24 the batch requirement at `b3228bb`, its round (h),
+B-84, and the classification requirement at `6bf9f77`, its round (g3), B-80, in
+round B21 the bounds requirement at `20084cd`, its round (m), B-99, in rounds
+B19 to B21 the retire requirement at `173d83c`, its round (k), B-93, and in
+rounds B18 to B21 the reconcilable-result requirement at `e14ada0`, its round
+(j), B-88, in rounds B16 to B20 the bounds requirement at `b3228bb`, in round
+B18 the retire requirement at `e14ada0`, B-88, in round B17 the retire and
+reconcilable-result requirements at `e0c91bb`, its round (i), B-87, in round
+B16 at `b3228bb`, and in round B16's earlier stages the retire and batch
+requirements at `4f1c0e0`, its round (g), B-76, and the bounds and
+reconcilable-result requirements at `f0bf538`; at `f0bf538` throughout in
+rounds B13 to B15; at `9267303`, its round (d), in round B12; at `2e819ad`, its
+round (c), in round B11; at `a664799`, its round (b), in round B10 (B-54,
+B-55); before it at `c462d87`, whose spec text equals the `5ce23d7` that the
+lane's rulings first named), and `PR19/rs` is `CAS/rs` and `PR19/cmd` is
+`CAS/cmd` as PR #19 amends them, `PR19/rs` at `dab8a64` within the preservation
+and revalidation requirements since round B26 (B-135; the revalidation
+requirement at `4512441` in round B25, B-126, at `173d83c` in rounds B19 to
+B24, B-93, at `e14ada0` in round B18, B-88, and at `b3228bb` in rounds B16 and
+B17, B-84, and the preservation requirement at `818311a` in round B25, B-122),
+and elsewhere at `f0bf538`, whose text that this change cites `54e869b` keeps
+byte for byte. PR #19's design, proposal and tasks are cited at `4f1c0e0`,
+whose D14 and task 2.1 are, byte for byte, those of its round (f) at `662be89`,
+and every string of which that this change quotes `54e869b` keeps. `project:N`
+is the
+executable at `961c405`. L-n and B-n are the lane's rulings for the three
+extensions and for this one: L-1 to L-9 and B-1 to B-9 of 2026-10-11, L-10 to
+L-15 and B-10 to B-15 of 2026-10-18, L-16 and L-17 of 2026-10-19 with B-16 to
+B-24, the lead's council verdicts of that date, and B-25 to B-46 of 2026-10-20
+and B-47 to B-56 of 2026-10-21, and B-57 to B-108 of 2026-10-22 and B-109 to
+B-142 of 2026-10-23; A-n are the rulings for #23 that this proposal cites, and
+R-n are lane openRepoProject-2's rulings for PR #19, cited by number, such as
+R-171 and R-208, and Q1 to Q9 are its questions of 2026-10-23, which Brett Heap
+answered "yes, recommended for Q1-Q9" (R-380), and PR #19's M1 and M3 the two
+open questions of its design that he answered "yes, recommended for M1 and M3"
+the same day (R-413); lane openRepoProject-3's W38
+read of PR #19's round (d), its W33 read of this change's rounds B10 to B12,
+its W44 read of round B13, its W56 note on round B14, its W52 read of next
+steps, its W53 departure ledger, its W62 sums, its W63 read of round B15, its
+W73 read of feature 004's writer G, its W79 read of round B16, its W85 read of
+round B17, its W87 read of PR #19's rounds (j) and (k), its W92 read of rounds
+B18 and B19, its W97 read of rounds B20 and B21, its W107 read of round B22,
+its W110 read of round B23, its W120 read of the next steps that Git refuses at
+the heads of 2026-10-23, its W128 read of round B24, its W133 read of PR #19's
+round (q), its W141 read of PR #19's round (r), its W146 read of PR #19's round
+(s), and readers RH's and RI's composition reads of
+2026-10-22, are cited by their findings, as "W38's L-4", "W33's M-1", "W44's
+LOW-1", "W52's F-12", "W53's 27-03", "W73's M-1", "W79's LOW-1", "W85's LOW-1",
+"W92's LOW-1", "W97's LOW-1", "W107's LOW-1", "W110's LOW-1", "W120's L-3",
+"W128's LOW-1", "W133's MEDIUM-2", "W141's MEDIUM-1", "RH's M1", "RI-9" and
+RI's "O-1", which are
+not the lane's L-n. SA-n, QA-n and G1 to G5 are the alignment review's findings
+on this draft at `7290100`. P-n, S-n and AE-n are the council's concerns
+(product-advocate, systems-architect, adversary-engineer) on `9ebe9f0`, and M1
+to M5 and LOW 1 to LOW 17 are lane openRepoProject-3's packet-fidelity findings
+on `3c08613` and `9ebe9f0`; its re-read of `e906c2f` is cited as "re-read
+MEDIUM 1" and so on, its delta read of `cf57956` as "delta read LOW (1)" and so
+on, lane openRepoProject-4's review of 2026-10-20 by its findings F2 and F4,
+the lane's review wave of 2026-10-21 by reader and finding, RB's HIGH-1 to
+LOW-5 (an adversarial read of `fe5b245`), RD's M2 (a composition read of #26,
+#27 and #29 in archive order) and RF's H1 and M1 (the same composition read
+again at the final heads), the lane's review wave of 2026-10-23 by reader and
+finding, RB's MEDIUM-1 of that date (an adversarial read of `288fc34`, which
+reader RB2 finished and confirmed on Git 2.36.6), RB2's MEDIUM-2 and LOW-1 to
+LOW-5, and RE's RE23-1 to RE23-5 and RE2's RE2-2 (a read of feature 004 at
+`f3724fc` against the three drafts), the date telling RB's MEDIUM-1 apart from
+the 2026-10-21 wave's, lane 3's confirm read of round B9 as "W2's LOW 1" and so
+on, and Codex's inline findings by their file and line. CD-n are this
+proposal's own decisions. The packet is non-normative brainstorm material
+(`OV:16-19`); only the deltas that follow will be normative.
+
+## Why
+
+Change 1 removes only worktrees with no ignored files, on purpose: "caches
+such as `__pycache__` keep a worktree out until the cache-disposal change"
+(CAS proposal.md:72-75). A merged, clean, published worktree whose only extra
+content is Python bytecode is therefore classified `ignored-local-files` and
+kept, run after run, although nothing in it is work. Change 1's measurement
+found `ignored-local-files` the largest exclusion among linked worktrees, 102
+of the 265 linked rows; only `main-worktree`, 296 of all 561 rows, is larger
+(CAS tasks.md:85-87). Its council found 20 of one repository's 29 merged
+worktrees excluded for caches alone (CAS proposal.md:697-699; PR #16 at
+`841c7dc` cites the same count as the evidence for this change). Measured again
+on 2026-10-19, those 20 rows are 13 whose ignored files are only `__pycache__`,
+`.pyc` and `.pyo`, which this change disposes of, and 7 that also hold a
+`.pytest_cache`, which it does not. Across the repositories with linked
+worktrees on that workstation, 37 merged, clean, published rows are kept for
+ignored files: this change makes 13 removable, 3 more are cache-only but stay
+excluded as `contains-submodule`, 16 are kept by `.pytest_cache` alone, and 5
+by other files (the council's P-1; Open Questions). Change 1 names cache
+disposal "the first follow-on change" (CAS proposal.md:697).
+
+The packet keeps cache deletion out of the first batch (`OV:150-152`,
+`SY:232-235`, `HO:47-50`) and fixes the contract a later proposal must meet
+(`BA:1314-1337`): a stage of its own before the worktree removal, inside
+`retire_worktree` and its deadline, counting its mutations in
+`operations.estimated` and its bounds in `limits` (`BA:1318-1322`); symlink
+candidates and ancestors ineligible; descriptor-relative, no-follow operations
+with each opened directory checked against its planned device and inode,
+failing closed where the platform cannot do that (`BA:1324-1330`); each cache
+path reported separately, a partial phase recorded as permanent partial
+completion with retry guidance, no worktree mutation after a failed preflight,
+and hard limits on entries and bytes in the plan estimate (`BA:1332-1337`). A
+proposal that adopts the extension must update the governing cleanup
+specification and add its failure and recovery contract first (`BA:56-60`,
+`OV:178-180`).
+
+The packet defines no cache: `grep -niE '__pycache__|\.pyc|disposable'` over
+`ideation/brainstorm/` finds only the commit descriptions at `OV:177` and
+`BA:41`. The allowlist exists only in the closed PR #2's code and in change
+1's prose. PR #2's `1789ad9` and `bb91a49` are the harvest source and do not
+meet the contract (`git show bb91a49 -- project`): no planned identity is
+checked; the ignored listing is unbounded and no cap exists; each path is
+revalidated only just before its own deletion (review thread 3989548481, open
+at the close); a cache under a parent not named `__pycache__` is classified
+disposable and then refused after confirmation (the open review finding at
+`project:759` of `bb91a49`); and a missing `O_NOFOLLOW` falls back to flag 0
+through `getattr(os, "O_NOFOLLOW", 0)` instead of failing closed.
+
+## What Changes
+
+- **Behaviour users will notice.** A merged, clean, published linked worktree
+  whose ignored files are only Python bytecode caches is now selected by
+  `project clean <root> --all-safe` (measured 2026-10-19: 13 of 37 such rows)
+  and removable by `--apply --action remove --worktree P`: the preview lists
+  its caches, and apply disposes of them in a cache stage, then removes the
+  worktree exactly as change 1 does, its branch kept. `project overview` keeps
+  reporting such a worktree as `ignored-local-files`, a preserve warning, whose
+  suggestion is the read-only clean report. A worktree holding any other
+  ignored file stays `ignored-local-files`, and its preview now says how many
+  of its ignored paths are disposable and how many block it, or, when its
+  sampled paths already show one that blocks, names that path without
+  counting. A worktree whose only ignored files are caches but which is
+  detached, unpublished or unmerged stays `ignored-local-files`, and its
+  preview names that state, since disposing of its caches would not make it
+  removable. Squash-merged worktrees are among them while question 2 is open.
+  For a repository whose worktrees hold no ignored files nothing changes: its
+  plan, digest, question, stages and exit status are change 1's. Where
+  cache-only rows that a gate after `deferred-target-cap` excludes take target
+  places, a worktree with no ignored file behind them is deferred where change
+  1 selected it (design Risks, B-56).
+- **The allowlist (B-1).** A listed cache is an ignored path that is either a
+  directory named `__pycache__` whose entries are only regular files whose
+  names end `.pyc` or `.pyo` and directories named `__pycache__` of the same
+  shape, or a regular file whose name ends `.pyc` or `.pyo`, none of them a
+  symbolic link. Every directory between the worktree root and a listed path
+  must be a non-symlink directory on the worktree root's device, as must a
+  listed cache directory and every directory inside it (B-48), and the path,
+  and every entry name inside a listed directory, must be valid UTF-8 (CD-8,
+  B-51). Every other ignored path is blocking.
+  `.pytest_cache` is before Brett Heap, with a recommendation not to admit it
+  in this change (B-23, B-50); other cache kinds are out of scope (Open
+  Questions).
+- **Detection by a bounded enumeration of its own (B-2, B-12).** The combined
+  status probe stops at the 65th ignored record and keeps eight samples
+  (CAS/cmd:161-173), so it cannot prove a whole worktree disposable. A
+  candidate row is a linked worktree whose combined probe read ignored records
+  and nothing else, none of whose samples has a name or encoding that the
+  allowlist rejects (the sample test, which spawns no child), and which, its
+  ignored records aside, would be `merged-removable` and pass every gate before
+  `deferred-target-cap` (CD-7). For each, in canonical order and at most 16 per
+  invocation (CD-6), `project clean` runs one more Git child in that worktree,
+  `status --porcelain=v2 -z --untracked-files=normal --ignored=matching`, under
+  the evidence model's scrub, protocol pins and directory rule and with the
+  five status pins, the fifth Brett Heap's Q1 of 2026-10-23 (B-124), and its
+  own `-c status.showStash=false` (CD-5, B-47, RH's M1), a child that exits 0
+  having warned on standard error counting as one that fails, as his Q8 counts
+  a combined probe that does (RE23-1), reading at most 512 records, then walks
+  the listed caches descriptor-relatively, opening each directory it records
+  once and counting it toward the per-worktree cap with the entries (B-33),
+  enumerating each cache directory one entry at a time and closing the
+  enumeration as soon as the cap decides, so that no directory's whole listing
+  is held (B-44), and checking with one descriptor-relative access check per
+  directory the stage would change that the running user may remove entries
+  from it (B-20). A row whose enumeration reaches a cap stays
+  `ignored-local-files` with the reason `cache-cap`; one
+  whose enumeration fails, times out, or reads anything but ignored records,
+  or an ignored record whose path is absolute or holds an empty, `.` or `..`
+  component (B-51, B-53), stays
+  `ignored-local-files` with `cache-unverified`; one whose caches the
+  user cannot change stays `ignored-local-files` with `cache-unwritable`, its
+  counts established, not selected and stopping nothing; and the plan stays
+  complete (CD-9).
+- **Caps (B-3, CD-6).** Per worktree, 512 recorded objects, its cache entries
+  (every file and directory the stage would remove) and every directory the
+  plan records for them, those above the caches included (B-33), and 256 MiB,
+  the `lstat` sizes of its regular files summed at plan time; per invocation,
+  4,096 entries, 1 GiB and 16 enumerations. `limits` reports them as
+  `cache_entries`, `cache_bytes`, `cache_entries_total`, `cache_bytes_total`
+  and `cache_rows`. The enumeration children count in `probes`, and each entry
+  a cache stage removes counts in `operations` beside the removal children
+  (draft PR #19, pending; CD-12; `BA:1321-1322`, `BA:1336-1337`). On PR #19's
+  text at `dab8a64`, which its head `54e869b` keeps, as at `4512441`,
+  `173d83c`, `b3228bb` and `f0bf538` (B-54, B-58, B-60, B-76, B-80, B-84, B-88,
+  B-93, B-126, B-135, B-139), whose revalidation spawns six Git children a
+  target where change 1's spawned five, for a plan that read
+  `extensions.worktreeConfig` as false, and three more where the path of the
+  repository's root or of its common directory holds a line feed, a case that
+  these figures, like D4's, do not count, the 50 s fit of the Git children no
+  longer holds all 16 targets with the 16 enumerations at the packet's 150 ms
+  per child, the first of PR #19's three bases: 283 children and 16 removals
+  take about 47.3 s, and the 15th and 16th targets reach their stage at about
+  45.3 s and 46.5 s, past the spawn limit, 45 s, after which less than the 5 s
+  removal floor remains, so 14 of 16 do, the other two deferred to the next run
+  with exit 1, never unsafe; where the plan read it as true, PR #19's D14 gives
+  the 128-row
+  case on three bases, before this change's enumerations, no removal at
+  150 ms and 11 on its mixed basis, and on its measured basis, D5's, on which
+  the case passes since Brett Heap resolved its LQ-20 by having the two probes
+  it had costed by stand-ins measured (2026-10-22), all 16, the 16th at 30.0 s
+  (37.7 s with 20,000-file removals); with this change's enumerations, walk
+  and stages, the 16th then comes at about 37.6 s through one worker and about
+  44.6 s at a thread per call, so all 16 fit, and with 20,000-file removals
+  15 of 16 fit through one worker, the 16th at about 45.3 s, and 11 or 12 at a
+  thread per call (design D4; B-65), the enumeration's child at revalidation
+  costed as the status probe whose place it takes; costed as an enumeration,
+  the 16th comes about 1.3 s later, and at a thread per call, at about 45.9 s,
+  it waits for the next run with exit 1, which task 2.3's measurement settles
+  (B-79). Design D4
+  restates the fit with the measured cost of the walk's and the stages'
+  filesystem calls, the walk bounded at 16 x 512 = 8,192 recorded objects
+  because a row the invocation's totals reject was still walked (B-25), and with
+  the stages' removals waited for (B-16, S-4): for ordinary trees, at the top of
+  the measured cost, 11 of 16 targets reach their stage or spawn, the floor
+  refusing the rest, which are deferred to the next run with exit 1, never
+  unsafe (B-31, B-54). In B-33's worst case, a deep tree whose every directory
+  with removals costs a chain from the worktree root, no fit holds without a new
+  limit, which is put to Brett Heap beside the caps; the caps stay before him
+  (Open Questions).
+  Candidates past the 16th drain on re-run as the candidates ahead of them are
+  removed or cease to be candidates, one left at the rung keeping its place
+  though the classification excludes it (round B12), unless each of the first
+  16 candidates is held for a persistent reason (B-32), one that a gate after
+  `deferred-target-cap` excludes counting as held (B-56), a stall the human
+  report
+  names with each row's cause and next step (QA-2, B-21) when at least one
+  later candidate is left with `cache-cap` by the 16-enumeration cap, and
+  otherwise not, each row then printing its own reason and next step (B-45),
+  or unless the rows that `deferred-target-cap` defers will not drain, which
+  change 1's line names; those rows drain as the rows ahead of them are
+  removed or excluded by a gate before the cap, as change 1's do. Candidates
+  that the invocation's totals leave drain as the candidates ahead of them are
+  removed, cease to be candidates or cease to count toward those totals,
+  unless those deferred rows will not drain; a row that a gate after
+  `deferred-target-cap` excludes is not counted toward the totals, though it
+  keeps its place among the 16 (B-56, round B13).
+- **The ladder reads blocking paths (B-5).** The `ignored-local-files` rung
+  keeps its name and its place and applies to a row holding an ignored path
+  that is not proven, within the caps, a listed cache; a row whose every
+  ignored path is a listed cache passes it, and the rungs below classify it, so
+  a merged one is `merged-removable`. No ladder class, gate reason, stage
+  value, reason value, refusal code or note code is added (L-4).
+- **The plan records identities (B-4).** Each worktree row holding ignored
+  records, and each `selected` entry whose plan lists caches, carries a
+  `cache_disposal` object; any other row or entry carries no such key, never
+  `null` (L-10, B-13). The object holds the `disposable` and `blocking` counts,
+  `null` and never 0 when not established (B-9); a `reason`; `entries` and
+  `bytes`; the listed cache paths; the device and inode of every directory the
+  stage will open, each ancestor up to the worktree root and each cache
+  directory; and up to eight blocking samples. A selected target's listed
+  caches and those identities enter the canonical text of `plan_digest`, by a
+  MODIFIED block of change 1's batch requirement (B-10, CD-14); a plan that
+  lists none keeps change 1's digest.
+- **The cache stage (B-6, B-8).** In the removal sequence, after the target's
+  revalidation and before its removal child is spawned, inside the same
+  deadline: a whole-list preflight opens every directory of every listed path
+  descriptor-relatively with `O_NOFOLLOW`, as the removals do after it, one
+  chain from the worktree root per directory holding a listed path (B-33),
+  checks each against its planned
+  device and inode, re-lists each cache directory against the allowlist and
+  the number of entries the plan recorded for it, by the walk's streaming
+  enumeration, closed at the first entry beyond that number (B-44), and keeps
+  the run's byte total, refusing a target whose measured bytes would take it
+  past the invocation's 1 GiB (B-26), all before the first unlink; then files
+  are unlinked and emptied directories removed one entry at
+  a time, never by a recursive deletion, and a directory that is no longer
+  empty is never removed. The stage starts only while more than the 5 s
+  removal floor remains and no signal has arrived, and checks both again
+  immediately before it hands its first removal to its worker (B-17); each of
+  its reads gets `min(5 s, work remaining less the removal floor)` on change
+  1's daemon threads, while each unlink and directory removal is handed over
+  only while more than the floor remains and is waited for until it returns,
+  as change 1 waits for its removal child, up to the 300 s removal ceiling
+  (CD-10, B-16). The hand-off of the first removal is the stage's commit point:
+  once it is made the stage runs to its end, a signal only being recorded
+  (CD-11). Change 1's rule that `project` never deletes a directory itself
+  gains this stage as its one exception (B-10).
+- **Failure and recovery (B-6, B-11).** A preflight difference deletes nothing,
+  and so does a first removal refused for what the plan's access check cannot
+  see, a sticky directory or a change made after the plan (B-20, B-51). A
+  failure after an
+  entry was removed leaves the earlier removals as permanent partial cache
+  completion, rescans the listed paths by the same identity-checked descriptor
+  chains the removals use (B-18), and reports each one removed, remaining, or
+  not established, a path whose removal is still outstanding among the last,
+  with the retry: re-run `project clean <root> --all-safe`, whose fresh plan
+  lists what remains (`BA:1332-1336`). Either way the target's removal child is
+  not spawned: the target is `refused` with `state-changed`, its
+  `cache_disposal` records `refused` with `cache-changed` or `partial` with
+  `cache-partial` (CD-2), and the run stops there, as change 1 stops at any
+  target that is not a plain `removed` (CD-1; `BA:1640-1643`), with exit status
+  2, or 1 when the removal floor ended the stage or the removal ceiling ended
+  the wait for one of its removals, the later targets then being
+  `not-attempted` with `deadline-exceeded`. A target whose stage removed every
+  listed cache but whose removal a signal or the floor then stopped is
+  `not-attempted` and carries its reconciliation (B-17). A target whose stage
+  the floor or the work deadline stopped in a read before its first removal is
+  `not-attempted` too, with nothing deleted, no difference found and no
+  reconciliation, the later targets likewise and the exit status 1 (B-34); a
+  read that outlives its own 5 s budget with at least 10 s of work remaining
+  stays a preflight error, `refused` with `cache-changed` (B-38, B-43), unless
+  a signal was received before the stage classified that or any other outcome
+  of the preflight, a changed entry or an error included, in which case the
+  stage is `not-attempted`, the target `interrupted` and the exit status the
+  signal's, as at the check before the first hand-off (B-39, B-41).
+- **Fail closed per platform (B-6, CD-3, B-37).** Where the running Python
+  cannot provide `O_NOFOLLOW`, `O_DIRECTORY` and the descriptor-relative calls,
+  no row gets a cache plan: a row that reaches the `ignored-local-files` rung
+  with ignored records keeps it with the reason `cache-unsupported-platform`, a
+  row that an earlier rung classified, a `dirty` one among them, keeps that
+  classification and its `not-candidate` sub-record, no enumeration runs, and
+  the batch behaves as change 1's.
+- **Revalidating a cache target (CD-4).** Change 1's revalidation requires the
+  combined status probe in the target to print no record (CAS/rs:75-76), which
+  every cache target fails. For a target whose plan lists caches, the
+  revalidation runs the enumeration's status child instead, which must print
+  exactly the ignored records the plan listed and nothing else, still within PR
+  #19's six Git children at `dab8a64`, as at `4512441`, `173d83c` and
+  `b3228bb`, seven where the plan read `extensions.worktreeConfig` as true, and
+  three more where
+  the path of the repository's root or of its common directory holds a line
+  feed (B-84), the child taking the combined probe's place, before the
+  hidden-state probe and PR #19's `worktree-only-commits` check (B-54). Any
+  other outcome refuses the target with `state-changed`, but a cut by the work
+  deadline, which leaves it and every later target `not-attempted` with
+  `deadline-exceeded` by PR #19's one rule for every Git child and every
+  filesystem call of the revalidation (B-55, R-208, B-58); a listed cache
+  missing there is a record the child does not print, a difference. The narrow
+  guarantee's revalidation is, for such a target, the one before its cache
+  stage (B-10).
+- **What the person sees (B-9, B-7).** The preview lists a selected target's
+  caches under it (paths, entries, bytes and the first path); an
+  `ignored-local-files` exclusion adds its disposable and blocking counts, or
+  `unknown` with the reason, its first blocking path, and, for a row that is
+  not a candidate, the class or gate that really keeps it with that next step
+  (`candidate_block`, B-24). The question is change 1's, unchanged (CD-15).
+  Success adds one line naming the caches disposed; a stop at a cache stage
+  adds one line before the stop block, saying that nothing was deleted, only
+  when nothing was and no removal is outstanding, or which cache paths were
+  removed, which remain and which may still be removed, naming the work
+  deadline when it ended the stage (B-16, B-21); a stop after a stage that
+  disposed of every cache says so and that the worktree was not removed (B-17),
+  as does a stop at that target when Git refused its removal or it could not be
+  spawned (B-49), or, when Git's removal then failed, says that it failed and
+  may have deleted part of the worktree and its registration, and to inspect
+  the path by hand (RB's MEDIUM-1 of 2026-10-23), or, where that removal is not
+  proven, says so (B-49); a stop at a stage that the floor or the deadline
+  stopped in a read before its first removal, and with no signal received by
+  then, says that it was not attempted because of the deadline and that nothing
+  was deleted (B-34, B-39), and the line for a stage that ended `refused`
+  before its first removal is printed only where no signal had been received by
+  then (B-41). The stall line names, for the 16 rows that hold the others back,
+  how many stay for each cause, with its next step, those that a gate after
+  `deferred-target-cap` excludes by those gates' reasons (B-56), and never
+  tells the person to remove by hand a worktree whose state was not established
+  (B-21); it is printed only when a later candidate waits behind them (B-45).
+  The residual-window line also names ignored files created during a cache
+  stage and a cache recreated after it, which Git's non-force removal deletes
+  with the worktree (`BA:319-323`, B-19).
+- **Versioned JSON.** Worktree rows, `selected` entries and apply-result
+  targets gain `cache_disposal` where this change acts (L-10), and `limits`
+  gains five keys. No value is added to any existing enum, `candidate_block`
+  takes its values from the existing class names and gate reasons (B-24), and
+  `schema_version` stays 1 (CD-16; Open Questions).
+- **The overview's equality clause (B-14, B-22, B-30).** Change 2's "Overview
+  reuses the cleanup classifier and merge target" gains two sentences: the
+  overview, which collects no cache evidence, SHALL classify
+  `ignored-local-files` a worktree that `project clean` classifies
+  `merged-removable` because clean's cache enumeration proved every ignored path
+  a listed cache, and SHALL NOT classify a worktree `merged-removable` where
+  `project clean` classifies it otherwise for the same working directory and
+  refs.
+  Lane openRepoProject-4 agreed the first wording on 2026-10-19 and it was
+  committed as `b4d3e12`; B-22's rewording, a third worktree in the new
+  scenario's fixture and lane 4's precision in the carried "Every protected
+  classifier" were agreed by lane 4 on 2026-10-19 and committed as `9f30fb9`;
+  B-30's scope, "for the same working directory and refs", is lane 4's own
+  words of 2026-10-20, committed as `4d5855a`, which lane 4 byte-checked on
+  2026-10-20 (`tasks.md` 2.2).
+
+## Rules This Change Keeps
+
+- **Never force, never a broad deletion.** No `git clean`, no recursive
+  deletion and no deleting command run by `project`: caches go one entry at a
+  time, and a directory only once `project` has emptied it (`BA:1329-1330`,
+  `BA:1632-1634`; PR #2's design rejected `git clean -fdX` because it also
+  deletes unknown ignored files). Change 1's "`project` SHALL never force a
+  removal or delete a directory itself" gains one exception, this stage's
+  descriptor-relative deletion of listed cache paths (B-10); its "It MUST never
+  use a force removal, reset, or deletion of unmerged work" stays verbatim.
+- **What is not proven disposable is preserved.** An ignored path is
+  disposable only when this invocation's enumeration proves it a listed cache
+  within the caps; an unproven path is blocking, and `null` is never 0.
+- **Never follow a symlink or leave the worktree.** A symlink candidate or
+  ancestor is blocking (`BA:1324-1325`, whose "any ancestor" this change reads
+  as any directory between the worktree root and the cache, the root's own
+  ancestors being covered by change 1's realpath and identity check and the
+  root's identity checked when the plan-time walk and the stage open it, RB2's
+  LOW-1); every descent is descriptor-relative with `O_NOFOLLOW` and an
+  identity check, and no descriptor given to a call still outstanding is closed
+  and reused (B-16); a hard-linked `.pyc` loses only its name inside the
+  worktree, and every external target stays intact (`BA:1632-1634`). One
+  residual is stated, not closed: a bind mount from the worktree's own
+  filesystem passes the device check, so through it disposal reaches the
+  mount's cache files as the worktree's own (CD-8, B-48).
+- **Stop before the worktree removal when the cache stage fails**
+  (`BA:1335-1336`), and stop the run at the first target that is not a plain
+  `removed`, as change 1 does (CAS/pc:246-248; `BA:1640-1643`).
+- **Removing a worktree leaves its branch.** Unchanged; paired retirement is
+  `add-project-clean-branch-retirement` (#23).
+- **Nothing beyond the confirmed plan.** The stage disposes of only the caches
+  that the confirmed plan lists, each holding the number of entries the plan
+  recorded, in a target that plan selected; the main worktree and every row not
+  selected are never touched.
+- **Local evidence only.** No fetch and no network; remote evidence never
+  proves anything disposable (`SY:129-130`).
+- **A started removal is never interrupted.** Unchanged; a cache stage, once
+  it has handed over its first removal, also runs to its end, and each removal
+  it hands over is waited for as a removal child is (B-16).
+
+## What This Repository Does Not Own
+
+- **Python's caches.** Python writes them again on the next import; `project`
+  decides only whether a worktree's caches are its only ignored content, and
+  never whether Python writes them (`PYTHONDONTWRITEBYTECODE` and
+  `PYTHONPYCACHEPREFIX` are the person's).
+- **Git's ignore rules.** Which paths are ignored is the repository's
+  `.gitignore`, `info/exclude` and `core.excludesFile`; `project` reads Git's
+  verdict and never edits them.
+- **Git's own refusals.** The pinned non-force `git worktree remove` stays the
+  last defense after the cache stage.
+- **The overview's evidence.** `project overview` is change 2's, owned by lane
+  openRepoProject-4 with feature 005; this change does not alter what it
+  collects, and amends only its equality clause, as lane 4 asked (B-14).
+
+## Capabilities
+
+### New Capabilities
+
+None. PR #2's `project-clean-disposable-cache-artifacts` is not reused (L-3);
+the contract lives in the two existing cleanup capabilities.
+
+### Modified Capabilities
+
+Headers are quoted verbatim, one per line; ADDED headers are proposed text. A
+line number alone is the canonical spec's at `961c405`; each MODIFIED block
+also names the delta text it is written on.
+
+- `project-clean` (all five canonical requirements and change 1's six ADDED
+  ones accounted for):
+  - MODIFIED (`:25`; written on PR19/pc:159 at `dab8a64`, re-based there in
+    round B26, B-135, unchanged at `54e869b`, B-139; at `4512441` in round
+    B25, B-122, B-126; on PR19/pc:136 at `6bf9f77` since round B16, B-76,
+    B-80, unchanged at `b3228bb`, `e0c91bb`, `e14ada0`, `173d83c`, `ccc52b9`,
+    `20084cd`, `2250830` and `88d0d36`, B-84, B-87, B-88, B-93, B-95, B-99,
+    B-104, B-107; at `f0bf538` in round B15, B-69; CAS/pc:105 before): `###
+    Requirement: Clean classifies preservation and cleanup actions`. The
+    `ignored-local-files` rung applies to a row holding an ignored path not
+    proven, within the caps, a listed cache, or a listed cache in a directory
+    the access check finds the user cannot change (B-20), and a row whose every
+    ignored path is a listed cache that passes that check passes it; a failed
+    cache enumeration leaves the paths unproven and is never
+    `inspection-error`; its `inspection-error` sentence names the combined
+    status probe; a row's cache proof is its evidence, though the caps can
+    withhold it. The fifteen names, the order and the ancestry test stay, with
+    the `partially-removed` row's recovery texts in the words of Brett Heap's
+    Q4 (PR #19's round (q)), the `stale-worktree` recommendations that PR #19's
+    round (r) states (W133's MEDIUM-4), the main worktree's recommendation that
+    its round (s) states, "The main worktree is never removed by project
+    clean." (W141's MEDIUM-1), and the six scenarios, round (s)'s "The main
+    worktree's recommendation" among them. Added scenario: cache-only ignored
+    files pass the rung, and beside `local.env` they do not.
+  - MODIFIED (`:55`; written on PR19/pc:364 at `4512441`, re-based there in
+    round B25, B-122, B-126, unchanged at `dab8a64` and `54e869b`, B-135,
+    B-139; on PR19/pc:323 at `2250830`, re-based there in
+    round B22, B-104, unchanged at `88d0d36`, B-107; on PR19/pc:300 at
+    `173d83c` since round B19, B-93, unchanged at `ccc52b9` and `20084cd`,
+    B-95, B-99; at `e14ada0` in round B18, B-88; at `e0c91bb` in round B17,
+    B-87; at `b3228bb` in round B16, B-84; at `4f1c0e0` in round B16's earlier
+    stages, B-76, unchanged at `6bf9f77`, B-80; at `f0bf538` in round B15,
+    B-69; CAS/pc:230 before), one inserted clause only: `### Requirement: Clean
+    can explicitly retire verified worktrees`. The one sequence gains "for a
+    target whose plan lists caches, dispose of them as "Clean disposes of
+    listed caches before a worktree removal" states;" between the revalidation
+    and the spawn. Every other sentence and the sixteen scenarios stay as PR
+    #19 writes them at `4512441`, the removal command's `core.trustctime=true`,
+    `core.checkStat=default` and, since its round (q), `core.ignoreCase=false`
+    pins (Brett Heap's Q1, with the scenario "Two worktree paths that differ
+    only in case"), the refusal for a branch that the main
+    worktree holds and the scenario "Branch deletion refuses a branch it may
+    not delete", with its four messages, and the removal ceiling's recovery
+    text in its three forms, two by whether the rescan finds the target's
+    `.git` file and registry entry both present (round (h)'s F-1, the second
+    since round (q) in the words of Brett Heap's Q3 (a), "inspect, then delete
+    `<path>` and its administrative directory
+    `<common_dir>/worktrees/<admin_id>` by hand", in place of round (p)'s R-365
+    text, in either mode, as round (r) words the ceiling's AND) and a third
+    where the rescan cannot read that `.git` file, whatever the rescan finds of
+    the registry entry (round (i)'s R-284, in round (k)'s words, its warning in
+    round (n)'s, R-324), among them.
+  - MODIFIED (change 1 ADDED; written on PR19/pc:785 at `dab8a64`, re-based
+    there in round B26, B-135, unchanged at `54e869b`, B-139; on
+    PR19/pc:725 at `818311a` in round B25, B-122, unchanged at `4512441`,
+    B-126; on PR19/pc:672 at
+    `b3228bb` since round B16, B-84, unchanged at `e0c91bb`, `e14ada0`,
+    `173d83c`, `ccc52b9`, `20084cd`, `2250830` and `88d0d36`, B-87, B-88, B-93,
+    B-95, B-99, B-104, B-107; at `4f1c0e0` in round B16's earlier stages, B-76,
+    unchanged at `6bf9f77`, B-80; at `f0bf538` in round B15, B-69; CAS/pc:566
+    before), B-10: `### Requirement: Clean previews and applies a batch of
+    eligible worktree removals in one repository`. The digest's canonical text
+    carries, after each selected target's triple whose plan lists caches, its
+    cache paths and planned cache directory identities; a plan that selects no
+    such target carries none. The `worktree-only-commits` rule's closing "as
+    for every other read and child" gains one exception: the cache
+    enumeration's child and the calls of its walk leave their row
+    `cache-unverified` and the plan complete, unless the deadline cuts them
+    (B-51, B-84; RB2's LOW-5, B-119, which moved it there in round B25 from the
+    branch reflog's outcome rule, whose line is PR #19's again); a child or
+    call that the deadline cuts records `deadline-exceeded` and leaves the plan
+    incomplete, as PR #19's deadline clause and this change's enumeration rule
+    give. Every other sentence stays, PR #19's gates after the cap,
+    `operation-in-progress` and `worktree-only-commits`, with their
+    definitions, and the `lstat` of `<dir>/.git` that Brett Heap's Q2 (2) adds
+    to the `contains-submodule` gate, for a directory that holds an index entry
+    directly or below it, other than the worktree's own top level, all of a
+    row's in one filesystem call under one budget, as PR #19's round (s) words
+    it (W141's LOW-3, R-409), among them. The scenario "Every protected
+    classifier" names its ignored files as not Python bytecode caches (B-22,
+    lane openRepoProject-4's precision); the other twelve stay, PR #19's three
+    added scenarios among them. Added scenario: cache paths are part of the
+    plan digest.
+  - MODIFIED (change 1 ADDED; written on PR19/pc:1040, draft PR #19's text at
+    `818311a`, re-based there in round B25, B-122, unchanged at `4512441`,
+    B-126, and at `dab8a64` and `54e869b`, B-135, B-139; on
+    PR19/pc:1018 at `2250830`, re-based there in round B22, B-104,
+    unchanged at `88d0d36`, B-107; on PR19/pc:1016 at `20084cd`, re-based there
+    in round B21, B-99; on PR19/pc:984 at `b3228bb`, re-based there in round
+    B16, B-84, unchanged at `e0c91bb`, `e14ada0`, `173d83c` and `ccc52b9`,
+    B-87, B-88, B-93, B-95, rewritten on `a664799` in round B10, B-54, and
+    re-based on `2e819ad` in round B11, whose text rounds (d) to (g3) keep byte
+    for byte, B-58, B-60, B-76, B-80): `### Requirement: Clean bounds its Git
+    work and reports omitted work`. The cache stage's start only while more
+    than the removal floor remains, a stricter test than the removal child's,
+    which is spawned while at least that floor remains (RI-9, B-67), and its
+    reads' budget; its removals handed over only while more than the floor
+    remains and waited for as removals in flight up to the 300 s ceiling
+    (B-16); the cache walk's opens, bounded directory enumerations (B-44),
+    `lstat` calls and access checks among the filesystem calls; the five cache
+    caps in `limits`; the enumeration children in `probes` and in the fit, on
+    the packet's 150 ms basis, which it names, for a plan that read
+    `extensions.worktreeConfig` as false and a root and common directory whose
+    paths hold no line feed (B-84), the walk's and the stages' filesystem calls
+    outside it; each removed cache entry in `operations`. The scenario
+    "Ignored-file bound" names files that are not caches; the other four stay,
+    "Row cap and planning failures" with the AND for the row cap's remedy that
+    PR #19 adds at `20084cd`, its warning in round (n)'s words at `2250830`
+    (R-324), and since round (q) Brett Heap's Q3 (b) warning to run
+    `git worktree prune --dry-run` first. Added scenario: the cache limits and
+    counts.
+  - MODIFIED (change 1 ADDED; written on PR19/pc:1183 at `818311a`, re-based
+    there in round B25, B-122, unchanged at `4512441`, B-126, and at `dab8a64`
+    and `54e869b`, B-135, B-139; on PR19/pc:1157 at `2250830`, re-based there
+    in round B22, B-104, unchanged at `88d0d36`,
+    B-107; on PR19/pc:1128 at `e14ada0` since round B18, B-88, unchanged at
+    `173d83c`, `ccc52b9` and `20084cd`, B-93, B-95, B-99; at `e0c91bb` in round
+    B17, B-87; at `b3228bb` in round B16, B-84; at `f0bf538` in round B15 and
+    round B16's earlier stages, B-69, whose text `6bf9f77` keeps byte for byte,
+    B-76, B-80; CAS/pc:886 before), B-10: `### Requirement: Clean records a
+    reconcilable result for every removal target`. The `refused` stage also
+    names a cache stage that ended `refused` or `partial`; the `not-attempted`
+    stage also names a target whose cache stage ended `disposed` and whose
+    removal a signal or the floor then stopped, and such a target carries its
+    reconciliation once its stage removed an entry; the signal paragraph lets a
+    cache stage that has handed over its first removal run to its end (B-17,
+    lane 3's M2, its re-read MEDIUM 2 and LOW 1); the exit table's row 2 also
+    names a cache stage's removal that reached the removal ceiling (re-read
+    MEDIUM 1); "`project` SHALL never force a removal or delete a directory
+    itself" gains its one exception, a cache stage's descriptor-relative
+    deletion of listed cache paths. PR #19's two reasons,
+    `operation-in-progress` and `worktree-only-commits`, and its deadline-cut
+    revalidation stay in the `refused` and `not-attempted` stages, as does this
+    change's text beside them, and so does the recovery text of a
+    `partially-removed` target in its three forms (round (h)'s F-1 and round
+    (i)'s R-284, the third's warning in round (n)'s words, R-324, and the
+    second in the words of Brett Heap's Q3 (a) since round (q), "inspect, then
+    delete `<path>` and its administrative directory
+    `<common_dir>/worktrees/<admin_id>` by hand"). The eight scenarios stay.
+  - ADDED:
+    `### Requirement: Clean disposes of listed caches before a worktree removal`.
+    The allowlist, the sample test, candidate rows, the enumeration with its
+    five status pins and `-c status.showStash=false` (B-47, RH's M1; Brett
+    Heap's Q1 for the fifth, B-124) and its child counted as failed when it
+    exits 0 having warned on standard error, as his Q8 counts the combined
+    probe (RE23-1), and its caps, the per-worktree one counting recorded
+    directories (B-33), the walk's root opened with the stage's identity check
+    (RB2's LOW-1), its streaming enumeration of each cache directory, closed
+    when the cap decides (B-44), the access check, reasons, a record path that
+    is absolute or holds an empty, `.` or `..` component and a no-follow open
+    refused at plan time among the causes of `cache-unverified` (B-51), and the
+    stall on persistent reasons (B-32), reported only beside a later candidate
+    that the 16-enumeration cap left (B-45), a candidate that a gate after
+    `deferred-target-cap` excludes counting as held for one and left out of
+    the invocation's totals (B-56), the plan's `cache_disposal`
+    with identities, counts and `candidate_block` and its presence rule, the
+    cache stage's place, start, checks, commit point and budget, the result's
+    `cache_disposal`, its `removed` true only for the stage's own returned
+    removal (RB2's LOW-2), the exit statuses through change 1's table, and the
+    human lines, the one for a preflight that the deadline stopped included
+    (B-34), and the one for a `disposed` stage whose target's removal then
+    failed or is not proven (B-49), in words of its own for a removal that
+    ended `git-failed`, after which Git may have deleted part of the worktree
+    and its registration (RB's MEDIUM-1 of 2026-10-23), and the
+    `cache-unwritable` line, which names the directory whose access check
+    failed and both remedies, to fix its ownership or mode and, on a read-only
+    filesystem, to remount it writable (B-72, B-74).
+  - Untouched (`:10`): `### Requirement: Clean reports local worktree state`.
+    The plain report carries `cache_disposal` on its rows holding ignored
+    records as every plan does, and its `selected` stays what `--all-safe`
+    would select.
+  - Untouched (`:39`):
+    `### Requirement: Clean can explicitly push safe feature branches`.
+    Push and delete-branch run no cache enumeration.
+  - Untouched (`:70`): `### Requirement: Clean hands off work requiring review`.
+  - Untouched (change 1 ADDED): `### Requirement: Clean resolves its target Git-first`.
+  - Untouched (change 1 ADDED):
+    `### Requirement: Clean reports every path exactly or excludes it`.
+    Cache paths are written by its rules.
+  - Untouched (change 1 ADDED):
+    `### Requirement: Clean plans and refusals are versioned JSON`.
+    The new objects and keys are additive (CD-16).
+- `project-clean-review-safety` (all four canonical requirements and change 1's
+  ADDED one accounted for):
+  - MODIFIED (`:21`; written on PR19/rs:3 at `dab8a64`, re-based there in round
+    B26, B-135, unchanged at `54e869b`, B-139; at `818311a` in round B25,
+    B-122, unchanged at `4512441`, B-126; at `f0bf538` since round B15,
+    B-69, whose text `b3228bb`, `e0c91bb`, `e14ada0`, `173d83c`, `ccc52b9`,
+    `20084cd`, `2250830` and `88d0d36` keep byte for byte, B-76, B-80, B-84,
+    B-87, B-88, B-93, B-95, B-99, B-104, B-107; CAS/rs:3 before): `###
+    Requirement: Cleanup preserves all local work not proven disposable`.
+    Ignored local files stay a preservation state, except listed caches, which
+    are disposable only by the cache stage of a selected target. The scenario
+    "A merged worktree has ignored local files" names an ignored file that is
+    not a cache; the other six stay, PR #19's "A repository nested in a tracked
+    directory" and "The main worktree inside a linked worktree" among them. PR
+    #19's two added states, an operation in progress and a commit held only by
+    the worktree, stay in its list of preservation states, and so do the states
+    that its round (q) widens by Brett Heap's Q2 and Q9 (b),
+    `contains-submodule` to a directory that holds an index entry directly or
+    below it, other than the worktree's own top level, and an entry named
+    `.git`, in its round (s)'s words (W141's LOW-3), and
+    `registration-mismatch` to a path that is the common directory, the main
+    worktree or another row's path, or an ancestor of one, and to a registered
+    path that is a symbolic link, its sentence the same at `dab8a64` as at
+    `818311a` and `4512441`. Added scenario: a worktree whose only ignored
+    files are caches.
+  - MODIFIED (`:49`; written on PR19/rs:89 at `dab8a64`, re-based there in
+    round B26, B-135, unchanged at `54e869b`, B-139; on PR19/rs:88 at `4512441`
+    in round B25, B-122, B-126; on PR19/rs:66 at `173d83c`, re-based there in
+    round B19, B-93, unchanged at `ccc52b9`, `20084cd`, `2250830` and
+    `88d0d36`, B-95, B-99, B-104, B-107; at `e14ada0`, re-based there in round
+    B18, B-88; at `b3228bb`, re-based there in round B16, B-84, unchanged at
+    `e0c91bb`, B-87, rewritten on `a664799` in round B10, B-54, re-based on
+    `2e819ad` in round B11, on `9267303` in round B12, B-58, and on `f0bf538`
+    in round B13, B-60, whose text `6bf9f77` kept byte for byte, B-76, B-80; at
+    `c462d87` it differed from CAS/rs:60 only in its last clause), beyond the
+    ruled list (CD-4): `### Requirement: Cleanup revalidates destructive
+    actions`. For a target whose plan lists caches the in-worktree status check
+    is the enumeration's child, in the combined probe's place and before the
+    hidden-state probe and PR #19's `worktree-only-commits` check, which must
+    print exactly the listed cache records; the revalidation the MUST names is,
+    for such a target, the one before its cache stage; a cache difference, and
+    a cache stage that ends `refused` or `partial`, refuse the target with
+    `state-changed`, with the exit status the ADDED requirement gives. PR #19's
+    rule for its work-tree probe, the output read as one path even over several
+    lines (R-287, R-291), stays as PR #19 writes it at `dab8a64`, as at
+    `4512441`, and so do Git's own check's pinned configuration with
+    `core.ignoreCase=false` (Brett Heap's Q1, round (q)), the hidden-state
+    probe's `lstat` of `<dir>/.git` for every directory that its listing shows
+    holding an index entry directly or below it, other than the worktree's own
+    top level, a new `.git` entry being `contains-submodule` (round (r), W133's
+    MEDIUM-2, in round (s)'s words, W141's LOW-3), and the
+    fifteen scenarios, "A work-tree probe at revalidation" and "A nested
+    repository made after the plan" among them. Added scenario: a cache target
+    changes before revalidation.
+  - MODIFIED (change 1 ADDED; written on PR19/rs:293 at `f0bf538` since round
+    B15, B-69, whose text `b3228bb`, `e0c91bb`, `e14ada0`, `173d83c`,
+    `ccc52b9`, `20084cd`, `2250830`, `88d0d36`, `818311a`, `4512441`, `dab8a64`
+    and `54e869b` keep byte for byte, B-76, B-80, B-84, B-87, B-88, B-93, B-95,
+    B-99, B-104, B-107, B-122, B-126, B-135, B-139; CAS/rs:194 before), B-10:
+    `### Requirement: Cleanup
+    states a narrow guarantee and its residual window`. The one guarantee for a
+    worktree removal holds, for a target whose plan lists caches, at the
+    revalidation before its cache stage; the stage carries the one guarantee
+    for the cache entries it removes, and nothing runs between it and the spawn
+    but the floor and signal checks; the residual window and its line name
+    ignored files created during the stage outside the
+    listed caches and a cache recreated after it (B-19), beside the items that
+    PR #19's text adds to the guarantee and the window, an effective work tree,
+    an operation in progress, and operations started and commits held only by
+    the worktree. The three scenarios stay. Added scenario: a cache recreated
+    after the cache stage.
+  - ADDED:
+    `### Requirement: Cache disposal never follows a symlink or leaves its worktree`.
+    Symlink candidates, ancestors and entries blocking; the device rule on a
+    listed cache directory and every directory inside it too (B-48); entry
+    names valid UTF-8, and a no-follow open refused at plan time
+    `cache-unverified`, not blocking (B-51); descriptor-relative
+    no-follow operations against planned identities, one chain per directory
+    holding a listed path in each pass (B-33), no descriptor of an
+    outstanding call reused; no recursive deletion; the whole-list preflight
+    with its entry count, its streaming enumeration closed at the first entry
+    beyond it (B-44), and the run's byte total (B-26), and its outcome when
+    the floor or the deadline stops a read of it (B-34), and a signal received
+    before any outcome of it is classified outranking each (B-39, B-41); the
+    outcome once a removal is handed over, a read that the floor stops after it
+    ending the stage as the floor does (RB2's MEDIUM-2) and a chain reopened
+    with another identity ending it (RB2's LOW-4); the partial-phase record,
+    its chain rescan, under the reserve, of the caches that the stage did not
+    remove (RB2's LOW-2), and retry; the per-platform fail-closed rule, which
+    leaves a row that an earlier rung classified as it is (B-37) and names the
+    streaming directory enumeration among the calls it checks (B-44); the
+    stage's guarantee, with its removal-time clause (RB2's LOW-4), and, in the
+    residual window, an entry put at a name that the preflight fixed (RB2's
+    LOW-3).
+  - Untouched (`:9`): `### Requirement: Cleanup protects the process worktree`.
+  - Untouched (`:38`): `### Requirement: Cleanup respects configured upstream mappings`.
+- `project-overview` (change 2's twelve ADDED requirements accounted for; no
+  canonical spec yet), B-14, B-22 and B-30, its first delta agreed by lane
+  openRepoProject-4 on 2026-10-19 and committed as `b4d3e12`, B-22's edit
+  agreed by lane 4 on 2026-10-19 and committed as `9f30fb9`, and B-30's scope,
+  lane 4's own words of 2026-10-20, committed as `4d5855a` (`tasks.md` 2.2):
+  - MODIFIED (change 2 ADDED; written on APO/ov:358):
+    `### Requirement: Overview reuses the cleanup classifier and merge target`.
+    Two sentences are appended to the equality clause: the exception for a
+    worktree that `project clean` classifies `merged-removable` on its cache
+    proof, and the classification-level SHALL NOT, for the same working
+    directory and refs (B-22, lane 3's M4 and M5; B-30, lane 4's F4).
+    The scenario "Every protected classifier" names its `ignored-local-files`
+    worktree's ignored file as not a Python bytecode cache (lane 4's
+    precision), a departure from B-14's "plus one scenario"; the other six
+    stay. Added scenario: caches that only `project clean` proves disposable,
+    with a third, submodule-holding worktree (B-22).
+  - Untouched (change 2 ADDED):
+    `### Requirement: Overview discovers projects within configured roots only`,
+    `### Requirement: Overview groups worktrees by repository identity`,
+    `### Requirement: Overview bounds its work and reports what it omitted`,
+    `### Requirement: Overview isolates one candidate's failure`,
+    `### Requirement: Overview reports findings by attention category`,
+    `### Requirement: Overview suggests only gated clean commands`,
+    `### Requirement: Overview prints a versioned JSON envelope`,
+    `### Requirement: Overview is local and read-only`,
+    `### Requirement: Overview reports default-branch health`,
+    `### Requirement: Overview exits by completeness and severity`,
+    `### Requirement: Overview renders a readable human report`.
+    The overview collects no cache evidence, and its suggestion for a row it
+    reads `ignored-local-files` stays the read-only clean command.
+- `project-command`, `project-review-safety` and
+  `speckit-extension-integration`: untouched. The enumeration child is a Git
+  child of `project clean` alone, carrying the evidence model's environment,
+  protocol pins, status pins, all five (PR19/cmd:158-168 at `4512441`; B-69,
+  B-124), and directory rule (CAS/cmd:98-133), and its own
+  `-c status.showStash=false` (B-47), without changing that model's probe list
+  or pins; status and doctor gather no cache evidence.
+
+## Impact
+
+- **`project`**: after feature 004, the plan builder gains the candidate rule
+  with its sample test, the enumeration child (through the bounded runner, with
+  a NUL parser for porcelain v2's ignored records) and the descriptor-relative
+  walk; the plan, the digest and the envelope gain `cache_disposal`; the
+  removal sequence gains the cache stage between the revalidation and the
+  spawn; the targeted revalidation reads a cache target with the enumeration
+  child; the human preview, success and stop output gain the cache lines. At
+  `961c405` the attach points are the ignored probe and rung
+  (`project:505-507`, `project:581-583`), the signature that compares
+  `ignored_files` and `classification` (`project:642-645`) and the remove path
+  (`project:707-722`, `project:736-743`); feature 004 replaces all of them, so
+  this change's feature builds on feature 004's code. No new dependency: only
+  `os` calls that Python 3.10 provides.
+- **`README.md`**: the "Clean up Git worktrees" section, feature 004's
+  `README.md`:189-573 at `f3724fc`, which PR #33's head `d8724e2` keeps byte
+  for byte, gains the cache paragraph: what is disposed of and what blocks, the
+  caps and their stall, the residual window, ignored files created during a
+  cache stage included, and the partial phase with its re-run; and the
+  sentences of that section that this change makes untrue as written change
+  with it: "Ignored local files, remote divergence, and an unknown default
+  branch also stop destructive cleanup" (:238-239), the next step of the
+  `ignored-local-files` row in its "Gates and next steps" table, "move or
+  delete the ignored files by hand" (:392), and the list "Five behaviour
+  changes come first" (:191-221), which gains the cache removal (RE2-2).
+- **`tests/test_project.py`**: a test named after each ADDED and MODIFIED
+  scenario that this change adds; fixtures write `.pyc` bytes directly and need
+  no compiler run;
+  `test_clean_preserves_ignored_files_in_an_otherwise_merged_worktree`
+  (tests:949, whose ignored file is `local.env`) and change 1's cache-free
+  scenarios keep passing; fault hooks for the preflight, the removals (held,
+  failed or past the ceiling) and the walk; a platform stub for
+  `cache-unsupported-platform`. The new tests' names begin `test_clean_`, so
+  that feature 004's `git-floor` job, which runs them with Git 2.36.6 first on
+  PATH, includes them (S-4). The command is `python3 -m unittest discover -s
+  tests -v`, which CI runs on `ubuntu-latest` with Python 3.10 and 3.12 (the
+  jobs `test (3.10)` and `test (3.12)`), and, once feature 004 merges, with Git
+  2.36.6 in `git-floor`; macOS is not verified by CI (L-12).
+- **Feature 005's tests**: once feature 005 has landed, any of its tests that
+  asserts that the overview and `project clean` classify identically gets the
+  cache case excluded in this change's realization, never in feature 005
+  (B-14).
+- **Speckit handoff**: exactly one feature, numbered when `/speckit.specify`
+  runs after ratification, 006 or later (L-7).
+
+### Dependencies and Sequencing
+
+- **Written on change 1 and change 2 (L-1, L-15).** Every MODIFIED block of
+  `project-clean` and `project-clean-review-safety` is written on draft PR #19's
+  text, eight blocks since round B15 (B-69), since round B26 the
+  classification, batch, preservation and revalidation blocks at `dab8a64`, its
+  round (s), the retire block at `4512441`, its round (r), the bounds and
+  reconcilable-result blocks at `818311a`, its round (q), and the
+  narrow-guarantee block at `f0bf538`, whose text `dab8a64` keeps byte for
+  byte, and `54e869b`, its round (t) and its head, keeps the text of every
+  block (B-76, B-80, B-84, B-87, B-88, B-93, B-95, B-99, B-104, B-107, B-122,
+  B-126, B-135, B-139), and the `project-overview` block on change 2's text at
+  main (`15504f1`, whose
+  directories of change 1 and change 2 equal `961c405`'s). "Clean bounds its
+  Git work and reports omitted work", as the rulings direct, and "Cleanup
+  revalidates destructive actions", whose last clause PR #19 also rewords (the
+  protocol pins are carried by every Git child "except the push child"), were
+  written on draft PR #19's text first, and PR #19 is a dependency: if it
+  merges, change 1's text equals the eight blocks' bases; if it closes
+  unmerged, or changes any of them again, the blocks are rewritten on the text
+  of that day before this change is ratified. They were first written on
+  `c462d87` (spec text equal to the `5ce23d7` the rulings first named); PR #19
+  then changed both, by Brett Heap's Q9 B and LQ-10 to LQ-15, which among other
+  things gave the revalidation its `worktree-only-commits` check and six
+  children (LQ-13), and by lane openRepoProject-2's round (a) and, for the
+  revalidation, its round (b) (R-171), so round B10 rewrote them on its text at
+  `a664799` and restated the fit on it (B-54, B-55, reader RF's H1); its round
+  (c) changed both again, and round B11 re-based them on its text at `2e819ad`,
+  whose fit D4 cites on its three bases; its round (d) at `9267303` changed the
+  revalidation block again (R-208), and round B12 re-based it there, the bounds
+  block being byte-identical at both; and its round (e) at `f0bf538` changed it
+  once more (W38's L-4 and L-5), and round B13 re-based it there, the bounds
+  block again byte-identical. The other six blocks stayed on change 1's text at
+  main until round B15: Codex's three findings on `69cb7a1` and reader RH's
+  item 7 found them at odds with PR #19's text, which had changed all six since
+  main (the removal command's `core.trustctime=true` and
+  `core.checkStat=default` pins, the gates `operation-in-progress` and
+  `worktree-only-commits` after the cap and the `refused` reasons that go with
+  them, and four smaller gaps), and round B15 re-based them on `f0bf538`
+  (B-69), with lane openRepoProject-2's byte check of each held block before
+  the commit. Its round (g) at `4f1c0e0`, after a round (f) at `662be89` with
+  no spec text, changed three of the eight, the classification, retire and
+  batch blocks (lane 3's W52 F-2, F-5 and F-3), and its round (g3) at `6bf9f77`
+  added to the classification block's scenario "Only tracked-file deletions"
+  the locked worktree's recovery text (F-2); and its round (h) at `b3228bb`, on
+  Brett Heap's ruling of 2026-10-22, changed five, the retire, batch, bounds,
+  reconcilable-result and revalidation blocks (F-1, O-1 and reader RI's RI-3);
+  round B16 re-based retire and batch on `4f1c0e0`, classification on `6bf9f77`
+  and the five on `b3228bb` (B-76, B-80, B-84), with lane 2's byte check again,
+  the preservation and narrow-guarantee blocks being byte-identical at all
+  four. Its round (i) at `e0c91bb` gave the removal ceiling's recovery text a
+  third form, for a `.git` file that the rescan cannot read (R-284), in the
+  retire and reconcilable-result blocks, and round B17 re-based those two on it
+  (B-87), with lane 2's byte check again, the other six being byte-identical at
+  `e0c91bb`. Its round (j) at `e14ada0` narrowed the reason that the ceiling's
+  second recovery text gives (W70's LOW-1) in the retire and
+  reconcilable-result blocks and read the revalidation's work-tree probe output
+  as one path (R-287, R-291) in the revalidation block, and round B18 re-based
+  those three on it (B-88), with lane 2's byte check again, the other five
+  being byte-identical at `e14ada0`. Its round (k) at `173d83c` said in the
+  retire block's scenario "A removal past the hard ceiling" that the recovery
+  text for a `.git` file that the rescan cannot read applies instead, "whatever
+  the rescan finds of the registry entry", and re-wrapped the THEN line of the
+  revalidation block's scenario "A work-tree probe at revalidation" (R-294,
+  R-299), and round B19 re-based those two on it (B-93), with lane 2's byte
+  check again, the other six being byte-identical at `173d83c`. Its round (l)
+  at `ccc52b9` changed none of the eight, its one spec change being an AND in
+  the scenario "An unreadable worktree is one row" of "Clean reports local
+  worktree state", which this change does not carry (R-307, R-310), so nothing
+  is re-based (B-95). Its round (m) at `20084cd` added to the bounds block's
+  scenario "Row cap and planning failures" an AND that names the row cap's
+  remedy with a warning against `git worktree prune` (R-320, R-323; round (n)
+  adds `git worktree remove` and `git gc` to it, R-324), and round B21 re-based
+  that block on it (B-99), with lane 2's byte check again, the other seven
+  being byte-identical at `20084cd`. Its round (n) at `2250830` (R-345), on
+  Brett Heap's "R-324: yes" (R-343), extended that warning, and the one in the
+  removal ceiling's third recovery text in the retire and reconcilable-result
+  blocks, to `git worktree remove` and `git gc` beside `git worktree prune`,
+  and round B22 re-based those three blocks on it (B-104), with lane 2's byte
+  check again, the other five being byte-identical at `2250830`. Its round (o)
+  at `88d0d36` changed none of the eight, its changes being four record items
+  of its design, proposal and tasks (R-349, R-350), so nothing is re-based
+  (B-107). Its round (p) at `e0b1671` gave the retire and reconcilable-result
+  blocks R-365's text beside a row whose path could not be read; its round (q)
+  at `818311a`, on Brett Heap's "yes, recommended for Q1-Q9" (R-380, R-389),
+  changed seven of the eight, all but the narrow guarantee, Q3 (a) replacing
+  round (p)'s text; and its round (r) at `4512441` (R-391, accepted as R-396)
+  changed three of them, the classification, retire and revalidation blocks
+  (lane 3's W133 MEDIUM-4, LOW-1 and MEDIUM-2); round B25 re-based those three
+  on `4512441` and the other four on `818311a` (B-122, B-126), with lane 2's
+  byte check again, the narrow guarantee being byte-identical at both. Its
+  round (s) at `dab8a64` (R-408, accepted as R-412) changed four of them, the
+  classification, batch, preservation and revalidation blocks (lane 3's W141
+  MEDIUM-1 and LOW-3, R-409), and its round (t) at `54e869b` (R-415), on Brett
+  Heap's "yes, recommended for M1 and M3" (R-413), changed none of the eight;
+  round B26 re-bases those four on `dab8a64` (B-135, B-139), with lane 2's byte
+  check again, the other four being byte-identical at `dab8a64` and `54e869b`.
+  Under
+  L-16 this change archives after PR #19's amendment of change 1
+  lands, and the passages that rest on PR #19's wording are marked "(draft PR
+  #19, pending)". `validate --strict` passes while changes 1 and 2 are
+  unarchived; the archive is the gate (it reports "Archive would refuse this
+  delta" for each delta file until change 1, and for the `project-overview`
+  delta change 2, is archived). `validate` and the archive check requirement
+  and scenario names, not sentences, so a block that kept PR #19's text after
+  PR #19 closed would pass both; before the archive, each block written on
+  change 1's or PR #19's text is therefore checked by a `diff -u` against the
+  archived requirement, its carried text equal and only this change's additions
+  differing, and by a second `diff -u`, of this change's block as committed at
+  its ratified head against the re-based block, showing only the archived text
+  carried in, and a re-base that changes this change's added text goes back to
+  Brett Heap (B-52, RD's M2; B-54, reader RF's M1; `tasks.md` 2.1).
+- **Archive order (L-5, L-11, L-16, B-14, B-29).** This change archives after
+  change 1's archive, which follows feature 004's merge, after PR #19's
+  amendment of change 1 has landed, or PR #19 has closed and the blocks
+  written on PR #19's text
+  have been rewritten, and after change 2's archive, its `project-overview`
+  block first re-aligned with main's text (Change 2, below).
+  `add-project-clean-branch-retirement` (#23) archives after this change and
+  carries every requirement that both changes modify: "Clean can explicitly
+  retire verified worktrees", "Clean previews and applies a batch of eligible
+  worktree removals in one repository", "Clean bounds its Git work and reports
+  omitted work" and "Clean records a reconcilable result for every removal
+  target" in `project-clean`, and "Cleanup states a narrow guarantee and its
+  residual window" in `project-clean-review-safety`, each re-based on this
+  change's archived block before #23 archives (L-11, A-13). #23 also states the
+  fit of a run with `--retire-branches` and cache disposal together (A-9, the
+  alignment review's G3); the inputs it needs from this change, restated after
+  the council and again in rounds B3 and B4, are listed in design D4: the
+  stage's removals waited for up to the 300 s ceiling, the walk's and the
+  stages' measured filesystem time, the walk bounded at 8,192 recorded objects
+  (B-25, B-33), the stages' chains and B-33's worst case, no status probe
+  after a `disposed` stage, and the residual-window line of D13,
+  on which #23's line for a flagged run with a cache target re-bases (B-16,
+  B-19, S-4). `add-project-overview-remote-merge-status` (#25)
+  modifies none of this change's requirements (its `project-overview` blocks
+  are "Overview is local and read-only", "Overview bounds its work and reports
+  what it omitted" and "Overview prints a versioned JSON envelope", and its
+  `project-command` block is "Repository inspection requires Git 2.36 and
+  shares one evidence model", which #23 also modifies) and archives after
+  change 2 and after PR #19's amendment of change 1.
+- **Implementation order.** This change's feature builds on feature 004
+  (`004-project-clean-all-safe`): its removal sequence, runner, parsers, ladder
+  function and envelope. It never alters feature 004's or feature 005's order
+  and does not wait for feature 005, but lane openRepoProject-4's agreement on
+  the `project-overview` delta, given on 2026-10-19 for `b4d3e12` and again
+  for B-22's edit, which is committed as `9f30fb9`, and its byte check of
+  B-30's commit `4d5855a`, which carries lane 4's own words, given on
+  2026-10-20 (B-36), precede its Speckit handoff (`tasks.md` 2.2).
+  Whichever realization merges second merges `main` in; never rebase, since
+  the organisation ruleset refuses force pushes.
+- **Change 2.** This change modifies one requirement of change 2, "Overview
+  reuses the cleanup classifier and merge target", with two sentences, one
+  added scenario and a precision in one carried scenario (B-14, B-22, B-30).
+  The overview's collection and its other requirements are unchanged. A
+  MODIFIED block replaces its requirement whole, so an amendment of that
+  requirement landing on main before this change archives, such as lane
+  openRepoProject-4's planned one for feature 005's open Q7 A, would be
+  dropped silently by this change's archive. Before `/opsx:archive`, this
+  change's block is therefore re-read against main's text of the requirement
+  and re-copied from it, keeping every amendment with this change's additions;
+  a `diff -u` of main's block against this change's shows additions only, and
+  the validation passes again (B-29, lane 4's F2; `tasks.md` 3.2).
+- **Question 2, squash-merged worktrees.** Whether patch equivalence proves a
+  squash-merged branch merged is change 1's open question 2 (CAS
+  proposal.md:700-701; `OV:364-366`, `SY:225-226`, `BA:195-199`), and this
+  change does not presume it: candidates follow the ladder's local-ancestry
+  `merged-removable`, so squash-merged worktrees stay non-candidates, their
+  `candidate_block` naming what keeps them (B-24), while it is open. A later
+  ruling that admits patch equivalence would add candidates through the
+  ladder, and the fit of design D4 would then be restated (lane 3's LOW 7).
+
+## Out of Scope
+
+- **`.pytest_cache`** (B-23, B-50). The recommendation to Brett Heap is now
+  not to admit it in this change, for the reasons its Open Question gives; it
+  is the next change, first in line, measured 2026-10-19 as the only blocker
+  of 16 kept rows, unless he admits it here.
+- **Other cache kinds** (`.mypy_cache`, `.ruff_cache`, `node_modules`, virtual
+  environments, build directories) (B-1; Open Questions).
+- **Paired branch retirement** (#23) and **remote merge status** (#25), each
+  its own change.
+- **The overview and doctor beyond the shared ladder.** Doctor classifies no
+  worktree (change 1's C3); `status` and `doctor` gather no cache evidence and
+  their JSON gains nothing; the overview's collection is unchanged, and only
+  its equality clause gains the cache exception (B-14).
+- **Disposal without removal.** No mode deletes caches and keeps the worktree;
+  the stage runs only for a target about to be removed.
+- **Configurable caps or allowlists** (change 1's OQ-8 holds) and the CI
+  matrix.
+- **Continuing after a failed target** (`BA:1640-1643`; CD-1).
+
+## Decisions Taken by This Proposal
+
+Each is a proposal decision, open to ratification. The lane's rulings applied,
+each citing the packet or change text that left it open:
+
+- **L-1 and L-15, the base text.** Drafted on change 1 and change 2 at
+  `961c405` (main now `15504f1`, with the same directories of change 1 and
+  change 2), and "Clean bounds its Git work and reports omitted work" on PR #19
+  (Dependencies and Sequencing). This proposal reads the six requirements that
+  lane openRepoProject-2 said PR #19 does not move as the six that the three
+  extensions' ruled lists modify besides the bounds. L-15 names only the
+  bounds requirement as written on PR #19's text; "Cleanup revalidates
+  destructive actions", which CD-4 adds, is not among the six, PR #19 rewords
+  its last clause, and a block written on change 1's text would undo that
+  clause when PR #19 lands, so its block stays on PR #19's text by the same
+  logic, as the alignment review agreed (CD-4). PR #19 was still a draft at
+  `c462d87` (2026-10-18); `git diff 5ce23d7 c462d87` touches only its
+  `design.md` and `tasks.md`. It was still a draft at `a664799` (2026-10-21),
+  its round (b), on whose text round B10 rewrote both blocks (B-54, B-55),
+  and at `2e819ad` (2026-10-21), its round (c), on which round B11 re-based
+  them, and at `9267303` (2026-10-22), its round (d), on which round B12
+  re-based the revalidation block (B-58), and at `f0bf538` (2026-10-22),
+  its round (e), on which round B13 re-based it again (B-60), the bounds
+  block being byte-identical at all three; round B15 re-based the other six
+  on `f0bf538` as well, since PR #19 had changed all six (B-69), so that all
+  eight MODIFIED blocks of `project-clean` and `project-clean-review-safety`
+  are written on its text. It was at `4f1c0e0` (2026-10-22), its round (g),
+  after its round (f) at `662be89`, which changed no spec text; round (g)
+  changed three of the eight blocks. It was at `6bf9f77` (2026-10-22), its
+  round (g3), after its round (g2) at `3dcd2d8`, which changed no spec text;
+  round (g3) changed one of the eight, the classification block. It was at
+  `b3228bb` (2026-10-22), its round (h), on Brett Heap's ruling of that date,
+  which changed five of the eight, the retire, batch, bounds,
+  reconcilable-result and revalidation blocks (F-1, O-1 and reader RI's RI-3).
+  Round B16 re-based retire and batch on `4f1c0e0`, classification on `6bf9f77`
+  and the five on `b3228bb` (B-76, B-80, B-84), the preservation and
+  narrow-guarantee blocks being byte-identical at all four. It was at `e0c91bb`
+  (2026-10-22), its round (i), which changed two of the eight, the retire and
+  reconcilable-result blocks, giving the removal ceiling's recovery text a
+  third form (lane openRepoProject-2's R-284, confirmed by Brett Heap (R-290));
+  round B17 re-based those two on it (B-87), the other six being byte-identical
+  there. It was at `e14ada0` (2026-10-22), its round (j), which changed three
+  of the eight, the retire and reconcilable-result blocks (W70's
+  LOW-1) and the revalidation block (R-287, R-291); round B18 re-based those
+  three on it (B-88), the other five being byte-identical there. It was at
+  `173d83c` (2026-10-22), its round (k), which changed two of the
+  eight, the retire block's scenario "A removal past the hard ceiling" and the
+  revalidation block's scenario "A work-tree probe at revalidation" (R-294,
+  R-299); round B19 re-based those two on it (B-93), the other six being
+  byte-identical there. It was at `ccc52b9` (2026-10-22), its round (l), which
+  changed none of the eight, all eight being byte-identical there (B-95). It
+  was at `20084cd` (2026-10-22), its round (m), which changed one of the eight,
+  the bounds block's scenario "Row cap and planning failures" (R-320, R-323);
+  round B21 re-based it there (B-99), the other seven being byte-identical
+  there. It was at `2250830` (2026-10-22), its round (n), which on
+  Brett Heap's "R-324: yes" (R-343, R-345) changed three of the eight, the
+  retire, reconcilable-result and bounds blocks, whose no-prune warnings now
+  name `git worktree remove` and `git gc` beside `git worktree prune`; round
+  B22 re-based those three there (B-104), the other five being byte-identical
+  there. It was at `88d0d36` (2026-10-22), its round (o), which changed none of
+  the eight, all eight being byte-identical there (B-107), at `e0b1671`
+  (2026-10-23), its round (p), which changed two, the retire and
+  reconcilable-result blocks (R-365), and at `818311a` (2026-10-23), its round
+  (q), which on Brett Heap's "yes, recommended for Q1-Q9" (R-380, R-389)
+  changed seven, all but the narrow guarantee. It was at `4512441`
+  (2026-10-23), its round (r) (R-391, accepted as R-396), which changed three
+  of the eight, the classification, retire and revalidation blocks; round B25
+  re-based those three there and the other four that round (q) changed on
+  `818311a` (B-122, B-126), the narrow guarantee being byte-identical at both.
+  It was at `dab8a64` (2026-10-23), its round (s) (R-408, accepted as R-412),
+  which changed four of the eight, the classification, batch, preservation and
+  revalidation blocks; round B26 re-bases those four there (B-135), the other
+  four being byte-identical there. It is still a draft at `54e869b`
+  (2026-10-23), its round (t) (R-415), on Brett Heap's "yes, recommended for M1
+  and M3" (R-413), which changed none of the eight, all eight being
+  byte-identical there (B-139).
+- **L-2, citations** at `da33d92`; PR #16's added sentence is quoted as "PR #16
+  at `841c7dc`" (Why).
+- **L-3 and L-11, capabilities and placement.** The existing capabilities only
+  (PR #2's abandoned names not reused); a MODIFIED block carries its whole
+  requirement and every scenario of its source text; the new contract is in two
+  ADDED requirements whose names no other change uses. Where this change
+  contradicts a sentence of change 1 or change 2 it modifies that requirement
+  and never overrides it from an ADDED one (L-11): B-10 places the digest, the
+  narrow guarantee's revalidation and the deletion exception in MODIFIED
+  blocks, and B-14 the overview's equality clause.
+- **L-4, L-10 and B-13, sub-records.** Every new value lives in
+  `cache_disposal`, whose `reason` and `stage` are its own enums. No value is
+  added to the closed `stage` enum, the target reasons, the fifteen classes,
+  the gate reasons, the refusal codes, the note codes or the overview's finding
+  codes. `cache_disposal` is present only where this change acts and absent
+  otherwise, never `null` for "not applicable": on a `selected` entry and an
+  apply-result target whose plan lists at least one cache, and on a worktree
+  row whose `ignored_files` is above 0. L-10 names the target case; a row
+  holding ignored records also carries the object because B-9 asks for its
+  counts, `null` when unknown. The enum-closure disagreement (CAS/pc:1129-1131
+  against APO/ov:655-658) is under Open Questions.
+- **L-5 to L-9, L-12 to L-14.** The archive order above; issue #24 governs, and
+  closing it ends this change; the feature is numbered at `/speckit.specify`
+  time; the lane opens the draft PR and runs the alignment review and the
+  council; no host-absolute path in any file here, and the bidi check runs on
+  every edit. Since PR #32 (merged 2026-10-15) CI runs the suite on Linux only,
+  as the jobs `test (3.10)` and `test (3.12)` on `ubuntu-latest`, so every
+  statement here that only macOS CI could have checked reads "not verified by
+  CI" (L-12, B-15). Commits carry the `Lane:` line and the attribution in force
+  (L-13). The Status line and `tasks.md` 1.2 record the resolved review
+  (L-14), and, after the council, the Status line reads "alignment review and
+  council resolved on PR #27; ratification by Brett Heap pending".
+- **L-16 and L-17.** This change's blocks that PR #19 also amends, first two,
+  "Clean bounds its Git work and reports omitted work" and "Cleanup revalidates
+  destructive actions", and all eight since round B15 (B-69), are written on
+  PR #19's text; under L-16 this
+  change also archives after PR #19's amendment of change 1 lands, and the two
+  passages that rest on PR #19's wording are marked pending (lane 3's LOW 9).
+  L-17's evidence-model block is A's and C's: this change does not modify
+  "Repository inspection requires Git 2.36 and shares one evidence model",
+  since its cache removals are filesystem calls, not children, and the
+  enumeration is a probe child that model already bounds.
+- **B-1, the allowlist** (no cache defined in the packet; PR #2's `1789ad9`
+  allowlist): applied as written, with CD-8; other kinds are an Open Question.
+- **B-2, detection** (the combined probe's bounds, `BA:795-806`): applied, with
+  CD-5 and CD-6.
+- **B-3, the caps** (`BA:1336-1337` sets no number): the four as ruled, and CD-6
+  adds the enumeration count; before Brett Heap under Open Questions.
+- **B-4, identities and the digest** (`BA:1327`, "the planned device/inode",
+  names no plan field): applied; the digest's placement is B-10 (CD-14).
+- **B-5, the ladder** (CAS/pc:107-111, the fifth rung): applied; doctor
+  classifies no worktree, and the overview's equality clause is B-14.
+- **B-6, preflight and partial phase** (`BA:1332-1337`; PR #2 thread
+  3989548481): the whole-list preflight and the partial record applied, read
+  as CD-1 to CD-3, which B-11 accepted. `BA:1334`'s "the report rescans the
+  worktree" is read as the rescan of the listed paths beside the target's
+  reconciliation (lane 3's LOW 2; design D8).
+- **B-7, the residual window** (`BA:319-323`): applied in the MODIFIED narrow
+  guarantee and the residual-window line.
+- **B-8, the stage order** (`BA:1318-1322`, "cache disposal before the worktree
+  removal"): applied, with CD-10 and CD-11.
+- **B-9, the counts** (APO proposal.md:804-809 hands this extension the zero
+  `disposable` and `blocking` counts of `1789ad9`): applied; unknown is `null`
+  in the plan, the report and the human `unknown`.
+- **B-10, three more MODIFIED blocks** (the alignment review's G1, SA-1, SA-2
+  and CD-14): "Clean previews and applies a batch of eligible worktree removals
+  in one repository" for the digest, "Cleanup states a narrow guarantee and its
+  residual window" for the revalidation before a cache stage and the stage's
+  own guarantee, and "Clean records a reconcilable result for every removal
+  target" for the deletion exception and the widened `refused` stage, each
+  carrying its whole source text and every scenario.
+- **B-11, CD-1 to CD-3 accepted** (G4): the consistent reading of B-6 under L-4
+  and change 1's stop rule; B-6 is amended to match.
+- **B-12, the sample test** (G5, QA-2): a candidate whose combined probe's
+  `ignored_samples` hold a path the allowlist rejects by its name or encoding
+  stays `ignored-local-files` as `not-candidate` without an enumeration, its
+  rejected samples in `blocking_samples`. What can still stall is stated
+  exactly (CD-6), and the drain is not claimed unconditionally.
+- **B-14, the overview exception rides here** (G2; CD-17): a
+  `project-overview` delta modifying change 2's "Overview reuses the cleanup
+  classifier and merge target", lane openRepoProject-4's two sentences appended
+  verbatim to its equality clause, with one scenario; this change archives
+  after change 2. B-22 rewords the two sentences.
+
+The council's verdicts, ruled by the lead on 2026-10-19 (B-16 to B-24, and S-4
+NOTED; the table "Council Verdicts" below):
+
+- **B-16, the stage's removals and its commit point** (S-1, AE-1, P-3 item 5,
+  Codex's P1 on `3c08613`; change 1 waits for its removal child, CAS/cmd:181-183,
+  and abandons only reads, CAS design.md:304-306). The stage's unlinks and
+  directory removals are treated as change 1 treats its removal child, never as
+  a read: each is handed over only while more than the removal floor remains
+  and waited for until it returns; only the 300 s removal ceiling, counted from
+  the hand-off, ends that wait, the listed cache it belongs to then being
+  `removed: null`; the worker gets no further call, and no descriptor given to
+  an outstanding call is closed before `project` exits. Reads keep `min(5 s,
+  work remaining less the removal floor)`. The hand-off of the first removal is
+  the stage's first removal for every rule of both ADDED requirements: after
+  it the stage ends `disposed` or `partial`, except `refused`, nothing deleted,
+  when every call handed over returned and none removed an entry (B-20);
+  `entries_removed` and `operations.performed` count the removals that
+  returned; "nothing was deleted" is printed only when nothing was removed and
+  no call is outstanding, and the partial line names a path whose call is
+  outstanding as one that may still be removed. That the ceiling case makes the
+  later targets `not-attempted` with `deadline-exceeded` and exits 1 is this
+  proposal's reading: past 300 s the work deadline has passed, and change 1's
+  `removal-ceiling` exits 1. Since the target itself is `refused` with
+  `state-changed`, the reconcilable-result block's exit table names the case
+  in its row 2, so that an only or last target also exits 1 (re-read MEDIUM 1,
+  B-27). The fit is restated in design D4.
+- **B-17, signals and `not-attempted` after a cache stage** (AE-3, lane 3's M2,
+  Codex's P2 on `3c08613`, P-3 item 3). The second floor and signal check sits
+  immediately before the hand-off of the first removal, after the whole-list
+  preflight and once the first listed cache's chain is reopened; a signal
+  recorded after it is handled as one received during the removals. The
+  MODIFIED "Clean records a reconcilable result for every removal target"
+  widens its `not-attempted` stage to a target whose cache stage ended
+  `disposed` and whose removal a signal or the floor stopped (re-read MEDIUM
+  2), gives such a target its reconciliation once its stage removed an entry,
+  and lets a cache stage that has handed over its first removal run to its end
+  in its signal paragraph (L-11; re-read LOW 1). QA-3's
+  `refused`/`state-changed` mapping for the floor case stays. A run that stops
+  after a `disposed` stage and before the spawn prints `Cache disposal at PATH:
+  removed N cache paths; the worktree was not removed.` before its stop block.
+  The design's Risks and Rollback call only `__pycache__` entries regenerable,
+  a loose `.pyc` possibly being sourceless.
+- **B-18, the partial-stage rescan** (S-2, AE-1). It opens the
+  identity-checked descriptor chain to each listed cache's parent, as the
+  removals do, and `lstat`s the cache's name relative to it without following
+  a symbolic link; a chain that does not open, or whose identity differs,
+  leaves that cache `removed: null`; it runs as a reconciliation probe, each
+  call on a thread of its own under `min(5 s, reserve remaining)`, never on the
+  stage's worker, and its first call past budget leaves that cache and every
+  later one `removed: null`. The draft's root-relative `lstat` followed a
+  swapped ancestor out of the worktree (both council members reproduced it).
+- **B-19, the widened residual window** (S-3, AE-4, lane 3's M1): stated, not
+  closed. For a cache target the window includes ignored files created during
+  its cache stage outside the listed caches, which Git's non-force removal
+  deletes with the worktree, and the residual-window line names them; CD-18's
+  "safer" is limited to files placed in a listed cache directory. The bound, as
+  measured: a 512-entry stage took about 0.25 s on this workstation on
+  2026-10-19, and task 2.3 re-measures it. Rejected alternative: one combined
+  status probe in each target after a `disposed` stage, which would restore
+  change 1's window at one Git child per cache target, at most 266 children
+  and about 44.7 s at the packet's model before any filesystem time, and, with
+  the walk and the stages at B-25's bound, about one target fewer: 14 of 16
+  targets reach their stage with it, against 15 of 16 without, these figures
+  being at `c462d87`, on change 1's terms before PR #19 changed them (design
+  D13; B-55). Under #23's flag B-19 put it at 12 of 16, one fewer than #23's 13
+  at `ca96701`, with the cache-stage filesystem time excluded; #26 restates its
+  count under A-23 and A-24 (design D4, B-35).
+  The packet bounds the residual window as "typically well under a
+  second" (`BA:319-325`), and concurrent writers are outside the contract
+  (CAS/rs:196-198).
+- **B-20, a cache the user cannot change** (AE-2; A-17's principle for a
+  refusal the plan can see). The plan-time walk checks, for each directory a
+  stage would change (each listed cache directory, each nested `__pycache__`
+  and the parent of each listed path), that the running user may remove
+  entries from it: one descriptor-relative access check with effective ids,
+  following no symbolic link, under the per-call budget. A failure keeps the
+  candidate `ignored-local-files` with `cache_disposal.reason`
+  `cache-unwritable` (the sub-record's own enum, L-4), its counts established,
+  not selected and stopping nothing; its line names the first directory, by raw
+  path bytes, whose check failed and says to fix its ownership or mode or, on a
+  read-only filesystem, to remount it writable, and to re-run (lane 3's F-12 and
+  F-11, B-72, B-74: the check returns a boolean and cannot tell the two apart,
+  and no JSON key carries the directory). A failure the check cannot see ends
+  the stage `refused` with `cache-changed`, nothing deleted, when every call
+  handed over has returned and none removed an entry (B-16). As B-51 restates
+  it, those failures are a sticky directory's rule for an entry the user does
+  not own, an append-only or immutable attribute, a security module's
+  refusal, and a change made after the plan; B-20 first named `EROFS` among
+  them, but the check sees a read-only mount on Linux 5.8 or later, where the
+  C library makes the effective-ids check with the `faccessat2` call, which is
+  then `cache-unwritable` at plan time (design D3; B-53). The platform check
+  gains the three `os.access` support checks.
+- **B-21, stop and stall lines name their cause** (P-3 items 1 and 4, AE-5,
+  Codex's P2 on `3c08613`). The stall line is printed only when each of the
+  first 16 candidates in canonical order is held at the rung for a persistent
+  reason, any one of `blocking` above 0, `cache-cap` from a per-worktree cap,
+  `cache-unverified` or `cache-unwritable`, never on `blocking` alone (B-32),
+  and at least one later candidate is left with `cache-cap` by the
+  16-enumeration cap, so that it has a row to name (B-45), and is built from
+  those rows' reasons, zero counts left out, each cause with
+  its next
+  step; it never tells the person to remove by hand a worktree whose state was
+  not established. The `cache-unwritable` part is this proposal's completion
+  of B-21 for B-20's reason, since sixteen such rows stall the same way. A
+  partial stage that the work deadline ended says so, with the remaining paths
+  and the fresh-plan command, and does not read as `state-changed`; the target's
+  JSON stays as CD-2 has it, and change 1's stop block keeps its form.
+- **B-22, the overview exception and the carried classifier scenarios** (P-4,
+  lane 3's M4 and M5, lane openRepoProject-4's precision). The two sentences of
+  the `project-overview` block become, as committed in `9f30fb9`: "Except: the
+  overview collects no cache evidence, so a worktree that `project clean`
+  classifies `merged-removable` because clean's cache enumeration proved every
+  ignored path a listed cache SHALL be classified `ignored-local-files` by the
+  overview. The overview SHALL NOT classify a worktree `merged-removable` where
+  `project clean` classifies it otherwise." The new scenario's fixture gains a
+  third cache-only, merged worktree holding an initialized submodule, which
+  the overview classifies `ignored-local-files` and `project clean` classifies
+  `merged-removable` and excludes as `contains-submodule`. Both carried
+  "Every protected classifier" scenarios name their ignored file as not a
+  Python bytecode cache. Lane openRepoProject-4 agreed the `project-overview`
+  edit on 2026-10-19, with one optional point, "clean's" for "its" before
+  "cache enumeration", which the committed text takes (`9f30fb9`; `tasks.md`
+  2.2), and which this proposal's and the design's paraphrases now follow
+  (B-28); the `project-clean` edit is committed. B-30 then scopes the second
+  sentence to "the same working directory and refs", in lane 4's own words
+  (`4d5855a`).
+- **B-23, `.pytest_cache` and the benefit claimed** (P-1). Why gives the
+  measured numbers, and "Behaviour users will notice" says "(measured
+  2026-10-19: 13 of 37 such rows)", naming no repository and no host path. The
+  Open Question "Other cache kinds" is split: `.pytest_cache` goes to Brett
+  Heap with the recommendation to admit it here as a third listed form; the
+  rest stays under the existing "no". This round does not add the third form;
+  it is added only on his answer. B-50 later turns the recommendation to no
+  for this change (below).
+- **B-24, what really blocks a cache-only row** (P-2). A row whose
+  `cache_disposal.reason` is `not-candidate` and whose samples pass the sample
+  test carries `candidate_block`: the class the ladder gives it with the
+  `ignored-local-files` rung skipped, when that class is not
+  `merged-removable`, or else the first gate before `deferred-target-cap` that
+  it fails, from the existing class and gate enums (L-4, CD-13, CD-16), printed
+  with that class's or gate's next step. Computing it needs no Git child the
+  classifier does not already run, since the candidate test already holds both
+  answers, so there is no gap to record (design D2).
+- **S-4 (NOTED), the pre-handoff and landing gates** are recorded in
+  `clarifications.md` and answered by design D4 (the measured dispatch cost),
+  D14 (test names), the Migration Plan's step 7 and `tasks.md` 2.3 and 3.1.
+
+The re-read and Codex findings of 2026-10-20, ruled by the lead as B-25 to
+B-28 (the table "Re-read and Codex Findings (round B3)" below):
+
+- **B-25, the walk's bound** (Codex's P2 at design.md:294 on `90d18ee`). Each
+  of the 16 enumerated rows can be walked to its per-worktree cap of 512
+  entries before the invocation's totals reject it, and a rejected row is
+  uncounted from the 4,096 but was walked, so the plan-time walk's bound is
+  16 x 512 = 8,192 entries, about 9,000 calls, about 2 s through one worker
+  and about 5.6 s at a thread per call (B-33 counts the recorded directories in
+  those 512, and states the worst case of trees that are not ordinary). Design
+  D4 restates the fit and every figure that depends on the walk, with the
+  arithmetic: at the packet's model and the top of the measured cost the 16th
+  target, which lists no cache there, reaches its spawn at about 45.5 s, with
+  about 4.5 s left, under the floor (B-31), so 15 of 16 targets reach their
+  stage or spawn and the 16th is deferred to the next run with exit 1,
+  never unsafe; at a thread per call as few as 8 of 16; at change 1's measured
+  costs all 16. No cap changes, and the caps stay before Brett Heap (Open
+  Questions). Task 2.3 measures the walk at 16 rows of 512 entries with the
+  totals reached.
+- **B-26, the run's byte total at the preflight** (Codex's P2 at
+  `specs/project-clean-review-safety/spec.md:341` on `90d18ee`). A `.pyc`
+  recompiled in place keeps its name, type and entry count, so it passes the
+  revalidation and the preflight's count, but it can grow, and five targets
+  planned with tiny caches could each reach 256 MiB. The whole-list preflight
+  therefore also keeps the run's byte total, the bytes it measures for this
+  target and for every earlier target whose stage passed its preflight in this
+  run, and a target that would take it past 1 GiB ends `refused` with
+  `cache-changed`, nothing deleted, as one past the per-worktree cap does.
+  Entries need no running total, since the preflight requires each listed
+  cache's planned entry count. The scenario "Caches that grew after the plan
+  cannot pass the run's byte cap" pins it (design D1, D4, D7).
+- **B-27, lane openRepoProject-3's re-read of `e906c2f`.** Every item is
+  applied as lane 3 words its fix, LOW 3 with a change: the exit table's row 2
+  names a cache stage's removal that reached the removal ceiling; the
+  `not-attempted` stage names a target whose cache stage ended `disposed`; the
+  signal paragraph names a cache stage that has handed over its first removal;
+  the residual window's two items share one relative clause; and `tasks.md` 2.2
+  quotes lane 4 from lane openRepoProject-4's own log, at its lines 47 and 49
+  for the second agreement as lane 3 words it, and, since those lines do not
+  record the first agreement, at its lines 32 and 37 and lane 5's line 27 for
+  that one, dropping the words found in no log, which is the change (delta
+  read LOW (2), B-31). The counts of `tasks.md` 1.4 and design D14 were
+  recounted at `e906c2f` and were right.
+- **B-28, three paraphrases.** What Changes, the B-22 decision above and design
+  D6 read "because clean's cache enumeration proved", as the committed
+  `project-overview` delta (`9f30fb9`) does.
+
+The findings of 2026-10-20 that followed round B3, ruled by the lead as B-29
+to B-33 (the table "Re-read and Codex Findings (round B4)" below):
+
+- **B-29, the overview block re-aligned before the archive** (lane
+  openRepoProject-4's F2). This change's `project-overview` block MODIFIES
+  change 2's "Overview reuses the cleanup classifier and merge target" whole,
+  so an amendment of change 2 that lands before this change archives, such as
+  lane 4's planned one for feature 005's open Q7 A, would be dropped silently
+  at the archive. `tasks.md` gains 3.2, modeled on #29's 2.3: before
+  `/opsx:archive`, the block is re-read against main's text and re-copied,
+  keeping every amendment, verified by a `diff -u` of main's block against this
+  change's showing additions only and by the validation passing again; the
+  archive becomes 3.3. Dependencies and Sequencing (Change 2) and the design's
+  Migration Plan say the same.
+- **B-30, the SHALL NOT's scope** (lane 4's F4). Read alone, "The overview
+  SHALL NOT classify a worktree `merged-removable` where `project clean`
+  classifies it otherwise" bound runs from different directories, where the
+  current worktree decides `merged-current` against `merged-removable`, though
+  the sentence before it carries the scope. The sentence now ends "for the same
+  working directory and refs", lane 4's own words, verbatim, and the added
+  scenario's AND follows; the edit is committed alone as `4d5855a`, which went
+  to lane 4 for a byte check, `tasks.md` 2.2 being reopened until that check
+  was cited; lane 4 gave it on 2026-10-20 and 2.2 is ticked again (B-36).
+  Design D6's paraphrase follows.
+- **B-31, lane openRepoProject-3's delta read of `cf57956`.** It found no HIGH
+  and no MEDIUM, every B-25 figure holding and B-26 and B-27 applied as worded,
+  and its four optional LOWs are applied: (1) the ADDED requirement's exit
+  sentence names the removal ceiling beside a signal and the deadline, and its
+  "SHALL be 1" gains "unless a signal decides it", as the exit table orders
+  them; (2) the B-27 decision above says that LOW 3 was applied with a change,
+  as the round B3 table does; (3) What Changes, the B-25 decision and design D4
+  say that in D4's case the 16th target lists no cache, so the floor refuses
+  its removal's spawn, not a cache stage; (4) the Open Question on the caps
+  says what the packet's rule would give if the filesystem time counted in the
+  fit.
+- **B-32, the stall test keys on reasons** (Codex's P2 at
+  `specs/project-clean/spec.md:910` on `cf57956`). The data contract leaves
+  `blocking` null for `cache-cap` and `cache-unverified` and 0 for
+  `cache-unwritable`, so a test read on `blocking` could not print the line for
+  rows held by those. The ADDED requirement now lists the persistent reasons as
+  an explicit disjunction: `blocking` above 0; `cache-cap` from a per-worktree
+  cap, never from the invocation's totals or the 16-enumeration cap;
+  `cache-unverified`; `cache-unwritable`. The report tells a per-worktree cap
+  from the totals by the counts the row already carries, null where a
+  per-worktree cap stopped the enumeration and established where only the
+  totals left the row, so no field is added. An AND of "Cache caps" pins
+  sixteen rows held by `cache-unverified`, `cache-unwritable` and a
+  per-worktree cap, none with `blocking` above 0, that print the line. Design
+  D4 and D11 and the B-21 decision above follow.
+- **B-33, directory opens bounded in the fit** (Codex's P2 at `design.md:323`
+  on `cf57956`). The preferred form is applied: every directory the plan
+  records, those between the worktree root and a listed path included, counts
+  toward the per-worktree cap of 512, now a cap on recorded objects, entries
+  and directories alike; the stage opens the chain from the root once per
+  directory holding a listed path in each pass, not once per entry; and the
+  walk, whose form the ruling leaves open, opens each directory it records
+  once. Design D4 states the worst case. The chains cost depth times the
+  directories with removals, under the 512-object cap at most 43,947 opens a
+  pass for one target (a chain of 341 directories whose deepest 171 each hold
+  one loose `.pyc`), about 19.8 s at 224 us, which no fit holds; a depth limit
+  alone would not bound a run, so the new limit put to Brett Heap is on the
+  chains' opens (Open Questions), and no cap changes. Counting a directory's
+  calls as well, four in the walk and five in the stage, a tree of nested
+  `__pycache__` directories needs about 32,800 walk calls and 20,480 stage
+  calls in a run; the existing caps bound that, but in that shape the report
+  mode fits only at 169 us and the all-safe mode brings no target to its stage
+  at a thread per call. An AND of "Cache caps" pins the count (a loose `.pyc`
+  600 directories deep stays `cache-cap`), design D14 adds a test of one chain
+  per directory, and task 2.3 measures the deep-tree worst case.
+
+The findings of 2026-10-20 that followed round B4, ruled by the lead as B-34
+to B-37 (the table "Re-read and Codex Findings (round B5)" below):
+
+- **B-34, a preflight that the floor or the deadline stops** (found in round
+  B4; Codex's P2 at `specs/project-clean-review-safety/spec.md:353` on
+  `e1049b2` is the same item). The preflight's closing sentence ended the stage
+  `refused` with `cache-changed` for "a filesystem call that runs out of its
+  budget", but a read's budget is `min(5 s, work remaining less the removal
+  floor)`: where the second term is the smaller, a read that outlives it, or
+  one that cannot start because no more than the floor remains, has found no
+  difference, deleted nothing and changed no state, and the bounds rule records
+  the first as `deadline-exceeded`. The delta now ends such a stage
+  `not-attempted` with `target-stopped` and the target `not-attempted` with
+  `deadline-exceeded`, as change 1's deadline rule makes every target whose
+  removal cannot start, with `reconciliation: null` and exit status 1, and the
+  human result prints `Cache disposal at PATH not attempted (deadline-exceeded);
+  nothing was deleted.` before its stop block, so that the deadline is named and
+  no change of state is claimed. A preflight that finds a real difference, an
+  error, or a read that outlives its own 5 s budget with at least 10 s of work
+  remaining (B-38, B-43) stays `refused` with `cache-changed` and exit 2; the
+  last is the bounds rule's `probe-timeout`, an ordinary preflight error in
+  Codex's words, not deadline exhaustion, though a signal received before it is
+  classified outranks it (B-39, B-41). The new line is printed only for a read
+  stopped before the first removal; a stage that never starts, and the check
+  before the first hand-off, keep the stop block alone, as they did. CD-2's
+  mapping of a
+  floor-ended partial stage to `refused`, and the decline of lane 3's LOW 14,
+  concern a stage that has removed an entry, and stand. One AND of "No time for
+  a cache stage" pins both outcomes; design D1, D7, D8, D11, D12, D14 and Risks
+  follow.
+- **B-35, the two drafts describe each other at today's heads** (A-25 for #26).
+  Design D4 described #23's joint fit at `ca96701`, "13 of its 16 targets ... 11
+  in the worst case", with the cache-stage filesystem time excluded. It first
+  described #26 at `9ff8202`, under A-23 and A-24, and B-42 restated it at
+  `9b67e8c`: a flagged run adds at most 81 children, 64 for the stage and 17
+  reflog children, and at the packet's 150 ms model, with this change's walk and
+  earlier stages added whole, 9 of 16 targets come through their stage before
+  the floor through one worker per stage (10 removals and 9 branch children), 8
+  in the worst case of 17 reflog children, and at least 5, or 3, at a thread per
+  call, 6, or 5, in the worst order a run can take; at change 1's measured costs
+  all 16 fit through a worker, and at a thread per call at least the 16th target
+  is deferred. Every figure is #26's, read at `9b67e8c` and checked against its
+  stated arithmetic; none is recomputed here from other inputs. Design D13 says
+  "13 of 16 at `ca96701`", and B-19 above "13 at `ca96701`". A-25 has #26's own
+  D7 add this change's worst-case shapes at `e1049b2`.
+- **B-36, `tasks.md` 2.2 ticked again.** Lane openRepoProject-4 agreed B-30 as
+  committed in `4d5855a`, and its byte check found the overview delta differs
+  from the agreed `9f30fb9` only by "for the same working directory and refs",
+  on :35-36 and :74, +3/-2, unchanged through `e1049b2`. Task 2.2 quotes lane
+  4's NOTED at line 64 of its log, brett-wip `fab1e721d`, read on the
+  register's `origin/main`. This round does not edit the overview delta.
+- **B-37, an unsupported platform keeps the earlier rungs** (Codex's P2 at
+  `specs/project-clean-review-safety/spec.md:383` on `e1049b2`). "Every row
+  that holds ignored records SHALL stay `ignored-local-files`" forced a dirty
+  worktree that also holds an ignored file onto a rung that the ladder tests
+  after `dirty`, replacing the dirty advice, which is the actionable one,
+  merely because cache disposal is unavailable. `cache-unsupported-platform`
+  now applies only to a row that reaches the `ignored-local-files` rung; a row
+  that `stale-worktree`, `protected-default`, `inspection-error` or `dirty`
+  classifies keeps that classification and, where it holds ignored records, its
+  `not-candidate` sub-record, as where the calls exist. One AND of "No
+  descriptor-relative calls on this platform" adds a dirty worktree that holds
+  an ignored `local.env`; CD-3 and design D9 follow.
+
+The findings of 2026-10-20 that followed round B5, ruled by the lead as B-38 to
+B-42 (the table "Re-read and Codex Findings (round B6)" below):
+
+- **B-38, lane 3's folded read of `cf57956..fffc194`** (no HIGH, one MEDIUM and
+  three LOWs, all accepted; lane 3 confirmed that every B4 and B5 ruling holds
+  and recomputed B-33's figures by brute force). The MEDIUM: the last AND of "No
+  time for a cache stage" gave `refused` with `cache-changed` to a read held
+  "past its 5 s per-call budget with more than 5 s of work remaining", which is
+  not the complement of the first half, whose budget `work remaining less the
+  removal floor` is under 5 s, so that with 5 to 10 s remaining both halves
+  claimed the read. The floor is 5 s, so the first half holds while less than
+  10 s of work remains and the second now reads "at least 10 s of work
+  remaining", in the delta, in What Changes, in B-34 above and in design D12 and
+  D14; no fit or arrival time cites the old threshold, so no figure moves. The
+  three LOWs: D7 says "no difference was found" where it said "nothing differs",
+  since a read that stopped has not shown that nothing differs; the caps' Open
+  Question cites the packet's reapplication rule, `BA:766-771`, which lowers the
+  target cap in steps of 8 under a higher measured cost, beside `BA:729-735`;
+  and D4 states the call count behind its 28.3 s, 683 calls a row (341 directory
+  opens, 171 file `lstat` calls and 171 access checks), 10,928 calls for 16
+  rows, 2.45 s at 224 us, added to the 25.8 s of the 172 Git children before the
+  first target's stage.
+- **B-39, a pending signal outranks a preflight timeout** (Codex's P2 at
+  `specs/project-clean-review-safety/spec.md:354` on `fffc194`). The preflight's
+  closing sentence ended the stage `refused` with `cache-changed` for "a
+  filesystem call that outlives its 5 s per-call budget" unconditionally, but
+  the signal scenario of "Clean disposes of listed caches before a worktree
+  removal" requires a signal during the whole-list preflight to leave the target
+  `not-attempted` with `interrupted`. The handler only records, so a signal
+  received while a read is held is seen only at the check before the hand-off,
+  which a stage that a timeout has ended never reaches. The delta now says that
+  the stage reads the slot before it classifies the stop of any preflight read,
+  or of the reopening of the first listed cache's chain, whether a
+  `probe-timeout`, the floor or the deadline: where a signal has been received,
+  the stage is `not-attempted` with `target-stopped`, nothing deleted, the
+  target and every later one `not-attempted` with `interrupted`, and the exit
+  status the signal's, never `refused` with `cache-changed` and never
+  `deadline-exceeded`. B-41 widens this to every outcome of the preflight
+  (below). The line `Cache disposal at PATH not attempted (deadline-exceeded)`
+  is printed only where no signal was received. One AND of "A signal during a
+  cache stage" pins the outcome and no scenario is added; design D1, D7, D8,
+  D11, D12, D14 and Risks, and CD-11, follow.
+- **B-40, lane 3's last two LOWs on `fffc194`** (its citation pass resolved 111
+  tokens and 25 more that its regex missed, each at the ref it names, and its
+  ASCII and bidi grep of all 8 files found nothing; the figures are right). LOW
+  1: B-30's row in the round B4 table put the end of the SHALL NOT sentence at
+  `spec.md:35`, where it runs :34-36 with the added words on :35-36, so it now
+  says `spec.md:35-36`, as `specs/project-overview/spec.md` stands and as lane
+  4's byte check and `tasks.md` 2.2 give it; that file is not edited. LOW 2: the
+  quotations are made verbatim. #26's draft at `ca96701` reads "13 of its 16
+  targets ... 11 in the worst case" in its design.md, so that is what D4 and
+  B-35 quote, and B-19 reads "13 at `ca96701`", while design D13 reads "13 of 16
+  at `ca96701`", so B-35 says each. Lane 3 also notes that A-25 resolves only at
+  #26's `9b67e8c`, where D4's figures hold; nothing was edited for it.
+- **B-41, a signal received first decides every outcome of the preflight**
+  (the lead's ruling on this round's own B-39 sentence, which left a difference
+  or an error that the preflight found `refused`). That sentence contradicted "A
+  signal during a cache stage", whose AND leaves every cache in place and the
+  target `not-attempted` with `interrupted` for SIGINT during the whole-list
+  preflight, and it had no row in D8's table, and so no reason for the later
+  targets. The rule stays one rule: the stage reads the signal slot before it
+  classifies any outcome of its preflight, or of the reopening of the first
+  listed cache's chain, whether a difference, an error, a byte total past either
+  cap, a `probe-timeout` or a floor or deadline stop, and where a signal has
+  been received the stage is `not-attempted` with `target-stopped`, nothing
+  deleted, the target and every later one `not-attempted` with `interrupted`,
+  and the exit status the signal's. Nothing is deleted in either reading, the
+  run is stopping, and a re-run's preflight sees any real difference again. The
+  review-safety delta states the rule once, in the preflight paragraph; the B-39
+  AND of "A signal during a cache stage" adds the changed-entry case; the human
+  line for a stage that ended `refused` before its first removal is printed only
+  where no signal had been received by then, as the deadline line is; design D1,
+  D7, D8's `target-stopped` row, D11, D12 and D14 follow.
+- **B-42, D4 quotes #26's counts from before its round A5** (lane 3, with its
+  read of #26). D4 said that at a thread per call #26 finds "5 and 5, or 4 and
+  3", the counts of its first two bullets before A5 added the worst order a run
+  can take. #26 at `9b67e8c` (its design.md D7, lines 724-731) says: "at least
+  5, or 3, at a thread per call, 6, or 5, in the worst order a run can take",
+  and "at a thread per call at least the 16th target is deferred", with "all 16
+  fit through a worker" at change 1's measured costs. D4 now restates #26 at
+  `9b67e8c` in those words, with the removals and branch children of its bullets
+  beside them, and names that head. #26's round A6 changes none of these
+  figures, so `9b67e8c` is cited. The B-35 decision above, and design's source
+  table row for B-35, say the same; the round B5 row of B-35 stays as it was, as
+  history.
+
+The findings of 2026-10-20 that followed round B6, ruled by the lead as B-43 to
+B-45 (the table "Re-read and Codex Findings (round B7)" below):
+
+- **B-43, lane 3's confirm read of round B6** (`e399309`; lane 3 read rounds C6
+  and A6 clean and this change at no HIGH, no MEDIUM and three optional LOWs,
+  and confirmed that B-41 leaves no target with two outcomes). LOW 1: What
+  Changes and the B-34 decision above say "at least 10 s of work remaining", as
+  M1 was ruled (B-38), where they said "work left". LOW 2: the AND of "A signal
+  during a cache stage" that B-39 and B-41 wrote names the floor stop, a read
+  held until no more than the removal floor remains for the next read to start,
+  beside the 5 s budget, the deadline's shorter budget and a changed entry, as
+  the review-safety preflight paragraph and design D14 name it. LOW 3: design
+  D4's run byte total past 1 GiB, which "ends `refused`", gains the signal
+  exception that the review-safety preflight paragraph and D7 state: where a
+  signal was received first, the signal decides, as for every outcome of the
+  preflight (B-41); D4's caps table, whose `cache_bytes_total` row says the
+  same in short, gains it too.
+- **B-44, a streaming enumeration that stops at the cap** (Codex's P2 at
+  `specs/project-clean/spec.md:873` on `e399309`). The walk listed each cache
+  directory by the descriptor-relative `os.listdir` that D9 required, which
+  builds the whole directory's listing before the walk can see the row's 513th
+  object, and a timeout abandons the worker without reclaiming that memory, so
+  a `__pycache__` of millions of entries could take unbounded memory. The walk
+  and the whole-list preflight now enumerate a directory by a
+  descriptor-relative streaming enumeration that yields one entry at a time and
+  is closed as soon as the cap decides: in the walk at the row's 513th recorded
+  cache object, and in the preflight at the first entry beyond those the plan
+  recorded, which is a difference. No enumeration holds a whole directory's
+  listing, so a row's walk holds at most 513 entries whatever a directory
+  holds. One directory's bounded enumeration counts as one filesystem call
+  under the per-call budget, as its listing did, so D4's call counts and every
+  fit, A-9's and B-3's among them, are unchanged; D4 says so, and a comparison
+  of every figure in D4 before and after this round found none changed. Design
+  D3 and D7 name the mechanism, `os.scandir` on the directory's descriptor,
+  iterated lazily and closed when the cap decides; CPython works on a
+  duplicate of the descriptor and rewinds it on close, so the walk's own
+  descriptor stays usable, which this round checked on Python 3.10.21, 3.12.3
+  and 3.13.15 (design, Context). D9's platform check names `os.scandir` in
+  `os.supports_fd` in place of `os.listdir`; the review-safety platform
+  sentence says "streaming directory enumeration" for "directory listing", and
+  the bounds block's list of the cache walk's calls "bounded directory
+  enumerations" for "listings", the one delta sentence beyond those the ruling
+  names.
+  One AND of "Cache caps" pins a `__pycache__` of 100,000 entries, of which a
+  test hook sees at most 513 taken, the row `cache-cap`; design D14 adds the
+  test in a bullet of its own.
+- **B-45, the stall report needs a held-back row** (Codex's P2 at
+  `specs/project-clean/spec.md:928` on `e399309`). With exactly 16 candidates,
+  each held for a persistent reason, no candidate is left with `cache-cap` by
+  the 16-enumeration cap, so a line saying that "these cache-cap rows will not
+  drain" would name rows that do not exist. The stall line now also requires at
+  least one later candidate left with `cache-cap` by the 16-enumeration cap;
+  otherwise each row's own reason and next step print as usual, and no stall
+  line prints. One AND of "Cache caps" pins exactly 16 such candidates and no
+  stall line; design D4, D11, D14 (in a bullet of its own) and Risks, the B-21
+  decision above, What Changes and Capabilities follow.
+
+The findings of 2026-10-21 that followed round B8, ruled by the lead as B-47
+to B-52 (the table "Re-read and Codex Findings (round B9)" below):
+
+- **B-47, the enumeration's child pins `status.showStash=false`** (RB's
+  HIGH-1). Under a user's `status.showStash=true`, porcelain v2 prints
+  `# stash N` ahead of the records whenever the repository holds a stash, and
+  a stash is repository-wide, so every candidate of such a repository read a
+  record that is not an ignored one and was `cache-unverified`, and every
+  revalidation of a cache target read a record that its plan did not list:
+  nothing was ever disposed of, though nothing unsafe was. The child's pins
+  gain `-c status.showStash=false` in the ADDED requirement, and the scenario
+  that pins the command gains the setting, a stash, the pin and an AND for the
+  revalidation at apply. RB's fixture was run on Git 2.43.0 before and after:
+  `# stash 1` before the record without the pin, the record alone with it
+  (design, Context). Git's own documentation at `v2.36.0` gives
+  `status.showStash` from 2.14.0 and porcelain v2's `# stash <N>` from 2.35.0,
+  so the setting, the header and the pin all exist at the Git 2.36 floor.
+  Change 1's combined probe is porcelain v1, which prints no such header, so
+  the evidence model is not modified.
+- **B-48, a bind mount from the worktree's own filesystem** (RB's MEDIUM-1;
+  applied as a residual, with one check added). The device check cannot see
+  such a mount, so CD-8's "disposal never reaches into a mounted tree" was
+  false and is corrected: disposal acts on paths inside the worktree's tree,
+  and through such a mount it disposes of the mount's cache files as the
+  worktree's own; where the mount point is a directory that the stage
+  removes, its removal fails with `EBUSY`, and the target stops there until
+  the mount is gone. The device rule now names a listed cache directory and
+  every directory inside it, as design D3's walk already checked every
+  directory it records. Parsing `/proc/self/mountinfo` is rejected: it is
+  Linux-only parsing for a rare case whose reach is limited to caches inside
+  the worktree's path.
+- **B-49, a line when Git's removal fails after a `disposed` stage** (RB's
+  MEDIUM-2). Change 1's own scenarios reach a cache target whose stage ended
+  `disposed` and whose removal then ends `failed` ("Git refuses the removal",
+  "Git leaves an orphaned directory") or `unknown`: B-17's end state, the
+  caches deleted and the worktree kept, though the person read only the stop
+  block. `Cache disposal at PATH: removed N cache paths; the worktree was not
+  removed.` now precedes the stop block there too, and for an `unknown`
+  target `Cache disposal at PATH: removed N cache paths; the worktree's
+  removal is not proven.`; the stop block that follows gives the reason and
+  the next step. One AND of "A merged worktree whose only ignored files are
+  caches" locks the worktree after its stage.
+- **B-50, `.pytest_cache`: the recommendation turns to no** (RB's MEDIUM-3).
+  Its Open Question now recommends not admitting it in this change, with four
+  reasons and what a later change would need; What Changes, Out of Scope and
+  design's Non-Goals, Risks, Migration Plan and Open Questions follow. No delta
+  text changes, since the form was never added.
+- **B-51, RB's five LOWs.** LOW-1: an ignored record whose path, its trailing
+  `/` disregarded, begins with `/` or holds an empty, `.` or `..` component
+  makes its candidate `cache-unverified`, so that the walk never opens `..`.
+  LOW-2: B-20's premise is corrected to what was observed and B-20 restated
+  with a true reason (above; design D3); behaviour does not change, since a
+  sticky target fails closed, nothing deleted, and so is no safety gap. LOW-3:
+  the batch block's reflog sentence keeps change 1's words and gains the clause
+  "except a read of the cache walk that times out, which leaves its row
+  `cache-unverified` and the plan complete", which round B25 moves to the
+  `worktree-only-commits` rule's closing "as for every other read and child",
+  naming the enumeration's child as well as the calls of its walk, the reflog
+  sentence then reading as PR #19 writes it (RB2's LOW-5 of 2026-10-23, B-119).
+  LOW-4: design D5 states by decision that the digest covers each target's
+  disposal decision and not its entry counts, the apply's caps bounding the
+  difference. LOW-5, answered fail-closed: an entry of a listed directory whose
+  name is not valid UTF-8 is blocking, and a no-follow open refused at plan
+  time makes the row `cache-unverified`, not blocking.
+- **B-52, the re-checks against the archived text proved by `diff -u`** (RD's
+  M2). If PR #19 closes unmerged, its blocks here, two when this was ruled and
+  eight since round B15 (B-69), carry its unratified sentences, which `validate`
+  and the archive cannot see. `tasks.md` 2.1 then
+  re-bases them on change 1's text at main, and verifies every block written
+  on change 1's or PR #19's text by a `diff -u` against the archived
+  requirement showing additions only, a re-base that changes this change's
+  added text going back to Brett Heap; `validate` is a second check only
+  (Dependencies and Sequencing). The ruling names "#27's `project-command`
+  block"; this change has none, so the blocks written on PR #19's text are
+  read for it.
+
+The findings of 2026-10-21 that followed round B9, ruled by the lead as B-53
+and B-54, and the lead's B-55 on round B10's first drafts (the table "Re-read
+and Codex Findings (round B10)" below):
+
+- **B-53, lane 3's confirm read of round B9** (W2: no HIGH, no MEDIUM and
+  eight LOWs, all accepted). The round B9 record names the key's citation
+  form and counts its LOW-2 row, which adds a spec clause, as applied with
+  change; LOW-1's empty and `.` components are named wherever the proposal
+  summarizes the rule; D3's `faccessat2` condition is kept wherever the access
+  check is said to see a read-only mount; D3 and Risks name a sticky
+  directory's `partial` case; task 2.1's check is word-level and allows an
+  `and` or an `or` that a list extension moves; the Migration Plan's step 2
+  names the re-base on main and the return to Brett Heap; and the
+  review-safety ADDED requirement says that at plan time a symbolic-link
+  directory on the way down is `cache-unverified`, not blocking.
+- **B-54, the two blocks on PR #19's text at `a664799`** (reader RF's H1, and
+  this change's share of its M1). PR #19 changed both requirements after
+  `c462d87`, so under this change's own rule (Dependencies and Sequencing)
+  they are rewritten on its text at `a664799`, lane openRepoProject-2's round
+  (b), every one of PR #19's scenarios carried and this change's additions
+  re-applied word for word, but for the fit sentence: 283 Git children and
+  about 47.3 s where it said 250 and 42.3 s, where the plan read
+  `extensions.worktreeConfig` as false, since PR #19 adds a seventh
+  revalidation child and a probe per linked row where it is true. Where the
+  revalidation's step lists meet, the enumeration's child takes the combined
+  probe's place and PR #19's hidden-state probe and `worktree-only-commits`
+  check follow it (design D10). The fit is restated on PR #19's D14 (design
+  D4): 14 of 16 targets reach their stage at the packet's model before any
+  filesystem time, 11 at the top of the measured cost, and the caps' Open
+  Question gives the new figures. Lane openRepoProject-2 checked the two
+  rewritten blocks at `a664799` before their commit and said YES, with one
+  correction, applied: the fit sentence also says that on its count the first
+  14 targets start any cache stage and their removal child before the removal
+  floor and the last two are `not-attempted` with `deadline-exceeded`. M1: every
+  re-base check gains a second diff, from this change's block as committed at
+  its ratified head, and any change it shows to this change's words returns the
+  block to Brett Heap, before the Speckit handoff for `tasks.md` 2.1 and before
+  the archive for 3.2, which lane openRepoProject-4 agreed in its pinned range.
+- **B-55, the lead's rulings on round B10's first drafts.** The drafts, written
+  on PR #19's round (a) at `6f2cb54`, keep their choices, and are re-based on
+  its round (b) at `a664799`, which leaves the bounds requirement byte for
+  byte and states one rule for every Git child of the revalidation that does
+  not finish with a value (PR19/rs:117-127 at `a664799`, R-171). The
+  enumeration's child follows it: a cut by the work deadline counts as no
+  difference and leaves the target and every later one `not-attempted` with
+  `deadline-exceeded`, and its own failure, or a run past its own budget while
+  the deadline is not the limit, refuses the target with `state-changed`
+  (design D10); B-34's rule for a read of the stage's preflight is unchanged.
+  D13's figures and those of the B-19 decision above are labelled as at
+  `c462d87`, not restated, while PR #19's LQ-20 was open, and the account of
+  main is corrected to what Git shows at `origin/main` `15504f1`.
+
+The finding of 2026-10-21 that followed round B10, ruled by the lead as B-56
+(the table "Re-read and Codex Findings (round B11)" below):
+
+- **B-56, a candidate that a gate after the target cap excludes** (Codex's P2
+  at `specs/project-clean/spec.md:866` on `d4e960b`, which reader RG verified
+  as VALID and wider; the lead's ruling is RG's option (c), its (b) with T2).
+  The candidate test stops at the gates before `deferred-target-cap`, since
+  the gates after it read the hidden-state probe and D21's reachability probe,
+  each a Git child a row, which change 1 runs only for the 16 rows past the cap
+  (PR #19's D12). So a cache-only row that `contains-submodule`,
+  `hidden-local-state`, `operation-in-progress` or `worktree-only-commits`
+  then excluded was enumerated, passed the rung, held one of the 16
+  enumerations and one of the 16 target places and counted in the
+  invocation's totals, on every run, with no stall line, since the stall test
+  read only rows held at the rung, and "a later run SHALL take the rows the
+  caps left" was false. The defect dates from the first delta (`d2241c3`), and
+  PR #19's two added gates widened its trigger. RG found three more effects:
+  four such rows of 250 MiB, or eight of 500 entries, keep a later cache-only
+  row at `cache-cap` for good by the totals alone (its W1); in Codex's own
+  example the 16 target places are the binding limit, so freeing the
+  enumerations alone would not drain the seventeenth (W2); and a plain row
+  behind 16 such rows, which change 1 selects, is deferred on every run (W3).
+  (b): such a candidate keeps its place among the 16 enumerations and counts
+  as held for a persistent reason; the stall line names how many a gate after
+  the cap excludes, by those gates' reasons, each row printing in its group
+  with change 1's next step; and the drain sentence excepts change 1's own
+  deferral stall, which change 1's line names. T2: such a row is not counted
+  toward the invocation's totals, the plan applying those gates to each row
+  that reaches them before it applies the totals to any later row, so that
+  the feature runs the gates from the classification through
+  `worktree-only-commits` as one pass in canonical order, the deferral counted
+  inline (design D4); no child is added, and the selected rows still keep
+  within 4,096 entries and 1 GiB. Two ANDs of "Cache caps" pin both halves,
+  and its AND for exactly 16 candidates then covers 16 such rows with no line
+  printed; no scenario is added, so the counts and the fit do not move. W3 is
+  a Risk of its own, and the design's Goals and What Changes are narrowed to
+  it. Option (a), running those gates before the enumeration, is declined: it
+  costs up to 32 more Git children, takes the targets that start before the
+  spawn limit from 14 to 10 of 16, and still leaves a stall. The admin-directory
+  pre-filter, RG's (c-i), goes to Brett Heap as an Open Question. B-56 adds to
+  B-12, B-21, B-32 and B-45 above, which stay as written records: to B-12's
+  statement of what can still stall, the rows that a gate after the cap
+  excludes, which no test before the enumeration sees; to B-21's stall line,
+  its `G` part, with those rows' reasons and their groups' next steps; to
+  B-32's list of persistent reasons, an exclusion by such a gate, and to its
+  claim that a row left only by the totals drains, the condition that makes it
+  true; and to B-45's held-back row, the new reason among the 16 it waits
+  behind. The drain sentence also takes the condition of PR #19's own
+  deferral at its round (c), "as the rows ahead of them are removed or
+  excluded by a gate before the cap", in full, as lane openRepoProject-2's
+  check asked, so that this change promises what change 1 does, no more and no
+  less. Round B12 keeps that condition for the rows that `deferred-target-cap`
+  defers and words the drain past the 16-enumeration cap on its own, since a
+  candidate left at the rung keeps its place there; round B13 words the drain
+  of a candidate that the invocation's totals leave on its own as well, as the
+  candidates ahead of it are removed, cease to be candidates or cease to count
+  toward those totals, which B-32's claim needs (W33's M-1, B-62).
+
+Departures from the rulings as first written, each naming what it departs
+from. B-11 accepted CD-1 to CD-3 as the consistent reading of B-6 and amended
+B-6 to match, so of these only CD-4 still departs from a ruling, besides
+B-22's edit of change 2's carried "Every protected classifier", which departs
+from B-14's "plus one scenario" on lane openRepoProject-4's precision and is
+ruled by B-22:
+
+- **CD-1, the run stops at a failed cache stage** (departed from B-6's "other
+  targets continue"; accepted by B-11). Change 1's retire requirement says
+  "Removal SHALL stop after the first target whose result is not a plain
+  `removed`, with no continuation" (CAS/pc:246-248), and the packet prefers
+  "stop-on-first-failure, consistent with current retirement"
+  (`BA:1640-1643`). Continuing would need a second change to that requirement
+  beyond the one clause B's brief allows, and would make a cache failure the
+  one stop cause that does not stop. Later targets are `not-attempted` with
+  `batch-stopped`, or `deadline-exceeded` when the removal floor ended the
+  stage; a re-run plans afresh.
+- **CD-2, the target's result** (departed from B-6's `cache-changed` as the
+  target's refusal and `not-attempted` with `cache-partial` as its removal's
+  result; accepted by B-11). Those values would extend the closed reason lists
+  of CAS/pc:896-908, against L-4, and `not-attempted` carries a null
+  reconciliation and, for a stage that failed, matches no exit row (CAS/pc:906-908,
+  :916-919 and :945-956). For the floor case QA-3 kept the same mapping, the exit
+  status then being 1 by the deadline row, and lane 3's LOW 14, which asked for
+  `not-attempted` there, is declined under it; the human line names the
+  deadline instead (B-21). The only `not-attempted` target that carries a
+  reconciliation is one whose stage ended `disposed` and whose removal a
+  signal or the floor then stopped (B-17, re-read MEDIUM 2).
+  Here the target is `refused` with `state-changed` (nothing was spawned; the
+  plan no longer held), carries its reconciliation and exits by the existing
+  table, and `cache_disposal` carries `refused` with `cache-changed` or
+  `partial` with `cache-partial`; the MODIFIED "Clean records a reconcilable
+  result for every removal target" (B-10) widens the `refused` stage to name a
+  cache stage that ended `refused` or `partial`.
+- **CD-3, the platform rule is per row** (departed from B-6's refusal of the
+  whole apply as `cache-unsupported-platform`; accepted by B-11). A refusal
+  code would extend the closed list of CAS/pc:1113-1119, against L-4, and
+  refusing the whole apply would stop change 1's cache-free removals on that
+  platform. Here no row gets a cache plan and each that reaches the
+  `ignored-local-files` rung holding ignored records keeps it with
+  `cache_disposal.reason` `cache-unsupported-platform`, while a row that an
+  earlier rung classified keeps that classification (B-37): nothing is deleted
+  by `project`, which is the fail-closed outcome `BA:1328` asks for.
+- **CD-4, one more MODIFIED block** (departs from B's list as B-10 extends it).
+  `Cleanup revalidates destructive actions` requires "the combined status
+  probe, which SHALL print no record" (CAS/rs:75-76), which every cache target
+  fails, so by L-3 it is modified: for such a target the enumeration's child
+  replaces that probe at revalidation and must print exactly the planned
+  records, the cache stage's failures refuse with `state-changed`, and the
+  revalidation the MUST names is the one before the stage. No other extension
+  modifies it. Its block is written on PR #19's text (L-1 and L-15 above), at
+  `dab8a64` since round B26 (B-135), which `54e869b` keeps (B-139), at
+  `4512441` in round B25 (B-126), at `173d83c` in rounds B19 to B24 (B-93),
+  at `e14ada0` in round B18 (B-88), at `b3228bb` in rounds B16 and B17 (B-84,
+  B-87), and at `f0bf538` from round B13, whose text `6bf9f77` kept byte for
+  byte (B-54, B-58, B-60, B-76, B-80; at `9267303` in round B12, at `2e819ad`
+  in round B11 and at `a664799` in round B10).
+- **CD-5, the enumeration's argument vector** (completes B-2). B-2 names
+  `status --porcelain=v2 --ignored=matching -z`; this adds
+  `--untracked-files=normal` and the status pins. Git 2.43 refuses
+  `--ignored=matching` with `--untracked-files=no` ("Unsupported combination of
+  ignored and untracked-files arguments", exit 128), and a user's
+  `status.showUntrackedFiles=no` does the same, so without it the child fails
+  for every such user, as change 1 found for its own probe (CAS
+  proposal.md:51-53); every status child carries the status pins, the two of
+  CAS/cmd:111-113 and, since PR #19's LQ-10, four (PR19/cmd:158-164 at
+  `f0bf538`), and, since its round (q), on Brett Heap's Q1 of 2026-10-23, five,
+  `-c core.ignoreCase=false` the fifth (PR19/cmd:158-168 at `4512441`; R-380),
+  the enumeration's child too (B-124), since it stands in for the combined
+  probe at a cache target's revalidation (RH's M1, B-69). This was observed with
+  Git 2.43.0 on Linux (design,
+  Context), the platform CI runs. B-47 adds the child's own pin, `-c
+  status.showStash=false`, since a user's `status.showStash=true` and any
+  stash put a `# stash N` header before porcelain v2's records.
+
+Lane additions, with no packet or ruling text behind them, except where a
+bullet names the packet line that its departure changes (CD-8, CD-9, CD-10 and
+CD-16, W53's 27-06, 27-07, 27-03 and 27-04; B-75):
+
+- **CD-6, at most 16 enumerations per invocation** (`limits.cache_rows`). With
+  one enumeration per candidate and up to 127 candidates, the plan of 128 rows
+  and 16 targets that read `extensions.worktreeConfig` as false needs 394 Git
+  children on PR #19's text at `f0bf538`, 59.1 s at the packet's 150 ms
+  (`BA:729-735`), past the 50 s work deadline (361 and 54.15 s at `c462d87`);
+  with 16 it needs 283, 42.45 s, and, counting Git children and removals, the
+  15th and 16th targets reach their stage at about 45.3 s and 46.5 s, past the
+  spawn limit, where at `c462d87`, with 250 children, the 16th removal still
+  spawned before it (B-54); with the walk's and the stages' filesystem time at
+  B-25's
+  bound, 11 of 16 targets reach their stage at the top of the measured cost, the
+  rest deferred to the next run, and B-33's deep trees need a new limit (design
+  D4; Open Questions). Candidates past the 16th keep `ignored-local-files` with
+  `cache-cap` and drain on re-run as the candidates ahead of them are removed
+  or cease to be candidates, one left at the rung keeping its place (round
+  B12), unless the first 16 candidates stay held
+  for a persistent reason (B-32), one that a gate after `deferred-target-cap`
+  excludes counting as held (B-56), a stall the report names, as change 1
+  names the index-gate stall, with each cause and its next step (B-21), or the
+  rows that `deferred-target-cap` defers will not drain, which change 1's line
+  names (B-56), those rows draining as the rows ahead of them are removed or
+  excluded by a gate before the cap. Candidates that the invocation's totals
+  leave drain as the candidates ahead of them are removed, cease to be
+  candidates or cease to count toward those totals, unless those deferred rows
+  will not drain (B-56, round B13). The sample test
+  (CD-7, B-12) keeps out of the 16 every row whose
+  samples show a blocking name; what can still hold a place is a candidate
+  whose samples all have cache names while it holds a blocking path beyond its
+  8 samples, a cache-named path that is blocking by its type, contents or
+  device, more than a per-worktree cap allows, an enumeration that failed, or
+  a directory the user cannot change (B-20), and a candidate that a gate after
+  the cap excludes, which no test before the enumeration sees (B-56).
+- **CD-7, candidate rows.** Only a linked worktree whose combined probe read
+  ignored records and nothing else, whose samples pass the sample test (B-12),
+  and which would otherwise pass every gate before `deferred-target-cap`, is
+  enumerated, so the 16 enumerations are never spent on rows that a gate before
+  `deferred-target-cap` or a sampled blocking path keeps anyway; in single mode
+  that is P alone, since `not-requested` precedes the cap. The gates after the
+  cap are the exception: change 1 checks them only for the 16 rows past it,
+  since the probes they read cost a Git child a row (PR #19's D12), so a
+  candidate that one of them excludes holds an enumeration and a target place,
+  counts as held for a persistent reason, and is not counted toward the
+  invocation's totals (B-56). Other rows holding ignored records carry
+  `not-candidate` with `null` counts, a row that only the sample test kept out
+  carries the samples it rejected in `blocking_samples`, and a row whose samples
+  pass carries the class or gate that keeps it in `candidate_block` (B-24).
+- **CD-8, device and encoding.** A cache path, a directory on its way down, or
+  a listed cache directory or a directory inside it (B-48), on a device other
+  than the worktree root's (a mount point inside the worktree) is blocking; a
+  cache path, or an entry name inside a listed directory (B-51), that is not
+  valid UTF-8 is blocking, as change 1 never uses such a path as an operand.
+  The device check cannot see a bind mount from the worktree's own
+  filesystem, whose device is the worktree's: disposal acts on paths inside
+  the worktree's tree, so through such a mount it disposes of the mount's
+  cache files as the worktree's own, and where the mount point is a directory
+  that the stage removes, its removal fails with `EBUSY` and the target stops
+  there until the mount is gone. The first wording, "so disposal never
+  reaches into a mounted tree", was false for that case and is withdrawn
+  (B-48, RB's MEDIUM-1), a departure from `BA:1632-1634`, "A future cache
+  extension ... leaves external targets intact", which reads "external targets"
+  by path, with the bind mount on the worktree's own filesystem a recorded
+  residual (W53's 27-06); parsing `/proc/self/mountinfo` to see such mounts is
+  rejected as Linux-only parsing for a rare case whose reach is limited to
+  caches inside the worktree's path.
+- **CD-9, a failed enumeration preserves the row, not the plan.** The row
+  already has a complete combined probe; a failed, timed-out or inconsistent
+  enumeration, a child that exits 0 having warned on standard error among the
+  failed ones (RE23-1, under Brett Heap's Q8), leaves its ignored paths
+  unproven, `ignored-local-files` with `cache-unverified`, and does not make
+  the row `inspection-error` or the plan incomplete, which would block every
+  other row's removal. The deadline still makes the plan incomplete, as for
+  every probe. This departs from `BA:908-910`, a plan complete only when no row
+  is `inspection-error`, and from `BA:1360-1362`, a probe timeout during
+  planning giving an incomplete plan, and fails safe, the row being preserved
+  (W53's 27-07).
+- **CD-10, the stage's time.** It starts only while more than the removal floor
+  remains, and each read gets `min(5 s, work remaining less the floor)`; each
+  removal is handed over only while more than the floor remains and waited for
+  until it returns, up to the 300 s removal ceiling, as a removal child is
+  (B-16). So the floor is left for the spawn whenever the removals return in
+  time, and no constant is added. It extends `BA:437-440`, the removal floor
+  for removals only, to the stage and its reads, the clause that #26 records
+  as a correction of the same lines, and its start test is strict where the
+  removal's is inclusive (RI-9, B-67; W53's 27-03).
+- **CD-11, signals in the stage.** Before the hand-off of its first removal a
+  signal stops the target as change 1's slot check does, the slot being read
+  before the preflight and again immediately before that hand-off, and before
+  the preflight classifies any outcome, a difference, an error, a byte total
+  past a cap, a timeout or a floor or deadline stop (B-39, B-41); after it, the
+  stage runs to its end and the slot is read before the spawn, so a signal
+  leaves the target's caches either untouched or all removed, never half done
+  (B-17).
+- **CD-12, `operations` counts removed cache entries** (`BA:1321-1322` and
+  `BA:1336-1337` put the mutations in the plan estimate): beside the removal
+  children PR #19 places there (draft PR #19, pending), each unlink and
+  directory removal that returned having removed its entry counts once.
+- **CD-13, the sub-records' shape.** Plan: `disposable`, `blocking`, `reason`,
+  `candidate_block` (B-24), `entries`, `bytes`, `paths`, `directories`,
+  `blocking_samples` (at most 8, `limits.ignored_samples`). Result: `stage`,
+  `reason`, `paths` with a per-path `removed`, `entries`, `entries_removed`.
+  Presence follows L-10 and B-13 above.
+- **CD-14, the digest** (B-10). Change 1 defines the digest's canonical text as
+  the identity fields, the merge target and "the selected `[path, branch,
+  head]` triples" (CAS/pc:629-632). The MODIFIED batch block extends a cache
+  target's entry with its cache paths and identities and leaves every plan
+  without a cache target at change 1's digest. The draft placed this in the
+  ADDED requirement as a named departure; the alignment review asked for one
+  placement ruling (G1), and B-10 moved it into a MODIFIED block, which #23
+  also carries (L-11).
+- **CD-15, the question is unchanged.** `Remove N worktrees, keeping N
+  branches? [yes/N]` stays; the caches are listed in the plan printed above it,
+  as PR #2's design held the remove confirmation sufficient. Changing it would
+  change the question sentence that the MODIFIED batch block keeps verbatim,
+  and its scenario "Only yes confirms".
+- **CD-16, `schema_version` stays 1.** No existing enum gains a value; the new
+  objects and keys are additive. Change 1's key lists read as additive
+  ("Worktree rows SHALL add", "each target carrying", CAS/pc:1107-1109 and
+  :1136-1140), and its `schema_version` rule names renames, removals, type
+  changes and changes of meaning, not additions (CAS/pc:1129-1131), so
+  "Clean plans and refusals are versioned JSON" needs no MODIFIED block; the
+  realization extends feature 004's `WORKTREE_ROW_KEYS`, `SELECTED_KEYS` and
+  `TARGET_RESULT_KEYS` in `project` with `cache_disposal` as an optional key,
+  as `prunable` already is (lane 3's LOW 10). The packet's "stage values of
+  its own" (`BA:1319-1320`) are read as the values of `cache_disposal.stage`,
+  since change 1's `stage` enum is closed (CAS/pc:1129-1131; lane 3's LOW 1),
+  and `BA:1318-1322` is the clause that the packet revision changes if that
+  reading stands (W53's 27-04).
+  `candidate_block` takes existing class names and gate reasons, and
+  `cache-unwritable` is a value of the sub-record's own `reason` (B-20, B-24).
+  `merged-removable` keeps its meaning,
+  removable by this tool's gates, and `ignored-local-files` its meaning, holding
+  ignored local files not proven disposable (the title of
+  `project-clean-review-safety`'s requirement); what grows is the proof.
+  `operations` keeps its meaning, the plan's mutations (`BA:1321-1322`), of
+  which PR #19's wording (draft PR #19, pending) counts the one kind change 1
+  has, the removal; a
+  removed cache entry is one more mutation (CD-12), and a plan without caches
+  counts as before. Before Brett Heap with L-4's question.
+- **CD-17, the overview's equality clause** (B-14, B-22, B-30). Change 2
+  requires the overview's classification of every row to equal that of
+  `project clean <root> --json`, and its ladder to spawn no probe of its own
+  (APO/ov:375-386),
+  as the packet decided that overview and clean "always produce the same
+  classification" (`DI:618-624`), from which this change departs for the cache
+  case (lane 3's LOW 15). After this change, `project clean` classifies a
+  cache-proven candidate `merged-removable` on evidence the overview does not
+  collect, so the overview reads the same row `ignored-local-files`: the safe
+  direction, since its suggestion for that class is the read-only clean
+  command (APO/ov:436), but a break of the equality as written. Lane
+  openRepoProject-4 asked on 2026-10-11 that the exception ride in this
+  change; its two sentences, appended to the equality clause in this change's
+  `project-overview` delta, were agreed by lane 4 on 2026-10-19 and committed
+  as `b4d3e12`. B-22 rewords them to cover every cache-proven row, those that
+  `project clean` then excludes included, and to state the second at the
+  classification level, and that edit was agreed by lane 4 on 2026-10-19 and
+  committed as `9f30fb9`; B-30 scopes the second to the same working directory
+  and refs, in lane 4's own words, committed as `4d5855a` (`tasks.md` 2.2).
+  The alternative, the overview
+  collecting the same evidence, costs its budget and is out of this change's
+  scope.
+- **CD-18, an explicit stage rather than letting Git delete.** Git's non-force
+  removal deletes ignored files with the worktree (`BA:319-321`), so proving
+  the caches at revalidation and leaving the deletion to Git would be simpler.
+  The packet and B-8 fix a stage, and the stage is safer for files placed in a
+  listed cache directory: Git sees an ignored `__pycache__/` as one record and
+  deletes whatever it holds by then, while the stage re-lists each cache
+  directory at its preflight, requires the number of entries the plan
+  recorded, and removes it only once it has emptied it, so a file placed in a
+  cache directory before that directory's removal, under a name that the
+  preflight did not fix, survives and stops the target, while an entry put at a
+  name that the preflight fixed is removed in its place, as the residual window
+  states (RB2's LOW-3). An ignored file created elsewhere in the worktree
+  during the stage is deleted by Git's removal exactly as under change 1, only
+  after a longer window (B-19).
+
+## Corrections to the Packet
+
+None to the packet itself. One to the PR #2 decision record's harvest row,
+which the packet links (`OV:186`): "bb91a49's `O_NOFOLLOW`/`dir_fd` deletes
+already match the packet's stated requirement" holds only in part, because
+`bb91a49` records no planned device or inode and falls back to flag 0 where
+`O_NOFOLLOW` is missing (`git show bb91a49 -- project`), where `BA:1326-1328`
+asks for both a planned identity and a fail-closed refusal.
+
+## Open Questions
+
+Each is before Brett Heap with a recommendation; the deltas implement the
+recommendation, and a different ruling edits them before ratification, except
+the limit on the cache stage's directory opens and the admin-directory
+pre-filter, whose recommendations the deltas do not yet implement: each is
+added only on his answer (B-33, B-56). For
+`.pytest_cache` the recommendation is now no (B-50), which the deltas
+implement by not admitting it.
+
+- **Enum closure and `schema_version` (L-4).** Change 1 says "Enums SHALL be
+  closed within a schema version" (CAS/pc:1129-1131) and change 2 that "adding
+  a field or an enum value is additive" (APO/ov:655-658). Recommendation: this
+  change makes the question moot for `clean --json`, since it adds no value to
+  any existing enum and puts its own values in the new `cache_disposal`
+  sub-records; `schema_version` stays 1 (CD-16). The same holds for
+  `operations`, which now also counts removed cache entries. If Brett Heap
+  reads a widened `merged-removable` as a change of meaning, the deltas move
+  `clean --json` to `schema_version: 2` instead.
+- **`.pytest_cache` (B-1, B-23, B-50).** Measured 2026-10-19 as the only
+  blocker of 16 of the 37 kept rows, 12 of which pass every later gate. Each
+  of its 19 instances has one shape: `.gitignore`, `CACHEDIR.TAG` with the
+  cache-directory signature, `README.md` and `v/`; 4 or 5 regular files of at
+  most 89 KB; no symbolic link and no executable file. Git prints it as those
+  four records, since pytest's own `.gitignore` (`*`) ignores them.
+  Recommendation: no, not in this change (B-50). B-23 recommended admitting
+  it here as a third listed form (the ignored records `D/.gitignore`,
+  `D/CACHEDIR.TAG`, `D/README.md` and `D/v/`, or `D/` itself where an ignore
+  rule names it, of a non-symlink directory `D` named exactly
+  `.pytest_cache`, its `CACHEDIR.TAG` carrying the 43-byte
+  signature, its `v/` holding only regular files and non-symlink
+  directories, and a sample test accepting those four names under
+  `.pytest_cache`); RB's adversarial read of 2026-10-21 showed, by fixtures
+  run again on Git 2.43.0 in round B9, that this form would:
+  - delete files under `D/v/` by their place and not by their name, so that
+    the stage would no longer remove only names that the allowlist matches
+    byte for byte (a `notes.txt` saved under `v/` fits the form), and the
+    stage's guarantee would have to be widened;
+  - remove `D/.gitignore` first, since it sorts first in raw-byte order, so
+    that a stage stopped after it, by a failure, the floor, the ceiling or a
+    SIGKILL, leaves `.pytest_cache/` untracked; the next run reads the row
+    `dirty`, a rung above `ignored-local-files`, which is never planned again
+    and which Git's non-force removal refuses, so a re-run would not finish
+    the job;
+  - never accept a repository that ignores `.pytest_cache/` itself, where Git
+    prints the one record `.pytest_cache/`, whose last component is none of
+    the four names that the sample test as worded accepts, so that its row
+    would never be a candidate: 35 of the 239 top-level repositories that the
+    review counted on this workstation on 2026-10-21, this repository among
+    them;
+  - force three carried scenarios to be reworded, the batch block's "Every
+    protected classifier", the bounds block's "Ignored-file bound" and the
+    overview block's "Every protected classifier", each of which names its
+    ignored file as not a Python bytecode cache, a fixture that a
+    `.pytest_cache` would satisfy and that the stage would then dispose of;
+    the overview's is lane openRepoProject-4's byte-checked text (`tasks.md`
+    2.2).
+
+  A later change that admits it would need: the form's `D/.gitignore`
+  removed last; a form and a sample test that accept the single record
+  `.pytest_cache/` of a repository that ignores it; the stage's guarantee
+  widened, or the form narrowed, for the files under `D/v/` that it admits by
+  place; `CACHEDIR.TAG`, the first file the cache code would open, opened
+  descriptor-relatively with `O_NOFOLLOW` and `O_NONBLOCK`, checked a regular
+  file by `fstat` after the open and read for at most 43 bytes under the
+  per-call budget, those flags added to the platform check; the three
+  scenarios reworded to "not a listed cache", with lane openRepoProject-4's
+  agreement again and a re-pin of its spec 005; and Why and What Changes
+  recounted, 13 of the 37 kept rows becoming 25. Alternative: admit it here as
+  B-23 recommended, with all of the above. The deltas do not admit it.
+- **Other cache kinds (B-1).** `.mypy_cache`, `.ruff_cache`, `node_modules` and
+  virtual environments are larger, hold executables or installed state, and
+  have no single safe shape. Recommendation: no; each would need its own
+  allowlist shape, caps and evidence in its own change.
+- **The caps (B-3, CD-6).** 512 recorded objects (the entries and the
+  directories the plan records, B-33) and 256 MiB per worktree, 4,096 entries
+  and 1 GiB per invocation, 16 enumerations. Recommendation: adopt them, and
+  measure the enumeration and the stage before the handoff as change 1's OQ-4
+  was (`tasks.md` 2.3); a measured cost that breaks the fit lowers them by that
+  rule before the feature starts. On PR #19's text at `dab8a64`, which its head
+  `54e869b` keeps, as at `4512441`, `173d83c`, `b3228bb` and `f0bf538` (B-54,
+  B-58, B-60, B-76, B-80, B-84, B-88, B-93, B-126, B-135, B-139; design D4),
+  whose revalidation spawns six Git children a target,
+  seven where the plan read `extensions.worktreeConfig` as true, and three more
+  where the path of the repository's root or of its common directory holds a
+  line feed, a case that these figures, like D4's, do not count, the 16
+  enumerations no longer fit beside 16 targets at the packet's 150 ms model,
+  the first of PR #19's three bases, even before any filesystem time where the
+  plan read it as false: 283 children, the 15th and 16th targets reaching their
+  stage at about 45.3 s and 46.5 s, past the spawn limit, so 14 of 16 do. Where
+  it read it as true, PR #19's D14 gives the 128-row case on three bases,
+  before this change's enumerations: no removal at 150 ms, 11 on its mixed
+  basis, and on its measured basis, D5's as ratified, all 16, the 16th at 30.0
+  s (37.7 s with 20,000-file removals), its open question LQ-20 resolved by
+  Brett Heap's choice of measuring the two probes it had costed by stand-ins
+  (2026-10-22), so that none of its options (a) to (d) is taken (its
+  design.md:992-1029). This change's own figure there, on those measured costs
+  (design D4, B-65): the 16 enumerations' at most 3.7 s, the walk's 2.0 s and
+  the stages' 1.9 s at 224 us a call bring the 16th to about 30.0 + 3.7 + 2.0 +
+  1.9 = 37.6 s through one worker, and at a thread per call, 5.6 s and 5.3 s,
+  to about 44.6 s, so all 16 fit; with 20,000-file removals the 16th comes at
+  about 45.3 s through one worker, past the spawn limit, so 15 of 16 fit, and
+  at about 52.3 s at a thread per call, so 11 or 12 do, the rest deferred to
+  the next run with exit 1, never unsafe. These figures cost the enumeration's
+  child at a cache target's revalidation as the status probe whose place it
+  takes, 74.1 ms; beside them, a conservative variant costs it as an
+  enumeration, about 0.23 s, so that the 8 cache targets add about 1.3 s: at
+  10,000-file removals the 16th then comes at about 38.9 s through one worker,
+  all 16 fitting, and at about 45.9 s at a thread per call, past the spawn
+  limit, so 15 of 16 fit and the 16th waits for the next run with exit 1, and
+  with 20,000-file removals at about 46.6 s, 14 or 15 of 16, and 53.6 s, 10
+  or 12 (design D4). Task 2.3's measurement settles which cost holds, and
+  neither is chosen before it (B-79). With the walk
+  bounded at 8,192 entries (B-25), design D4's
+  arithmetic brings 11 of 16 targets through their
+  stage at the top of the measured cost and as few as 6 at a thread per call,
+  the rest deferred to the next run with exit 1, while on PR #19's measured
+  basis where the plan read the setting as false, its 16th removal at 28.7 s,
+  all 16 fit, at about 36.3 s through one worker and about 43.3 s at a thread
+  per call, and with its 20,000-file removals at about 44.0 s through one
+  worker, while at a thread per call 12 or 13 do. At `c462d87`
+  these were 16 of 16, 15 and as few as 8, and all 16 at change 1's measured
+  costs; at `f0bf538`, before LQ-20's measurement, the measured figures where
+  the plan read the setting as false were 35.1 s and 42.7 s, with at least the
+  16th deferred at a thread per call or with 20,000-file removals. On the Git
+  children alone, design D4's rule for task 2.3, which
+  lowers `cache_rows` in steps of 4, would take it to 4, the first value at
+  which the 16th target reaches its stage at the model (about 44.7 s), and
+  the packet's rule (`BA:729-735`), which takes the largest multiple of 8 that
+  fits, with its reapplication under a higher measured cost (`BA:766-771`),
+  which lowers the target cap in steps of 8, would lower the target cap from
+  16 to 8, as it would if the walk's and the stages' filesystem time counted
+  in the fit, and as #23's A-9 names it for a flagged run; this change counts
+  that time outside the fit, as the bounds block states, and leaves change 1's
+  `limits.targets` at 16 (B-31). The report mode's 312 children take about
+  46.8 s, so with the walk it fits through one worker and not at a thread per
+  call (design D4). B-33's tree of nested `__pycache__`
+  directories, within these caps, costs more (design D4: the report mode then
+  fits at no measured cost, and at a thread per call no target reaches its
+  stage), and the measurement weighs it by the same rule; the caps are
+  unchanged, and the measurement decides.
+- **A limit on the cache stage's directory opens (B-33).** The 512-object cap
+  bounds a row's depth and its number of directories with removals, but the
+  stage opens one chain per such directory in each pass, and under that cap
+  the opens of a pass reach 43,947 for one target (a chain of 341 directories
+  whose deepest 171 each hold one loose `.pyc`), about 19.8 s through one
+  worker at 224 us, which no fit holds (design D4). A depth limit alone would
+  not bound a run: 8 levels deep, a row can still hold 252 directories with
+  removals, 72,576 opens for 16 targets. Recommendation: a new per-worktree
+  cap, `limits.cache_opens`, 512: the opens of one pass of the stage along its
+  chains, the sum over the directories that hold a listed path of one plus
+  each one's depth below the worktree root, as the walk computes it; a row past
+  it stays `ignored-local-files` with `cache-cap` from a per-worktree cap, its
+  counts null. An ordinary tree stays inside it (a hundred package directories
+  four levels deep, each with a `__pycache__`, need 500), and a run's chains
+  are then at most 16,384 opens, about 3.7 s at 224 us. Alternative: the stage
+  opens each directory once per pass, keeping open the chain above the
+  directory it is in, which bounds its opens by the recorded directories with
+  no new cap, but checks an ancestor's identity once per pass rather than
+  before each directory's removals, the form B-33 did not prefer. The deltas do
+  not yet add the cap; it is added only on Brett Heap's answer, measured by
+  `tasks.md` 2.3 with the others, and no cap changes before it.
+- **The admin-directory pre-filter (B-56; reader RG's (c-i)).** A cache-only
+  candidate that a gate after `deferred-target-cap` excludes holds one of the
+  16 enumerations and one of the 16 target places on every run, and a backlog
+  behind 16 of them, plain rows included, does not drain (B-56; design
+  Risks). The common real cases are probably rows holding an initialized
+  submodule or an operation in progress: PR #19's design counts 20
+  `contains-submodule` rows in one repository (its design.md:1655-1658 at
+  `4f1c0e0`), and the council measured 3 cache-only rows holding a submodule
+  on this workstation (design D6). Before a would-be candidate's enumeration,
+  one listing of its worktree administrative directory, as change 1 reads for
+  its `modules` check and its operation markers, would show a `modules` entry
+  or a marker; such a row would be `not-candidate`, its `candidate_block`
+  naming that gate, and would take no enumeration and no target place. An
+  error or timeout of the pre-filter's listing filters nothing: the row stays
+  a would-be candidate and meets change 1's own gates in their turn, so the
+  pre-filter never makes a plan incomplete (B-61). Cost:
+  one filesystem call per would-be candidate, at most 127, about 0.03 s at
+  224 us a call or 0.08 s at 622 us (design D4), and no Git child; D2's reflog
+  read is the precedent for such a read. It catches initialized submodules and
+  operations in progress, and leaves rows held by a gitlink alone,
+  `hidden-local-state` or `worktree-only-commits` to B-56, which stays needed;
+  it is a mitigation, not a condition of soundness. It changes what makes a
+  row a candidate, so it is Brett Heap's to decide. Recommendation (the
+  lead's): yes, in this change. The deltas do not yet add it; it is added only
+  on his answer, and would then edit the candidate test, `candidate_block` and
+  design D2 and D4, and make part of design D6's B-22 paragraph stale.
+
+## Questions Resolved by the Alignment Review
+
+The alignment review (stack-architect and qa-lead) ran on `7290100`; the lane's
+rulings of 2026-10-18 answered its five GAPs, recorded as the last five rows.
+
+| Findings | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| SA-1: the cache stage removes directories against change 1's "never ... delete a directory itself" | MISMATCH | applied with change: the preferred MODIFY, under B-10; the exception worded as B-10 gives it; recorded as ruling B-10, not as a departure CD-19 | pc MODIFIED "Clean records a reconcilable result for every removal target"; proposal Capabilities, CD-2, Dependencies; design D8, D14, Migration Plan; tasks 1.4 |
+| SA-2: the narrow guarantee's revalidation redefined from the ADDED requirement | DRIFT | applied with change: a MODIFIED block under B-10 and L-11 instead of the departure CD-20 | rs MODIFIED "Cleanup states a narrow guarantee and its residual window", rs ADDED last paragraph; proposal Capabilities; design D1, D13 |
+| SA-3: "a status probe" makes a failed cache enumeration `inspection-error` | DRIFT | applied | pc MODIFIED classify; proposal Capabilities |
+| SA-4: the cache proof depends on caps applied in canonical order | DRIFT | applied | pc MODIFIED classify, pc ADDED reasons |
+| SA-5: `operations` widened without naming it | DRIFT | applied | proposal CD-16, Open Questions |
+| SA-6: tasks 1.4 claims every scenario byte-exact | DRIFT | applied, with the counts B-10 and B-14 give | tasks 1.4 |
+| SA-7: feature 005's fixture stated as fact; the batch requirement called untouched | DRIFT | applied with change: feature 005 has a spec and no plan at `33a1214`, so no fixture is asserted and B-14's test exclusion replaces the confirmation; D14 names the batch block as carried byte-exact | design D6, D14 |
+| SA-8: the reflog read is new for an ignored row | DRIFT | applied | design D2 |
+| QA-1: a `.pyc` written into a listed directory before revalidation is deleted | MISMATCH | applied | rs ADDED preflight, guarantee and "The whole list is checked before the first removal"; design D5, D7, Risks; proposal What Changes, CD-18 |
+| QA-2: "drain on re-run" false when sixteen blocked candidates sort first | MISMATCH | applied with change: B-12's sample test taken; the stall stated exactly; the scenario's blocking path sits beyond the samples, and a `local.env` case shows the sample test | pc ADDED prose, "Cache caps", "Caches beside a blocking ignored file"; proposal What Changes, CD-6, CD-7; design D2, D4 |
+| QA-3: the floor reached after the first removal: later targets and exit status | MISMATCH | applied | pc ADDED prose and "The removal floor reached during a cache stage"; rs MODIFIED revalidates; proposal What Changes, CD-1; design D8 |
+| QA-4: a signal during the preflight lets every removal run | MISMATCH | applied; also pinned in "A signal during a cache stage" | pc ADDED prose and scenario; proposal CD-11; design D1, D12 |
+| QA-5: the fit sentence counts Git children only, and #23 cannot carry it | MISMATCH | applied with change: "as change 1 applies it" dropped, since spec text names no change; the floor clause says "cannot start" so it does not contradict QA-3's refused target | pc MODIFIED bounds |
+| QA-6: a recreated directory can reuse its inode on ext4 | MISMATCH | applied | pc MODIFIED batch scenario (moved there by B-10); rs ADDED "The whole list is checked before the first removal" |
+| QA-7: no scenario for `cache-unverified` | GAP | applied | pc ADDED "A failed cache enumeration preserves the row, not the plan" |
+| QA-8: which fields are null in each `cache-cap` case | GAP | applied with change: the rule also names `not-candidate`, `cache-unverified`, `cache-unsupported-platform` and `blocking_samples`, and B-12's sample-test exception | pc ADDED prose and "Cache caps" |
+| QA-9: plan-time directory opens have no budget | GAP | applied | pc MODIFIED bounds, pc ADDED prose |
+| QA-10: no scenario for CD-8's two blocking rules | GAP | applied with change: under B-12 the 0xFF path fails the sample test, so the scenario says so | rs ADDED "A symlink named like a cache is never disposable" |
+| QA-11: no scenario for the success line, which said "1 worktrees" | GAP | applied with change: singular for a path as well as a worktree | pc ADDED "A merged worktree whose only ignored files are caches"; design D11 |
+| B-10 (G1): one placement for the digest, the narrow guarantee and the deletion exception | GAP | ruling: MODIFY all three, each block whole | pc MODIFIED batch and reconcilable result; rs MODIFIED narrow guarantee; proposal Capabilities, Decisions; design D5, D13 |
+| B-14 (G2): change 2's equality clause | GAP | ruling: the exception rides in this change as a `project-overview` delta, agreed by lane openRepoProject-4 on 2026-10-19 and committed; this change archives after change 2 | `specs/project-overview/spec.md`; proposal What Changes, Capabilities, Dependencies, CD-17, Open Questions; design D6, D14; tasks 2.2, 3.3 (3.2 before round B4) |
+| A-9 (G3): the joint fit of branch retirement and cache disposal | GAP | ruling: #23, which archives second, states it | proposal Dependencies; design D4 |
+| B-11 (G4): B-6 against L-4 and change 1's stop rule | GAP | ruling: CD-1 to CD-3 accepted, B-6 amended to match | proposal Decisions |
+| B-12 (G5): the candidate pre-filter | GAP | ruling: take the sample test, state what still stalls | pc ADDED; proposal CD-6, CD-7; design D2, D4 |
+
+### Council Verdicts
+
+The council (product-advocate P-1 to P-4, systems-architect S-1 to S-4,
+adversary-engineer AE-1 to AE-5, read-only) reviewed `9ebe9f0` on 2026-10-19;
+the lane lead's verdicts bind: 12 VALID, 1 NOTED (S-4, in
+`clarifications.md`), 0 DISMISSED, ruled as B-16 to B-24. Codex's three inline
+findings on `3c08613` and lane openRepoProject-3's packet-fidelity read of
+`3c08613` and `9ebe9f0` (M1 to M5, LOW 1 to LOW 17) were weighed by the council
+and applied in the same round; their rows follow the council's, and lane
+openRepoProject-4's precision is the last row.
+
+| Concern | Severity | Verdict | Section changed |
+| --- | --- | --- | --- |
+| P-1: the evidence counts `.pytest_cache` as a cache, which the allowlist does not, so the change admits about a third of the rows it is sold on | HIGH | VALID (B-23): Why gives the measured 13 of the 20 and 13 of 37; "Behaviour users will notice" says "(measured 2026-10-19: 13 of 37 such rows)", naming no repository; the Open Question is split, `.pytest_cache` going to Brett Heap with the recommendation to admit it here; the third form is not added this round | Why; What Changes; Out of Scope; Decisions; Open Questions; `design.md` Non-Goals, Risks, Open Questions |
+| P-2: a cache-only row that is not a candidate is told to delete its ignored files, though deleting its caches would not make it removable | MEDIUM | VALID (B-24): `candidate_block`, from the existing class and gate enums, printed with its next step; it needs no Git child, so no gap is recorded | What Changes; Decisions; CD-7, CD-13, CD-16; project-clean delta (ADDED, "Unknown counts are null, never zero"); `design.md` D2, D11 |
+| P-3: what the person reads after a stage stops does not match what was deleted or what fixes it | MEDIUM | VALID (B-16, B-17, B-21): the stall line by cause; the line after a `disposed` stage; the deadline-ended partial line; "nothing was deleted" only when nothing was and no removal is outstanding | project-clean delta (ADDED); review-safety delta (ADDED); What Changes; `design.md` D11 |
+| P-4: the overview exception is false for rows that exist today, and the carried "Every protected classifier" scenarios hold only by a design note | MEDIUM | VALID (B-22): the two sentences reworded, a third, submodule-holding worktree in the fixture, lane 4's precision in both carried scenarios, the overview edit agreed by lane 4 on 2026-10-19 and committed; "Behaviour users will notice" names the overview's report | project-overview delta; project-clean delta (batch block); What Changes; Capabilities; Decisions; CD-17; `design.md` D6, D14; `tasks.md` 1.4, 2.2 |
+| S-1: the stage abandons its unlinks at a budget that shrinks to nothing near the floor, and ties its outcomes to the first removal completed | HIGH | VALID (B-16): removals waited for as change 1 waits for its removal child, up to the 300 s ceiling; the hand-off as the one commit point; the second check moved before it (B-17) | bounds and reconcilable-result blocks; both ADDED requirements; What Changes; Rules; Decisions; CD-10, CD-11; `design.md` D1, D4, D7, D8, D12 |
+| S-2: the partial rescan establishes nothing at the floor, and its root-relative `lstat` follows a swapped ancestor | MEDIUM | VALID (B-18): S-2's text; the rescan never on the stage's worker | review-safety delta (ADDED); What Changes; `design.md` D8, D12 |
+| S-3: the residual window widens over the cache stage | MEDIUM | VALID (B-19) as its stated form: the window stated and bounded as measured; the post-stage status probe rejected and recorded | narrow-guarantee block and its scenario; CD-18; Decisions; `design.md` D13, Risks |
+| S-4: the pre-handoff and landing gates check the wrong axes | LOW | NOTED: the measured dispatch cost in D4; task 2.3 through `fs_call`, idle and loaded, the walk included, and on Git 2.36.6; task 3.1 and step 7 on every job, `git-floor` included; test names beginning `test_clean_` | `clarifications.md`; `design.md` D4, D14, Migration Plan; `tasks.md` 2.3, 3.1 |
+| AE-1: an abandoned unlink can finish after the record, and a reused descriptor can send it to another directory | HIGH | VALID (B-16, B-18): as S-1 and S-2, with the descriptor rule and the scenario "A removal call that outlives its wait" | review-safety delta (ADDED); Rules; `design.md` D7, D12 |
+| AE-2: a cache directory the user cannot write turns an exclusion into a stop of every run | MEDIUM | VALID (B-20): the plan-time access check and `cache-unwritable`; a failure the check cannot see ends the stage `refused`; D9's support checks; the scenario "An unwritable cache directory is kept, not a stop" | classify block; project-clean delta (ADDED); review-safety delta (ADDED); What Changes; Decisions; `design.md` Context, D3, D9, D11, Risks |
+| AE-3: a target whose caches were deleted can end `not-attempted` with a null reconciliation, and a signal after the post-preflight check still lets every cache go | MEDIUM | VALID (B-17): the check moved; the reconcilable-result block widened (L-11); QA-3's floor mapping kept; "regenerable" limited to `__pycache__` | reconcilable-result block; project-clean delta (ADDED); CD-2, CD-11; `design.md` D1, D8, D12, Risks, Rollback |
+| AE-4: the stage lengthens the residual window, and CD-18's "safer" holds only in the listed directories | LOW | VALID (B-19): its option (a), the window stated, about 0.25 s at 512 entries | as S-3 |
+| AE-5: the stall line's text and trigger are wrong for some rows | LOW | VALID (B-21), applied with change: the trigger and text built from the rows' reasons, with a fourth part for B-20's `cache-unwritable`, which stalls the same way | project-clean delta (ADDED, "Cache caps"); CD-6; `design.md` D4, D11 |
+| Codex P1, design.md:469 at `3c08613`: an abandoned mutating call can complete unreported | P1 | VALID (B-16) | as S-1 |
+| Codex P2, design.md:478 at `3c08613`: a signal between the post-preflight check and the first unlink lets every removal run | P2 | VALID (B-17) | as AE-3 |
+| Codex P2, design.md:455 at `3c08613`: the stall line gives one cause whatever the cause | P2 | VALID (B-21) | as AE-5 |
+| M1: the residual window is silently widened by the cache stage | MEDIUM | applied (B-19) | as S-3 |
+| M2: the signal case contradicts the reconcilable-result block it says it keeps | MEDIUM | applied (B-17) | as AE-3 |
+| M3: the overview delta was missing while the change counted it | MEDIUM | resolved by `b4d3e12` | `specs/project-overview/spec.md` |
+| M4: the overview exception does not cover every case where the two classifications differ | MEDIUM | applied (B-22), agreed by lane 4 and committed | project-overview delta; CD-17 |
+| M5: the second sentence conflicts with change 2's gate rules read at the gate level | MEDIUM | applied (B-22), agreed by lane 4 and committed | project-overview delta; CD-17 |
+| LOW 1: "stage values of its own" not acknowledged | LOW | applied: `BA:1319-1320` read as `cache_disposal.stage`'s values | CD-16 |
+| LOW 2: "rescans the worktree" narrowed without saying so | LOW | applied: named as this change's reading | Decisions (B-6); `design.md` D8 |
+| LOW 3: "any ancestor" narrowed to the directories below the root | LOW | applied: named as this change's reading | Rules; `design.md` D7 |
+| LOW 4: "the largest exclusion" is wrong | LOW | applied: the largest among linked worktrees, `main-worktree` larger | Why |
+| LOW 5: CAS/pc:906-908 covers only part of its sentence | LOW | applied: CAS/pc:916-919 and :945-956 added | CD-2 |
+| LOW 6: OV:188-192 is imprecise | LOW | applied: OV:178-180 | Why |
+| LOW 7: question 2 is never recorded | LOW | applied: under Dependencies and Sequencing, as A does | Dependencies and Sequencing; What Changes |
+| LOW 8: no cache scenario exercises question 1 | LOW | applied: an upstream-gone, merged, cache-only row, as an AND | project-clean delta (ADDED, "A merged worktree whose only ignored files are caches") |
+| LOW 9: two passages use PR #19's wording without saying it is pending | LOW | applied under L-16 | What Changes (Caps); CD-12, CD-16; Dependencies and Sequencing |
+| LOW 10: the versioned-JSON requirement is called untouched though its lists grow | LOW | applied with change: one CD-16 sentence, the lists read as additive, no MODIFIED block | CD-16 |
+| LOW 11: "Every protected classifier" keeps an unpinned fixture | LOW | applied (B-22), in both carried copies | batch block; project-overview delta; `design.md` D14; `tasks.md` 1.4 |
+| LOW 12: some rules have no scenario | LOW | applied: one AND each, for the check before the first hand-off, `cache_bytes_total`, a deadline during an enumeration, `cache-unverified` for no ignored record and for a walk call, and the `refused` human line | project-clean delta (ADDED); review-safety delta (ADDED) |
+| LOW 13: D11 says `path_valid_utf8` is always true | LOW | applied: limited to `paths` and `directories` | `design.md` D11 |
+| LOW 14: a floor-ended partial stage is reported as `state-changed` | LOW | declined: QA-3 settled the mapping; the human line names the deadline instead (B-21) | CD-2; project-clean delta (ADDED, "The removal floor reached during a cache stage") |
+| LOW 15: DI:618-624 is not named as departed from | LOW | applied | CD-17 |
+| LOW 16: the task 2.2 tick weakens its own verification | LOW | applied: 2.2 reopened and citing lane 4's agreement by the lane's log records, in place of a link | `tasks.md` 2.2 |
+| LOW 17: three wording issues in the overview delta | LOW | applied (B-22): SHALL wording and the third worktree; the paraphrase in What Changes aligned | project-overview delta; What Changes |
+| Lane openRepoProject-4's optional precision on "Every protected classifier" | LOW | applied (B-22), in both carried copies, the overview one a departure from B-14's "plus one scenario" | as LOW 11; Decisions |
+
+### Re-read and Codex Findings (round B3)
+
+Lane openRepoProject-3's read-only re-reader re-read this change at `e906c2f`
+from a checkpoint at `90d18ee`, and Codex reviewed `90d18ee` in answer to the
+`@codex review` comment 6279844648, its two inline findings citing lines
+unchanged at `e906c2f`; the lead ruled both on 2026-10-20 as B-25 to B-27 and
+added B-28. Lane 3 found no HIGH, and of review-27's 22 ids 20 FIXED, LOW 14
+DECLINED with its reason holding and LOW 16 PARTLY, which is its re-read LOW 3
+below; of the 9 items here, 8 are applied, 1 is applied with change (re-read
+LOW 3), and none is declined.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| Codex (90d18ee) P2 at design.md:294: the fit counts the walk over the 4,096 entries the totals admit, though a row they reject was walked to its 512 | P2 | B-25: applied: the walk's bound is 16 x 512 = 8,192 entries, about 9,000 calls, about 2 s through one worker and 5.6 s at a thread per call; D4's fit, the all-safe and report rows, the thread-per-call figure, D13's probe cost and #23's inputs restated with the arithmetic; at the top of the measured cost the 16th target now arrives at about 45.5 s, under the floor (15 of 16 reach their stage; as few as 8 of 16 at a thread per call), which D4 says; no cap changed | `design.md` D4, D13; What Changes (Caps); Dependencies and Sequencing; Decisions (B-19, B-25); CD-6; Open Questions (the caps); `tasks.md` 2.3; `clarifications.md` S-4 |
+| Codex (90d18ee) P2 at `specs/project-clean-review-safety/spec.md:341`: the preflight does not reapply the invocation's byte cap, so caches recompiled larger can take a run past 1 GiB | P2 | B-26: applied: the preflight keeps the run's byte total of the bytes it and the earlier passed preflights measured, and a target past 1 GiB ends `refused` with `cache-changed`, nothing deleted; one scenario | review-safety delta (ADDED preflight paragraph; "Caches that grew after the plan cannot pass the run's byte cap"); `design.md` D1, D4, D5, D7, D8, D14, Risks; What Changes (the cache stage); Capabilities; Decisions (B-26); `tasks.md` 1.4 |
+| lane 3 re-read (e906c2f) MEDIUM 1: a cache stage's removal at the 300 s ceiling exits 1, but the carried exit table gives 2 when no later target exists | MEDIUM | B-27: applied: row 2 gains "or a cache stage's removal reached the removal ceiling" | project-clean delta (MODIFIED "Clean records a reconcilable result for every removal target"); Capabilities; Decisions (B-16); `design.md` D8 |
+| lane 3 re-read (e906c2f) MEDIUM 2: the widened `not-attempted` bullet also matches a stage that ended `refused` or `partial` | MEDIUM | B-27: applied: "for a target whose cache stage ended `disposed`" | project-clean delta (same block); Capabilities; Decisions (B-17); CD-2; `design.md` D8 and its B-17 row |
+| lane 3 re-read (e906c2f) LOW 1: "a started cache stage running to its end" conflicts with the commit point | LOW | B-27: applied: "a cache stage that has handed over its first removal" | project-clean delta (same block, signal paragraph); Capabilities; Decisions (B-17); `design.md` D8 |
+| lane 3 re-read (e906c2f) LOW 2: the residual window says "which Git's non-force removal deletes with the worktree" twice | LOW | B-27: applied: one relative clause, "both of which" | review-safety delta (MODIFIED "Cleanup states a narrow guarantee and its residual window") |
+| lane 3 re-read (e906c2f) LOW 3 (review-27's LOW 16, still PARTLY): `tasks.md` 2.2 quotes lane 4 from lane 5's log, which does not hold those words | LOW | B-27: applied with change: the second agreement and its commit are quoted exactly from lane openRepoProject-4's log at lines 47 and 49, as lane 3 words it; since those lines do not record the first agreement, it is quoted exactly from lane 4's log at lines 32 and 37 and lane 5's log at line 27, and the words found in no log are dropped | `tasks.md` 2.2 |
+| lane 3 re-read (90d18ee checkpoint) N-L3: the counts in `tasks.md` 1.4 and design D14 | LOW | B-27: applied: recounted at `e906c2f` by the carry script: 66 carried scenarios, 62 byte-exact and 4 edited, the overview 6 byte-exact, 1 edited and 1 added; both passages were right, so nothing was fixed for N-L3, and only B-26's scenario moves the review-safety count to 28 | none for N-L3 (`tasks.md` 1.4 and design D14 changed for B-26) |
+| lead B-28: three paraphrases say "because its cache enumeration proved" where the committed delta says "clean's" | not graded | B-28: applied | What Changes (the overview's equality clause); Decisions (B-22); `design.md` D6 |
+
+### Re-read and Codex Findings (round B4)
+
+Lane openRepoProject-4's review of 2026-10-20 (its findings F2 and F4; F2 is in
+lane 4's log at line 55, and the words of F4's fix in its handoff at line 132,
+read on the register's `origin/main` at `971bc6eda`), lane openRepoProject-3's
+delta read of `e906c2f..cf57956`, sent by message, and Codex's re-review of
+`cf57956`, in answer to the `@codex review` comment 6288232873, were ruled by
+the lead on 2026-10-20 as B-29 to B-33. Lane 3 found no HIGH and no MEDIUM and
+every B-25 figure holding; of the 8 items here, 8 are applied, none with
+change and none declined, and B-33's fit puts a new limit to Brett Heap (Open
+Questions).
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| lane 4 (2026-10-20) F2: no step re-aligns the `project-overview` block with change 2's text before this change archives, so an amendment of change 2 landing first would be dropped | LOW to MEDIUM | B-29: applied: `tasks.md` 3.2, modeled on #29's 2.3, re-reads the block against main's text before `/opsx:archive` and re-copies it, keeping every amendment, verified by a `diff -u` showing additions only and by the validation passing again; the archive becomes 3.3, and the B-14 row above points to it | `tasks.md` 3.2, 3.3; Dependencies and Sequencing (Archive order, Change 2); Decisions (B-29); `design.md` Migration Plan step 8 |
+| lane 4 (2026-10-20) F4: "The overview SHALL NOT classify a worktree `merged-removable` where `project clean` classifies it otherwise" carries no scope, so read alone it binds runs from different directories | LOW | B-30: applied, in lane 4's words, verbatim: the sentence ends "for the same working directory and refs" at spec.md:35-36, the added scenario's AND following; committed alone as `4d5855a` for lane 4's byte check, and `tasks.md` 2.2 reopened until that check is cited | `specs/project-overview/spec.md` (`4d5855a`); What Changes; Capabilities; Dependencies (Implementation order, Change 2); Decisions (B-22, B-30); CD-17; `design.md` D6; `tasks.md` 1.4, 2.2 |
+| lane 3 delta read (cf57956) LOW (1): the stage's exit sentence names a signal and the deadline but not the removal ceiling, and its "SHALL be 1" leaves out the signal row | LOW | B-31: applied: "2 unless a signal, the deadline or the removal ceiling decides it" and "SHALL be 1 unless a signal decides it", as the exit table's rows 1 and 2 order them | project-clean delta (ADDED "Clean disposes of listed caches before a worktree removal"); `design.md` D8 |
+| lane 3 delta read (cf57956) LOW (2): the B-27 decision says every item was applied as worded, while the round B3 table applies LOW 3 with a change | LOW | B-31: applied | Decisions (B-27) |
+| lane 3 delta read (cf57956) LOW (3): in D4's case the 16th target lists no cache, so the floor refuses its removal's spawn, not a cache stage | LOW | B-31: applied | What Changes (Caps); Decisions (B-25); `design.md` D4 |
+| lane 3 delta read (cf57956) LOW (4): the caps' Open Question does not say what the packet's rule would give if the filesystem time counted in the fit | LOW | B-31: applied: the target cap would go from 16 to 8, as #23's A-9 names it; this change counts that time outside the fit and leaves `limits.targets` at 16 | Open Questions (the caps) |
+| Codex (cf57956) P2 at `specs/project-clean/spec.md:910`: the stall test reads `blocking`, which is null for `cache-cap` and `cache-unverified` and 0 for `cache-unwritable`, so the line those rows need is never printed | P2 | B-32: applied: an explicit disjunction of the four persistent reasons, never `blocking` alone; a per-worktree cap told from the invocation's totals by the row's counts, null or established, so no field is added; an AND of "Cache caps" for sixteen rows held by `cache-unverified`, `cache-unwritable` and a per-worktree cap, none with `blocking` above 0, that print the line | project-clean delta (ADDED prose and "Cache caps"); `design.md` D4, D11; What Changes (Caps); Capabilities; Decisions (B-21, B-32); CD-6 |
+| Codex (cf57956) P2 at `design.md:323`: the directories above a listed path are recorded, access-checked and reopened per path without counting toward the caps, so depth leaves the walk's and the stage's calls outside the fit | P2 | B-33: applied, the preferred form: every recorded directory counts toward the per-worktree cap of 512 recorded objects, the stage opens one chain per directory holding a listed path in each pass, and the walk opens each recorded directory once; D4 states the worst case, depth times directories with removals, at most 43,947 opens a pass for one target, which no fit holds, and the shape whose every object is a directory, at four walk calls and five stage calls an object; a limit on the chains' opens, 512 a pass per worktree recommended, put to Brett Heap as an Open Question, since a depth limit alone would not bound a run; no cap changed; an AND for a loose `.pyc` 600 directories deep; task 2.3 adds the deep-tree worst case | project-clean delta (bounds block; ADDED prose and "Cache caps"); review-safety delta (ADDED descriptor paragraph); `design.md` D3, D4, D5, D7, D14, Risks, Migration Plan step 1, Open Questions; What Changes (detection, Caps, the cache stage); Capabilities; Dependencies (Archive order); Decisions (B-25, B-33); CD-6; Open Questions (the caps, the opens limit); `tasks.md` 2.3; `clarifications.md` S-4 |
+
+### Re-read and Codex Findings (round B5)
+
+Codex re-reviewed this change at `e1049b2` and found two P2s (inline comments
+4324625878 and 4324625890, read 2026-10-20), and the lead ruled on both on
+2026-10-20 as B-34 and B-37, adding B-35, so that the two drafts describe each
+other at today's heads, and B-36, lane openRepoProject-4's byte check of B-30's
+commit. Lane openRepoProject-3's delta read of `cf57956..e1049b2` had not
+arrived when this round was applied; a later round takes it. Of the 4 items
+here, 4 are applied, none with change and none declined; B-34 and B-37 are the
+rulings on Codex's two findings, each recorded as one item with its ruling.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| Codex (e1049b2) P2 at `specs/project-clean-review-safety/spec.md:353`, and the lead's B-34, found in round B4, the same item: a preflight read whose limiting budget is the deadline, or that the removal floor stops before the first removal, ends the stage `refused` with `cache-changed`, a state-change diagnosis, where the bounds rule records `deadline-exceeded` and makes every target whose removal cannot start `not-attempted` | P2 | B-34: applied: a read that cannot start because no more than the floor remains, or that outlives the budget that the deadline set, ends the stage `not-attempted` with `target-stopped` and the target `not-attempted` with `deadline-exceeded`, `reconciliation: null`, exit 1, and the human result prints `Cache disposal at PATH not attempted (deadline-exceeded); nothing was deleted.` before its stop block; a real difference, an error and a read past its own 5 s budget stay `refused` with `cache-changed`, exit 2; one AND of "No time for a cache stage" pins both outcomes | review-safety delta (ADDED preflight paragraph); project-clean delta (ADDED stage paragraph and human lines; "No time for a cache stage"); `design.md` D1, D4, D7, D8, D11, D12, D14, Risks; What Changes (Failure and recovery, What the person sees); Capabilities; Decisions (B-34) |
+| lead B-35 (A-25 for #26): D4 still describes #23's joint fit at `ca96701`, "13 of its 16 targets ... 11 in the worst case", with the cache-stage filesystem time excluded | not graded | B-35: applied: D4 describes #26 at `9ff8202` under A-23 and A-24: at most 81 children, and at the packet's model with cache disposal 10 of 16 targets removed and 9 branches retired through one worker, 8 and 8 in the worst case of 17 reflog children; every figure is #26's, checked against its own arithmetic; no cap changed, `limits.targets` 16 and A-9 still Brett Heap's; D13 reads "13 of 16 at `ca96701`" and the B-19 decision "13 at `ca96701`" | `design.md` Context, D4, D13; Decisions (B-19, B-35) |
+| lead B-36: `tasks.md` 2.2 stands reopened until lane openRepoProject-4's byte check of B-30's commit is cited | not graded | B-36: applied: ticked again, citing lane 4's NOTED at line 64 of `lanes/log/openRepoProject-4.md` (2026-10-20T11:50:06Z, brett-wip `fab1e721d`, an ancestor of the register's `origin/main` at `fa9800bad`), quoted exactly: the overview delta differs from the agreed `9f30fb9` only by "for the same working directory and refs", on :35-36 and :74, +3/-2, unchanged through `e1049b2`; `specs/project-overview/spec.md` is not edited this round | `tasks.md` 2.2; Status; What Changes; Dependencies (Implementation order); Decisions (B-30, B-36); `design.md` D6, Migration Plan |
+| Codex (e1049b2) P2 at `specs/project-clean-review-safety/spec.md:383`, and the lead's B-37: on a platform without the descriptor-relative calls, "every row that holds ignored records" is forced to `ignored-local-files`, so a dirty worktree that also holds an ignored file loses the `dirty` classification, which the ladder tests first, and its actionable diagnosis | P2 | B-37: applied: `cache-unsupported-platform` applies only to a row that reaches the `ignored-local-files` rung; a row classified by `stale-worktree`, `protected-default`, `inspection-error` or `dirty` keeps that classification and, where it holds ignored records, its `not-candidate` sub-record as where the calls exist; one AND of "No descriptor-relative calls on this platform" adds a dirty worktree that holds an ignored `local.env` | review-safety delta (ADDED platform paragraph; "No descriptor-relative calls on this platform"); `design.md` D9; What Changes (Fail closed per platform); Capabilities; Decisions (B-37), CD-3 |
+
+### Re-read and Codex Findings (round B6)
+
+Lane openRepoProject-3's folded read of this change over `cf57956..fffc194`,
+sent by message on 2026-10-20 at about 16:3xZ, with its two last checks, the
+citation pass and the ASCII grep, and Codex's inline finding on `fffc194`
+(comment 4327345826, 2026-10-20T16:16:38Z), were ruled by the lead on 2026-10-20
+as B-38, B-39 and B-40, for a short round after the 20:50Z reset; the lead then
+ruled as B-41 on this round's own B-39 sentence, and as B-42 on D4's account of
+#26, which lane 3 found quoting #26's counts from before its round A5. Lane 3
+found no HIGH and confirmed that every B4 and B5 ruling holds, recomputing
+B-33's figures by brute force; of the 9 items here, 9 are applied, none with
+change and none declined. `specs/project-overview/spec.md` is not edited: none
+of the rulings needs it, and its block is lane openRepoProject-4's.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| lane 3 folded read (fffc194) M1: the last AND of "No time for a cache stage" says "past its 5 s per-call budget with more than 5 s of work remaining", which is not the complement of the first half's `work remaining less the removal floor` being under 5 s, so with 5 to 10 s remaining both halves claim the read | MEDIUM | B-38: applied: "at least 10 s of work remaining", the floor being 5 s, in the delta, What Changes, B-34's decision and design D12 and D14; checked that no fit or arrival time cites the old threshold, so no figure changes | project-clean delta ("No time for a cache stage"); What Changes (Failure and recovery); Decisions (B-34, B-38); `design.md` D12, D14 |
+| lane 3 folded read (fffc194) LOW 1: design D7 says "nothing differs" of a read that stopped before it finished | LOW | B-38: applied: "no difference was found before the read stopped" | `design.md` D7 |
+| lane 3 folded read (fffc194) LOW 2: the caps' Open Question cites `BA:729-735` alone for the rule that lowers the target cap, where `BA:766-771` states its reapplication under a higher measured cost | LOW | B-38: applied: both cited, the second for the steps of 8 | Open Questions (the caps); Decisions (B-38) |
+| lane 3 folded read (fffc194) LOW 3: design D4's 28.3 s for the first deep-tree target is stated without the walk's call count | LOW | B-38: applied: 683 calls a row (341 directory opens, 171 file `lstat` calls and 171 access checks), 10,928 for 16 rows, 2.45 s at 224 us, added to the 25.8 s of the 172 Git children before the target; the worktree root's own open is a 684th call a row, named in D4, which moves nothing at this precision (16 x 684 x 224 us is also 2.45 s) | `design.md` D4; Decisions (B-38) |
+| Codex (fffc194) P2 at `specs/project-clean-review-safety/spec.md:354`, and the lead's B-39: a call past its 5 s budget is unconditionally `refused` with `cache-changed`, which contradicts the signal scenario when SIGINT arrived while the read was held | P2 | B-39: applied: the stage reads the slot before it classifies the stop of any preflight read, a `probe-timeout`, the floor or the deadline alike; where a signal has been received the stage is `not-attempted` with `target-stopped`, nothing deleted, the target and every later one `not-attempted` with `interrupted`, and the exit status the signal's, never `refused` with `cache-changed`, a ruling that B-41 widens to every outcome of the preflight (below); the deadline line is printed only where no signal was received; one AND of "A signal during a cache stage", so no scenario is added and the counts stay 55, 28 and 8 | review-safety delta (ADDED preflight paragraph); project-clean delta (ADDED stage paragraph and human lines; "A signal during a cache stage"); `design.md` D1, D7, D8, D11, D12, D14, Risks; What Changes (Failure and recovery, What the person sees); Capabilities; Decisions (B-34, B-39); CD-11 |
+| lane 3's last checks (fffc194) LOW 1: B-30's row in the round B4 table says the SHALL NOT sentence ends "for the same working directory and refs" at `spec.md:35`, where it runs :34-36, the added words on :35-36 | LOW | B-40: applied: `spec.md:35-36`, re-checked against `specs/project-overview/spec.md` as it stands (the sentence on :34-36, "for" ending :35 and "the same working directory and refs." on :36); that file is not edited | the round B4 table (B-30's row); Decisions (B-40) |
+| lane 3's last checks (fffc194) LOW 2: the quotations are not verbatim: D4 and the proposal quote #26's `ca96701` as "13 of 16, 11 in its worst case", where its design.md:573 reads "13 of its 16 targets ... 11 in the worst case", and say B-19 reads "13 of 16 at `ca96701`", where B-19 reads "13 at `ca96701`" and only design D13 reads "13 of 16 at `ca96701`" | LOW | B-40: applied: #26's words quoted as "13 of its 16 targets ... 11 in the worst case" in design D4, in B-35 and in the round B5 table's B-35 row, and B-35 now says that D13 reads "13 of 16 at `ca96701`" and B-19 "13 at `ca96701`"; the figures were right and none changes; the ca96701 text was read with `git show ca96701:openspec/changes/add-project-clean-branch-retirement/design.md` | `design.md` D4; Decisions (B-35, B-40); the round B5 table (B-35's row) |
+| lead B-41, a ruling on this round's own B-39 sentence (found in round B6): design D7 said that a difference or an error that the preflight found stays `refused` when a signal was received first, which contradicts the AND of "A signal during a cache stage" (SIGINT during the whole-list preflight leaves the target `not-attempted` with `interrupted` and the stage `not-attempted` with `target-stopped`) and left D8 without a row, and so the later targets without a reason | not graded | B-41: applied: the stage reads the signal slot before it classifies any outcome of its preflight or of the reopening of the first listed cache's chain, a difference, an error, a byte total past either cap, a `probe-timeout` or a floor or deadline stop; where a signal was received the stage is `not-attempted` with `target-stopped`, nothing deleted, the target and every later one `not-attempted` with `interrupted`, the exit status the signal's; the review-safety paragraph states the rule once; the B-39 AND adds the changed-entry case; the `refused` human line gets "no signal having been received by then", as the deadline line has; D8's `target-stopped` row names "any preflight outcome after a signal was received"; the `refused` row keeps "with no signal received"; the 683 count and B-38's threshold are unchanged | review-safety delta (ADDED preflight paragraph); project-clean delta (ADDED stage paragraph and human lines; "A signal during a cache stage"); `design.md` D1, D7, D8, D11, D12, D14; What Changes (Failure and recovery, What the person sees); Capabilities; Decisions (B-34, B-39, B-41); CD-11 |
+| lead B-42 (lane 3, with its read of #26): D4 quotes #26's counts from before its round A5, "at a thread per call 5 and 5, or 4 and 3", where #26 at `9b67e8c` (design.md:724-731) says "at least 5, or 3, at a thread per call, 6, or 5, in the worst order a run can take", and "at a thread per call at least the 16th target is deferred" | not graded | B-42: applied: D4 restates #26 at `9b67e8c`, naming that head: its sentence on the joint fit quoted whole (checked verbatim against `git show 9b67e8c:openspec/changes/add-project-clean-branch-retirement/design.md`), with the removals and branch children of its bullets beside it (10 and 9, 8 and 8; 5 and 5, 4 and 3; 6 and 6, 5 and 5 in the worst order) and its A-25 scope for ordinary trees; every other restatement of #26's counts or of its "all 16 fit" sentence was checked, and the live ones corrected (the B-35 decision and design's source table row for B-35); this change's own fit sentences are about #27's fit and stay; the round B5 row of B-35 stays as history; #26's round A6 changes none of these figures | `design.md` D4, the source table (B-35, B-42), Context; Decisions (B-35, B-42) |
+
+### Re-read and Codex Findings (round B7)
+
+Lane openRepoProject-3's combined confirm read of rounds C6, B6 and A6, sent by
+message at about 18:1xZ on 2026-10-20, found this change at `e399309` with no
+HIGH, no MEDIUM and three optional LOWs, and confirmed that B-41 leaves no
+target with two outcomes; the lead ruled the LOWs as B-43. Codex reviewed
+`e399309` and found two P2s (inline comments of 2026-10-20T17:56:31Z, read at
+19:00Z), which the lead ruled as B-44 and B-45, for a short round after the
+swap to team01f. Of the 5 items here, 5 are applied and none is declined;
+B-43's LOW 3 also edits one passage beyond the line the ruling names, and B-44
+edits several beyond the lines its ruling names, said in their rows. Each
+ruling adds an AND and no scenario, so the counts stay 55, 28 and 8.
+`specs/project-overview/spec.md` is not edited: none of the rulings needs it,
+and its block is lane openRepoProject-4's. Design D14's bullet on feature 005's
+tests, on which lane 4's spec 005 and its question Q17 to Brett Heap rest,
+keeps its words; the tests that B-44 and B-45 add are in bullets of their own.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| lane 3 confirm read (e399309) LOW 1: proposal.md:235 and :1030-1031 say "at least 10 s of work left", where M1 was ruled "work remaining" | LOW | B-43: applied: "at least 10 s of work remaining" in What Changes (Failure and recovery) and in the B-34 decision; no other "work left" in the change states the threshold | What Changes (Failure and recovery); Decisions (B-34, B-43) |
+| lane 3 confirm read (e399309) LOW 2: the AND of "A signal during a cache stage" at pc:1280-1287 names the 5 s budget, the deadline's shorter budget and a changed entry, but not the floor stop that rs:364-373 and design D14 name | LOW | B-43: applied: the AND adds "or is held until no more than the removal floor remains for the next read to start", the words of the deadline AND of "No time for a cache stage" ("until no more than the floor remains for the next read to start") with "removal" added before "floor"; no scenario added | project-clean delta (ADDED, "A signal during a cache stage"); Decisions (B-43) |
+| lane 3 confirm read (e399309) LOW 3: design.md:342 says that a byte total past 1 GiB "ends `refused`" without the signal exception that the review-safety preflight paragraph and D7 state | LOW | B-43: applied: D4 adds that where a signal was received before the stage classified that outcome, the signal decides, as for every outcome of the preflight (B-41, D7): the stage `not-attempted` with `target-stopped`, nothing deleted, the target and every later one `not-attempted` with `interrupted`, the exit status the signal's; also, beyond the line named, D4's caps table row for `cache_bytes_total`, which says the same in short, gains "where no signal was received first (B-41)" | `design.md` D4 (the byte-total paragraph and the caps table); Decisions (B-43) |
+| Codex (e399309) P2 at `specs/project-clean/spec.md:873`: the descriptor-relative `os.listdir` that D9 requires builds a whole directory's listing before the walk can see the row's 513th object, and a timeout that abandons the worker cannot reclaim it, so an oversized `__pycache__` can take unbounded memory; stream the enumeration and stop at the cap, in the preflight too | P2 | B-44: applied: the walk and the whole-list preflight enumerate a directory by a descriptor-relative streaming enumeration that yields one entry at a time and is closed as soon as the cap decides, the walk at the row's 513th recorded object and the preflight at the first entry beyond those the plan recorded; one bounded enumeration is one call under the per-call budget, as a listing was, so no D4 count, time or fit moves, which D4 says and a comparison of D4's figures before and after confirmed; D3 and D7 name `os.scandir` on the descriptor, iterated lazily and closed when the cap decides, its duplicate descriptor rewound on close, checked in scratch on Python 3.10.21, 3.12.3 and 3.13.15 and recorded in the Context table; D9 checks `os.scandir` in `os.supports_fd` in place of `os.listdir`; rs's platform sentence says "streaming directory enumeration"; also, beyond the lines named, the bounds block's list of the cache walk's calls says "bounded directory enumerations" for "listings", and D12 names a bounded enumeration among the reads; one AND of "Cache caps" for a 100,000-entry `__pycache__` whose enumeration a test hook sees yield at most 513 entries, the row `cache-cap`; D14's test, with its preflight counterpart and a third assertion that the ruling does not name, in a bullet of its own: after each enumeration is closed the walk's descriptor still `fstat`s to its identity and a second enumeration from it starts at its first entry, the descriptor rewound to offset 0, as the Context's check found | project-clean delta (bounds block; ADDED walk paragraph; "Cache caps"); review-safety delta (ADDED preflight and platform paragraphs); `design.md` Context, D3, D4, D7, D9, D12, D14, Risks; What Changes (detection, the cache stage); Capabilities; Decisions (B-44) |
+| Codex (e399309) P2 at `specs/project-clean/spec.md:928`: with exactly 16 candidates, each `cache-unverified` or `cache-unwritable`, the stall predicate fires though no later candidate was left by the 16-enumeration cap, so the line names `cache-cap` rows that do not exist | P2 | B-45: applied: the stall line also requires at least one later candidate left with `cache-cap` by the 16-enumeration cap; otherwise each row's own reason and next step print as usual and no stall line prints; one AND of "Cache caps" for exactly 16 candidates, each held for a persistent reason, that prints no stall line; D4 and D11 follow, D14 adds the test in a bullet of its own, and Risks names the condition | project-clean delta (ADDED stall paragraph; "Cache caps"); `design.md` D4, D11, D14, Risks; What Changes (Caps, What the person sees); Capabilities; Decisions (B-21, B-45) |
+
+### Re-read and Codex Findings (round B8)
+
+Lane openRepoProject-3's confirm read of rounds C6c and B7
+(`confirm-c6c-b7-findings.md`, brett-wip `d48a20d65`), sent by message at about
+21:2xZ on 2026-10-20, found this change at `ca34644` with no HIGH, no MEDIUM
+and three LOWs, all in this file and none in a spec, and confirmed that the
+scandir claims hold on Python 3.12.3, that no D4 figure moved, that D14's
+bullet on feature 005's tests is byte-identical and that the overview blob is
+`a40458cb`; the lead accepted all three and ruled them as B-46. Codex reviewed
+`ca34644` and found no major issue (receipt 2026-10-20T21:14:37Z). The one item
+here, B-46, applies the three LOWs in `proposal.md` alone: no design or spec
+file is edited, so D14 and every line that lane openRepoProject-4's spec 005
+cites stay where they are, and the counts stay 55, 28 and 8.
+`specs/project-overview/spec.md` is not edited, and its block is lane
+openRepoProject-4's.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| lane 3 confirm read of B7 (ca34644), three LOWs: LOW 1: the round B7 intro says that B-43's LOW 3 and B-44 each edit "one passage" beyond the lines the ruling names, but the B-44 row names several; LOW 2: D14's streaming bullet (`design.md`:1139-1147) carries a third assertion that no row names, that after each enumeration is closed the walk's descriptor still `fstat`s and is rewound to 0; LOW 3: the B-43 LOW 2 row says "the words of the deadline AND", but the clause also adds "removal" before "floor" | LOW | B-46: applied, in `proposal.md` alone: LOW 1: the intro says that B-43's LOW 3 also edits one passage beyond the line the ruling names and B-44 several beyond the lines its ruling names, said in their rows; LOW 2: the B-44 row names the assertion, that after each enumeration is closed the walk's descriptor still `fstat`s to its identity and a second enumeration from it starts at its first entry, the descriptor rewound to offset 0, which was checked in scratch on Python 3.10.21, 3.12.3 and 3.13.15 and by lane 3 on 3.12.3, so D14's bullet keeps its words; LOW 3: the B-43 LOW 2 row says that the clause takes the words of the deadline AND, "until no more than the floor remains for the next read to start", with "removal" added before "floor"; no scenario is added and the counts stay 55, 28 and 8 | the round B7 table (its intro, the B-43 LOW 2 row and the B-44 row); Status; the key's ruling range (B-25 to B-46); `tasks.md` 1.1, 1.4, 1.5, 2.2 |
+
+### Re-read and Codex Findings (round B9)
+
+The lane's review wave of 2026-10-21 read this change at `fe5b245`. Reader
+RB's adversarial read found 1 HIGH, 3 MEDIUM and 5 LOW, and one observation
+outside this change's scope, a per-worktree `core.worktree` that redirects
+change 1's evidence, which the lead sent to lane openRepoProject-2. Reader
+RD's composition read of #26, #27 and #29 in archive order found M2 for this
+change. The lead ruled them on 2026-10-21 as B-47 to B-52, applied in round
+B9. Lane openRepoProject-4 asked that the round edit in place, so every range
+of `proposal.md`, `design.md` and `tasks.md` that its spec 005 pins keeps its
+bytes, as `cmp` against `fe5b245` confirmed, though some of their line numbers
+move. Of the 10 items here, 6 are applied, 4 are applied with change (RB's
+MEDIUM-1, MEDIUM-3 and LOW-2, and RD's M2), and none is declined (the count
+corrected in round B10, B-53). The rulings add
+ANDs and no scenario, so the counts stay 55, 28 and 8. The round also
+updates the Status, the key's ruling range (B-47 to B-52) and its citation
+form for the review wave, design's Context
+and source table, and `tasks.md` 1.1, 1.4, 1.5 and 2.1.
+`specs/project-overview/spec.md` is not edited: none of the rulings needs it,
+and its block is lane openRepoProject-4's.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| RB (fe5b245) HIGH-1: under a user's `status.showStash=true` and any stash, porcelain v2 prints `# stash N` before the enumeration child's records, so every candidate of that repository is `cache-unverified`, every revalidation of a cache target refuses, and nothing is ever disposed of | HIGH | B-47: applied: the child's pins gain `-c status.showStash=false`; the scenario "The cache enumeration runs under the pins" gains the setting, a stash, the pin and an AND for the revalidation at apply; RB's fixture run on Git 2.43.0 printed `# stash 1` before the record without the pin and the record alone with it; Git's own documentation at `v2.36.0` gives the setting (2.14.0) and porcelain v2's header (2.35.0), so both exist at the 2.36 floor; change 1's porcelain v1 probe prints no header, so the evidence model is not modified | project-clean delta (ADDED walk paragraph; "The cache enumeration runs under the pins"); `design.md` Context, D3; What Changes (detection); Capabilities; Decisions (B-47); CD-5 |
+| RB (fe5b245) MEDIUM-1: a bind mount from the worktree's own filesystem passes the device check, so CD-8's "disposal never reaches into a mounted tree" is false, and the device rule's words omit the listed directory itself | MEDIUM | B-48: applied with change: the residual stated in CD-8, Rules and design Risks: disposal acts on paths inside the worktree's tree and, through such a mount, disposes of its cache files as the worktree's own, and where the mount point is a directory that the stage removes, its removal fails with `EBUSY` and the target stops there until the mount is gone; the device rule names the listed cache directory and, beyond the ruling's words, every directory inside it, which design D3's walk already checked; one AND puts a listed `__pycache__` itself on another device; parsing `/proc/self/mountinfo` rejected, with the ruling's reason; the `EBUSY` was not reproduced, for want of the privileges to mount | review-safety delta (ADDED first paragraph; "A symlink named like a cache is never disposable"); `design.md` D2, Risks; What Changes (the allowlist); Rules; Capabilities; Decisions (B-48); CD-8 |
+| RB (fe5b245) MEDIUM-2: no human line says that a target's caches were deleted when its stage ended `disposed` and Git's removal then failed or is unproven | MEDIUM | B-49: applied: before the stop block, `Cache disposal at PATH: removed N cache paths; the worktree was not removed.` for a `failed` target, as for B-17's, and `Cache disposal at PATH: removed N cache paths; the worktree's removal is not proven.` for an `unknown` one, the stop block that follows giving the reason and the next step; one AND of "A merged worktree whose only ignored files are caches" locks the worktree after its stage | project-clean delta (ADDED human lines; "A merged worktree whose only ignored files are caches"); `design.md` D11; What Changes (What the person sees); Capabilities; Decisions (B-49) |
+| RB (fe5b245) MEDIUM-3: admitting `.pytest_cache` as B-23 recommended would delete by place, leave an untracked remnant after a stopped stage, never accept repositories that ignore it themselves, and force three carried scenarios, one of them lane 4's, to be reworded | MEDIUM | B-50: applied with change: the Open Question's recommendation is no for this change, with the four reasons and what a later change would need, RB's fixture run again on Git 2.43.0 (records in raw-byte order with `.gitignore` first, `? .pytest_cache/` once it is gone, and the one record `!! .pytest_cache/` where the repository ignores it); the committed text says "this repository among them" where the ruling names it, since B-23 names no repository in committed text; this round does not edit the pull request's description, which the ruling also names | Open Questions (`.pytest_cache`, and their introduction); What Changes (the allowlist); Out of Scope; Decisions (B-23, B-50); `design.md` Non-Goals, Risks, Migration Plan, Open Questions |
+| RB (fe5b245) LOW-1: nothing excludes a record path with an empty, `.` or `..` component or a leading `/`, so a walk written to the spec's words could open `..` | LOW | B-51: applied: such a record makes its candidate `cache-unverified` and the walk opens nothing; an AND of "A failed cache enumeration preserves the row, not the plan" for a record beginning `../` | project-clean delta (ADDED `cache-unverified`; "A failed cache enumeration preserves the row, not the plan"); `design.md` D3; What Changes (detection); Capabilities; Decisions (B-51) |
+| RB (fe5b245) LOW-2: B-20's premise is partly false: the access check sees a read-only filesystem, and a sticky directory is computable from what the walk reads | LOW | B-51: applied with change, since it also adds a spec clause, below (B-53, W2's LOW 2): design D3 states what was observed, `EROFS` from D3's access call on a read-only bind mount on Linux 6.18 with glibc 2.39, and B-20's decision is restated with a true reason, the refusals the plan cannot see (a sticky directory's rule, an append-only or immutable attribute, a security module, a change after the plan); behaviour does not change, since a sticky target fails closed with nothing deleted and is no safety gap; beyond the lines named, the review-safety delta's ADDED sentence on a refused first removal says "a filesystem made read-only after the plan" | review-safety delta (ADDED paragraph on the outcome after the first removal); `design.md` Context, D3, D8, Risks; What Changes (Failure and recovery); Decisions (B-20, B-51) |
+| RB (fe5b245) LOW-3: the carried batch sentence makes every timed-out filesystem read leave the plan incomplete, which the cache walk's reads do not | LOW | B-51: applied: one clause after change 1's "as for every other filesystem read", "except a read of the cache walk that times out, which leaves its row `cache-unverified` and the plan complete", change 1's words kept | project-clean delta (MODIFIED "Clean previews and applies a batch of eligible worktree removals in one repository"); Capabilities; Decisions (B-51) |
+| RB (fe5b245) LOW-4: the digest is silent on entry counts, so `--expect-plan` accepts more entries than the preview showed | LOW | B-51: applied: design D5 states by decision that the digest covers each target's disposal decision and not its entry counts or bytes, since caches change between preview and apply, and that the apply's caps bound the difference | `design.md` D5; Decisions (B-51) |
+| RB (fe5b245) LOW-5: two ambiguities, a name that is not valid UTF-8 inside a listed `__pycache__`, and an open refused for a symbolic link at plan time | LOW | B-51: applied, fail-closed: such an entry is blocking, its listed directory with it; such an open makes the row `cache-unverified`, not blocking; ANDs of "A symlink named like a cache is never disposable" and "A failed cache enumeration preserves the row, not the plan" | review-safety delta (ADDED first paragraph; "A symlink named like a cache is never disposable"); project-clean delta (ADDED `cache-unverified`; "A failed cache enumeration preserves the row, not the plan"); `design.md` D2, D3; What Changes (the allowlist); Capabilities; Decisions (B-51); CD-8 |
+| RD (fe5b245) M2: `tasks.md` 2.1 proves the re-check of the blocks written on PR #19's text by `validate` alone, which sees no dropped sentence, so if PR #19 closes this change's archive would write PR #19's unratified text | MEDIUM | B-52: applied with change: 2.1 re-bases the two blocks written on PR #19's text on change 1's text at main if PR #19 closes unmerged, and verifies every block written on change 1's or PR #19's text by a `diff -u` against the archived requirement showing additions only, a re-base that changes this change's added text going back to Brett Heap, `validate` a second check; the ruling names "#27's `project-command` block", and this change has none, so the two blocks written on PR #19's text are read for it | `tasks.md` 2.1; Dependencies and Sequencing; `design.md` Migration Plan; Decisions (B-52) |
+
+### Re-read and Codex Findings (round B10)
+
+Reader RF re-ran the composition of #27, #26 and #29 in archive order at their
+final heads, this change at `e07cc42`, and found one HIGH for this change, H1,
+and one MEDIUM for all three drafts, M1. Lane openRepoProject-3's confirm read
+of round B9 (W2, `fe5b245..e07cc42`) found no HIGH, no MEDIUM and eight LOWs.
+The lead ruled them on 2026-10-21 as B-53 and B-54, and ruled that this round
+writes the two blocks on PR #19's text at lane openRepoProject-2's round (a),
+`6f2cb54`, and that lane 2 checks the two rewritten blocks before they are
+committed. PR #19's round (b) then landed, `4485678` with lane 2's R-171 and its
+head `a664799` with D14 restated and LQ-20 named, and the lead's B-55 kept the
+round's first drafts, re-based them on `a664799`, applied R-171's rule to the
+enumeration's child and labelled D13's and the B-19 decision's figures as at
+`c462d87`. Codex reviewed `e07cc42` and found no major issues (about 12:55Z on
+2026-10-21). Lane openRepoProject-4 agreed on 2026-10-21 that M1's edit of
+`tasks.md` 3.2, which its spec 005 pins whole, is committed in this round with
+the rest, its return route in #29's words; every other range of `proposal.md`,
+`design.md` and `tasks.md` that spec 005 pins keeps its bytes, though some of
+their line numbers move. Lane openRepoProject-2 checked the two re-based blocks
+and said YES, with one correction to the bounds block's fit sentence, which is
+applied, and the blocks are committed with it. Of the 13 items here, 11 are
+applied, 2 are applied with change (RF's H1 and M1), and none is declined. The
+revalidation block carries PR #19's three added scenarios, so the counts become
+55, 31 and 8. The round also updates the Status, the key's ruling range (B-47 to
+B-55), its citation forms, R-n among them, and its account of main, design's
+Context, source table and Goals, and `tasks.md` 1.1, 1.4 and 1.5.
+`specs/project-overview/spec.md` is not edited: none of the rulings needs it,
+and its block is lane openRepoProject-4's.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| RF (e07cc42) H1: PR #19 has moved past `c462d87` and changes both requirements this change wrote on its text, so this change's own rule makes their rewrite a step before ratification, and the fit's 250 children rest on change 1's five revalidation children | HIGH | B-54: applied with change: both blocks rewritten on PR #19's text at `a664799`, its round (b) (first drafted on `6f2cb54`, its round (a), and re-based by B-55), its 5 and 13 scenarios carried, every one byte for byte but "Ignored-file bound", which keeps this change's edit, and every addition re-applied word for word, a word diff of the additions on `c462d87` and on `a664799` differing only in the fit sentence and in the word that the filesystem-call list ends on; where the revalidation's step lists meet, the enumeration's child takes the combined probe's place and PR #19's hidden-state probe and `worktree-only-commits` check follow it (design D10); the fit sentence says 283 children and about 47.3 s, and, on lane openRepoProject-2's check, that on that count the first 14 targets start before the removal floor and the last two are `not-attempted` with `deadline-exceeded`, and, beyond the ruling's words, holds where the plan read `extensions.worktreeConfig` as false, since PR #19 adds a seventh revalidation child and a probe per linked row where it is true; D4's table restated whole on PR #19's D14, with a paragraph of its arithmetic: 14 of 16 targets at the packet's model (the 15th at 45.3 s and the 16th at 46.5 s, RF's figures), 11 at the top of the measured cost, as few as 6 at a thread per call, and where the plan read it as true PR #19's D14 and LQ-20 cited with no figure of this change's (B-55); CD-6 and the caps' Open Question restated with them; the blocks held for lane openRepoProject-2's check before their commit | project-clean delta (MODIFIED "Clean bounds its Git work and reports omitted work"); review-safety delta (MODIFIED "Cleanup revalidates destructive actions"); `design.md` Context, source table, Goals, D4, D10, D14; Status; the key; What Changes (Caps, Revalidating a cache target); Capabilities; Dependencies and Sequencing; Decisions (L-1 and L-15, B-54); CD-4, CD-6; Open Questions (the caps); `tasks.md` 1.1, 1.4, 1.5, 2.1 |
+| RF (e07cc42) M1, this change's share: every re-base check diffs the archived block against the re-based one, which cannot see a change to this change's own words, so the return to Brett Heap has no detector, and `tasks.md` 3.2 has no return route | MEDIUM | B-54: applied with change: tasks 2.1 and 3.2 gain a second `diff -u`, of this change's block as committed at its ratified head against the re-based or re-copied block, showing only the archived text, or main's, carried in, in the words of #29's round C15 where they fit; 3.2's return route is lane openRepoProject-4's wording, "a re-base that changes the block's added text returns it to Brett Heap before the archive", the only edit in spec 005's pin, as lane 4 agreed; 2.1's route says "before the Speckit handoff", since 2.1 gates the handoff, where #29's 2.4 says "before the archive"; the Migration Plan gains #29's paragraph on the two diffs, for its steps 2 and 8 | `tasks.md` 2.1, 3.2; `design.md` Migration Plan (steps 2 and 8, and the two diffs); Dependencies and Sequencing; Decisions (B-54) |
+| lane 3 confirm read of B9 (e07cc42) LOW 1: the round B9 intro leaves out the key's citation form for the review wave | LOW | B-53: applied | the round B9 table's intro |
+| lane 3 confirm read of B9 (e07cc42) LOW 2: the LOW-2 row says "applied" though it adds a spec clause, as B-48's "applied with change" row does | LOW | B-53: applied: the row reads "applied with change", and the intro's count becomes 6 applied and 4 applied with change | the round B9 table (intro and RB's LOW-2 row) |
+| lane 3 confirm read of B9 (e07cc42) LOW 3: the proposal's summaries of LOW-1's rule name only a path that leaves the tree, where the spec also names an empty or `.` component | LOW | B-53: applied: "absolute or holds an empty, `.` or `..` component" in both | What Changes (detection); Capabilities (ADDED "Clean disposes of listed caches before a worktree removal") |
+| lane 3 confirm read of B9 (e07cc42) LOW 4: two summaries drop D3's condition that the C library make the check with `faccessat2` | LOW | B-53: applied | Decisions (B-20); `design.md` Risks |
+| lane 3 confirm read of B9 (e07cc42) LOW 5: D3 says that a sticky-directory target fails `refused` with nothing deleted, where one that also holds the user's own entries ends `partial` | LOW | B-53: applied: "`refused` or `partial`, never deleting anything but cache entries", with both cases; also, beyond the lines named, Risks' bullet, which says the same | `design.md` D3, Risks |
+| lane 3 confirm read of B9 (e07cc42) LOW 6: task 2.1's `diff -u` "showing additions only", every word of the archived text kept, cannot pass where a clause re-wraps lines or a list extension moves an `and` or an `or` | LOW | B-53: applied: the comparison is word-level, and allows an `and` or an `or` that a list extension moves to the list's new last item | `tasks.md` 2.1 |
+| lane 3 confirm read of B9 (e07cc42) LOW 7: the Migration Plan's step 2 omits the re-base on main if PR #19 closes and the return to Brett Heap | LOW | B-53: applied | `design.md` Migration Plan step 2 |
+| lane 3 confirm read of B9 (e07cc42) LOW 8: the review-safety ADDED requirement lists a symbolic-link ancestor as blocking, which the walk meets at plan time only as a refused no-follow open, `cache-unverified` | LOW | B-53: applied: lane 3's clause, with its reason, in the list: "at plan time a symbolic-link directory on the way down is `cache-unverified`, below, since the walk meets it only as a refused no-follow open" | review-safety delta (ADDED "Cache disposal never follows a symlink or leaves its worktree", first paragraph) |
+| the lead's ruling on RF's H1 (2026-10-21): this round writes on round (a)'s sha, and lane openRepoProject-2 checks the two rewritten blocks before they are committed | not graded | applied, then moved by B-55: written on `6f2cb54`, then re-based on round (b)'s `a664799`; the two blocks and their `diff -u` against PR #19's text at `a664799` were held for lane 2, and committed on its YES, with its one correction (the next row but one) | the two MODIFIED blocks above |
+| the lead's B-55 (2026-10-21) on this round's first drafts, after PR #19's round (b), `4485678` with lane openRepoProject-2's R-171 and `a664799` | not graded | applied: the first drafts' choices kept; both blocks re-based on `a664799`, the revalidation block's 13 scenarios carried byte for byte and its additions word for word as on `6f2cb54`, and the bounds block unchanged, its requirement being byte for byte the same at both heads; the enumeration's child at revalidation follows R-171's one rule, a cut by the work deadline counting as no difference and giving `not-attempted` with `deadline-exceeded`, its own failure or a run past its own budget giving `state-changed`, with no sentence of its own in the block, and B-34's preflight rule unchanged; the fit's inputs re-cited at `a664799`, every figure unchanged, and the case where the plan read `extensions.worktreeConfig` as true cited from PR #19's D14 and LQ-20 with no figure of this change's; D13's and the B-19 decision's figures labelled as at `c462d87`; the account of main corrected to `origin/main` at `15504f1` in the key, Dependencies and Sequencing, L-1 and L-15 and design's Context | review-safety delta (MODIFIED "Cleanup revalidates destructive actions"); `design.md` Context, source table, D4, D10, D13; Status; the key; What Changes (Caps, Revalidating a cache target); Dependencies and Sequencing; Decisions (B-19, L-1 and L-15, B-54, B-55); CD-6; Open Questions (the caps); `tasks.md` 1.1, 1.4, 2.1 |
+| lane openRepoProject-2's check of the two re-based blocks at `a664799` (2026-10-21): YES, with one correction: the bounds block's fit sentence gives 283 children and about 47.3 s, past the point where the removal floor stops new spawns, without saying how many removals fit, so a reader could take it as all 16 | not graded | applied, worded on D4's model: "on which count the first 14 targets start any cache stage and their removal child before the removal floor and the last two are `not-attempted` with `deadline-exceeded`", the `extensions.worktreeConfig` condition kept; D4's table already said so, and the design's account of the fit sentence now does too; the revalidation block is unchanged | project-clean delta (MODIFIED "Clean bounds its Git work and reports omitted work"); `design.md` D4 (the fit sentence's account); Status; Decisions (B-54) |
+| Codex (e07cc42): no major issues | none | no action | none |
+
+### Re-read and Codex Findings (round B11)
+
+Codex reviewed `d4e960b`, round B10's head, and raised one P2 (2026-10-21),
+on the candidate test. Reader RG's read-only trace verified it as VALID and
+wider than Codex states, and the lead ruled it on 2026-10-21 as B-56, RG's
+option (c). PR #19's round (c) then landed at `2e819ad` and changed both
+requirements this change writes on its text, as lane openRepoProject-2 found
+requirement by requirement and this round checked: "Cleanup revalidates
+destructive actions" gains the qualifier of lane 3's W31 M-1 and a fourteenth
+scenario, "A work-tree probe at revalidation", and "Clean bounds its Git work
+and reports omitted work" gains the drain sentence of its L-7, every other
+requirement of change 1's deltas being byte-identical between `a664799` and
+`2e819ad`. Under this change's own rule (Dependencies and Sequencing) the
+lead's plan re-bases both blocks on `2e819ad` in this round, names the basis
+of the fit as PR #19's D14 now names its own, and holds the two blocks for
+lane openRepoProject-2's check before their commit. Lane 2 said YES on
+2026-10-22, both blocks as held, with two corrections to this change's own text,
+which are applied, and the blocks are committed on its YES. Every range of
+`proposal.md`, `design.md` and `tasks.md` that lane openRepoProject-4's spec 005
+pins keeps its bytes, as `cmp` against `d4e960b` confirmed, though some of their
+line numbers move. Of the 10 items here, 6 are applied, 3 are applied with
+change (B-56's (b), its plain-row Risk and the fit's basis), and 1 is declined
+(option (a), as the ruling declines it). B-56 adds ANDs and no scenario;
+PR #19's added revalidation scenario makes the counts 55, 32 and 8. The round
+also updates
+the Status, the key (PR #19 at `2e819ad`, the ruling range to B-56),
+design's Context and source table, and `tasks.md` 1.1, 1.4, 1.5, 1.6 and 2.1.
+`specs/project-overview/spec.md` is not edited: none of the rulings needs it,
+and its block is lane openRepoProject-4's.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| Codex (d4e960b) P2 at `specs/project-clean/spec.md:866`, "Keep later-gated rows from consuming cache caps": the candidate test admits a row that a gate after `deferred-target-cap` later excludes, so such rows can hold the 16 enumerations and the invocation's totals on every run without being removed, leaving a seventeenth candidate at `cache-cap` for good, and the stall line, which keys on rows held at the `ignored-local-files` rung, does not print | P2 | B-56: applied; reader RG verified it VALID and wider by a trace over two runs and a fixture on Git 2.43.0, a cache-only linked worktree holding an initialized submodule reading as a candidate and then `contains-submodule`: the totals stall with four such rows of 250 MiB or eight of 500 entries (its W1), in Codex's own example the 16 target places bind, so freeing the enumerations alone would not drain the seventeenth (W2), and a plain row behind 16 such rows, which change 1 selects, is deferred on every run (W3); the defect dates from the first delta, `d2241c3`, and PR #19's two added gates widened its trigger; no row is unsafe, since no such row is selected; B-56's parts are the next six rows | the next six rows |
+| B-56, RG's (b): such a candidate keeps its place among the 16 enumerations and counts as held for a persistent reason; the stall line names those rows by their gates' reasons with change 1's next steps; the drain sentence excepts change 1's own deferral stall | not graded | applied with change: the keep-place and sample-test sentences, the persistent list (each existing bullet now "it is left at the rung ...", and a fifth, "it passes the rung and a gate after `deferred-target-cap` excludes it") and the stall line's naming as RG's section 4(b) words them; D11's line gains RG's `G` part, `REASONS` formed as change 1's deferral line forms its own (PR19 design.md:1111-1117 at `2e819ad`), each such row printing in its group with change 1's next step (:1124-1142); the change: the drain sentence also takes the condition of PR #19's own deferral at round (c), its L-7, so that this change promises what change 1 does; drafted as "as the rows ahead of them are removed", it takes L-7's full condition, "as the rows ahead of them are removed or excluded by a gate before the cap", on lane openRepoProject-2's correction (the last row but one), and What Changes, CD-6, the B-56 decision and D4 say the same | project-clean delta (ADDED: the keep-place and sample-test sentences, the persistent list, the stall line, the drain sentence); `design.md` D2, D4, D11, Risks; What Changes (Caps; What the person sees); Capabilities; Decisions (B-56); CD-6, CD-7 |
+| B-56, T2: a row that a gate after `deferred-target-cap` excludes is not counted toward the invocation's totals, the plan applying those gates to each row that reaches them before it applies the totals to any later row | not graded | applied as RG's section 4(c) words it, in the `cache-cap` bullet's totals clause; design D4 states the single canonical pass and the build consequence: feature 004's planner at `881119b` runs gates 1 to 7, then `deferral_gate()`, then gates 9 to 11; this change's feature runs as one pass, row by row in canonical order, every gate from the classification through `worktree-only-commits`, the last of PR #19's list at `2e819ad` (PR19/pc:664-671), named there by their names, the deferral counted inline, feature 004's gates 5 to 11 at `881119b` and 5 to 12 once LQ-13's gate, built on `impl/004-wt-gates` at `f6082db`, merges, whose numbering it follows; no child added | project-clean delta (ADDED `cache-cap` bullet); `design.md` D4; Capabilities; Decisions (B-56) |
+| B-56, the spec's two ANDs: sixteen cache-only candidates holding an initialized submodule or an assume-unchanged entry, ahead of a seventeenth; eight such candidates of 500 entries ahead of a ninth | not graded | applied: RG's two ANDs, after the AND of rows held with no `blocking` above 0, as RG's section 5 words them; the existing AND for exactly 16 candidates then covers 16 such rows with no line; no scenario added, so the counts and D14's arithmetic do not move; design D14 adds the tests in a bullet of its own | project-clean delta ("Cache caps"); `design.md` D14 |
+| B-56, the plain-row case (RG's W3): a Risk of its own, and Goals narrowed or citing it | not graded | applied with change: the new Risk as RG's section 5 lists it, change 1's line quoted from PR #19 at `2e819ad` and the pre-filter named as its mitigation; Goals narrowed to "any repository whose worktrees hold no ignored file" and citing the Risk; beyond RG's list, What Changes' "For a worktree with no ignored files nothing changes" makes the same claim and is narrowed the same way; the Risk on sixteen held candidates gains "or that a gate after `deferred-target-cap` excludes" | `design.md` Goals, Risks; What Changes (Behaviour users will notice) |
+| B-56, option (a): run the gates after the cap before each candidate's enumeration | not graded | declined, as the ruling declines it: up to 32 more Git children, the targets that start before the spawn limit going from 14 to 10 of 16, and a stall that only moves | Decisions (B-56) |
+| B-56, RG's (c-i): the admin-directory pre-filter, before Brett Heap | not graded | applied: a sixth Open Question with RG's figures (at most 127 filesystem calls and no Git child; initialized submodules and operations in progress caught, rows held by a gitlink alone, `hidden-local-state` or `worktree-only-commits` left to B-56) and the lead's recommendation, yes, in this change; the deltas do not add it before his answer, as for the opens limit | Open Questions (their introduction, the pre-filter); `design.md` Migration Plan step 1, Open Questions; `tasks.md` 1.1, 1.6 |
+| the lead's plan (2026-10-21) on PR #19's round (c) at `2e819ad`: re-base both blocks on it, with lane openRepoProject-2's check before their commit | not graded | applied: each block is PR #19's requirement at `2e819ad` with this change's additions re-applied word for word, by two routes that agree byte for byte (PR #19's round (c) diff applied to the block committed at `d4e960b`, and this change's additions applied to PR #19's block at `2e819ad`); the revalidation block carries PR #19's 14 scenarios byte for byte, the new one before this change's added scenario, and its M-1 qualifier; the bounds block keeps PR #19's L-7 sentence as it is, which meets this change's drain text in the ADDED requirement, made to agree by B-56's drain sentence (above); the carry check maps both blocks to `2e819ad`; the blocks and their diffs against PR #19 at `2e819ad` and against this change's blocks at `d4e960b` held for lane 2, which said YES, and committed on it | review-safety delta (MODIFIED "Cleanup revalidates destructive actions"); project-clean delta (MODIFIED "Clean bounds its Git work and reports omitted work"); `design.md` Context, Goals, D10, D14, Migration Plan; Status; the key; Capabilities; Dependencies and Sequencing; Decisions (L-1 and L-15); CD-4; `tasks.md` 1.4, 2.1 |
+| the lead's plan, the fit's basis: the fit sentence's figures where `extensions.worktreeConfig` reads false name the packet's 150 ms per child, as PR #19's D14 now names its bases; where it reads true, D14's three bases and LQ-20's first step are cited, with no figure of this change's | not graded | applied with change: the fit sentence reads "on the packet's basis of 150 ms per child and 0.3 s per removal", its figures unchanged at `2e819ad` (283 children, about 47.3 s, the first 14 targets before the spawn limit, as round B11 calls the 45 s that the block calls the removal floor), every input re-cited there (PR19 design.md:879-881, :887, :897-900, :905-909, PR19/pc:1023-1025, PR19/rs:76-77); the case where it reads true cites D14's three bases (none, 16 or 15 with 20,000-file removals, and 11) and LQ-20's first step, to measure the two probes or decide the basis; the change: D4's sentence at change 1's measured costs added D21's 7.7 s, unmargined, to task 2.1's 23.6 s, which carries the margin, and PR #19's measured basis now counts 11.5 s, so it is restated on that basis, its 16th removal at 35.1 s: 42.7 s through one worker, where it read 38.9 s, all 16 still fitting, and 49.7 s at a thread per call, where it read 45.9 s, and past the spawn limit with PR #19's 20,000-file removals | project-clean delta (MODIFIED "Clean bounds its Git work and reports omitted work", the fit sentence); `design.md` D4; What Changes (Caps); Capabilities; CD-6; Open Questions (the caps) |
+| lane openRepoProject-2's check of the two re-based blocks at `2e819ad` (2026-10-22): YES, the 12 sha256 of the held files checked, the revalidation block's diff against `d4e960b` exactly round (c)'s text, the bounds block carrying L-7 word for word with the fit's basis phrase, and the case where `extensions.worktreeConfig` reads true cited correctly; with two corrections to this change's own text: (1) the drain sentence takes L-7's full condition, "removed or excluded by a gate before the cap", since without its second half this change promised less than change 1 for a run whose leading rows are excluded rather than removed; (2) where this change says a removal or a stage comes before or past the floor, meaning the 45 s instant, it calls 45 s the spawn limit, "the removal floor" naming only the 5 s that must remain (lane 3's W36 M-A on PR #19) | not graded | applied: (1) in the ADDED requirement's drain sentence, and in What Changes (Caps), CD-6, the B-56 decision and design D4's two drain claims; (2) design D4 defines the spawn limit, 45 s, the 50 s work deadline less the 5 s removal floor, and uses it in its table's first row, the B-54 paragraph (the 150 ms count and the measured-cost sentence), the deep-tree preflight, the nested-directory shape and its account of the fit sentence, D13's alternative and the deep-tree Risk; What Changes (Caps), the B-56 decision, CD-6, the caps' Open Question and this table's option (a) and fit rows do the same; uses of the floor as the 5 s rule are kept, as are quotations of #26 and of the bounds block, and the records of earlier rounds; both blocks are committed byte-identical to the held files, the bounds block's fit sentence keeping "before the removal floor", lane 2's agreed text, which round B12 reviews with PR #19's round (d) | project-clean delta (ADDED drain sentence); `design.md` D4, D13, Risks; What Changes (Caps); Decisions (B-56); CD-6; Open Questions (the caps); this table |
+| Codex (d4e960b): this one P2 and nothing else | none | no action | none |
+
+### Re-read and Codex Findings (round B12)
+
+PR #19's round (d) landed at `9267303` (2026-10-22) and changed one requirement
+this change writes on its text, as lane openRepoProject-2 and the lead found
+requirement by requirement and this round checked: "Cleanup revalidates
+destructive actions" takes the lead's R-208, so that every filesystem call of
+the revalidation follows the rule of a Git child, a call that finds its path
+missing (`ENOENT` or `ENOTDIR`) deciding that the path is absent, and "A check
+that fails at revalidation" gains an AND for an unreadable `.git` file, its
+scenarios staying 14; "Clean bounds its Git work and reports omitted work" is
+byte-identical between `2e819ad` and `9267303`. "Clean previews and applies a
+batch of eligible worktree removals in one repository" changed too, but this
+change carries that block from main's text at `961c405`, so the re-base step
+brings that change when PR #19 lands. Under the lead's B-58 this round re-bases
+the revalidation block on `9267303`, changes only this change's own fit clause
+in the bounds block, re-cites PR #19 at `9267303`, and holds both blocks for
+lane openRepoProject-2's check before their commit; lane 2 said YES on
+2026-10-22 to both blocks as held, and they are committed on its YES. Every
+range of `proposal.md`, `design.md` and `tasks.md` that lane openRepoProject-4's
+spec 005 pins keeps its bytes, as `cmp` against `f170079` confirms, though some
+of their line numbers move. Of the 6 items here, all 6 are applied, and no
+scenario is added, so the counts stay 55, 32 and 8. The round also updates the
+Status, the key (PR #19 at `9267303`, the ruling range to B-59), design's
+Context and ruling table, and `tasks.md` 1.1, 1.4, 1.5 and 2.1.
+`specs/project-overview/spec.md` is not edited: none of the rulings needs it,
+and its block is lane openRepoProject-4's.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| B-58, PR #19's round (d) at `9267303`: re-base "Cleanup revalidates destructive actions" on it for the lead's R-208, keeping PR #19's 14 scenarios byte for byte and this change's added one | not graded | applied: the block is PR #19's requirement at `9267303` with this change's additions re-applied word for word, built two ways with the same bytes (this change's additions on `9267303`, and round (d)'s change on the block committed at `f170079`); its 15 scenarios are PR #19's 14 and this change's one | `specs/project-clean-review-safety/spec.md` |
+| B-58, R-208 and this change's own words on the filesystem reads of the revalidation and of a cache stage | not graded | applied: no word of the deltas changes, since this change adds no filesystem call to the revalidation and its stage already ends `refused`, the target `state-changed`, on any failed or over-budget read and `deadline-exceeded` on a read the deadline cuts; design D10 states PR #19's one rule for every Git child and every filesystem call and what a missing listed cache, an unreadable cache directory and a deadline cut each give, and D7 names `ENOENT` and `ENOTDIR` at the preflight as differences from the plan, `ENOTDIR` being either a non-directory where the plan recorded a directory or an ancestor that is no longer a directory, which R-208 reads as a decided absence (B-59); What Changes follows | design Context, D7, D10; proposal What Changes, Capabilities, Dependencies, L-1, CD-4 |
+| B-57 item 6, B-58 and B-59: the bounds block's own fit clause, "before the removal floor", called the 45 s instant the floor; the clause now names it without doing so; "under the removal floor", the rule acting on the 5 s, stays | not graded | applied with the lead's B-59 wording, "before only the removal floor remains, and the last two are", since no spec defines the spawn limit, which the design and proposal keep where D4 defines it: one clause; the rest of the block is PR #19's text at `9267303`, byte-identical to `2e819ad` | `specs/project-clean/spec.md` |
+| round B11's own observation: the drain sentence for cache rows, "excluded by a gate before the cap", promises a drain the 16 enumerations withhold, since a candidate left at the `ignored-local-files` rung keeps its place among them though the classification, a gate before `deferred-target-cap`, excludes it | not graded | applied: the sentence takes the candidates past the 16th as the candidates ahead of them are removed or cease to be candidates, and keeps PR #19's condition in full for the rows that `deferred-target-cap` defers, with change 1's stall as the exception for both; design D4 and the proposal's restatements follow | `specs/project-clean/spec.md`; design D4; proposal What Changes, B-56, CD-6 |
+| B-58, the fit and the cites: every input of PR #19 re-cited at `9267303`, and where the plan read `extensions.worktreeConfig` as true, D14's two tables and LQ-20's first step cited with no figure of this change's own | not graded | applied: no figure changes, since round (d) restates none of the inputs D4 uses (F = 8, six and seven revalidation children, 44.1 s, the measured basis's 35.1 s and 42.8 s, D21's 11.5 s); each cite is moved by content, and every cite of `2e819ad` that is a round record stays as history | design key, Goals, D2, D4, D10, D11, D14, Risks, Migration Plan; proposal key, What Changes, Capabilities, CD-4, CD-6, Open Questions; `tasks.md` 1.4 and 2.1 |
+| round B11's record: its paragraph broke with "Of" alone on a line | cosmetic | applied: re-wrapped, no word changed | "Re-read and Codex Findings (round B11)" |
+| Codex's review of `f170079` found no major issues (2026-10-22) | none | no action | none |
+
+### Re-read and Codex Findings (round B13)
+
+PR #19's round (e) landed at `f0bf538` (2026-10-22), lane openRepoProject-2's
+answer to lane openRepoProject-3's W38 read of its round (d) under R-213 and
+R-216, and changed one requirement this change writes on its text, as lane 2
+and the lead found requirement by requirement and this round checked:
+"Cleanup revalidates destructive actions" writes "SHALL NOT" where it wrote
+"SHALL not" (W38's L-5) and makes an administrative directory that the
+`operation-in-progress` listing finds absent a registration difference,
+`identity-changed` (W38's L-4), its scenarios staying 14; "Clean bounds its
+Git work and reports omitted work" is byte-identical between `9267303` and
+`f0bf538`. "Clean previews and applies a batch of eligible worktree removals
+in one repository" changed too (W38's L-3), but this change carries that block
+from main's text at `961c405`, so the re-base step brings that change when
+PR #19 lands; its two added lines move PR #19's later `project-clean` lines
+by 2. Under the lead's B-60 this round re-bases the revalidation block on
+`f0bf538`, reads this change's own words against W38's L-4, keeps the bounds
+block byte-identical to round B12's, moves every cite of PR #19's current text
+to `f0bf538`, and holds the two blocks written on PR #19's text and, under
+B-62, the ADDED requirement for lane openRepoProject-2's check before their
+commit. Lane openRepoProject-3's W33 read of rounds B10 to B12 as one
+range, `e07cc42..25f7333`, found no HIGH, one MEDIUM and four LOWs, with three
+observations, and the lead ruled them as B-62, all into this round, with B-61
+on this round's own observation on the admin-directory pre-filter; the
+ADDED requirement's drain sentence changes for W33's M-1, and the blocks
+written on PR #19's text do not. Lane 2 said YES on 2026-10-22 to the three
+blocks as held, and they are committed on its YES. Every range of
+`proposal.md`, `design.md` and `tasks.md` that lane openRepoProject-4's spec
+005 pins keeps its bytes, as `cmp` against `25f7333` confirms, though some of
+their line numbers move. Of the 12 items here, 9 are applied, 2 are applied
+with change (W33's M-1, each cap given its own condition, and its O-1, only in
+passages this round edits), and 1 needs no action (W33's O-2 and O-3, as B-62
+rules); none is declined, and the count is corrected in round B14 (W44's
+LOW-2). No scenario is added, so the counts stay 55, 32 and 8. The round also
+updates the Status, the key (PR #19 at `f0bf538`, the ruling range to B-62,
+and W38's and W33's findings as citation forms), design's Context, its ruling
+range, which still read B-1 to B-56, and its ruling table, and `tasks.md` 1.1,
+1.4, 1.5 and 2.1.
+`specs/project-overview/spec.md` is not edited: none of the rulings needs it,
+and its block is lane openRepoProject-4's.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| B-60, PR #19's round (e) at `f0bf538`: re-base "Cleanup revalidates destructive actions" on it, keeping PR #19's 14 scenarios byte for byte and this change's added one | not graded | applied: the block is PR #19's requirement at `f0bf538` with this change's additions re-applied word for word, built two ways with the same bytes (this change's additions on `f0bf538`, and round (e)'s change on the block committed at `25f7333`); the lines its diff against `25f7333` changes are exactly round (e)'s own change, W38's L-5 and L-4; its 15 scenarios are PR #19's 14 and this change's one | `specs/project-clean-review-safety/spec.md` |
+| B-60, W38's L-4 and this change's own words on the administrative directory and the `operation-in-progress` listing, at revalidation and at plan time | not graded | applied: no word of the deltas changes, since none of this change's added words names the administrative directory or that listing, and this change adds no filesystem call to the revalidation; design D10 cites PR #19's one rule at `f0bf538` with W38's L-4 and says that PR #19's reads of the administrative directory stay as they are there, a decided absence keeping its step's own reason, as a missing listed cache keeps `state-changed`; D2 and D4 name the `operation-in-progress` gate at plan time only, and D7's preflight reads no administrative directory, so neither changes; the admin-directory pre-filter's Open Question says nothing of an administrative directory found absent at plan time, where change 1 makes such a row `inspection-error` by its registration check (CAS/cmd:139-144), before any status probe and so before any candidate test, and an error on the `operation-in-progress` listing `inspection-error` too (PR19/pc:705-720), so W38's L-4 changes nothing there (B-61's sentence, below, has another cause) | design Context, D10 |
+| B-60, the bounds block | not graded | applied: no change; the block is PR #19's text at `f0bf538`, byte-identical to `9267303`, with this change's additions as round B12 committed them, and equals round B12's held file byte for byte | none |
+| B-60, the cites: every cite of PR #19's current text moved from `9267303` to `f0bf538` | not graded | applied: each cite is re-mapped by content; every cited range carries its bytes from `9267303` to `f0bf538` but two that round (e) edits, PR #19's one rule for the revalidation's calls, now PR19/rs:113-135 with W38's L-4, and the first step of LQ-20, now its design.md:1768-1785 with W38's L-1 and L-6; `project-clean` lines after :736 move by 2 (the bounds requirement's header, :962, the deferral, :1003-1017, and the revalidation's count, :1026-1028), the design's cited lines by 6 (D12, :854-872, and D14, :889-1029, with the lines cited in it; the deferral line, :1143-1149, the next steps, :1156-1174, and the submodule count, :1598-1601), and its `tasks.md`'s by 2 (:122-123); no figure changes, since round (e) restates none of the inputs D4 uses and this change states no figure of LQ-20's options, whose (c) now also names the invocation deadline; every cite of `9267303` that is a round record stays as history | design key, Goals, D2, D4, D10, D11, D14, Risks, Migration Plan; proposal key, What Changes, Capabilities, Dependencies, L-1, CD-4, CD-6, Open Questions; `tasks.md` 1.4 and 2.1 |
+| Codex's review of `25f7333` found no major issues (2026-10-22) | none | no action | none |
+| W33 (25f7333) M-1: B12's drain sentence (pc:972-981) promises a later run only the candidates that the 16-enumeration cap left and the rows that `deferred-target-cap` left, so a candidate among the first 16 that the invocation's totals left at `cache-cap` has no drain SHALL, though the AND of "Cache caps" ("since it drains"), design D4's account of a row left only by the totals and the B-56 decision rely on one | MEDIUM | B-62: applied with change: each cap has its own condition, not W33's one shared clause, since a candidate that a gate after `deferred-target-cap` excludes stops counting toward the totals (T2) but keeps its place among the 16, so ceasing to count frees room in the totals and no place: the 16-enumeration cap's candidates drain as the candidates ahead of them are removed or cease to be candidates, as before; the totals' candidates, in a sentence of their own, as the candidates ahead of them are removed, cease to be candidates or cease to count toward those totals; the rows `deferred-target-cap` left by L-7's full condition, that sentence unchanged; and "Each holds unless" the deferred rows will not drain, where "Both hold" stood; What Changes, CD-6, design D4's drain claim and the B-56 decision follow, so that the AND and D4's account of a row left only by the totals are true as written, unchanged; no behaviour changes | project-clean delta (ADDED drain sentence); `design.md` D4; What Changes (Caps); Decisions (B-56); CD-6 |
+| W33 (25f7333) L-1: design D10 cites CAS/rs:92-93 for "a value that cannot be re-read is a difference", the sentence that PR #19 has qualified since `2e819ad` (W31's M-1), where the block this change writes on is PR #19's | LOW | B-62: applied: PR19/rs:113-115 at `f0bf538`, "other than one that the work deadline cuts", checked by content | `design.md` D10 |
+| W33 (25f7333) L-2: design D4 numbers feature 004's gates 5 to 12 "once LQ-13's gate ... merges into feature 004", which it had done at `93a3ae9` (2026-10-22 02:12:03Z, parents `881119b` and `f6082db`) before rounds B11 and B12 | LOW | B-62: applied: "and 5 to 12 since `93a3ae9`, where LQ-13's gate merged into feature 004"; the round B11 row that says the same is left as history, and this row records the correction | `design.md` D4 |
+| W33 (25f7333) L-3: `tasks.md` 1.4 reads as if the added revalidation scenario came in with the round, though it is this change's own, older than `e07cc42` | LOW | B-62: applied, at this round's sha: "PR #19's 14 at `f0bf538` (B-54, round B13) and this change's one" | `tasks.md` 1.4 |
+| W33 (25f7333) L-4: the round B12 row on the fit clause reads backwards, "names the 45 s instant without calling it the floor" said of the old clause | LOW | B-62: applied: corrected in place, a round record, in W33's words: "'before the removal floor', called the 45 s instant the floor; the clause now names it without doing so"; this row records the correction | the round B12 table (its B-57 item 6 row) |
+| B-61, round B13's own observation: if the admin-directory pre-filter were adopted, an error on its listing for a would-be candidate past the first 16 would make the plan incomplete, where change 1 alone defers that row and keeps the plan complete | not graded | applied: the pre-filter's Open Question gains one sentence: an error or timeout of the pre-filter's listing filters nothing, the row stays a would-be candidate and meets change 1's own gates in their turn, so the pre-filter never makes a plan incomplete | Open Questions (the admin-directory pre-filter) |
+| W33 (25f7333) O-1: short lines left by re-wraps, at prop:2258, pc:594 and :597, and des:446, :462, :613, :734 and :751 | none | B-62: applied with change, only in passages this round edits: des:446 and :462 (the drain and stall paragraph of D4) and :613 (D4's measured-basis sentence) re-wrapped, the re-wrap changing no word; pc:594 and :597 are in the bounds block, which stays byte-identical to its held file, and prop:2258 (the round B11 record) and des:734 and :751 are in passages this round does not edit, so they stay | `design.md` D4 |
+| W33 (25f7333) O-2 and O-3: B-57 to B-59 have no Decisions bullet, and LQ-20's option table is cited with none of its rows restated | none | B-62: no action | none |
+
+### Re-read and Codex Findings (round B14)
+
+Lane openRepoProject-3's W44 read of round B13, `25f7333..bced895` (its file
+`confirm-b13-findings.md`, brett-wip `16108c574`), found no HIGH, no MEDIUM, no
+departure and three wording LOWs, and confirmed that the revalidation block is
+PR #19's requirement at `f0bf538` plus this change's declared additions only,
+that the bounds block is byte-identical to round B12's, that the ADDED
+requirement is round B12's plus the totals sentence and "Each holds", that all
+three equal their held files, that M-1's three drain conditions each hold, and
+that all 58 hunks of round B13 are declared. The lead queued the three LOWs for
+this change's next round (B-63) and ran that round on Brett Heap's word of
+2026-10-22 to do as much as possible in parallel, the trigger that B-63 waited
+for (B-64). It is a wording round: no spec file is edited, so the two blocks
+written on PR #19's text and the ADDED requirement stay byte-identical to the
+three held files of round B13, as `cmp` confirms, no PR #19 block is touched,
+and lane openRepoProject-2 needs no check. Every range of `proposal.md`,
+`design.md` and `tasks.md` that lane openRepoProject-4's spec 005 pins keeps its
+bytes, as `cmp` against `bced895` confirms, though some of their line numbers
+move. Of the 3 items here, all 3 are applied, and none is declined (the Codex
+row is left out of the count, as in rounds B10 to B12); no scenario is added, so
+the counts stay 55, 32 and 8. The round also updates the Status, the key (the
+ruling range to B-64, and W44's findings as a citation form), design's Context,
+its ruling range and its ruling table, and `tasks.md` 1.1, 1.4 and 1.5.
+`specs/project-overview/spec.md` is not edited: none of the rulings needs it,
+and its block is lane openRepoProject-4's.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| W44 (bced895) LOW-1: the Status and the round B13 record say "both blocks" for lane openRepoProject-2's check of round B13, which covered three held files, the two blocks written on PR #19's text and the ADDED requirement, as the same record says further on (its "three blocks as held") | LOW | B-63, B-64: applied: the Status says "the three held blocks, the two written on PR #19's text and the ADDED requirement"; the round B13 record says that the round holds the two blocks written on PR #19's text and, under B-62, the ADDED requirement for lane 2's check; the round B11 and B12 records, whose check did cover two blocks, stay | Status; "Re-read and Codex Findings (round B13)" |
+| W44 (bced895) LOW-2: the round B13 tally, "Of the 13 items here, 11 are applied, 2 are applied with change ... and none is declined", counts the Codex row and counts the "no action" row of W33's O-2 and O-3 as applied, where the tallies of rounds B10 to B12 leave the Codex row out (14 rows and 13 items, 11 and 10, 7 and 6) | LOW | B-63, B-64: applied: corrected in place, a round record, in W44's form: "Of the 12 items here, 9 are applied, 2 are applied with change (W33's M-1 and O-1), and 1 needs no action (W33's O-2 and O-3, as B-62 rules), and none is declined"; the Codex row stays in the table, and this row records the correction | "Re-read and Codex Findings (round B13)" |
+| W44 (bced895) LOW-3: the round B13 row on D10 and the comment on the pull request say that D10 states a decided absence keeping its step's own reason, which D10 said only by analogy, "as R-208 keeps a decided value's own reason", beside a second "as" clause, so that the two read as two grounds for `state-changed` | LOW | B-63, B-64: applied: D10 states the rule outright, with its cite: a filesystem call that finds no file or directory at its path (`ENOENT` or `ENOTDIR`) decides that the path is absent, and a decided value keeps its step's own reason (PR19/rs:122-127 at `f0bf538`; R-208, W38's L-4), so a decided absence keeps its step's own reason, a listed cache missing at revalidation `state-changed` and an administrative directory that the `operation-in-progress` listing finds absent `identity-changed`; the round B13 row on D10, which says that D10 states that rule, is exact as D10 now reads and is left as it is, and the comment stands (B-63); no word of the deltas changes | `design.md` D10 |
+| Codex's review of `bced895` found no major issues (2026-10-22T08:08:46Z) | none | no action | none |
+
+### Re-read and Codex Findings (round B15)
+
+Codex's review of `69cb7a1` (2026-10-22T12:44:17Z) raised two P1 findings and
+one P2, all on `specs/project-clean/spec.md`: the removal command's literal
+argv lacks the two stat pins that "Cleanup revalidates destructive actions"
+names for Git's own check (line 118), the ordered gate list ends at
+`hidden-local-state` where the bounds block and the design put
+`operation-in-progress` and `worktree-only-commits` after the cap (line 303),
+and the `refused` reasons lack those two (line 702). Reader RH's composition
+read, item 7, found all three VALID and one class: this change wrote two blocks
+on PR #19's text at `f0bf538` and six on change 1's text at main, and PR #19
+had changed all six since main, so that where the two blocks rely on PR #19's
+change this change contradicted itself. The lead ruled option (a), B-69: the
+six blocks are re-based on `f0bf538`, each being PR #19's requirement with this
+change's additions re-applied word for word and every one of PR #19's scenarios
+carried byte for byte, built two ways with the same bytes (this change's hunks
+re-applied on `f0bf538`, and a three-way merge of main's block, this change's
+and PR #19's with the same hand resolutions), and held for lane
+openRepoProject-2's byte check before the commit. Five adaptations, each where
+PR #19 changed the lines an addition rests on, and no other word of this
+change's own moves: the classification block's clause on an effective work tree
+that is not the registered path, PR #19's, stands beside this change's word
+"combined"; the reconcilable block's `refused` and `not-attempted` stages each
+carry both texts, `not-attempted` as one merged sentence (RH's 7.2-b); the
+preservation block's appended sentence follows PR #19's re-flowed list; and the
+narrow guarantee's list carries PR #19's three added items beside this change's
+"for a worktree removal" and cache-stage sentences. The retire and batch blocks
+needed none. PR #19's round (f), `662be89`, has no spec hunk, so `f0bf538`'s
+text is still PR #19's current spec text. Lane openRepoProject-2 said YES on
+2026-10-22 (13:53Z) to every held file, with no correction: the six blocks, the
+bounds block, whose RI-9 hunk is this change's own clause in a PR #19 block
+(B-73), and M1's hunk in the ADDED requirement. The other hunks of the ADDED
+requirement, B-72's and B-74's `cache-unwritable` text, are this change's own
+and were not on its list. The deltas move from 55, 32 and 8 scenarios to 59,
+32 and 8, the four more being PR #19's (retire one, batch three). Of the 18
+items here, 15 are applied, 2 are applied with change (RH's 7.2-b and W52's
+F-11), and 1 needs no action (the queued rulings B-65, B-66, B-70 and B-71);
+none is declined, and the row for lane 2's check is left out of the count. The
+round commits the deltas as `87165d5`, the design as `237bdd6`, and this record
+with the Status, the key (the ruling range to B-75, and the new citation forms)
+and `tasks.md` 1.1, 1.4, 1.5 and 2.1. The sentence of "Archive order" that
+reads "the two blocks have been rewritten" lies in a range that lane
+openRepoProject-4's spec 005 pins, so it is not edited and still reads two; the
+other ranges that spec 005 pins keep their bytes, as `cmp` against `69cb7a1`
+confirms, though some of their line numbers move.
+`specs/project-overview/spec.md` is not edited: none of the rulings needs it,
+and its block is lane openRepoProject-4's.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| Codex (69cb7a1) P1 at `specs/project-clean/spec.md:118`: the removal command's argv lacks `-c core.checkStat=default -c core.trustctime=true`, which "Cleanup revalidates destructive actions" requires of the pinned configuration that Git's own non-force check runs on | P1 | B-69: applied: "Clean can explicitly retire verified worktrees" is PR #19's requirement at `f0bf538` with this change's one inserted clause, so the argv carries `-c core.trustctime=true -c core.checkStat=default` after `-c core.fsmonitor=false` (PR19/pc:306-307, LQ-10); the block's 15 scenarios are PR #19's 14 and its added "Branch deletion refuses a branch it may not delete", byte for byte | `specs/project-clean/spec.md` |
+| Codex (69cb7a1) P1 at `specs/project-clean/spec.md:303`: the ordered gate list ends at `hidden-local-state`, while the bounds block and the design put `operation-in-progress` and `worktree-only-commits` after the cap | P1 | B-69: applied: the batch block is PR #19's requirement at `f0bf538` with this change's additions, so its list ends `contains-submodule`, `hidden-local-state`, `operation-in-progress` and `worktree-only-commits`, each defined with its outcome rule and its three scenarios; the bounds block's "the two index gates, `operation-in-progress` and `worktree-only-commits`" now refers to gates this change's own blocks define | `specs/project-clean/spec.md` |
+| Codex (69cb7a1) P2 at `specs/project-clean/spec.md:702`: the `refused` reasons lack `operation-in-progress` and `worktree-only-commits`, which revalidation requires | P2 | B-69: applied: the reconcilable block's `refused` stage reads "revalidation found a difference, or a cache stage ended `refused` or `partial`, and nothing was spawned", with PR #19's two reasons added to the reasons list, so that the stage names every reason with which revalidation refuses | `specs/project-clean/spec.md` |
+| RH item 7: the class behind Codex's three, two blocks on PR #19's text and six on main's, PR #19 having changed all six, and the archive's scenario guard not seeing it for blocks whose scenario names did not change | MEDIUM | B-69: applied, RH's option (a): the six blocks (classification, retire, batch, reconcilable result, preservation, narrow guarantee) are PR #19's text at `f0bf538` with this change's additions, held for lane 2's byte check before the commit and equal to their held files by `cmp`; the rule that this change re-bases its PR #19 blocks whenever PR #19 changes them now covers eight blocks, and design Migration Plan and `tasks.md` 2.1 name all eight; the lines the blocks gain are PR #19's words, and this change's own words move only in the merged `not-attempted` sentence | the six blocks; Dependencies; L-1 and L-15; L-16 and L-17; B-52; design Context, D4, D14, Migration Plan; `tasks.md` 1.4, 2.1 |
+| RH 7.2-a: the batch block defines neither `operation-in-progress` nor `worktree-only-commits`, though the bounds block names both as gates after the cap, and lacks PR #19's three scenarios | MEDIUM | B-69: applied: the batch block carries both definitions and PR #19's three scenarios, "An operation in progress", "A squash merge that holds an autostash" and "A commit held only by the worktree", ahead of this change's added one, so the block has 14 scenarios, PR #19's 13 and this change's one | `specs/project-clean/spec.md` |
+| RH 7.2-b: the `not-attempted` stage's cause list is narrower than the revalidation block's, which makes a deadline cut at revalidation `not-attempted` with `deadline-exceeded` | LOW | B-69: applied with change: one merged sentence, since PR #19 and this change each extend the same clause of the old text, PR #19's "or the work deadline cut its revalidation" first and this change's "or, for a target whose cache stage ended `disposed`, before its removal was spawned because a signal had been received or less than the removal floor remained" after it; this change's words are unchanged and PR #19's are PR #19's; RH's candidate reads the same | `specs/project-clean/spec.md` |
+| RH 7.2-c: the preservation block's list of preserved states lacks PR #19's two | LOW | B-69: applied: the list names a merge, cherry-pick, revert, `am`, rebase, bisect or notes merge in progress or a merge's held autostash (`operation-in-progress`), and a commit that only the worktree's HEAD reflog or `refs/worktree/` holds (`worktree-only-commits`); this change's sentence on listed caches follows the list | `specs/project-clean-review-safety/spec.md` |
+| RH 7.2-d: the narrow guarantee omits PR #19's added items and the window's two added kinds, which "the confirmation and the result SHALL each state" | LOW | B-69: applied: the guarantee lists an effective work tree where the plan read it, the absence of an operation in progress and the absence of a commit that only the worktree's HEAD reflog or `refs/worktree/` holds, and the window names operations started and commits made that only the worktree holds, with this change's cache sentences after them; design D13's cache-run line is item RI-1 below | `specs/project-clean-review-safety/spec.md` |
+| RH 7.2-e: the classification block's `inspection-error` causes and the batch block's remedy list lack PR #19's effective-work-tree cause and its `config.worktree` remedy | LOW | B-69: applied: classification names "an effective work tree that is not the registered path" and the batch block's remedies include unsetting `core.worktree` and `core.bare` in a worktree's `config.worktree`, both PR #19's words | `specs/project-clean/spec.md` |
+| RH M1 (= its 7.2-f): the cache enumeration's child, which stands in for the status probe at a cache target's revalidation, carries two of the four status pins that LQ-10 requires (PR19/cmd:158-164 at `f0bf538`), so that under a user's `core.trustctime=false` or `core.checkStat=minimal` an edit that keeps a file's size and restores its mtime reads unchanged | MEDIUM | B-69: applied: the ADDED requirement's sentence, its scenario "The cache enumeration runs under the pins" and design D3 carry `-c core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default`, as PR #19 words them and in its order, beside the child's own `-c status.showStash=false`; D3 gives the reason; lane 2 checked this hunk | `specs/project-clean/spec.md` (ADDED requirement and its scenario); `design.md` D3 |
+| RH M3 and RI-1: design D13's cache-run residual-window line, `ignored files created or index flags set after the last check or during a cache stage ...`, omits "operations started or worktree-only commits made", which PR #19's requirement and 004 print (PR19/rs:309-313; PR19/design.md:1150-1152) | MEDIUM | B-67: applied: D13 gives the line on PR #19's text at `f0bf538`, `Not protected: ignored files created, index flags set, operations started or worktree-only commits made after the last check or during a cache stage, caches recreated after it, and any change after Git's own check.`, and says that the spec states it relatively (the line "SHALL also name" the two cache items), so that a later change to change 1's line moves this one with it; D13's window sentence names PR #19's four items; #26's own literal is its draft's | `design.md` D13 |
+| RI-9: "under the same rule" joins the cache stage's strict start test to the removal child's inclusive one, though 004's `below_removal_floor` refuses a removal only when less than 5 s remain, so a removal with exactly 5.0 s left is allowed | LOW | B-67: applied: the bounds block says that a cache stage starts only while more than the removal floor remains, "a stricter test than the removal child's, which is spawned while at least that floor remains"; the block is PR #19's text plus this change's additions as before, with this one hunk changed, and lane 2 checked it (B-73); RI's second point, that the fit clause "before only the removal floor remains" is strict for a removal child too, is a case of measure zero in RI's own grading, that clause is B-59's wording, and it stays | `specs/project-clean/spec.md` (bounds block) |
+| W56 (bced895..69cb7a1) optional note: design D10's cite PR19/rs:122-127 stops where the sentence runs on, to :135 | not graded | B-68: applied: D10 cites PR19/rs:122-135 at `f0bf538`; the round B14 records, which name :122-127 as they were, stay as history | `design.md` D10 |
+| RH L2: design D4 gives #26's joint fit as #26 stated it at `9b67e8c`, in the present tense, where #26 at `1bf217c` and `7b224c7` restates it on PR #19's text and three bases | LOW | B-69: applied: D4 says that #26 stated the fit at `9b67e8c` and has since restated it (its D7 at `7b224c7`), keeps its account in the past tense as history, as B-35 and B-42 ruled it, and points to #26's D7 for #26's present account, stating none of its figures; D13's sentence "#26 restates its own count" reads "restated ... as it stood at `9b67e8c`" | `design.md` D4, D13 |
+| W52 F-12 (LOW, confirmed): the `cache-unwritable` line says "fix the ownership or mode of PATH", the worktree, but the access check tests each cache directory, nested `__pycache__` and parent, and a mode change of the worktree leaves it false for a `__pycache__` of mode 0555 | LOW | B-72: applied: the line names the first directory, by raw path bytes, whose access check failed, relative to the worktree and `.` for the worktree itself; the walk keeps the path in the row's evidence for the line and no JSON key carries it, so the schema does not change; the spec's next-step text and the scenario "An unwritable cache directory is kept, not a stop" follow, the scenario adding that a re-run plans the same after a mode change of the worktree itself; no scenario is added | `specs/project-clean/spec.md` (ADDED requirement and scenario); `design.md` D3, D11, Risks |
+| W52 F-11 (LOW, reasoned, not reproduced): "fix the ownership or mode" cannot work on a read-only mount, where `chmod` and `chown` fail with `EROFS` | LOW | B-72, B-74: applied with change: `os.access` returns a boolean and no error number, so the check cannot tell `EROFS` apart, as D3 now says, which B-72 would have left as a general line; B-74 has the one general line name both remedies, to fix the ownership or mode of the directory or, on a read-only filesystem, to remount it writable; telling the two apart would take one more call a directory, `os.statvfs` and its `ST_RDONLY` flag, which moves the call counts and the fit, and is not added | `specs/project-clean/spec.md` (ADDED requirement and scenario); `design.md` D3, D11, Risks |
+| W53 27-03, 27-04, 27-06 and 27-07: four lane-only departures declared but not cited against the packet line they change | not graded | B-75: applied: CD-10 cites `BA:437-440` (27-03, with RI-9's strict test), CD-16 `BA:1318-1322` (27-04), CD-8 `BA:1632-1634` (27-06) and CD-9 `BA:908-910` and `BA:1360-1362` (27-07), as W53 gives each row, and the heading of the lane additions says which bullets name a packet line | Decisions (CD-8, CD-9, CD-10, CD-16) |
+| B-65, B-66, B-70 and B-71, queued: the restatements of option (c) once PR #19's round (f) lands on the measured basis (it has, at `662be89`, with LQ-20 resolved by measurement), A1's alignment held for after #34 merges, and lane 4's survival check | not graded | no action: they are rounds of their own; B-65 and PR #19's coming round (g) go to round B16, and this change still states no figure of its own for the 128-row case | none |
+| B-73: lane openRepoProject-2 also checks the bounds block and M1's hunk, beside the six blocks, and said YES on 2026-10-22 (13:53Z) with no correction | not graded | recorded: all 55 sha256 lines of its held list check, the eight copies of PR #19's blocks at `f0bf538` are byte-equal, PR #19's words survive in every held block except where this change extends them, M1 carries exactly PR #19's four status pins in order, and the RI-9 hunk is this change's own clause; the held blocks equal the committed ones by `cmp` | none |
+
+### Re-read and Codex Findings (round B16)
+
+PR #19 moved three times during this round. Its round (g) at `4f1c0e0`, lane
+openRepoProject-2's answer to lane 3's W52 read of next steps that Git refuses,
+changed three of the eight blocks that this change writes on PR #19's text: the
+classification block (W52's F-2, a locked worktree's partial-removal recovery),
+the retire block (F-5, the refusal for a branch that the main worktree holds,
+and the scenario "Branch deletion refuses a branch it may not delete") and the
+batch block (F-3, the plan-blocking remedy naming `core.worktree` and
+`core.bare` in `config` or `config.worktree`). Its round (g3) at `6bf9f77`
+added to the classification block's scenario "Only tracked-file deletions" the
+locked worktree's recovery text. Its round (h) at `b3228bb`, on Brett Heap's
+ruling of 2026-10-22 (R-263, "F-2: yes; F-1: prune-then-delete; O-1:
+deadline-exceeded"), gave the removal ceiling's recovery text two forms (W52's
+F-1), made a read of gate 7 that the deadline cuts `deadline-exceeded` (RI's
+O-1) and added the exception for a root or common-directory path that holds a
+line feed (RI-3), in the retire, batch, bounds, reconcilable-result and
+revalidation blocks. The lead ruled the round in stages (B-76, B-78, B-80,
+B-84): each block that a round of PR #19 changed is re-based on that round's
+text, PR #19's words carried byte for byte and this change's additions
+re-applied word for word, built two or three ways with the same bytes (this
+change's hunks re-applied on PR #19's new text, and three-way merges from this
+change's block at `8d34525` and from the round's earlier block, with the same
+hand resolution), and held for lane openRepoProject-2's byte check before the
+commit. The classification block is on `6bf9f77`, the retire, batch, bounds,
+reconcilable-result and revalidation blocks on `b3228bb`, and the preservation
+and narrow-guarantee blocks stay on `f0bf538`; `b3228bb` keeps the text of
+those three byte for byte. Two of this change's additions are adapted where
+round (h) changed the text they rest on (B-85): the batch block's exception for
+a cache-walk read that times out attaches to gate 7's budget clause, the
+deadline not being the limit, so that a cache-walk read that the deadline cuts
+records `deadline-exceeded`, as this change's enumeration rule already gives;
+and the bounds block's fit sentence of 283 Git children gains the condition
+that neither the path of the repository's root nor that of its common directory
+holds a line feed, which round (h)'s exception makes necessary. No other word
+of this change's own moves in the deltas. PR #19's round (f), `662be89`,
+resolved LQ-20 by measurement, so this change states its own fit for a plan
+that read `extensions.worktreeConfig` as true on PR #19's measured costs
+(B-65), with both costs of the enumeration's child at a cache target's
+revalidation (B-79, B-83). Lane openRepoProject-2 said YES on 2026-10-22 to the
+held set, all eight blocks, each named with its base, with no correction. The
+deltas keep 59, 32 and 8 scenarios: rounds (g), (g3) and (h) add no scenario,
+and the scenarios they change are carried byte for byte. Of the 14 items here,
+11 are applied and 3 need no action (W62's sums, W63's read and Codex's review
+of `8d34525`); none is declined, and the row for lane 2's check is left out of
+the count. The round commits the deltas as `4d41a98`, the design as `a183b5f`,
+and this record with the Status, the key (PR #19 at `b3228bb`, `6bf9f77`,
+`4f1c0e0` and `f0bf538` by block and document, the ruling range to B-85, and
+W62, W63 and RI's O-1 as citation forms), the restatements and currency of What
+Changes, Capabilities, Dependencies and Sequencing, L-1 and L-15, the B-55
+decision, CD-4 and the Open Question on the caps, and `tasks.md` 1.1, 1.4, 1.5
+and 2.1. The Archive order sentence in lane openRepoProject-4's pinned range
+now reads "the blocks written on PR #19's text", the one change inside those
+ranges, on lane 4's YES (B-77); the other ranges keep their bytes, as `cmp`
+against `8d34525` confirms, though their line numbers move.
+`specs/project-overview/spec.md` is not edited: none of the rulings needs it,
+and its block is lane openRepoProject-4's.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| B-76: PR #19's round (g) at `4f1c0e0` changes three of the blocks this change writes on its text, classification (W52's F-2), retire (F-5) and batch (F-3) | not graded | applied: the three blocks re-based on `4f1c0e0` in the round's first stage, each PR #19's requirement with this change's additions re-applied word for word and no adaptation, built two ways with the same bytes; the other five were byte-identical at `f0bf538` and `4f1c0e0`; PR #19's later rounds moved classification on to `6bf9f77` (B-80) and retire and batch to `b3228bb` (B-84); design D11 quotes round (g)'s next step for `contains-submodule`, "review, then git worktree remove --force yourself" (W52's F-8); every cite of PR #19's design, proposal and tasks moves to `4f1c0e0`, whose quoted strings `b3228bb` keeps | `specs/project-clean/spec.md` (classification, retire and batch blocks); `design.md` key, Context, D11; key; Capabilities |
+| B-65, queued in round B15: PR #19's round (f) at `662be89` resolves LQ-20 by measurement, so this change's stance of stating no figure of its own where the plan read `extensions.worktreeConfig` as true (B-55) no longer rests on an open question | not graded | applied: design D4 and the Open Question on the caps state this change's own fit on PR #19's measured costs, by D4's method, which costs the enumeration's child at a cache target's revalidation as the status probe whose place it takes, 74.1 ms with the margin: at 10,000-file removals the 16th target reaches its stage or spawn at about 37.6 s through one worker and 44.6 s at a thread per call, all 16 fitting, and at 20,000-file removals at about 45.3 s, 15 of 16, and 52.3 s, 11 or 12; where the plan read the setting as false, 36.3 s and 43.3 s, all 16, and with 20,000-file removals 44.0 s, all 16, and 51.0 s, 12 or 13; the statements that LQ-20 is open, or that this change asks Brett Heap to measure first, go, the B-55 decision saying that LQ-20 was open; RH's estimate of 45.5 s never stood in this change's text, and the 45.5 s figures that do are B-25's cases on the 150 ms basis | `design.md` D4; What Changes (Caps); Decisions (B-55); Open Questions (the caps) |
+| B-77: lane openRepoProject-4's YES (2026-10-22): the Archive order sentence in its pinned range, "the two blocks have been rewritten", names the blocks without a count | not graded | applied: it reads "the blocks written on PR #19's text have been rewritten", one inserted line; every other byte of that range, and of every other range that lane 4's spec 005 pins, is unchanged by `cmp` against `8d34525` | Dependencies and Sequencing (Archive order) |
+| B-78: lane openRepoProject-2's notice of PR #19's round (g3) | not graded | applied: the round's first stage finished on `4f1c0e0`, round (g3)'s re-base ran as a stage of its own, and nothing was committed before lane 2's check | none |
+| B-79: the round's own doubt: the enumeration's child at a cache target's revalidation may cost what an enumeration costs, not what the status probe it replaces costs | not graded | applied: design D4, What Changes and the Open Question on the caps give both costs; costed as an enumeration, about 0.23 s, the 8 cache targets add about 1.3 s: at 10,000-file removals about 38.9 s through one worker, all 16, and 45.9 s at a thread per call, past the spawn limit, so 15 of 16 and the 16th waits for the next run with exit 1; at 20,000-file removals 46.6 s, 14 or 15, and 53.6 s, 10 or 12; where the setting is false, 37.6 s and 44.6 s, all 16, and with 20,000-file removals 45.3 s, 15, and 52.3 s, 11 or 12; task 2.3's measurement settles which cost holds, and neither is chosen before it | `design.md` D4; What Changes (Caps); Open Questions (the caps) |
+| B-80: PR #19's round (g3) at `6bf9f77` changes, of the eight blocks, only the classification block, whose scenario "Only tracked-file deletions" gains the locked worktree's recovery text (W52's F-2) | not graded | applied: the classification block re-based on `6bf9f77`, built three ways with the same bytes and no adaptation, carrying F-2's AND as PR #19's text, which Brett Heap's R-263 keeps ("F-2: yes"); retire and batch were byte-identical at `4f1c0e0` and `6bf9f77`, and the other five at `f0bf538` and `6bf9f77`, and `b3228bb` keeps the classification block's text | `specs/project-clean/spec.md` (classification block); `design.md` key, Context; key; Capabilities |
+| B-81: whether this change carries or restates PR #19's sentence on the Git children of one revalidation and of the final rescan, which round (h) was to change | not graded | applied: it does: the bounds block carries the sentence and its scenario "Bounded revalidation work", and the revalidation block its count; `design.md` Goals, D4 and D10, What Changes (Caps, Revalidating a cache target) and the Open Question on the caps restate it; each follows round (h) under B-84 | none (B-84's row) |
+| B-82: Brett Heap's ruling of 2026-10-22 on W52's F-2 and F-1 and RI's O-1 (R-263), and a map of every place that round (h) would touch, none changed before it landed | not graded | applied: the map, given to the lead: F-1's ceiling recovery text carried in the retire block, its scenario "A removal past the hard ceiling" and the reconcilable block, and named without quotation in design D11; O-1's gate 7 sentence carried in the batch block, with this change's cache-walk exception attached to it, restated in Capabilities and quoted in B-51's records; the bounds sentence as in B-81's row | none |
+| B-83: the round's two judgment calls | not graded | applied: What Changes keeps B-79's clause, so that the proposal never says that all 16 fit without the variant, and the 16th target waits as every target the deadline leaves does, under change 1's deadline rule, not this change's drain rule, which covers the candidates that the caps leave | What Changes (Caps); `design.md` D4 |
+| B-84 with R-263: PR #19's round (h) at `b3228bb` changes five of the eight blocks: the ceiling's recovery text takes two forms, by whether the rescan finds the target's `.git` file and registry entry both present (W52's F-1, the retire and reconcilable-result blocks); a read of gate 7 that the deadline cuts records `deadline-exceeded` (RI's O-1, the batch block); and a root or common-directory path holding a line feed makes revalidation nine children, ten where the plan read `extensions.worktreeConfig` as true, and the final rescan six, counted in `probes.estimated` (RI-3, the bounds and revalidation blocks) | not graded | applied: the five blocks re-based on `b3228bb`, each PR #19's requirement carried byte for byte with this change's additions re-applied word for word, built three ways with the same bytes, retire, reconcilable result and revalidation with no adaptation and batch and bounds with B-85's; the classification text at `6bf9f77` and the preservation and narrow-guarantee text at `f0bf538` are byte-identical at `b3228bb`; this change's live restatements take round (h)'s form: the line-feed counts in `design.md` Goals, D4 and D10 and in What Changes, CD-4 and the Open Question on the caps, D4's six-child arithmetic saying in one clause that it is for paths without a line feed and citing round (h)'s D14 paragraph at `b3228bb`, and the Capabilities bullets naming F-1's two texts and gate 7's two clauses; D11's "the recovery text of a `partially-removed` target" reads true of both forms and stays; cites of PR #19's design, proposal and tasks stay at `4f1c0e0`, since round (h) changed no string this change quotes; records stay as history | `specs/project-clean/spec.md` (retire, batch, bounds and reconcilable-result blocks); `specs/project-clean-review-safety/spec.md` (revalidation block); `design.md` key, Context, Goals, D4, D10, D14, Migration Plan; key; What Changes; Capabilities; Dependencies and Sequencing; Decisions (L-1 and L-15, CD-4); Open Questions (the caps); `tasks.md` 1.4, 2.1 |
+| B-85: the round's two adaptations of this change's own words, where round (h) changed the text they rest on | not graded | applied: the batch block's exception, "except a read of the cache walk that times out, which leaves its row `cache-unverified` and the plan complete", follows gate 7's budget clause, "a read not finished within the filesystem budget, the deadline not being the limit", with PR #19's deadline clause after it word for word, so that a cache-walk read that times out keeps its meaning and one that the deadline cuts records `deadline-exceeded`, as this change's bounds addition and enumeration rule already give; the bounds block's fit sentence of 283 Git children gains "and neither the path of the repository's root nor that of its common directory holds a line feed"; lane 2 accepted both | `specs/project-clean/spec.md` (batch and bounds blocks); `design.md` Context; Capabilities |
+| W62 (lane 3): its sums for B-65's figure | not graded | recorded: they agree with this change's own, 37.6 s through one worker where the plan read the setting as true, at 10,000-file removals; no action | none |
+| W63 (lane 3, `69cb7a1..8d34525`): its confirm read of round B15 | not graded | recorded: CLEAN, with 0 HIGH, 0 MEDIUM, 0 LOW and nothing departing; it also confirms that PR #19's round (g) changed three blocks, each merging cleanly three-way, and that the other five were byte-identical; no action | none |
+| Codex's review of `8d34525` (2026-10-22T14:11:09Z) | not graded | recorded: no major issues; no action | none |
+| Lane openRepoProject-2's byte check of the held set (2026-10-22) | not graded | recorded: YES with no correction: the set's SHA256SUMS hashes to `ded81538b8c690a9` and all 46 of its lines check; the eight source copies equal PR #19's blocks byte for byte at their named bases and at `b3228bb`; this change's hunks equal round B15's accepted set (R-249) in six of the eight blocks, and batch and bounds differ only by B-85's two adaptations, which it accepts; feature 004 is being aligned to PR #19's gate 7 (R-278), which needs nothing from this change; the held blocks equal the committed ones by `cmp` | none |
+
+### Re-read and Codex Findings (round B17)
+
+PR #19's round (i) at `e0c91bb` (4204eb9, b60f6ac, 1a4785e and e0c91bb, of
+which only 1a4785e changes spec text) gives the removal ceiling's recovery text
+a third form, "inspect `<path>` by hand; its `.git` could not be read, so do
+not run `git worktree prune` until it can", for a `.git` file that the rescan
+cannot read, since `git worktree prune` deletes the administrative directory of
+a worktree whose `.git` Git cannot stat, even a live one (lane 3's W73 M-1,
+lane openRepoProject-2's R-284, which Brett Heap is asked to confirm). It
+changes two of the eight blocks that this change writes on PR #19's text, the
+retire block, whose scenario "A removal past the hard ceiling" gains an AND,
+and the reconcilable-result block. The lead ruled the round as B-87: the two
+blocks are re-based on `e0c91bb`, carrying R-284's text as PR #19's current
+text, as B-80 did with F-2 while F-2 was pending, a later re-base following if
+Brett Heap reverts it; each is PR #19's requirement carried byte for byte with
+this change's additions re-applied word for word, 1 in retire and 6 in the
+reconcilable block, with no adaptation, built two ways with the same bytes
+(this change's hunks re-applied on `e0c91bb`, and `git merge-file` from this
+change's block at `57bfc15`), and held for lane openRepoProject-2's byte check
+before the commit. The deltas' change is PR #19's own spec change from
+`b3228bb` to `e0c91bb`, line for line. The other six blocks keep their bases,
+`6bf9f77` for classification, `b3228bb` for batch, bounds and revalidation and
+`f0bf538` for preservation and the narrow guarantee, whose text `e0c91bb` keeps
+byte for byte. Two clauses of this change's own Capabilities bullets said "in
+its two forms" and now say three; design D11's "the recovery text of a
+`partially-removed` target" reads true of all three and stays. Round (i)
+touches no line of any range of PR #19's design, proposal or tasks that this
+change cites, so those cites stay where they are. Lane 3's W79 read of round
+B16 found 0 HIGH, 0 MEDIUM, 2 LOW and nothing departing, and the lead ruled its
+two LOWs as B-86: D4's count for one case of the variant reads 11 or 13 with
+D4's rule stated, and the hunks that round B16's table leaves out of two rows
+are recorded here, round B16's table staying as history, as is its B-79 row's
+"11 or 12", an error of that row. Lane openRepoProject-2 said YES on 2026-10-22
+to the held set with no correction. The deltas keep 59, 32 and 8 scenarios:
+round (i) adds an AND, no scenario. Of the 8 items here, 5 are applied and 3
+need no action (W79's verdict, CI and SonarCloud at `57bfc15`, and Codex); none
+is declined, and the row for lane 2's check is left out of the count. The round
+commits the delta as `25600de`, the design as `00009ec`, and this record with
+the Status, the key (PR #19 at `e0c91bb` for the retire and reconcilable-result
+requirements, the ruling range to B-87, and W73 and W79 as citation forms), the
+currency of Capabilities, Dependencies and Sequencing, L-1 and L-15 and CD-4,
+and `tasks.md` 1.1, 1.4, 1.5 and 2.1. The ranges that lane openRepoProject-4's
+spec 005 pins keep their bytes, as `cmp` against `57bfc15` confirms, though
+their line numbers move. `specs/project-overview/spec.md` is not edited.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| W79 (lane 3, `8d34525..57bfc15`) LOW-1: design D4 says "11 or 12" for the variant where the plan read `extensions.worktreeConfig` as false, at 20,000-file removals and a thread per call, where D4's own rule gives 11 or 13: with the 8 cache targets last the 13th arrives at about 44.6 s, and 12 would need its stage to end by 45.0 s too | LOW | B-86: applied: D4 reads "11 or 13 of 16, 11 with the 8 cache targets first and 13 with them last", with the rule stated, that a target counts when it reaches its cache stage, or its spawn, by the spawn limit; with them last the 13th, a cache target, reaches its stage at about 44.6 s, and its stage, which ends at about 45.2 s, leaves its removal to the next run with exit 1; re-derived here: with them first the 11th arrives at about 44.6 s and the 12th at about 46.2 s | `design.md` D4 |
+| W79 LOW-1, the record: round B16's B-79 row says "and 52.3 s, 11 or 12" for the same case | LOW | B-86: applied: recorded here as an error of that row, which by D4's rule should read 11 or 13; the row stays as history | none |
+| W79 LOW-2: the "Section edited" cells of round B16's B-76 and B-84 rows leave out the hunks that only move a cite (line numbers at `57bfc15`): design D2 :364 (PR #19's D12, its design.md:863-881 at `4f1c0e0`), D3 :433 (the removal argv's pins, PR19/pc:310-311), D13 :1567 and :1570 (the residual-window line, its design.md:1183-1185 at `4f1c0e0`), Risks :1711 (the deferral line, its design.md:1176-1182 at `4f1c0e0`) and the Open Question on the admin-directory pre-filter, proposal :2104 (its design.md:1655-1658 at `4f1c0e0`) | LOW | B-86: applied: recorded here, round B16's table staying as history: those hunks belong to B-76's row (D2, D13, Risks and the pre-filter Open Question, cites of PR #19's design moved to `4f1c0e0`) and to B-84's (D3, a cite into the retire block at `b3228bb`), each declared by class in those rows and in the key, and each cite resolves, as W79 found | none |
+| B-87: PR #19's round (i) at `e0c91bb` (1a4785e) gives the removal ceiling's recovery text a third form for a `.git` file that the rescan cannot read (W73's M-1, R-284, pending Brett Heap's confirmation), in the retire block and its scenario "A removal past the hard ceiling" and in the reconcilable-result block | not graded | applied: the two blocks re-based on `e0c91bb`, built two ways with the same bytes, with R-284's text carried as PR #19's current text and a later re-base following if Brett Heap reverts it; the deltas' change equals PR #19's own spec change from `b3228bb` to `e0c91bb`, line for line; this change's additions, 1 in retire and 6 in the reconcilable block, are re-applied word for word with no adaptation; the other six blocks' sources are byte-identical at `e0c91bb`; the key, Capabilities, Dependencies and Sequencing, L-1 and L-15, CD-4, and design D4, D10 and the Migration Plan move to `e0c91bb` or say "unchanged at `e0c91bb`"; the cites of PR #19's design, proposal and tasks stay where they are, round (i) touching no line of any range this change cites | `specs/project-clean/spec.md` (retire and reconcilable-result blocks); `design.md` key, Context, D4, D10, Migration Plan; key; Capabilities; Dependencies and Sequencing; Decisions (L-1 and L-15, CD-4); `tasks.md` 1.4, 2.1 |
+| This change's own restatements of the ceiling's recovery text under round (i) | not graded | applied: the Capabilities bullets for the retire and reconcilable-result blocks said "in its two forms", which round (i) makes untrue, and now say "in its three forms", naming round (h)'s F-1 and round (i)'s R-284; design D11's "the recovery text of a `partially-removed` target" reads true of all three forms and stays; the records stay as history | Capabilities |
+| W79 (lane 3, `8d34525..57bfc15`): its confirm read of round B16 | not graded | recorded: 0 HIGH, 0 MEDIUM, 2 LOW (the rows above) and nothing departing; it confirms each base, classification at `6bf9f77` and preservation and narrow guarantee at `f0bf538` being cmp-equal at `b3228bb`, B-85's two adaptations as exact insertions into PR #19's text, the carry at all three bases, B-65's and B-79's figures within 0.07 s, B-81's sites and B-83; no action beyond B-86 | none |
+| CI and SonarCloud at `57bfc15` | not graded | recorded: CI's six test jobs and SonarCloud (quality gate passed, 0 new issues) pass at `57bfc15`, read on 2026-10-22 at 16:56:42Z; no action | none |
+| Codex's review of `57bfc15` | not graded | recorded: not requested, since Codex is at its usage limit and rounds post no `@codex review` while it is; no action | none |
+| Lane openRepoProject-2's byte check of the held set (2026-10-22) | not graded | recorded: YES with no correction: the set's SHA256SUMS hashes to `ca66c35bc51c859f` and all 13 of its lines check; both source blocks equal PR #19's text at `e0c91bb`, which lane 2 extracted itself; this change's hunks are identical to round B16's accepted ones, 1 in retire and 6 in the reconcilable block; the other six blocks are unchanged at `e0c91bb`; the held blocks equal the committed ones by `cmp` | none |
+
+### Re-read and Codex Findings (round B18)
+
+PR #19's round (j) at `e14ada0`, one commit on `e0c91bb`, takes lane 3's W70
+read of its round (h) and LQ-11's one-path work-tree probe (lane
+openRepoProject-2's R-285, R-287, R-290 and R-291). It changes three of the
+eight blocks that this change writes on PR #19's text. In the retire and
+reconcilable-result blocks the reason that the ceiling's second recovery text
+gives, "since Git then refuses" and "because Git then refuses" `git worktree
+remove --force`, now reads "Git refusing `git worktree remove --force` while
+the path remains" (W70's LOW-1). In the revalidation block the requirement and
+its scenario "A work-tree probe at revalidation" read the probe's output as one
+path even over several lines, another path being `identity-changed`, and output
+that is empty, names no path or does not end in a line feed `state-changed`
+(R-287, R-291). Its change to PR #19's `project-command` delta (M-2) touches no
+block that this change carries. The lead ruled the round as B-88 to B-92: the
+three blocks are re-based on `e14ada0`, each PR #19's requirement carried byte
+for byte with this change's additions re-applied word for word, 1 in retire, 6
+in the reconcilable block and 4 in the revalidation block, with no adaptation,
+built two ways with the same bytes (this change's hunks re-applied on
+`e14ada0`, and `git merge-file` from this change's block at `97bf4ee`), and
+held for lane openRepoProject-2's byte check before the commit. The deltas'
+change is PR #19's own spec change from `e0c91bb` to `e14ada0` in
+`project-clean` and `project-clean-review-safety`, line for line. The other
+five blocks keep their bases, `6bf9f77` for classification, `b3228bb` for batch
+and bounds and `f0bf538` for preservation and the narrow guarantee, whose text
+`e14ada0` keeps byte for byte. No text of this change's own restates the
+narrowed reason or the probe's rule. Brett Heap has confirmed R-284 ("R-284:
+yes", R-290), so its live mentions as pending now say "confirmed by Brett Heap
+(R-290)", the round records staying as history (B-89). Round (j) touches no
+line of any range of PR #19's design, proposal or tasks that this change cites,
+and every string that this change quotes from them is present at `e14ada0`, so
+those cites stay where they are. Lane 3's W85 read of round B17 found 0 HIGH, 0
+MEDIUM, 1 LOW and nothing departing, and the lead ruled it as B-91. Lane
+openRepoProject-2 said YES on 2026-10-22 to the held set with no correction
+(R-298). The deltas keep 59, 32 and 8 scenarios: round (j) adds and removes
+none. Of the 12 items here, 5 are applied and 7 need no action (the
+restatements, W85's observations and its verdict, B-90, B-92, CI and SonarCloud
+at `97bf4ee`, and Codex); none is declined, and the row for lane 2's check is
+left out of the count. The round commits the deltas as `1817b39`, the design as
+`aa5f4b1`, and this record with the Status, the key (PR #19 at `e14ada0` for
+the retire, reconcilable-result and revalidation requirements, the ruling range
+to B-92, and W73's and W85's citation forms), the currency of What Changes,
+Capabilities, Dependencies and Sequencing, L-1 and L-15, CD-4 and the Open
+Question on the caps, and `tasks.md` 1.1, 1.4, 1.5 and 2.1. The ranges that
+lane openRepoProject-4's spec 005 pins keep their bytes, as `cmp` against
+`97bf4ee` confirms, though their line numbers move.
+`specs/project-overview/spec.md` is not edited. Line numbers in the rows are at
+`97bf4ee`.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| B-88: PR #19's round (j) at `e14ada0` narrows the reason that the ceiling's second recovery text gives, in the retire and reconcilable-result blocks, to "Git refusing `git worktree remove --force` while the path remains" (W70's LOW-1), and reads the work-tree probe's output at revalidation as one path even over several lines, in the revalidation block and its scenario "A work-tree probe at revalidation" (R-287, R-291) | not graded | applied: the three blocks re-based on `e14ada0`, built two ways with the same bytes; the deltas' change equals PR #19's own spec change from `e0c91bb` to `e14ada0` in `project-clean` and `project-clean-review-safety`, line for line; this change's additions, 1 in retire, 6 in the reconcilable block and 4 in the revalidation block, are re-applied word for word with no adaptation; the other five blocks' sources are byte-identical at `e14ada0`; the key, What Changes, Capabilities, Dependencies and Sequencing, L-1 and L-15, CD-4 and the Open Question on the caps, and design's key, Context, Goals, D4, D10, D14 and Migration Plan, move to `e14ada0` or say "unchanged at `e14ada0`", the Capabilities bullet for the revalidation block naming PR #19's rule for its work-tree probe as carried at `e14ada0`; the cites of PR #19's design, proposal and tasks stay where they are, round (j) touching no line of any range this change cites and every quoted string being present at `e14ada0`; the Status, the key's ruling range and `tasks.md` 1.1, 1.4, 1.5 and 2.1 record the round | `specs/project-clean/spec.md` (retire and reconcilable-result blocks); `specs/project-clean-review-safety/spec.md` (revalidation block); `design.md` key, Context, Goals, D4, D10, D14, Migration Plan; Status; key; What Changes; Capabilities; Dependencies and Sequencing; Decisions (L-1 and L-15, CD-4); Open Questions; `tasks.md` 1.1, 1.4, 1.5, 2.1 |
+| This change's own restatements of the narrowed reason or of the probe's rule under round (j) | not graded | no action: none; outside the carried blocks, the design and the proposal state the narrowed reason and the probe's rule only where they record round (j) itself (design Context and its B-88 row, and this table); the Capabilities bullets name the recovery text's three forms, which round (j) keeps, and design D11's "the recovery text of a `partially-removed` target" stays; the records stay as history | none |
+| B-89: Brett Heap has confirmed R-284 ("R-284: yes", lane openRepoProject-2's R-290), so every live mention of it as pending, or as put to Brett Heap, reads "confirmed by Brett Heap (R-290)" | not graded | applied: design's Context (its round B17 sentence) and Decisions L-1 and L-15 now say "confirmed by Brett Heap (R-290)", L-1 and L-15 adding round (j); the B-87 row of the design's ruling table, and round B17's introduction and its B-87 row, which name R-284 as pending or a re-base if Brett Heap reverts it, are round records and stay as history | `design.md` Context; Decisions (L-1 and L-15) |
+| W85 (lane 3, `57bfc15..97bf4ee`) LOW-1: the key's "its W73 read and its W79 read of round B16" makes W73 a read of round B16, where W73 read feature 004's writer G | LOW | B-91: applied: the key reads "its W73 read of feature 004's writer G, its W79 read of round B16, its W85 read of round B17", and "W85's LOW-1" joins the citation forms | key |
+| W85, currency: R-284 named as pending, as asked of Brett Heap, or with a re-base if he reverts it, at design :126 and :230 (twice) and proposal :956, :2765, :2770-2771 and :2807 (twice) | not graded | B-89, B-91: applied at the two live sites, design :126 (the Context) and proposal :956-957 (L-1 and L-15); design :230 (the B-87 row of the ruling table), proposal :2765 and :2770-2771 (round B17's introduction) and :2807 (round B17's B-87 row) are round records and stay as history | `design.md` Context; Decisions (L-1 and L-15) |
+| W85, round B18's sites: "since Git then refuses" at pc:137 (retire) and "because Git then refuses" at pc:909 (reconcilable result), beside the scenario's AND at pc:313-317 and the third form's reason at pc:142-144, :320-322 and :913-915 | not graded | B-88, B-91: applied by the re-base: pc:137 and pc:909 carry PR #19's text at `e14ada0`, "Git refusing `git worktree remove --force` while the path remains" (PR19/pc:329 and :1172); the AND and the third form's three reasons are PR #19's text, which round (j) leaves as it was, its one change in each of the two blocks being the reason clause, and are carried as they stand | `specs/project-clean/spec.md` (retire and reconcilable-result blocks) |
+| W85's observations O-1 to O-5, which W85 does not count | not graded | recorded: O-1, that round B17's B-87 row leaves the Status and `tasks.md` 1.1 and 1.5 out of its cell, is met in this table's B-88 row; O-4, "since" at one site and "because" at the other, ends with round (j), which gives both one wording; O-2 (B-65's and B-79's borderline counts, unchanged), O-3 (D4's "no change of rounds ... stating a count of children" read as a claim about spec text) and O-5 (round B17's count of items) are not ruled, and no text changes for them; no action | none |
+| W85 (lane 3, `57bfc15..97bf4ee`): its confirm read of round B17 | not graded | recorded: 0 HIGH, 0 MEDIUM, 1 LOW (the row above) and nothing departing; the re-base equals PR #19's own `b3228bb..e0c91bb` spec change; retire 15/15 and reconcilable result 8/8 carry byte-exact at `e0c91bb`; this change's 1 and 6 additions equal round B16's, and both blocks rebuild two ways to the committed bytes; the other six blocks are cmp-equal at `e0c91bb`; the 17 ranges of PR #19's design and tasks that this change cites are identical at `b3228bb` and `e0c91bb`; W79's LOW-1 holds, 11 with the cache targets first and 13 with them last, the 13th arriving at 44.58 s and its stage ending at 45.24 s; no action beyond B-88, B-89 and B-91 | none |
+| B-90: round B18 runs in two stages, with lane openRepoProject-2's one-pass byte check between, W85's findings joining it if they arrive while it works | not graded | recorded: stage 1 built and held the three blocks and committed nothing; this stage commits them on lane 2's YES; W85's findings joined under B-91; no action | none |
+| B-92: stage 2 runs in the lane's next window, an account swap having been requested at the moment lane 2's YES arrived; round B19 follows PR #19's round (k) once lane 2 accepts it | not graded | recorded: this stage ran after the swap, on lane 2's YES (R-298), from the stage 1 tree, whose diff equalled the saved one; PR #19's round (k) has since landed at `173d83c` and lane 2 has accepted it (R-301), so this change's claims that `e14ada0` is PR #19's head hold until round B19 takes round (k); no action | none |
+| CI and SonarCloud at `97bf4ee` | not graded | recorded: CI's six test jobs and SonarCloud pass at `97bf4ee`, read on 2026-10-22 at 17:51:23Z and again at 18:26:04Z; no action | none |
+| Codex's review of `97bf4ee` | not graded | recorded: not requested, since Codex is at its usage limit and rounds post no `@codex review` while it is; no action | none |
+| Lane openRepoProject-2's byte check of the held set (2026-10-22, R-298) | not graded | recorded: YES with no correction: the set's SHA256SUMS hashes to `20e45efc181f13df` and all 19 of its lines check; each re-based block's source, which lane 2 extracted itself from PR #19 at `e14ada0`, equals the held source; this change's additions equal round B17's, 1, 6 and 4; each block's change from round B17's committed block equals PR #19's own; the five unchanged blocks equal PR #19's text at `e14ada0`; the held blocks equal the committed ones by `cmp` | none |
+
+### Re-read and Codex Findings (round B19)
+
+PR #19's round (k) at `173d83c`, one commit on `e14ada0`, takes lane 3's W80
+read of its round (i) (lane openRepoProject-2's R-294, R-299 and R-301). It
+changes two of the eight blocks that this change writes on PR #19's text, each
+in one scenario clause. In the retire block's scenario "A removal past the hard
+ceiling", the AND for a `.git` file that the rescan cannot read now says that
+the recovery text is instead "inspect `<path>` by hand; its `.git` could not be
+read, so do not run `git worktree prune` until it can", "whatever the rescan
+finds of the registry entry"; the quoted note itself is unchanged. In the
+revalidation block's scenario "A work-tree probe at revalidation", the THEN
+line is re-wrapped and now ends "since the probe's two lines are read as one
+path, which is D's". Nothing else under PR #19's `specs/` changes. The lead
+ruled the round as B-93: the two blocks are re-based on `173d83c`, each PR
+#19's requirement carried byte for byte with this change's additions re-applied
+word for word, 1 in retire and 4 in the revalidation block, with no adaptation,
+built two ways with the same bytes (this change's hunks re-applied on
+`173d83c`, and `git merge-file` from this change's block at `9473b2c`), and
+held for lane openRepoProject-2's byte check before the commit. The deltas'
+change is PR #19's own spec change from `e14ada0` to `173d83c`, line for line.
+The other six blocks keep their bases, `6bf9f77` for classification, `b3228bb`
+for batch and bounds, `e14ada0` for the reconcilable result and `f0bf538` for
+preservation and the narrow guarantee, whose text `173d83c` keeps byte for
+byte. The Capabilities bullet for the retire block names the third form in
+round (k)'s words, as PR #19's own Capabilities `:55` does. Round (k) also
+changes PR #19's design, proposal and tasks, but touches no range of them that
+this change cites, D14 and task 2.1 among them, so no figure that this change
+takes from them moves, and every string that this change quotes from them is
+present at `173d83c`; those cites stay where they are. Lane 3's W87 read of PR
+#19's rounds (j) and (k) lists sites of this change at `97bf4ee` that lag those
+rounds, and rounds B18 and B19 bring each to PR #19's words. Lane
+openRepoProject-2 said YES on 2026-10-22 to the held set with no correction
+(R-306). The deltas keep 59, 32 and 8 scenarios: round (k) adds and removes
+none. Of the 6 items here, 2 are applied and 4 need no action (the cites of PR
+#19's design, proposal and tasks, W87's notes, CI and SonarCloud at `9473b2c`,
+and Codex); none is declined, and the row for lane 2's check is left out of the
+count. The round commits the deltas as `43e8894`, the design as `47f3f37`, and
+this record with the Status, the key (PR #19 at `173d83c` for the retire and
+revalidation requirements and at `e14ada0` for the reconcilable-result
+requirement, the ruling range to B-93, and W87 as a citation form), the
+currency of What Changes, Capabilities, Dependencies and Sequencing, L-1 and
+L-15, CD-4 and the Open Question on the caps, and `tasks.md` 1.1, 1.4, 1.5 and
+2.1. The ranges that lane openRepoProject-4's spec 005 pins keep their bytes,
+as `cmp` against `9473b2c` confirms, though their line numbers move.
+`specs/project-overview/spec.md` is not edited. Line numbers in the rows are at
+`97bf4ee` where they are W87's.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| B-93: PR #19's round (k) at `173d83c` says in the retire block's scenario "A removal past the hard ceiling" that the recovery text for a `.git` file that the rescan cannot read applies instead, "whatever the rescan finds of the registry entry", and re-wraps the THEN line of the revalidation block's scenario "A work-tree probe at revalidation", which now ends "since the probe's two lines are read as one path, which is D's" | not graded | applied: the two blocks re-based on `173d83c`, built two ways with the same bytes; the deltas' change equals PR #19's own spec change from `e14ada0` to `173d83c`, line for line, 8 lines added and 7 removed; this change's additions, 1 in retire and 4 in the revalidation block, are re-applied word for word with no adaptation; the other six blocks' sources are byte-identical at `173d83c`; the key, What Changes, Capabilities, Dependencies and Sequencing, L-1 and L-15, CD-4 and the Open Question on the caps, and design's key, Context, Goals, D4, D10, D14 and Migration Plan, move to `173d83c` or say "unchanged at `173d83c`"; the Status, the key's ruling range and `tasks.md` 1.1, 1.4, 1.5 and 2.1 record the round | `specs/project-clean/spec.md` (retire block); `specs/project-clean-review-safety/spec.md` (revalidation block); `design.md` key, Context, Goals, D4, D10, D14, Migration Plan; Status; key; What Changes; Capabilities; Dependencies and Sequencing; Decisions (L-1 and L-15, CD-4); Open Questions; `tasks.md` 1.1, 1.4, 1.5, 2.1 |
+| This change's own restatements of the two clauses that round (k) changes | not graded | applied: the Capabilities bullet for the retire block named the ceiling's third recovery text as "a third where the rescan cannot read that `.git` file", and now adds "whatever the rescan finds of the registry entry", in round (k)'s words, as PR #19's own Capabilities `:55` does at `173d83c`; the bullet for the reconcilable-result block names the three forms without their conditions and stays, round (k) leaving that block as it was; no text of this change's own restates the THEN line; the records stay as history | Capabilities |
+| Round (k)'s changes to PR #19's design, proposal and tasks: eight hunks in its design, at `e14ada0` :62, :275, :357, :1338, :1374, :1395, :1408 and :2086, and one in its tasks, at :89 | not graded | no action: none lies in a range that this change cites; 21 of the 22 cited ranges map to regions that are byte-identical at `e14ada0` and `173d83c`, D14 (its design.md:898-1062 at `4f1c0e0`, :965-1140 at `173d83c`) and task 2.1 among them, so no figure that D4 takes from them moves, and the 22nd, the residual-window line (its design.md:1183-1185 at `4f1c0e0`), whose lines no longer align line for line, is checked by its quoted string; every string that this change quotes from them is present at `173d83c`; the cites stay where they are, PR #19's design, proposal and tasks staying cited at `4f1c0e0` | none |
+| W87 (lane 3, PR #19's `e0c91bb..173d83c`), its notes on this change at `97bf4ee`: R-284 named as pending at design :126 and :230 and proposal :956, :2765, :2769-2770 and :2807; "since Git then refuses" and "because Git then refuses" at pc:137-138 and :909; the ceiling's AND at pc:319-322 without "instead" or "whatever the rescan finds of the registry entry"; rs:155-158's "prints anything but one line"; and rs:304-312's old THEN and AND | not graded | recorded: at this round's head every live mention of R-284 says "confirmed by Brett Heap (R-290)" (B-89, round B18), at design :126 (the Context) and proposal :956 (L-1 and L-15); design :230 (the B-87 row of the ruling table), proposal :2765 and :2769-2770 (round B17's introduction) and :2807 (round B17's B-87 row) are round records and stay as history; pc:137-138 and :909 carry round (j)'s "Git refusing `git worktree remove --force` while the path remains" and rs:155-158 and :304-312 its one-path reading (B-88), rs:304-312 with round (k)'s THEN, and pc:319-322 carries round (k)'s "instead" and "whatever the rescan finds of the registry entry" (B-93), each PR #19's text at `173d83c`; no action beyond B-88, B-89 and B-93 | none |
+| CI and SonarCloud at `9473b2c` | not graded | recorded: CI's six test jobs and SonarCloud pass at `9473b2c`, round B18's head, as the lead read the check runs on 2026-10-22 at 18:45:37Z; no action | none |
+| Codex's review of `9473b2c` | not graded | recorded: not requested, since Codex is at its usage limit and rounds post no `@codex review` while it is; no action | none |
+| Lane openRepoProject-2's byte check of the held set (2026-10-22, R-306) | not graded | recorded: YES with no correction: the set's SHA256SUMS hashes to `5284acb26c447337` and all 13 of its lines check; each re-based block's source, which lane 2 extracted itself from PR #19 at `173d83c`, equals the held source, trailing blank lines apart; this change's additions equal round B18's, anchors included, 1 in retire and 4 in the revalidation block; each block's change from round B18's committed block equals PR #19's own from `e14ada0` to `173d83c`, one each; the six other blocks are equal at their bases and at `173d83c`; the retire block's Capabilities restatement matches PR #19's wording; the held blocks equal the committed ones by `cmp` | none |
+
+### Re-read and Codex Findings (round B20)
+
+PR #19's round (l) at `ccc52b9` (d1c5343 and ccc52b9, lane openRepoProject-2's
+R-307 and R-310, accepted as R-311) takes lane 3's W87 read of its rounds (j)
+and (k). Its one spec change is an AND in the scenario "An unreadable worktree
+is one row" of "Clean reports local worktree state", a block that this change
+does not carry: where a row's path could not be read, the preview's next steps
+and the `inspection-incomplete` remedies leave out `git worktree prune`, which
+would delete that live worktree's administrative directory. Its design and
+proposal give those five texts, round (l)'s T1 to T5, which Brett Heap has
+since confirmed ("T1-T5: yes", lane openRepoProject-3's RULED line d6dd6d9a8),
+name D18's locked note as a report row's own form, which a ceiling target never
+shows (W87's LOW-3), and correct D18's `.project.json` and `.devcontainer`
+sentence (W87's LOW-2) and D7's attribution (W87's LOW-1). The lead ruled the
+round as B-95 to B-98: the eight blocks that this change writes on PR #19's
+text keep their bases, `173d83c` for retire and revalidation, `e14ada0` for the
+reconcilable result, `b3228bb` for batch and bounds, `6bf9f77` for
+classification and `f0bf538` for preservation and the narrow guarantee, each
+byte-identical at `ccc52b9`, so nothing is re-based and lane
+openRepoProject-2's byte check is not needed; the head claims and the
+"unchanged at" lists name `ccc52b9`. No live text of this change's own restates
+D18's remedies or gives the locked note a reach beyond a report row. Round (l)
+also changes PR #19's design, proposal and tasks: D14 and task 2.1 are
+byte-identical at `ccc52b9`, every string that this change quotes from them is
+present there, and one cited range, its design.md:1189-1216 at `4f1c0e0`, now
+ends in round (l)'s new text, which this change does not quote, so that cite
+stays at its base. Lane 3's W92 read of rounds B18 and B19 found 0 HIGH, 0
+MEDIUM, 1 LOW and nothing departing; the lead ruled its LOW as B-98, and D4's
+claim on rounds (g) to (l) is scoped to PR #19's spec text and its D14. The
+deltas keep 59, 32 and 8 scenarios and are not edited. Of the 12 items here, 3
+are applied and 9 need no action (B-94, B-96, R-311, round (l)'s texts, the
+cites of PR #19's design, proposal and tasks, W92's notes and its verdict, CI
+and SonarCloud at `dc39ec3`, and Codex); none is declined. The round commits
+the design as `89c8d16`, and this record with the Status, the key (PR #19's
+head at `ccc52b9`, the ruling range to B-98, and W92 as a citation form), the
+currency of Capabilities, Dependencies and Sequencing and L-1 and L-15, and
+`tasks.md` 1.1, 1.4, 1.5 and 2.1. The ranges that lane openRepoProject-4's spec
+005 pins keep their bytes, as `cmp` against `dc39ec3` confirms, though their
+line numbers move. `specs/project-overview/spec.md` is not edited. Line numbers
+in the rows are at `dc39ec3` where they are W92's.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| B-94: round B19's stage 2 runs on lane openRepoProject-2's YES (R-306); lane 3's W87 sites in this change at `97bf4ee` are round B18's and round B19's re-bases, and the R-284 sites are swept | not graded | recorded: applied in round B19's stage 2, as its row for W87's notes records, and W92 confirms it (its section 3); no action | none |
+| B-95: PR #19's round (l) at `ccc52b9` changes no block that this change carries, so nothing is re-based; PR #19's head and any live restatement of D18's locked note go to this round | not graded | applied: each of the eight blocks' sources at its base is byte-identical at `ccc52b9` (`cmp`, the round's MANIFEST), and each block of this change equals its block at `dc39ec3`; the key, design's key and Context, D4, the Migration Plan, the Capabilities headers' "unchanged at" lists, Dependencies and Sequencing and L-1 and L-15 name `ccc52b9` as PR #19's head or as keeping the blocks' text, and the cites that name a block's base stay; no live text of this change's own restates D18's remedies, `git worktree prune` appearing only in round records (design's B-87 row and the introductions of rounds B17 and B19), and its two mentions of the locked note, round (g3)'s recovery text in the classification block's scenario "Only tracked-file deletions" (design Context and Dependencies and Sequencing), name a report row's form and stay; the Status, the key's ruling range and `tasks.md` 1.1, 1.4, 1.5 and 2.1 record the round | `design.md` key, Context, D4, Migration Plan; Status; key; Capabilities; Dependencies and Sequencing; Decisions (L-1 and L-15); `tasks.md` 1.1, 1.4, 1.5, 2.1 |
+| B-96: round B20 runs in two stages, stage 1 building and holding round (l)'s currency and stage 2 committing on the lead's message, with lane 3's one-pass read of rounds B18 and B19 if it has come | not graded | recorded: stage 1 held the design and proposal edits uncommitted, its diff saved; this stage commits them with W92's read, B-97 and B-98; no action | none |
+| B-97: Brett Heap has confirmed round (l)'s T1 to T5 (lane openRepoProject-2's R-307 and R-310), "T1-T5: yes" (lane openRepoProject-3's RULED line d6dd6d9a8) | not graded | applied: the Context's round B20 sentence, which said the five texts were "put to Brett Heap to confirm", now says that he has confirmed them, with his words and the RULED line, read on the register's `origin/main`; no other live text of this change names round (l)'s texts as put to him, the other live "put to Brett Heap" lines being the caps' (What Changes and Decisions), and the T2 of this change's own B-56 is another label | `design.md` Context |
+| W92 (lane 3, `97bf4ee..dc39ec3`) LOW-1: D4's "no change of rounds (g) to (k) stating a count of children or a time" (design :775-777) is wider than PR #19's text, since round (k)'s proposal entry "The identity probe's line count" states "three more children" (W85's O-3) | LOW | B-98: applied: D4 reads "no change of rounds (g) to (l) to its spec text or its D14 stating a count of children or a time"; no figure moves, since D4's arithmetic takes its counts from PR #19's spec text and its D14, D14 being byte-identical from `b3228bb` to `ccc52b9` (sha256 `0f5fead479e50413`) and counting no children for a submodule checkout's repeated identity probe | `design.md` D4, Context |
+| R-311: lane openRepoProject-2 accepts PR #19's round (l) at `ccc52b9` (d1c5343 for R-307 and ccc52b9 for R-310; validate 9 of 9, scenario counts 71, 22 and 24) | not graded | recorded: its one spec change is a 21-line AND in "Clean reports local worktree state", which this change does not carry; no action beyond B-95 | none |
+| Round (l)'s texts: the five texts, round (l)'s T1 to T5, that leave out `git worktree prune` where a row's path could not be read, the locked note named as a report row's own form (W87's LOW-3), D18's `.project.json` and `.devcontainer` sentence (W87's LOW-2) and D7's attribution (W87's LOW-1) | not graded | no action: this change restates none of them; design D11 names change 1's next step for a row's class or gate without restating its text, so a cache row of class `inspection-error` or `registration-mismatch` takes round (l)'s forms through that reference where a row's path could not be read; the carried batch block's remedy sentence, "as the cause fits", is PR #19's text, byte-identical at `ccc52b9` | none |
+| Round (l)'s changes to PR #19's design, proposal and tasks | not graded | no action: D14 (its design.md:970-1145 at `ccc52b9`) and task 2.1 (its tasks.md:135-186) are byte-identical to `173d83c`'s; of the 22 cited ranges, 21 hold the same bytes at `173d83c` and `ccc52b9`, the residual-window line (its design.md:1183-1185 at `4f1c0e0`) by W92's region map and by its quoted string, and the 22nd, its design.md:1189-1216 at `4f1c0e0` (design D11's next steps), now :1274-1333 at `ccc52b9`, ends in round (l)'s T1, T4 and T5, which this change does not quote, the four strings that it quotes from that range being present at `ccc52b9`, so the cite stays at its base; every string that this change quotes from PR #19's design, proposal and tasks is present at `ccc52b9` | none |
+| W92's notes for this round: round (l) leaves the eight blocks cmp-equal; the "PR #19's head" claims at proposal :74-77 and :988-993 and design :11-12; the cite of PR #19's design.md:1189-1216 at design :1477; the requirement starts of PR #19's `project-clean` 21 lines later at `ccc52b9` (:157, :321, :704, :1016 and :1150) | not graded | recorded: the eight blocks are cmp-equal at `ccc52b9` (B-95); the key and design's key now name `ccc52b9`, its round (l), as PR #19's head, and L-1 and L-15 say that PR #19 "is still a draft at `ccc52b9`", round (k)'s `173d83c` staying the base of the retire and revalidation requirements; the :1189-1216 cite stays at its base, as the row above says; the requirement starts that this change cites name their bases, pc:136 at `6bf9f77`, pc:300 at `173d83c`, pc:672 and pc:984 at `b3228bb` and pc:1128 at `e14ada0`, so none moves; no action beyond B-95 | none |
+| W92 (lane 3, `97bf4ee..dc39ec3`): its confirm read of rounds B18 and B19 | not graded | recorded: 0 HIGH, 0 MEDIUM, 1 LOW (the row above) and nothing departing; each round's spec change equals PR #19's own, `e0c91bb..e14ada0` and `e14ada0..173d83c`, hunk for hunk; retire 15/15, the reconcilable result 8/8 and revalidation 14/14 carry byte-exact at their bases, and a stale-base control fails on exactly round (k)'s two scenarios; this change's 1, 6 and 4 additions are equal at rounds B17, B18 and B19, and all five re-based blocks rebuild two ways to the committed bytes; the 22 cited ranges, D14 and task 2.1 are identical through `ccc52b9`; W85's LOW-1, R-284's confirmation and W87's five sites are applied, the remaining "pending" lines being round records; the checks reproduce; of its observations, O-1 (a "since confirmed" note on design's B-87 row) and O-5 (a "W87's" example in the key) are optional and not ruled, O-2 is met by the row above, O-4 by "round (l)'s T1 to T5" here, and O-3, O-6 and O-7 ask nothing of this round; the second read of `97bf4ee`'s checks that round B18's record names, at 18:26:04Z, was this writer's own `gh` read in that round's stage 2, kept in no file; no action beyond B-98 | none |
+| CI and SonarCloud at `dc39ec3` | not graded | recorded: CI's six test jobs and SonarCloud pass at `dc39ec3`, round B19's head, as the lead read the check runs on 2026-10-22 at 19:47:48Z, the check "test (ubuntu-latest, 3.10)" having reported its success late; no action | none |
+| Codex's review of `dc39ec3` | not graded | recorded: not requested, since Codex is at its usage limit and rounds post no `@codex review` while it is; no action | none |
+
+### Re-read and Codex Findings (round B21)
+
+PR #19's round (m) at `20084cd`, one commit on `ccc52b9`, records Brett Heap's
+confirmation of round (l)'s T1 to T5, "R-307: yes; R-310: yes" (lane
+openRepoProject-2's R-319), and his ruling of three more texts, T6 to T8,
+"R-320: yes" (R-321); lane openRepoProject-2 accepted the round as R-323. T6
+and T7, the recommendations of a stale worktree and of a locked one where a
+row's path could not be read, are in its design D18 only; T8, the row cap's
+remedy, is its one spec change, an AND in the bounds block's scenario "Row cap
+and planning failures" that names the remedy "{N} rows exceed the row cap of
+{M}; remove worktrees explicitly, or prune stale entries by hand; if a
+worktree's path cannot be read, do not run git worktree prune until it can",
+"whether or not any inspected row's path was read, since the rows past the cap
+are never read". It also records F-1's (b) as an open question before Brett
+Heap. The lead ruled the round as B-99: the bounds block is re-based on
+`20084cd`, PR #19's requirement carried byte for byte with this change's eight
+additions re-applied word for word, with no adaptation, built two ways with the
+same bytes (this change's hunks re-applied on `20084cd`, and `git merge-file`
+from this change's block at `383da59`), and held for lane openRepoProject-2's
+byte check before the commit. The delta's change is PR #19's own spec change
+from `ccc52b9` to `20084cd`, line for line. The other seven blocks keep their
+bases, `173d83c` for retire and revalidation, `e14ada0` for the reconcilable
+result, `b3228bb` for batch, `6bf9f77` for classification and `f0bf538` for
+preservation and the narrow guarantee, whose text `20084cd` keeps byte for
+byte; the cites into the bounds block take `20084cd`'s lines. No live text of
+this change's own restates the row cap's remedy or a stale worktree's
+recommendation, and none restates F-1 as wholly ruled; nothing about F-1
+changes. Round (m) also changes PR #19's design, proposal and tasks, but D14
+and task 2.1 are byte-identical at `20084cd`, every cited range holds, and
+every string that this change quotes from them is present there. Lane
+openRepoProject-2 said YES on 2026-10-22 to the held set with no correction
+(R-325). The deltas keep 59, 32 and 8 scenarios: round (m) adds an AND, no
+scenario. Of the 8 items here, 2 are applied and 6 need no action (the
+restatements, the cites of PR #19's design, proposal and tasks, F-1, R-323, CI
+and SonarCloud at `383da59`, and Codex); none is declined, and the row for lane
+2's check is left out of the count. The round commits the delta as `bc823b9`,
+the design as `1fdc9e1`, and this record with the Status, the key (PR #19 at
+`20084cd`, its round (m) and its head, for the bounds requirement, and the
+ruling range to B-99), the currency of Capabilities, Dependencies and
+Sequencing and L-1 and L-15, and `tasks.md` 1.1, 1.4, 1.5 and 2.1. The ranges
+that lane openRepoProject-4's spec 005 pins keep their bytes, as `cmp` against
+`383da59` confirms, though their line numbers move.
+`specs/project-overview/spec.md` is not edited.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| B-99: PR #19's round (m) at `20084cd` adds to the bounds block's scenario "Row cap and planning failures" an AND that names the row cap's remedy, "{N} rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale entries by hand; if a worktree's path cannot be read, do not run git worktree prune until it can" | not graded | applied: the bounds block re-based on `20084cd`, built two ways with the same bytes; the delta's change equals PR #19's own spec change from `ccc52b9` to `20084cd`, line for line, 5 lines added; this change's eight additions in the block are re-applied word for word with no adaptation; the other seven blocks' sources are byte-identical at `20084cd`; the key, Capabilities, Dependencies and Sequencing and L-1 and L-15, and design's key, Context, Goals, D4 and Migration Plan, move to `20084cd` or say "unchanged at `20084cd`", the cites into the bounds block taking `20084cd`'s lines (PR19/pc:1016, :1057-1071 and :1080-1088); the Status, the key's ruling range and `tasks.md` 1.1, 1.4, 1.5 and 2.1 record the round | `specs/project-clean/spec.md` (bounds block); `design.md` key, Context, Goals, D4, Migration Plan; Status; key; Capabilities; Dependencies and Sequencing; Decisions (L-1 and L-15); `tasks.md` 1.1, 1.4, 1.5, 2.1 |
+| This change's own restatements of round (m)'s texts | not graded | no action: none; no live text of this change names the row cap's remedy or the recommendation of a stale worktree, its `stale-worktree` mentions being the classification's list of classes; the records stay as history | none |
+| Round (m)'s changes to PR #19's design, proposal and tasks | not graded | no action: D14 (its design.md:974-1149 at `20084cd`) and task 2.1 (its tasks.md:140-191) are byte-identical to `ccc52b9`'s; 21 of the 22 cited ranges map to regions byte-identical at `ccc52b9` and `20084cd`, and the 22nd, the residual-window line (its design.md:1183-1185 at `4f1c0e0`), holds by its quoted string; every string that this change quotes from PR #19's design, proposal and tasks is present at `20084cd`; the cites stay where they are | none |
+| T1 to T8: Brett Heap's confirmation of round (l)'s T1 to T5, "R-307: yes; R-310: yes" (lane openRepoProject-2's R-319), beside his "T1-T5: yes" (lane openRepoProject-3's RULED line d6dd6d9a8), and his ruling of round (m)'s T6 to T8, "R-320: yes" (R-321), as lane 2 relays them | not graded | applied: design's Context names "R-307: yes; R-310: yes" in its round B20 sentence and T6 to T8 with "R-320: yes" in its round B21 sentence, and the Status names Brett Heap's confirmation of T1 to T8; no live text of this change names any of the eight as put to him | `design.md` Context; Status |
+| F-1: PR #19 at `20084cd` records F-1's (b), "inspect, then git worktree prune and delete PATH by hand", as an open question before Brett Heap: whether it should carry R-310's warning where it prints for a ceiling-cut target beside a row whose path could not be read | not graded | recorded: no live text of this change restates F-1 as wholly ruled; its five live mentions, design's Context on round (h), the Capabilities bullets for the retire and reconcilable-result blocks, Dependencies and Sequencing, and L-1 and L-15, name round (h)'s forms or narrate round (h) on Brett Heap's ruling of F-1 (R-263, "F-1: prune-then-delete"), which stands, and none restates F-1's (b) or whether it carries a warning; nothing about F-1 changes, the lead not having ruled on it | none |
+| R-323: lane openRepoProject-2 accepts PR #19's round (m) at `20084cd` (validate 9 of 9, scenario counts 71, 22 and 24) | not graded | recorded: its one spec change is the AND of B-99's row; no action beyond B-99 | none |
+| CI and SonarCloud at `383da59` | not graded | recorded: pending, the lead's late read of `383da59` not having run when this row was written; no action | none |
+| Codex's review of `383da59` | not graded | recorded: not requested, since Codex is at its usage limit and rounds post no `@codex review` while it is; no action | none |
+| Lane openRepoProject-2's byte check of the held set (2026-10-22, R-325) | not graded | recorded: YES with no correction: the set's SHA256SUMS hashes to `d81782b102ff8497` and all 7 of its lines check; lane 2's own extraction of the bounds block from PR #19 at `20084cd` equals the held source, trailing blank lines apart; this change's eight additions equal round B20's, anchors included; the change from round B20's committed block to the held block equals PR #19's own from `b3228bb` to `20084cd`, one each; the seven other blocks are equal at their bases and at `20084cd`; the held block equals the committed one by `cmp` | none |
+
+### Re-read and Codex Findings (round B22)
+
+PR #19's round (n) at `2250830`, two commits on `20084cd` (e6b6b16 and
+2250830), applies Brett Heap's ruling "R-324: yes" of 2026-10-22 (lane
+openRepoProject-5's RULED line 26e556b43; lane openRepoProject-2's R-343),
+which extends every no-prune warning, the removal ceiling's third recovery
+text's (R-284) and those of round (l)'s and round (m)'s T1 to T8, to `git
+worktree remove` and `git gc` beside `git worktree prune`; lane
+openRepoProject-2 accepted the round as R-345. Its spec text changes in five
+places, four of them in three blocks that this change carries: the third
+recovery text, now "inspect `<path>` by hand; its `.git` could not be read, so
+do not run `git worktree prune`, `git worktree remove` or `git gc` until it
+can", in the retire block's requirement text and in its scenario "A removal
+past the hard ceiling" and in the reconcilable-result block's requirement text,
+and T8's AND in the bounds block's scenario "Row cap and planning failures",
+whose remedy now reads "{N} rows exceed the row cap of {M}; remove worktrees
+explicitly, or prune stale entries by hand; if a worktree's path cannot be
+read, do not run git worktree prune, git worktree remove or git gc until it
+can". The fifth, in the scenario "An unreadable worktree is one row" of "Clean
+reports local worktree state", is in a block that this change does not carry.
+The lead ruled the round as B-103 and B-104: the three blocks are re-based on
+`2250830`, PR #19's requirements carried byte for byte with this change's
+additions, one in retire, six in the reconcilable result and eight in bounds,
+re-applied word for word, with no adaptation, each built two ways with the same
+bytes (this change's hunks re-applied on `2250830`, and `git merge-file` from
+this change's block at `04be7f6`), and held for lane openRepoProject-2's byte
+check before the commit. The delta's change is PR #19's own spec change from
+`20084cd` to `2250830` in those three blocks, line for line. The other five
+blocks keep their bases, `173d83c` for revalidation, `b3228bb` for batch,
+`6bf9f77` for classification and `f0bf538` for preservation and the narrow
+guarantee, whose text `2250830` keeps byte for byte; the cites into the three
+blocks take `2250830`'s lines. This change's own live mentions of the warnings,
+in design's Context on rounds (l) and (m), the Capabilities bullets for the
+three blocks and Dependencies and Sequencing, name round (n)'s extension; the
+round records keep their words as history. Round (n) also changes PR #19's
+design, proposal and tasks, but D14 and task 2.1 are byte-identical at
+`2250830`, and every string that this change quotes from them is present there,
+save round (m)'s words of T8, which design's round B21 sentence marks as its
+words at `20084cd`. Lane 3's W97 read of rounds B20 and B21 found one LOW,
+whose correction is a row here (B-101, B-102). The deltas keep 59, 32 and 8
+scenarios: round (n) rewords two requirement sentences and two ANDs that this
+change carries and adds no scenario. Lane openRepoProject-2 said YES on
+2026-10-22 to the held set with no correction, checking it byte for byte with
+its own script on Git and this tree's files. Of the 14 items here, 5 are
+applied and 9 need no action (round (n)'s changes to PR #19's design, proposal
+and tasks, W97's verdict and notes, B-100, R-345, CI and SonarCloud at
+`04be7f6`, Codex, B-105, the re-wrap and W97's O-1); none is declined, and the
+row for lane 2's check is left out of the count. The round commits the delta as
+`bed4eeb`, the design as `96ce753`, and this record with the Status, the key
+(PR #19 at `2250830`, its round (n) and its head, for the retire, bounds and
+reconcilable-result requirements, the ruling range to B-106 and W97 as a
+citation form), the currency of Capabilities, Dependencies and Sequencing and
+L-1 and L-15, and `tasks.md` 1.1, 1.4, 1.5 and 2.1. The ranges that lane
+openRepoProject-4's spec 005 pins keep their bytes, as `cmp` against `04be7f6`
+confirms, though their line numbers move. `specs/project-overview/spec.md` is
+not edited.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| B-103 and B-104: PR #19's round (n) at `2250830` changes three blocks that this change carries, the third recovery text in the retire block's requirement text and in the AND of its scenario "A removal past the hard ceiling" and in the reconcilable-result block's requirement text, and T8's AND in the bounds block's scenario "Row cap and planning failures", each warning now naming `git worktree remove` and `git gc` beside `git worktree prune` | not graded | applied: the three blocks re-based on `2250830`, each built two ways with the same bytes; the delta's change equals PR #19's own spec change from `20084cd` to `2250830` in those blocks, line for line, four hunks, 11 lines added and 10 removed; this change's additions, one in retire, six in the reconcilable result and eight in bounds, are re-applied word for word with no adaptation; the other five blocks' sources are byte-identical at `2250830`; round (n)'s fifth hunk is in "Clean reports local worktree state", which this change does not carry; the key, Capabilities, Dependencies and Sequencing and L-1 and L-15, and design's key, Context, Goals, D4 and Migration Plan, move to `2250830` or say "unchanged at `2250830`", the cites into the three blocks taking `2250830`'s lines (PR19/pc:323, :333-334, :1018, :1059-1073, :1082-1090 and :1157); the Status, the key's ruling range and `tasks.md` 1.1, 1.4, 1.5 and 2.1 record the round | `specs/project-clean/spec.md` (retire, reconcilable-result and bounds blocks); `design.md` key, Context, Goals, D4, Migration Plan; Status; key; Capabilities; Dependencies and Sequencing; Decisions (L-1 and L-15); `tasks.md` 1.1, 1.4, 1.5, 2.1 |
+| R-324: Brett Heap's ruling "R-324: yes" (lane openRepoProject-5's RULED line 26e556b43, 2026-10-22T21:24:49Z; lane openRepoProject-2's RULED line 5ebdba0a5 and its R-343; lane openRepoProject-3's RULED line c7c0b1f5e), that every no-prune warning names `git worktree remove` and `git gc` beside `git worktree prune` | not graded | applied: recorded as ruled, design's Context naming it, with its RULED line and R-343, in its round B22 sentence, as design's B-103 row does; it reaches this change's deltas through the three re-based blocks (the row above); no live text of this change names it as pending or as put to Brett Heap | `design.md` Context |
+| This change's own restatements of the no-prune warnings, as W97 lists them (its section 4, at `04be7f6`): design's Context :177-178 and :198-206, proposal :866-867, and the spec sites pc:139-144, :318-323, :797-801 and :917-921 | not graded | applied: design's Context sentence on round (l) says that its five texts warn against `git worktree prune`, "and since round (n) against `git worktree remove` and `git gc` too (R-324)"; its sentence on round (m) says that round (n) adds them to each warning of T6 to T8 and marks its quotation of T8 as "its words at `20084cd`, which round (n) extends", the round B22 sentence quoting T8 in round (n)'s words; Dependencies and Sequencing says the same of the AND that round (m) added and names round (n) and round B22; the Capabilities bullets for the retire, bounds and reconcilable-result blocks name round (n)'s words for the third recovery text's warning and for T8's; the spec sites are PR #19's text, carried by the re-base; the round records, which quote the earlier words, stay as history | `design.md` Context; Capabilities; Dependencies and Sequencing |
+| W97 (lane 3, `dc39ec3..04be7f6`) LOW-1: round B21's row "Round (m)'s changes to PR #19's design, proposal and tasks" names as the 22nd cited range the residual-window line (its design.md:1183-1185 at `4f1c0e0`), which is byte-identical at every sha; the range that changed is its design.md:1189-1216 at `4f1c0e0` | LOW | B-101, B-102: applied in this row, round B21's row staying as history: the cited range that round (m) changed is PR #19's design.md:1189-1216 at `4f1c0e0` (change 1's next steps in its D18, which this change's design D11 quotes), :1278-1350 at `20084cd`, whose tail gains round (m)'s T6 and T7, a stale worktree's recommendation and its locked form, after round (l)'s T1, T4 and T5; this change quotes none of them, and the four strings that it quotes from that range are present at `20084cd`, so no quote is affected and the cite stays at its base | proposal, this table |
+| Round (n)'s changes to PR #19's design, proposal and tasks | not graded | no action: D14 (its design.md:982-1157 at `2250830`, sha256 `0f5fead479e50413`) and task 2.1 (its tasks.md:146-197, `10d9ad50391d5304`) are byte-identical to `20084cd`'s; 21 of the 22 cited ranges map to regions byte-identical at `20084cd` and `2250830`, the residual-window line among them (its design.md:1267-1276 at `20084cd`, :1275-1284 at `2250830`), and the 22nd, its design.md:1189-1216 at `4f1c0e0`, :1278-1350 at `20084cd`, is :1286-1367 at `2250830`, whose first 43 lines are unchanged and whose tail, round (l)'s T1, T4 and T5 and round (m)'s T6 and T7, takes round (n)'s words and gains a sentence that the locked form prints only as a report row's recommendation (lane 3's W95 LOW-3), the four strings that this change quotes from that range lying in its unchanged lines (:1294-1322 at `2250830`); every string that this change quotes from PR #19's design, proposal and tasks is present at `2250830`, save round (m)'s words of T8, which design's round B21 sentence marks as its words at `20084cd` and round B21's records keep as history; the cites stay where they are | none |
+| W97 (lane 3, `dc39ec3..04be7f6`): its confirm read of rounds B20 and B21 | not graded | recorded: 0 HIGH, 0 MEDIUM, 1 LOW (the row above) and nothing departing; W92's LOW-1 is applied as written, "T1-T5: yes" is quoted with its RULED line, and round (l) needs no re-base; round B21's spec change equals PR #19's own from `ccc52b9` to `20084cd`, line for line, the bounds block rebuilds two ways to the committed bytes, and the other seven blocks are byte-equal at their bases; D14 and task 2.1 are identical from `b3228bb` to `20084cd`; T1 to T8 are recorded as confirmed and F-1's (b) never as ruled; every check reproduces; its R-324 sites are the restatements row above; of its observations, O-1 (the key's history parenthesis) gets no edit, as the note row below records (B-106), O-4 (round B21's CI row, pending when written) is met by the CI row below, and O-2, O-3 and O-5 ask nothing of this round; no action beyond B-101 to B-104 | none |
+| B-100: round B21's stage 2 runs on lane openRepoProject-2's YES (R-325) | not graded | recorded: applied in round B21's stage 2, which committed `bc823b9`, `1fdc9e1` and `04be7f6`; no action | none |
+| R-345: lane openRepoProject-2 accepts PR #19's round (n) at `2250830` (e6b6b16 and 2250830; validate 9 of 9, scenario counts 71, 22 and 24), which carries its R-343 | not graded | recorded: its spec changes in the blocks that this change carries are B-104's; no action beyond B-104 | none |
+| CI and SonarCloud at `04be7f6` | not graded | recorded: CI's six test jobs and SonarCloud pass at `04be7f6`, round B21's head, as the lead read the check runs on 2026-10-22 at 20:16:09Z; no action | none |
+| Codex's review of `04be7f6` | not graded | recorded: not requested, since Codex is at its usage limit and rounds post no `@codex review` while it is; no action | none |
+| B-105: after the lane's swap to team-01e, round B22 runs on PR #19's round (n) at `2250830`, in parallel with round A22 on #26, one writer to each tree | not graded | recorded: stage 1 built and held the round's edits, uncommitted, and this stage commits them; no action | none |
+| B-106: the lead's answers to this round's five questions | not graded | applied: the ruling range runs to B-106 in design's ruling table and key, the key and the Status, the B-100 row staying and rows B-105 and B-106 added; this table, started in stage 1, stands; round B21's Context sentence keeps its quotation of T8 in round (m)'s words, marked as its words at `20084cd`; the re-wrap and W97's O-1 are the two rows below | `design.md` key, Context, ruling table; Status; key; this table |
+| The re-wrap (B-106): this round's edits re-wrap whole paragraphs at 79 columns, so that lines move though their words do not: in `design.md`, the key (the Context's first paragraph), the Context paragraph that holds the sentences on PR #19's rounds (l) to (n), and D3's paragraph on the four status pins; in this file, the Status, the key's paragraph that defines `PR19/pc`, the Capabilities bullets for the classification, batch, bounds, preservation, revalidation and narrow-guarantee blocks, the Dependencies and Sequencing bullet "Written on change 1 and change 2 (L-1, L-15)" and the Decisions bullet "L-1 and L-15, the base text"; in `tasks.md`, 1.4 and 2.1 | not graded | recorded: in each, the words are unchanged from `04be7f6` except where `git diff --word-diff 04be7f6` shows a change; the largest are the key's paragraph, 44 lines moved with no word changed, and the Dependencies and Sequencing bullet, 76; no action | none |
+| W97's O-1 (a note): the key's history parenthesis, in design's key, the key and `tasks.md` 1.4, read literally says that `2250830` keeps texts that later rounds changed, such as the bounds requirement's at `b3228bb`; it lists where each requirement's base stood in earlier rounds | not graded | recorded: no edit (B-106); the parenthesis keeps the form it has had since round B18, now naming round B21's bases too; no action | none |
+| Lane openRepoProject-2's byte check of the held set (2026-10-22, at about 22:08Z) | not graded | recorded: YES with no correction, checked byte for byte with lane 2's own script, which read Git and this tree's files rather than this round's diffs: the set's SHA256SUMS hashes to `a1e117787bb75111` and checks; `git diff` equals the round's saved stage 1 diff (sha256 `0243b7586e69647d`); for each of the three re-based blocks, its source equals the held source, the held block equals the tree's block, this change's additions are identical (1, 6 and 8), and PR #19's own change equals the change from this change's block at `04be7f6` to the held block; the five other blocks are unchanged; no adaptation; lane 2 did not check the design or the proposal beyond a look, nor the validation or the scenario counts | none |
+
+### Re-read and Codex Findings (round B23)
+
+PR #19's round (o) at `88d0d36`, one commit on `2250830`, takes lane 3's W103
+read of its round (n): four record items of its design, proposal and tasks, and
+no spec text, its design and tasks each gaining two lines; lane
+openRepoProject-2's R-349 launched it and R-350 accepted it. The lead ruled it
+as B-107: this change's naming of PR #19's current head moves to `88d0d36`,
+whose spec text is `2250830`'s, and nothing is re-based. Each of the eight
+blocks' sources at `88d0d36` equals, by `cmp`, its source at the base that this
+change names, `2250830` for retire, the reconcilable result and bounds,
+`173d83c` for revalidation, `b3228bb` for batch, `6bf9f77` for classification
+and `f0bf538` for preservation and the narrow guarantee, and each block of this
+change equals its block at `dafe476`. D14 and task 2.1 are byte-identical at
+`88d0d36`, two lines later, all 22 cited ranges keep their bytes, and every
+string that this change quotes from PR #19's design, proposal and tasks is
+present there. Lane 3's W107 read of round B22 found one LOW, a cell of round
+B22's record that does not name D3, which a row here corrects (B-108); of its
+four checks not done at lane 3's wrap-up, two are closed and two fold into lane
+3's read of this round (B-109); and lane 2's YES to round B22's held set, which
+round B22's row gives with no number, is R-348, sent at 22:07:28Z, which a row
+here records. No spec file changes, and the deltas keep 59, 32 and 8 scenarios.
+Of the 10 items here, 3 are applied and 7 need no action (W107's verdict, its
+checks not done, round (o)'s changes to PR #19's design, proposal and tasks,
+R-349 and R-350, CI and SonarCloud at `dafe476`, Codex and the re-wrap); none
+is declined. The round commits the design as `715885c`, and this record with
+the Status, the key (PR #19's head at `88d0d36`, its round (o), the ruling
+range to B-109 and W107 as a citation form), the currency of Capabilities,
+Dependencies and Sequencing and L-1 and L-15, and `tasks.md` 1.1, 1.4, 1.5 and
+2.1, the bases unchanged. The ranges that lane openRepoProject-4's spec 005
+pins keep their bytes, as `cmp` against `dafe476` confirms, though their line
+numbers move. `specs/project-overview/spec.md` is not edited.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| B-107: PR #19's round (o) at `88d0d36` edits four record items of its design, proposal and tasks and no spec text, so that its spec text is `2250830`'s; this change names `88d0d36` as PR #19's current head, the bases unchanged | not graded | applied: each of the eight blocks' sources at its base is byte-identical at `88d0d36` (`cmp`, the round's proof: retire, the reconcilable result and bounds at `2250830`, revalidation at `173d83c`, batch at `b3228bb`, classification at `6bf9f77`, and preservation and the narrow guarantee at `f0bf538`), and each block of this change equals its block at `dafe476`; design's key and the key name `88d0d36`, its round (o), as PR #19's head, whose spec text is `2250830`'s, `2250830` staying the base of the three requirements that round B22 re-based; design's Context gains a round B23 sentence, and D4 and the Migration Plan, the Capabilities "unchanged at" lists, Dependencies and Sequencing, L-1 and L-15 and `tasks.md` 1.4 and 2.1 name `88d0d36` as keeping the blocks' text; the cites that name a block's base stay; the Status, the key's ruling range and `tasks.md` 1.1, 1.4, 1.5 and 2.1 record the round | `design.md` key, Context, D4, Migration Plan; Status; key; Capabilities; Dependencies and Sequencing; Decisions (L-1 and L-15); `tasks.md` 1.1, 1.4, 1.5, 2.1 |
+| W107 (lane 3, `04be7f6..dafe476`) LOW-1: the "Section edited" cell of round B22's row for B-103 and B-104 lists `design.md` key, Context, Goals, D4 and Migration Plan but not D3, whose cite PR19/pc:310-311 at `173d83c` became :333-334 at `2250830`, a cite that the row's own text names | LOW | B-108: applied in this row, round B22's row staying as history: that cell also takes `design.md` D3, whose paragraph on the four status pins cites PR19/pc:333-334 at `2250830`, with :310-311 kept at `173d83c`, the two ranges equal by content; no word of the text is affected | proposal, this table |
+| W107 (lane 3, `04be7f6..dafe476`): its confirm read of round B22 | not graded | recorded: 0 HIGH, 0 MEDIUM, 1 LOW (the row above) and nothing departing; round B22's spec change equals PR #19's own from `20084cd` to `2250830` minus its two hunks in "An unreadable worktree is one row", which this change does not carry (4 hunks, 21 lines); the retire, reconcilable-result and bounds blocks rebuild two ways to the committed bytes; this change's additions, 1, 6 and 8, are unchanged, and the other five blocks equal their bases; D14 and task 2.1 are cmp-identical; "R-324: yes" is verbatim, with the three RULED lines; the four spec sites carry R-343's words, and the old phrase appears only in labelled history; W97's LOW-1 is applied; the reproduction: valid 8 of 8, the carry check PASS, 70, 4 and 7 (strict 67, 64 and 3), 59, 32 and 8 scenarios, the overview blob `a40458cb`, 447 added lines clean, lane 4's 8 pins at `cmp` 0 and the held set's SHA256SUMS 19 of 19; of its observations, O-3 (PR #19's head named as `2250830`) is met by B-107 here, and O-1, O-2 and O-4 ask nothing of this round; no action beyond B-107 and B-108 | none |
+| W107's checks not done at lane 3's wrap-up (2026-10-22, 22:28Z): CI, SonarCloud and round B22's comment; the saved stage 1 diff's sha256; the line map and cite check lists; and a one-to-one table of round B22's hunks against its items | not graded | recorded (B-109): lane 3 closed the first two on 2026-10-23 at 03:16:22Z, finding nothing new: one `gh` read found all seven checks SUCCESS at `dafe476`, and comment 6352482312 (created 2026-10-22T22:14:36Z) to be round B22's record, its "CI and SonarCloud pass at `04be7f6`" true when posted; and the saved stage 1 diff's sha256, `0243b7586e69647d`, equals round B22's row and its `.sha256` file, the file unchanged since 2026-10-22T22:04:05Z; the other two fold into lane 3's read of this round; beside them, the lead's facts that W107 could not read: CI and SonarCloud pass at `dafe476` (the lead's late read, 22:16:21Z), round B22's comment is 6352482312, and lane 2's YES is R-348, sent at 22:07:28Z, its entry in lane 2's own register log being lane 2's; no edit | none |
+| Round B22's row for lane openRepoProject-2's byte check of the held set gives "(2026-10-22, at about 22:08Z)", with no number | not graded | applied in this row, round B22's row staying as history: lane 2 numbers that YES R-348, sent at 22:07:28Z; no other text depends on it | proposal, this table |
+| Round (o)'s changes to PR #19's design, proposal and tasks: four record items (lane 3's W103 LOW-1 to LOW-4), its design and tasks each gaining two lines | not graded | no action: D14 (its design.md:984-1159 at `88d0d36`, sha256 `0f5fead479e50413`) and task 2.1 (its tasks.md:148-199, `10d9ad50391d5304`) are byte-identical to `2250830`'s :982-1157 and :146-197; all 22 cited ranges map to regions byte-identical at `2250830` and `88d0d36`, each two lines later, the residual-window line and change 1's next steps in its D18 among them (:1277-1286 and :1288-1369 at `88d0d36`); every string that this change quotes from PR #19's design, proposal and tasks at `2250830` is present at `88d0d36`; the cites stay at their bases | none |
+| R-349 and R-350: lane openRepoProject-2's R-349 accepts lane 3's W103 and launches round (o), and R-350 accepts it at `88d0d36` (validate 9 of 9, scenario counts 71, 22 and 24) | not graded | recorded: round (o) changes no spec text; no action beyond B-107 | none |
+| CI and SonarCloud at `dafe476` | not graded | recorded: CI's six test jobs and SonarCloud pass at `dafe476`, round B22's head, as the lead read the check runs on 2026-10-22 at 22:16:21Z, and lane 3's read on 2026-10-23 at 03:16:22Z finds all seven checks SUCCESS; no action | none |
+| Codex's review of `dafe476` | not graded | recorded: not requested, since Codex is at its usage limit and rounds post no `@codex review` while it is; no action | none |
+| The re-wrap (B-106's rule): this round's edits re-wrap paragraphs at 79 columns, so that lines move though their words do not: in `design.md`, the key (the Context's first paragraph), the Context paragraph that holds the sentences on PR #19's rounds, and D4's paragraph that begins "B-54 restates the fit"; in this file, the Status, the key's paragraph that defines `PR19/pc`, the Capabilities bullets for the eight blocks written on PR #19's text, the Dependencies and Sequencing bullet "Written on change 1 and change 2 (L-1, L-15)" and the Decisions bullet "L-1 and L-15, the base text"; in `tasks.md`, 2.1 | not graded | recorded: in each, the words are unchanged from `dafe476` except where `git diff --word-diff dafe476` shows a change; the largest are the key's paragraph, 24 lines moved with no word changed, and the Capabilities bullets, 97 in all; no action | none |
+
+### Re-read and Codex Findings (round B24)
+
+The lane's review wave of 2026-10-23 read this change at `288fc34` (B-112,
+B-113): reader RB's adversarial read, which reader RB2 finished on Git 2.43.0
+and on the 2.36.6 floor, 0 HIGH, 2 MEDIUM and 5 LOW; reader RE's read of
+feature 004 at `f3724fc` against the three drafts, which RE2 finished, giving
+this change RE23-1, RE23-4, RE23-5 and RE2-2; and lane 3's W120 read of the
+next steps that Git refuses, giving it L-3. Lane 3's W110 read of round B23
+left two LOWs in its records, which ride here (B-111). PR #19's round (p) waits
+for Brett Heap's answers to lane openRepoProject-2's Q1 to Q9, so the lead
+split the rounds (B-117): this one runs now, in one stage, with no re-base, and
+the re-base of the retire block on round (p), RE23-1, which follows his answer
+to Q8, and the scenario case that combines it with RB's MEDIUM-1 wait for round
+B25 (B-114 to B-116). No block that this change carries from PR #19 changes:
+each of the nine MODIFIED blocks equals its bytes at `288fc34`, and only the
+two ADDED requirements change, by nine edits of their prose and two ANDs, so
+the deltas keep 59, 32 and 8 scenarios; RB2's LOW-5, whose fix lies in the
+carried batch block, waits for a round that changes that block. RB's MEDIUM-1
+and the `git-refused` case beside it were reproduced in this round's scratch
+fixtures on Git 2.43.0 and 2.36.6, with the same output but for the version
+line, and the filesystem facts under RB2's LOW-1 to LOW-4 were run on real
+files. Of the 21 items here, 10 are applied, 2 are applied with change, 3 wait
+for round B25 or a later round (RB2's LOW-5, B-114's re-base, whose check is
+made here, and RE23-1) and 6 need no action; none is declined. The round
+commits the deltas as `bab9e24`, the design as `309113b`, and this record with
+the Status, the key (the ruling range to B-117 and the wave's, W110's and
+W120's citation forms), What Changes, Rules This Change Keeps, Capabilities,
+Impact, CD-18 and `tasks.md` 1.1, 1.4, 1.5, 2.1 and its Speckit Handoff, the
+bases unchanged. The ranges that lane openRepoProject-4's spec 005 pins keep
+their bytes, as `cmp` against `288fc34` confirms, though their line numbers
+move. `specs/project-overview/spec.md` is not edited.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| RB (`288fc34`) MEDIUM-1 of 2026-10-23, which RB2 confirmed on Git 2.36.6: after a `disposed` stage, the line before the stop block says "the worktree was not removed" for every `failed` target, but a removal that ended `git-failed` has already deleted part of the worktree and its registration (RB's fixture: 17 of 33 top-level entries gone, the `.git` file among them) | MEDIUM | B-117: applied: the ADDED requirement keeps the line for `git-refused` and `spawn-error`, which delete nothing, and gives `git-failed` its own, `Cache disposal at PATH: removed N cache paths; Git's removal of the worktree failed and may have deleted part of it and its registration; inspect PATH by hand.`, whose next step is change 1's for the orphaned directory that Git leaves (CAS proposal.md:361-364) and names no prune, removal or `gc`; the scenario "A merged worktree whose only ignored files are caches" gains one AND, a tracked directory without write permission making Git's removal exit 255 with `orphaned-directory`, change 1's "Git leaves an orphaned directory" staying byte for byte; reproduced in this round on Git 2.43.0 and 2.36.6 alike: a worktree whose caches were removed and which holds a tracked directory of mode 0555 lost 5 of its 36 top-level entries and its registration, exit 255, and the lock case refused with 128 and deleted nothing; design D11 gives the line and why it is true, D14 the fixture, and What Changes and Capabilities follow; B-49's records, its Decisions bullet, the round B9 row and design's B-49 row, stay as written (A-70), corrected by this row; the brief's "D11's text" is read as design's B-49 row, whose Decision cell names D11, since D11's bullet is the design's live account of the line, which the realization implements, and so changes with the spec | `specs/project-clean/spec.md` (ADDED); `design.md` D11, D14; What Changes; Capabilities |
+| RB2 MEDIUM-2: when the removal floor ends the stage in a read after its first removal, no design row covers the case; the spec gives exit 1 and the later targets `deadline-exceeded`, but D8's nearest row gives exit 2, `batch-stopped` and a line that reads as a change of state | MEDIUM | B-117: applied, the spec governing, since it is right: a read that the floor or the deadline stops has found no difference, as before the first removal (B-34); the review-safety ADDED requirement now says so outright, that after the first removal a read that cannot start because no more than the floor remains, or that outlives the budget `work remaining less the removal floor`, ends the stage as the floor reached at a hand-off does and is not reported as a change of state, so that the project-clean ADDED requirement's floor sentence (the later targets `deadline-exceeded`, exit 1), its deadline line and the exit table's row 2 apply, and its list names "a read that outlives its 5 s per-call budget" for the failure; D8 gains the row (`partial`, `cache-partial`; the later targets `not-attempted`, `deadline-exceeded`; exit 1), its failure row names a read past its own 5 s budget (exit 2), and its prose, D12's read bullet, D11's deadline line and D14's hooks follow; the scenario "The removal floor reached during a cache stage" gains one AND that holds the open of the second cache's chain, as the removals reopen it, until that budget is spent | `specs/project-clean-review-safety/spec.md` (ADDED); `specs/project-clean/spec.md` (ADDED, its scenario); `design.md` D8, D11, D12, D14; Capabilities |
+| RB2 LOW-1: the plan-time walk's root open names no identity check, so an ancestor swapped for a symbolic link after the row's identity check lets the walk list and `lstat` a tree outside the worktree (read-only; apply fails closed) | LOW | B-117: applied: the walk opens the worktree root by the row's recorded path with `O_DIRECTORY` and `O_NOFOLLOW` and requires its device and inode to equal those of the row's recorded worktree identity, a refused open or another identity being a failed call of the walk, so the row is `cache-unverified`; the check reads the open's own descriptor, so no count of D4 moves; run on real files in this round: the root opened through a swapped ancestor with another identity and listed the outside tree, which the check refuses | `specs/project-clean/spec.md` (ADDED); `design.md` D3, D7; Rules This Change Keeps; Capabilities |
+| RB2 LOW-2: a removal that returns `ENOENT` gets `removed` values that contradict the rule, and the partial line counts another writer's deletion as the stage's | LOW | B-117: applied with one change: `removed` is true only when the stage's own removal of the listed path returned having removed it, and null when the path is absent though the stage did not remove it, its own removal having found it absent (`ENOENT`, or `ENOTDIR`, as R-208 reads it) or another writer having removed it; the partial line counts only the stage's own removals and names a "not established" group; the change: the review-safety ADDED requirement's rescan now reads only the caches that the stage's own removals did not remove, since its rule that a chain that does not open leaves a cache `removed: null` would otherwise contradict the new rule for a cache that the stage did remove; D8's prose and its row for a stage whose handed-over removals all returned without removing follow, and so does D11's partial line; run on real files: an unlink of a name that another writer removed returned `ENOENT`, and a `rmdir` of a planned directory's name that holds a symbolic link returned `ENOTDIR`, the link and its target intact | `specs/project-clean/spec.md` (ADDED); `specs/project-clean-review-safety/spec.md` (ADDED); `design.md` D8, D11; Capabilities |
+| RB2 LOW-3: D7 and D13 say that a file placed in a listed cache directory survives, but one put at a name that the preflight fixed is unlinked, and an empty directory put at a planned directory's name is removed in its place (the rmdir-by-name window); the narrow guarantee's window sentence does not name such a file | LOW | B-117: applied with change: D7, D13 and CD-18 say "under a name that the preflight did not fix", and D7 says that the stage removes by name, an entry put at a fixed name being removed in the planned entry's place and a link or a non-empty directory there making its removal fail; RB2's spec edit is in the window sentence of the narrow-guarantee block, which this change carries from PR #19 and this round does not change (the brief; B-117), so the review-safety ADDED requirement says instead, beside the stage's guarantee, that the window also holds such an entry, a file or symbolic link at a file's name or an empty directory at a directory's name, the residual-window line already naming ignored files created during a cache stage; run on real files: a file renamed over a fixed `.pyc` was unlinked, an empty directory made at a planned directory's name was removed and the planned one kept elsewhere, and a non-empty one refused with `ENOTEMPTY` | `specs/project-clean-review-safety/spec.md` (ADDED); `design.md` D7, D13; Decisions (CD-18); Capabilities |
+| RB2 LOW-4: neither the review-safety ADDED requirement's list of what ends the stage after its first removal nor D8 names an identity difference on a chain reopened for the removals, and the stage's guarantee lacks D13's removal-time clause | LOW | B-117: applied: the list names a chain reopened for the removals whose identity differs from the plan's, the guarantee gains "and, at its removal, the chain to it carried those identities again", and D7, D8's prose and its failure row name the case; run on real files: a directory moved aside and a copy made in its place reopened with no error and another identity | `specs/project-clean-review-safety/spec.md` (ADDED); `design.md` D7, D8; Capabilities |
+| RB2 LOW-5: this change's exception for the cache walk's timeout sits inside the batch block's reflog outcome rule, and PR #19's "as for every other read and child" in its `worktree-only-commits` rule is left unqualified, the enumeration's child unnamed | LOW | deferred to round B25, or the first later round that changes the batch block: both of RB2's sites are in blocks that this change carries from PR #19, the batch block or, as RB2's alternative, the bounds block, and this round changes no carried block (the brief; B-117), a carried block's hunk going to lane openRepoProject-2's byte check (B-73); the ADDED requirement already states that the enumeration's child and its walk leave a row `cache-unverified` and the plan complete, so no behaviour is unstated; no edit | none |
+| W120 (lane 3, the heads of 2026-10-23) L-3: the stall line's `W` clause in design D11 keeps "fix their ownership or mode, then re-run", the remedy before B-74 | LOW | B-117: applied as W120 words it, "fix their ownership or mode, or, on a read-only filesystem, remount it writable, then re-run", and the bullet says that the `W` part names both remedies of that row's own line (B-74); no spec text gives the stall line's words | `design.md` D11 |
+| RE23-4: design D3 calls the enumeration's child a handle of change 1's kind `probe`, which in feature 004 carries no status pin, feature 004 giving the four status pins to its kinds `status`, `hidden` and `removal` | LOW | B-117: applied: D3 names change 1's read-only kind, `probe` in change 1's D2 (PR19 design.md:177-181 at `4f1c0e0`), which feature 004 builds as `probe`, `status` and `hidden`, only the last two with the status pins (its `project`:1084-1095 at `f3724fc`), so the realization starts the child as kind `status` with its own pin added, or adds a kind, never `probe`; wording only | `design.md` D3 |
+| RE23-5: D3's "after the row's identity check" does not say "immediately before", as the evidence model does, and feature 004 makes that check for its combined probe alone | LOW | B-117: applied: D3 says that the child runs only once the row's identity has been verified immediately before it, at plan time and at revalidation alike (PR19/cmd:188-190 at `f0bf538`), and that feature 004's check (`_identity_unchanged()`, its `project`:3386 at `f3724fc`) has no seam for a later child, so the realization makes it again; the ADDED requirement's "after the row's identity is verified" stands, RE23-5 being a realization note | `design.md` D3 |
+| RE2-2: the README edit points name no line range in feature 004's README, and three of its sentences that a cache passing the rung makes untrue are on no list | LOW | B-117: applied: Impact and the Migration Plan's step 5 name the section at feature 004's `README.md`:189-573 at `f3724fc`, which PR #33's head `d8724e2` keeps byte for byte, and its three sentences, "Ignored local files, remote divergence, and an unknown default branch also stop destructive cleanup" (:238-239), the `ignored-local-files` row's next step (:392) and the list "Five behaviour changes come first" (:191-221); the Speckit Handoff of `tasks.md` names them for the realization; wording only | Impact; `design.md` Migration Plan; `tasks.md` Speckit Handoff |
+| W110 (lane 3, `dafe476..288fc34`) LOW-1: round B23's row for W107's checks not done, and design's B-109 row, date both of lane 3's closures 03:16:22Z | LOW | B-111: applied in this row, those rows staying as history (A-70): lane 3 recomputed the saved stage 1 diff's sha256 at 03:14:23Z and made its one `gh` read at 03:16:22Z, as its `confirm-b22-findings.md` records them; round B23's CI row, which dates only the `gh` read, stands | proposal, this table |
+| W110 (lane 3) LOW-2: the "Section edited" cell of round B23's row for B-107 does not name `design.md` ruling table, though round B23 added rows B-107 to B-109 there | LOW | B-111: applied in this row, round B23's row staying as history: that cell also takes `design.md` ruling table | proposal, this table |
+| B-114: this round was to re-base the retire block on PR #19's round (p), and to check that this change states that change 2 archives first | not graded | the re-base deferred to round B25 (B-117), since round (p) waits for Brett Heap's answers to lane openRepoProject-2's Q1 to Q9; the check made: the Archive order bullet of Dependencies and Sequencing ("after change 2's archive, its `project-overview` block first re-aligned with main's text"), design's Migration Plan step 8 ("after the archives of change 1 and change 2") and `tasks.md` 3.2 and 3.3 state it, as RD2 also found; no edit | none |
+| RE23-1 (RE, run on real Git by RE2): the enumeration's child, which takes the combined probe's place at revalidation, has no rule for a status child that exits 0 while its standard error warns, which feature 004's `status_warned()` refuses (R-116); with B-115's scenario case of the run that combines it with RB's MEDIUM-1, which RB2 reproduced | MEDIUM | deferred to round B25 (B-116, B-117): it follows Brett Heap's answer to lane openRepoProject-2's Q8; the combined run waits with it; no edit | none |
+| RB and RB2 (`288fc34`): their whole read | not graded | recorded: 0 HIGH, 2 MEDIUM and 5 LOW, the rows above; the 2026-10-21 HIGH's fix (B-47) holds on Git 2.43.0 and 2.36.6; the eight blocks carried from PR #19 are its text at `88d0d36` plus additions only; the access check covers exactly the directories that a stage changes; B-50's reasons on `.pytest_cache` hold, also at 2.36.6, RB2 noting, as no finding, that the list of what a later change would need does not name B-20's access-check list or D3's descent rule, both of which name `__pycache__`; on its brief's question, disposal removes only listed caches in identity-checked directories and follows no link at apply; no action beyond the rows above | none |
+| RE and RE2 (feature 004 at `f3724fc`): their other items for this change | not graded | recorded: RE-16 (the digest's `selected` rows, which feature 004's `plan_digest` widens), the sentences that name CI's two jobs, stale once feature 004's `git-floor` job joins them, the re-pin map RE23-3, and the mapping of D10's `ignored_files` to feature 004's revalidation step 6 are alignment items for after feature 004 merges (RE's step 3), which B-117 does not name for this round; this change's quoted texts and removal argument vector equal feature 004's; no action | none |
+| W120 (lane 3): its read of this change's next steps at `288fc34` | not graded | recorded: W52's F-11 and F-12 are fixed, the `cache-unwritable` line's `chmod` of `DPATH` clearing the access check, and F-8's restatement in D11 matches feature 004's next steps; the cache stage's ceiling exit row is declared; L-3 is the row above; no action | none |
+| CI and SonarCloud at `288fc34` | not graded | recorded: CI's six test jobs and SonarCloud pass at `288fc34`, round B23's head, the Quality Gate passed, as the lead read the check runs on 2026-10-23 at 03:34:28Z; no action | none |
+| Codex's review of `288fc34` | not graded | recorded: not requested; this round posts nothing on GitHub; no action | none |
+| The re-wrap (B-106's rule): this round's edits re-wrap the lines they touch at 79 columns, a code span of at most 40 characters kept on one line, so that lines move though their words do not: in the project-clean ADDED requirement, the paragraph on the enumeration and its walk and the two on the result and the human lines; in the review-safety ADDED requirement, the paragraph on what follows the first removal and the guarantee's; in `design.md`, the key, the Context paragraph on PR #19's rounds, D3's first paragraph and its walk paragraph, D7's paragraphs on descriptor chains and on the removals, D8's first paragraph, three bullets of D11, D12's read bullet, D13's paragraph on the window, two bullets of D14 and the Migration Plan's step 5; in this file, the Status, the key's paragraph on citation forms, the What Changes bullet on what the person sees, the Rules bullet on symbolic links, the Capabilities bullets for the two ADDED requirements, the Impact bullet for `README.md` and CD-18; in `tasks.md`, 1.1, 1.4, 1.5, 2.1 and the Speckit Handoff | not graded | recorded: in each, the words are unchanged from `288fc34` except where `git diff --word-diff 288fc34` shows a change; the largest are the review-safety ADDED requirement's paragraph on what follows the first removal, 22 lines re-wrapped for its three edits, and this file's key paragraph on citation forms, 18, and design's D7 paragraph on descriptor chains moves 16 lines for one added clause; no action | none |
+
+### Re-read and Codex Findings (round B25)
+
+PR #19's round (p) at `e0b1671`, a fast-forward from `88d0d36` that lane
+openRepoProject-2 accepted on 2026-10-23, gives the retire and
+reconcilable-result blocks R-365's text beside a row whose path could not be
+read; its round (q) at `818311a` (lane 2's R-389) builds Brett Heap's "yes,
+recommended for Q1-Q9" of 2026-10-23 (R-380) and changes seven of the eight
+blocks that this change carries, all but the narrow guarantee, Q3 (a) replacing
+round (p)'s text; and its round (r) at `4512441` (R-391, which lane 2 accepted
+as R-396, recorded as B-127) changes three of them, the classification block's
+stale-worktree recommendations, the retire block's ceiling AND and the
+revalidation block's `lstat` of `<dir>/.git` (lane 3's W133 MEDIUM-4, LOW-1 and
+MEDIUM-2). The lead ruled the round as B-122 and B-126: each changed block is
+re-based on the round that last changed it (B-128), the classification, retire
+and revalidation blocks on `4512441`, and the batch, bounds,
+reconcilable-result and preservation blocks on `818311a`, whose text `4512441`
+keeps byte for byte, PR #19's text carried byte for byte and this change's
+additions re-applied word for word with no adaptation, each block built two
+ways with the same bytes (this change's hunks re-applied, and
+`git merge-file`), five places where both sides change the same or adjacent
+lines joined by position with no word changed, and held for lane
+openRepoProject-2's byte check before the commit; the narrow guarantee keeps
+`f0bf538`, whose text `4512441` keeps byte for byte. The round also carries
+Brett Heap's Q1 and Q8 into this change's own cache enumeration, the fifth
+status pin and the rule for a status probe that warns on standard error (B-123,
+B-124; RE23-1, B-116), moves the batch block's exception for the cache walk to
+the rule that RB2's LOW-5 names (B-119), and takes lane 3's W128 read of round
+B24, whose three LOWs ride here (B-121), and the items of its W133 read of PR
+#19's round (q) for this change (B-123). PR #19's round (s) is still owed (lane
+2's R-408, which starts it): the classification and revalidation blocks,
+PR19/rs:111-112 at `4512441` among the revalidation block's lines, and the
+batch block, which holds PR19/pc:811-812, are subject to it (this change's
+`project-clean-review-safety` :133-134 and `project-clean` :439-440), and round
+B26 re-bases them once lane 2 sends round (s)'s accepted sha (B-131);
+PR19/rs:10-14, the preservation block's registration-mismatch sentence, which
+this change carries byte for byte with no addition inside it, is not, so
+nothing here cites a line that round (s) may change as settled. Lane
+openRepoProject-2's byte check passed the held set (R-400), finding three
+differences, each this change's own and declared. The deltas hold 61, 35 and 8
+scenarios, the five more being PR #19's, one each in the classification, retire
+and revalidation blocks and two in the preservation block, so that of the
+carried scenarios 75 are byte-exact and 4 edited, beside 7 added in MODIFIED
+blocks. Of the 28 items here, 14 are applied and 14 need no action (the answer
+on `project-clean-review-safety` :172, W128's and W133's reads, the count
+sentences, R-380 and R-389, B-118, B-120, B-121, B-125, B-129, B-130, CI and
+SonarCloud at `d95eea2`, Codex and the re-wrap); none is declined, and the row
+for lane 2's check is left out of the count. The round commits the deltas as
+`7f74be2`, the design as `18854da`, and this record with the Status, the key
+(PR #19 at `4512441`, its round (r) and its head, for the classification,
+retire and revalidation requirements, at `818311a`, its round (q), for the
+batch, bounds, reconcilable-result and preservation requirements, the ruling
+range to B-130, Q1 to Q9 with R-380, and W128 and W133 as citation forms), What
+Changes, Capabilities, Dependencies and Sequencing, Decisions (L-1 and L-15,
+B-51, B-55, CD-4, CD-5 and CD-9), Open Questions and `tasks.md` 1.1, 1.4, 1.5
+and 2.1, which name each block's base. The ranges that lane openRepoProject-4's
+spec 005 pins keep their bytes, as `cmp` against `d95eea2` confirms, though
+their line numbers move. `specs/project-overview/spec.md` is not edited.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| B-122 and B-126: PR #19's rounds (p) to (r) change seven of the eight blocks that this change carries: round (p) at `e0b1671` the retire and reconcilable-result blocks, round (q) at `818311a` all seven, those two again included, and round (r) at `4512441` three of them, the classification, retire and revalidation blocks; the narrow guarantee is byte-identical at `88d0d36`, `e0b1671`, `818311a` and `4512441` | not graded | applied: by `cmp`, each block's source at its base at `d95eea2` equals its block at `88d0d36`, seven differ at `818311a`, and of those three differ again at `4512441`, while the batch, bounds, reconcilable-result and preservation blocks are byte-identical there; so the classification, retire and revalidation blocks are re-based on `4512441` and the other four on `818311a`, the round that last changed each (B-128), each built two ways with the same bytes (this change's hunks re-applied, and `git merge-file` from this change's block at `d95eea2`, then from the build on `818311a` for the three that round (r) changed); PR #19's text is carried byte for byte, and this change's word edits, 3 in classification, 1 in retire, 4 in batch, 13 in bounds, 7 in the reconcilable result, 5 in preservation and 5 in revalidation, are the same on the new base as on the old, with no adaptation; five places where both sides change the same or adjacent lines are joined by position with no word changed, preservation's opening lines and its added scenarios on `818311a`, and classification's added scenarios and revalidation's status step and its reasons sentence on `4512441`, PR #19's added scenarios coming before this change's one; the deltas' change, RB2's LOW-5 and the ADDED requirement's edits included (their rows below), is 136 lines added and 60 removed in `project-clean` and 51 and 16 in `project-clean-review-safety`; the key, What Changes, Capabilities, Dependencies and Sequencing, L-1 and L-15, CD-4 and Open Questions, and design's key, Context, Goals, D4, D10, D14 and Migration Plan, name the new bases, the cites into the seven blocks taking their bases' lines; the Status, the key's ruling range, design's ruling table and `tasks.md` 1.1, 1.4, 1.5 and 2.1 record the round | `specs/project-clean/spec.md` (classification, retire, batch, bounds and reconcilable-result blocks); `specs/project-clean-review-safety/spec.md` (preservation and revalidation blocks); `design.md` key, Context, Goals, D4, D10, D14, Migration Plan, ruling table; Status; key; What Changes; Capabilities; Dependencies and Sequencing; Decisions (L-1 and L-15, CD-4); Open Questions; `tasks.md` 1.1, 1.4, 1.5, 2.1 |
+| B-123 and B-124's first answer: lane 3's W133 finds that this change's own text gives the enumeration's child "the four status pins that every status probe carries" (`project-clean` :1068-1071 and :1476-1479 at `d95eea2`), where Brett Heap's Q1, which PR #19's round (q) builds, makes them five, `-c core.ignoreCase=false` the fifth (PR19/cmd:158-168 at `4512441`) | not graded | applied by B-69's rule, the child carrying what the combined probe carries: the ADDED requirement gives the child the five status pins, and its scenario "The cache enumeration runs under the pins" records `-c core.ignoreCase=false` among them; design D3 says why, an untracked file made after the plan whose name differs only in case from a tracked one being left out of the child's records under a user's `core.ignoreCase=true` on a case-sensitive file system (PR19/cmd:166-168 at `4512441`), and D14's test records the five pins; What Changes, the Capabilities bullets for the ADDED requirement and for `project-command`, and CD-5 follow; the round records that name four pins stay as history | `specs/project-clean/spec.md` (ADDED); `design.md` D3, D14; What Changes; Capabilities; Decisions (CD-5) |
+| RE23-1 (RE, run on real Git by RE2): the enumeration's child, which takes the combined probe's place at revalidation, has no rule for a status child that exits 0 while its standard error warns, which feature 004's `status_warned()` refuses (R-116); with B-115's scenario case of the run that combines it with RB's MEDIUM-1 of 2026-10-23 | MEDIUM | B-116, B-124's third answer: applied under Brett Heap's Q8 (R-380), as PR #19's evidence model words it (PR19/cmd:265-271 at `4512441`), in the delta as well as the design: the ADDED requirement treats a child that exits 0 having written to standard error any line other than Git's advice lines (`hint:` alone or `hint: TEXT`), or more than the 4 KiB kept, as one that fails, as that requirement treats the combined status probe, since Git exits 0 when it cannot read a directory and leaves what it could not read out of its records; at plan time the row is then `cache-unverified` (CD-9), and at a cache target's revalidation the target is `refused` with `state-changed`, nothing deleted; the scenario "A failed cache enumeration preserves the row, not the plan" extends its AND to a fake `git` that exits 0 having printed the child's ignored records and a warning on standard error, and "A merged worktree whose only ignored files are caches" gains one AND, B-115's combined run: a directory that holds only an untracked file, made unreadable after the plan, the revalidation's child printing exactly the planned records and exiting 0 while it warns, the target `refused`, no cache entry deleted, no removal child spawned and exit 2; design D3, D10 and D14 give the rule, its two outcomes and its test, and What Changes, Capabilities and CD-9 follow | `specs/project-clean/spec.md` (ADDED); `design.md` D3, D10, D14; What Changes; Capabilities; Decisions (CD-9) |
+| RB2 LOW-5: this change's exception for the cache walk's timeout sits inside the batch block's reflog outcome rule, and PR #19's "as for every other read and child" in its `worktree-only-commits` rule is left unqualified, the enumeration's child unnamed (deferred in round B24, its sites being carried blocks) | LOW | B-119: applied in RB2's words, the re-base leaving this change's own clause to move: the branch reflog's rule loses the exception, so that its line reads as PR #19's at `818311a` byte for byte, and the `worktree-only-commits` rule's closing reads "as for every other read and child, except the cache enumeration's child and the calls of its walk, which leave their row `cache-unverified` and the plan complete, as "Clean disposes of listed caches before a worktree removal" states, unless the deadline cuts them", two word edits on the re-based block and the only change to this change's own words in a carried block, which lane openRepoProject-2's byte check names (R-400); RB2's alternative site, the bounds block, is not used; the Capabilities bullet for the batch block and the B-51 decision, which keeps its words and says that round B25 moves the clause, follow | `specs/project-clean/spec.md` (batch block); Capabilities; Decisions (B-51) |
+| B-124's second answer: design D11 quotes change 1's `contains-submodule` next step as "review, then git worktree remove --force yourself" (PR19 design.md:1189-1216 at `4f1c0e0`), which Brett Heap's Q4 (c), built by PR #19's round (q), rewrites | not graded | applied: D11 quotes the step in round (q)'s words, "push or otherwise keep each submodule's commits first, since --force deletes its repository with this worktree's git directory, then git worktree remove --force yourself", cited at PR #19's design.md:1409-1412 at `4512441`, the string present at `818311a` and `4512441` and absent at `88d0d36`, so that round (r) leaves it as round (q) wrote it; the round records that quote the old step stay as history | `design.md` D11 |
+| B-124's fourth answer, with rounds (p) to (r)'s changes to PR #19's design, proposal and tasks | not graded | applied in D4, no figure moving: D14 (its design.md:1085-1259 at `4512441`, sha256 `0f5fead479e50413`) is byte-identical to `88d0d36`'s :984-1158, and task 2.1 (its tasks.md:167-220) equals `818311a`'s and differs from `88d0d36`'s :148-199 only by the link to its results on PR #11 that round (p) adds; D4 notes that the `lstat` of `<dir>/.git` that Brett Heap's Q2 (2) adds for `contains-submodule`, at planning since round (q) and at each target's revalidation since round (r), is a filesystem call that starts no Git child, so that no count of children moves, and that its cost on a large tree is unmeasured by PR #19's own word (its design.md:586-594 and :616-617 at `4512441`), so that no figure counts it, as none of PR #19's does; every string that this change quotes from PR #19's design, proposal and tasks is present at `4512441`, save change 1's old `contains-submodule` step, which D11 now quotes in round (q)'s words (the row above); the cited ranges keep their bytes there, save the lines of its D18 region that this change cites at `4f1c0e0` (:1176-1182, :1183-1185 and :1189-1216, change 1's deferral line, the residual-window line and change 1's next steps), which rounds (q) and (r) edit, and task 2.1's measured basis (its tasks.md:148-158 at `4f1c0e0`), beside which round (p) puts its link, each holding by the strings that it quotes; the cites stay at their bases | `design.md` D4 |
+| B-124's note: lane 3's W133 lists `project-clean-review-safety` :172 at `d95eea2` among this change's lines that round (q) changes, beside the narrow guarantee, and this change's own text there is checked for what it restates | not graded | recorded: :172 at `d95eea2` is a line of the carried revalidation block, PR #19's pinned configuration for Git's own non-force check (`core.checkStat=default`, then the protocol pins), neither this change's own text nor the narrow guarantee, whose source is byte-identical at `f0bf538`, `88d0d36`, `818311a` and `4512441` and which names no pin; the re-base carries Q1's `core.ignoreCase=false` into that sentence, now at :194-195; no text of this change's own restates it; no action beyond B-126 | none |
+| This change's own restatements of the texts that rounds (p) to (r) replace or extend: round (p)'s unread-row form, which Q3 (a) replaces everywhere with "inspect, then delete `<path>` and its administrative directory `<common_dir>/worktrees/<admin_id>` by hand", round (h)'s second recovery text, and T8, which Q3 (b) extends | not graded | applied: no live text of this change quoted round (p)'s form or round (h)'s second recovery text in their words at `d95eea2`, as the round's cite check finds; the Capabilities bullets for the retire and reconcilable-result blocks name Q3 (a)'s text as the ceiling's second recovery text since round (q), in either mode, in place of round (p)'s; the bullet for the bounds block names Q3 (b)'s warning to run `git worktree prune --dry-run` first beside R-324's; design's round B22 Context sentence marks its quotation of T8 as its words at `2250830`, which round (q) extends, as round B21's marks round (m)'s; the classification bullet names Q4's `partially-removed` texts and the `stale-worktree` recommendations that round (r) states; the round records, which quote the earlier words, stay as history | Capabilities; `design.md` Context |
+| W128 (lane 3, `288fc34..d95eea2`) LOW-1: round (p) was accepted at `e0b1671` with R-365's text alone, and Q1 to Q9 went to round (q), so that the live text's "round (p) waits for Q1 to Q9" and "once that round lands" are overtaken; only the retire block is named for the re-base, where round (p) changes the retire and reconcilable-result blocks; and the key calls `88d0d36` PR #19's head and the Status lists PR #19's rounds only to (o) (design.md:18-19 and :271-274, proposal.md:61-66, :92 and :919-921, and `tasks.md`:105-108 at `d95eea2`) | LOW | B-121: applied in the live text: design's round B24 Context sentence adds that round (p) was accepted at `e0b1671` with R-365's text alone before round B24 landed, and that Brett Heap's Q1 to Q9 went to its round (q), so that round B25 re-bases the retire and reconcilable-result blocks and five more; design's key and the key name `4512441` as PR #19's head; the Status names rounds (p) to (r) and round B25; Dependencies and Sequencing and the L-1 and L-15 decision narrate rounds (p) to (r); and `tasks.md` 2.1 names each block's base, round B25 having re-based the retire and reconcilable-result blocks among the seven; the record sites stay as history (the next row) | `design.md` key, Context; Status; key; Dependencies and Sequencing; Decisions (L-1 and L-15); `tasks.md` 2.1 |
+| W128's LOW-1 in this change's records: round B24's paragraph (proposal.md:3296-3302 at `d95eea2`), its rows for B-114 and RE23-1 (:3336-3337) and design's rows B-114 to B-117 (design.md:394-397) give round (p) as waiting for Q1 to Q9 and name only the retire block for the re-base | LOW | B-121, B-128's first answer: applied in this row, those records staying as history (A-70): round (p) was accepted at `e0b1671` (lane openRepoProject-2's message received 2026-10-23 at 13:08:59Z, before round B24's commits of 13:16:06Z to 13:20:25Z) with R-365's text alone, changing the retire and reconcilable-result blocks; Brett Heap's Q1 to Q9 went to round (q) (R-380, R-389); B-118 named both blocks for round B25, and B-121 and B-122 moved its base to round (q), on which round B25 re-bases those two and five more | proposal, this table |
+| W128 LOW-2: design D8's prose (design.md:1446-1450 at `d95eea2`) and its row for a stage whose handed-over removals all returned without removing (:1461) call a removal that returned `ENOTDIR` one that found its name absent, but for the stage's `rmdir` by name `ENOTDIR` means that something that is not a directory is there | LOW | B-121: applied as W128 words it: D8 says that a removal that returned `ENOENT` found its name absent, R-208's decided absence, while one that returned `ENOTDIR`, the `rmdir` of a listed directory's name, found something there that is not a directory, so that the listed name no longer names the cache, and that either removed nothing, `removed: null` staying; the row names `ENOTDIR` as finding a non-directory at a listed directory's name; the spec's words, "its own removal having found it absent", name no errno and stand; round B24's row for RB2's LOW-2, which reads `ENOTDIR` as R-208 does, stays as history | `design.md` D8 |
+| W128 LOW-3: design's key range (design.md:36 at `d95eea2`) and its ruling rows B-110 to B-117 (:390-397), which round B24 changed and added, are in no "Section edited" cell of round B24's table, nor in its paragraph | LOW | B-121, B-128's first answer: applied in this row, round B24's table staying as history (A-70): the "Section edited" cell of its row for RB's MEDIUM-1 of 2026-10-23 also takes `design.md` key and ruling table; no word of any text is affected; this round's own table names design's key and ruling table in its first row and in the row for B-128 | proposal, this table |
+| W128 (lane 3, `288fc34..d95eea2`): its confirm read of round B24 | not graded | recorded: 0 HIGH, 0 MEDIUM, 3 LOW (the rows above) and nothing departing: all 12 applied rows are applied, the two applied with change declared, and the `git-failed` line is reproduced on Git 2.43.0 and 2.36.6, its wording standing (B-119); W120's L-3 equals W120's words with B-74's remount; the eight blocks are `cmp`-equal to their `88d0d36` bases, and only the two ADDED requirements change; valid 8 of 8, the carry check 70, 4 and 7, 59, 32 and 8 scenarios, the overview blob `a40458cb`, 485 added lines clean and lane 4's 8 pins found once each by content; RB2's LOW-5, B-114's re-base and RE23-1 are deferred, none shown as done; of its observations, O-4, that LOW-5's home is the round on round (q), is met by the LOW-5 row, O-1, a pointer on B-49's Decisions bullet if the lead wants one, gets no edit, the lead not having asked for it, and O-2, O-3 and O-5 ask nothing of this round; no action beyond the rows above | none |
+| W133 (lane 3, `e0b1671..818311a`): its confirm read of PR #19's round (q), and its items for this change (its section 6 (b)) | not graded | recorded: 0 HIGH, 4 MEDIUM, 1 LOW and nothing departing, for PR #19, whose round (r) takes them (R-391); for this change, its sites in the carried blocks are carried by the re-base (B-122, B-126), save its `project-clean-review-safety` :172, which the row on B-124's note answers, the narrow guarantee being unchanged (B-123); the four status pins of this change's own text take the fifth (B-123, B-124); of its quote sites, D11's `contains-submodule` step takes round (q)'s words (B-124), the `worktree-only-commits` step at design.md:1657 at `d95eea2` reads at `4512441` as quoted, round (q)'s Q5 rewording only gate 7's steps, which this change does not quote, and its cap-remedy sites (design.md:208, :226 and :379, and proposal.md:3123, :3159 and :3185 at `d95eea2`) are the round B21 and B22 Context sentences, whose quotations of T8 are marked as their words at `20084cd` and `2250830`, design's B-99 row and round records; its count sentences are the next row; no action beyond those rows | none |
+| W133's note that the count sentences "71, 22 and 24" of rounds B20 to B23's records (proposal.md:3105, :3164, :3235 and :3284 at `d95eea2`) become 72, 24 and 26 at `818311a` | not graded | recorded (B-128's fourth answer): those sentences give PR #19's counts at the round that each records, so they stay as history; the counts at `4512441` are 73, 25 and 26 (R-396); no edit | none |
+| R-380 and R-389, with round (p)'s acceptance: lane openRepoProject-2 accepted PR #19's round (p) at `e0b1671`, a fast-forward from `88d0d36` (its message received 2026-10-23 at 13:08:59Z; validate 9 of 9, scenario counts 71, 22 and 24); Brett Heap answered lane 2's Q1 to Q9 "yes, recommended for Q1-Q9" (2026-10-23T13:30:27Z, lane 2's R-380); and lane 2 accepted round (q) at `818311a`, which builds them (R-389; validate 9 of 9, scenario counts 72, 24 and 26) | not graded | recorded: their spec changes in the blocks that this change carries are B-122's, and the key's citation form for Q1 to Q9 is the first row's; no action beyond B-122 | none |
+| B-127: lane openRepoProject-2 accepted PR #19's round (r) at `4512441` (R-396, received 2026-10-23 at 17:54:38Z; validate 9 of 9, scenario counts 73, 25 and 26); its round (s) is still owed | not graded | applied: R-396's changes in the blocks that this change carries are B-126's, and round (r)'s fourth removed site, `project-command`'s Q8 sentence, now under Git's default `core.warnAmbiguousRefs`, is in no block that this change carries; design's ruling table gains B-127; of round (s), the classification and revalidation blocks, PR19/rs:111-112 at `4512441` included, and the batch block, which holds PR19/pc:811-812, are subject to it, and PR19/rs:10-14, the preservation block's registration-mismatch sentence, is not, by lane 2's R-408 (the next row), which corrects B-127's first account of round (s), that it might change rs:10-14 and `project-command`'s T9 lines; this change carries PR19/rs:10-14 byte for byte, once, at its `project-clean-review-safety` :12-16 (368 bytes), with no addition of its own inside it, and carries none of T9's lines | `design.md` ruling table |
+| R-408 and B-131: lane openRepoProject-2 has started PR #19's round (s) (its R-408), which by lane 2's account adds beside the classification block's stale-worktree text (PR19/pc:188-212 at `4512441`) a stating requirement and one scenario for feature 004's main-worktree recommendation, "The main worktree is never removed by project clean.", rewords PR19/rs:111-112 and PR19/pc:811-812 so that "every directory ... holding an index entry" matches feature 004's code, the worktree's own top level excluded and a directory that holds an entry below it included, and changes only D7's phrase and the M1 Open Questions label in its design; PR19/rs:10-14 is not touched, Brett Heap's M1 and M3 being unanswered; the lead rules that round B26 re-bases the blocks that round (s) changes once lane 2 sends its accepted sha (B-131) | not graded | applied: the Status, this round's paragraph and `tasks.md` 2.1 say that the classification and revalidation blocks, PR19/rs:111-112 included, and the batch block, which holds PR19/pc:811-812, are subject to round (s), and that PR19/rs:10-14 is not; in this change those lines are the revalidation block's status step at `project-clean-review-safety` :133-134 and the batch block's `contains-submodule` gate sentence at `project-clean` :439-440, which carry those lines' words at `4512441`, the revalidation block's joined by position after this change's insertion (lane 2's rotation around "record,"), and are cited nowhere here as settled; design's row B-127, committed in `18854da` before R-408 arrived, gives B-127 as ruled and stays as history (A-70), this row correcting its account of round (s); B-131, ruled after that commit, is cited here past the ruling range to B-130 that this round's brief sets, which design's key and ruling table and the key keep | Status; this table; `tasks.md` 2.1 |
+| B-118: after round B24 lands, round B25 re-bases the retire and reconcilable-result blocks on PR #19's round (p) at `e0b1671`, in two stages with lane openRepoProject-2's byte check; round (q) does not touch this change's blocks; RE23-1 waits for Q8 | not graded | recorded: B-121 reads its second clause as superseded by R-380, B-122 moves the base to round (q), and B-126 moves three blocks' to round (r); its two stages and lane 2's byte check stand; no action beyond them | none |
+| B-120: round B24's owed posting, the late read of CI and SonarCloud at `d95eea2` and this change's status section on its pull request for `d95eea2`, whose stale 42.7 s figure gives way to the proposal's own figures | not graded | recorded: done, the lead's late read finding CI and SonarCloud passing at `d95eea2` (2026-10-23, 13:54:41Z) and the pull request's description carrying the status section for `d95eea2`; the proposal's figures do not move in this round; no action | none |
+| B-121: lane 3's W128 read rides with round B25, on PR #19's round (q) with lane openRepoProject-2's byte check, together with RB2's LOW-5 and RE23-1 under Brett Heap's yes to Q8 | not graded | recorded: its items are the rows for W128's LOW-1 to LOW-3, RB2's LOW-5 and RE23-1; its reading of B-118's second clause as superseded is B-122's; no action beyond those rows | none |
+| B-125: round B25 holds its stage 2 for PR #19's round (r), and its stage 1 continues on it, re-basing the changed blocks from the checkpoint two ways before the held set goes to lane openRepoProject-2 | not graded | recorded: done; B-126 records the continuation on `4512441`, and stage 1 held the round's edits, uncommitted, until lane 2's byte check (R-400); no action | none |
+| B-128: the lead's answers to round B25's four questions after its stage 1 | not graded | applied: stage 2 writes the whole record, this table with W128's LOW-1 record row and LOW-3's row and the answer on `project-clean-review-safety` :172, the Status, both ruling ranges, design's key and the key, to B-130, and `tasks.md` 1.1, 1.4, 1.5 and 2.1; each block's base is the round that last changed it, as in rounds B22 and B23 (the first row); B-127 is the record number for R-396 and the round (s) note (its row above); the "71, 22 and 24" count sentences stay as history (W133's note); design's Context names the round's rulings as B-118 to B-130, and its ruling table gains rows B-127 to B-130 | `design.md` key, Context, ruling table; Status; key; this table; `tasks.md` 1.1, 1.4, 1.5, 2.1 |
+| B-129: round B25's stage 2 waits for the lane's next window, the meter having passed the lane's wrap-up point, this change's tree staying dirty on purpose with stage 1's work | not graded | recorded: the tree stayed so through the lane's swap to team01l, and before this stage began its diff equalled stage 1's by `cmp` (sha256 `1db30f02e309d134`); no action | none |
+| B-130: round B25's stage 2 runs now, on team01l, by a fresh writer | not graded | recorded: this stage commits the deltas as lane openRepoProject-2 checked them, each committed spec file equal by `cmp` to its stage 1 state, then the design, then this record; no action | none |
+| CI and SonarCloud at `d95eea2` | not graded | recorded: CI's six test jobs and SonarCloud pass at `d95eea2`, round B24's head, as the lead read the check runs on 2026-10-23 at 13:54:41Z (B-120); no action | none |
+| Codex's review of `d95eea2` | not graded | recorded: not requested; this round posts nothing on GitHub; no action | none |
+| The re-wrap (B-106's rule): this round's edits re-wrap the lines they touch at 79 columns, a code span of at most 40 characters kept on one line, so that lines move though their words do not: in the deltas, the carried blocks take PR #19's lines with its text, and this change's own re-wrap is the `project-clean` ADDED requirement's paragraph on the enumeration and its walk and its scenarios "The cache enumeration runs under the pins" and "A failed cache enumeration preserves the row, not the plan"; in `design.md`, the key (the Context's first paragraph), the Context paragraph on PR #19's rounds, Goals, D3's paragraphs on the child's kind and on its pins and the new one on a warned child, D4's paragraphs on the deferral drain, on the gate order and on PR #19's measured costs, D8's paragraph on `ENOENT` and `ENOTDIR`, D10's paragraphs on the order of the revalidation and on the child, D14's counts paragraph and the Migration Plan's steps 2 and 8; in this file, the Status, the key's paragraphs on `PR19/rs` and on citation forms, the What Changes bullets on detection, on the caps and on revalidating a cache target, the Capabilities bullets for the classification, batch, bounds, reconcilable-result, ADDED `project-clean`, preservation, revalidation and narrow-guarantee blocks and for `project-command`, the Dependencies and Sequencing bullet "Written on change 1 and change 2 (L-1, L-15)", the Decisions bullets B-51, B-55, CD-4 and CD-9 and the Open Questions bullet on the caps; in `tasks.md`, 1.4 and 2.1 | not graded | recorded: in each, the words are unchanged from `d95eea2` except where `git diff --word-diff d95eea2` shows a change; the largest are the Capabilities bullets for the batch and bounds blocks, 33 lines moved for their edits, design's D4 paragraph on PR #19's measured costs, 30, D3's paragraph on the child's pins and `tasks.md` 1.4, 25 each, the ADDED requirement's paragraph on the enumeration, 22, and the Open Questions bullet on the caps, 21 for four changed words; no action | none |
+| Lane openRepoProject-2's byte check of the held set (R-400, received 2026-10-23 at 18:31:08Z) | not graded | recorded: it passes, and stage 2 may commit: the set has 46 entries, its MANIFEST (`2a11b2dd26bc8b65`) and SHA256SUMS (`ed59ef4d2c0b72a2`) match what this lane declared, and every SHA256SUMS line checks; with its own word-level tool, which ignores whitespace, lane 2 found for each of the seven re-based blocks that this lane's copy of PR #19's block equals PR #19's at its base, that every base is current at `4512441`, and that the held block equals the tree's; the narrow guarantee's source at `f0bf538` equals `4512441`'s, and the tree's block equals `d95eea2`'s; the classification, retire, bounds and reconcilable-result blocks keep this change's own edits exactly and carry PR #19's exactly; it found three differences, each this change's own and declared: the batch block's two LOW-5 edits (B-119), a pure rotation around the repeated "record," in this change's insertion in the revalidation block (40 tokens, the same words), and a pure rotation around "#### Scenario:" in the preservation block's PR #19 scenarios (152 tokens), PR #19's scenarios before this change's; on round (s), lane 2 noted then that PR19/rs:10-14 is carried byte for byte at this change's :12-16, which its later R-408 leaves untouched (the row for R-408 and B-131) | none |
+
+### Re-read and Codex Findings (round B26)
+
+PR #19's round (s) at `dab8a64` (lane openRepoProject-2's R-408, which started
+it, and R-412, which accepted it on 2026-10-23), its answer to lane 3's W141
+read of round (r), changes four of the eight blocks that this change carries:
+the classification block states the main worktree's recommendation, "The main
+worktree is never removed by project clean.", in a paragraph and a scenario of
+its own (W141's MEDIUM-1), and the batch block's `contains-submodule` gate, the
+preservation block's `contains-submodule` clause and the revalidation block's
+hidden-state step take Q2 (2)'s `lstat` of `<dir>/.git` to a directory that
+holds an index entry directly or below it, other than the worktree's own top
+level, the gate running all of a row's `lstat`s in one filesystem call under
+one budget (W141's LOW-3; R-409); its round (t) at `54e869b` (R-415) builds
+Brett Heap's "yes, recommended for M1 and M3" of the same day (R-413) and
+changes none of the eight. The lead ruled the round as B-135 and B-139: the
+four blocks are re-based on `dab8a64`, the round that last changed each
+(B-128), PR #19's text carried byte for byte and this change's additions
+re-applied word for word with no adaptation, each block built two ways with the
+same bytes (this change's hunks re-applied, and `git merge-file`), two places
+where both sides change the same or adjacent lines joined by position with no
+word changed, and held for lane openRepoProject-2's byte check before the
+commit; the retire block keeps `4512441`, the bounds and reconcilable-result
+blocks `818311a` and the narrow guarantee `f0bf538`, whose text `dab8a64` keeps
+byte for byte, and `54e869b` keeps all eight byte for byte. The preservation
+block's registration-mismatch sentence, which this change carries with no
+addition inside it, is byte for byte as before, round (s) rewording only the
+`contains-submodule` clause before it, so that design's B-127 row is corrected
+in place (B-132, B-138). The round also takes B-132's three record answers,
+lane 3's W146 read of round (s) (B-138) and the currency at `54e869b`, PR #19's
+M1 and M3 named as ruled (B-139). Lane openRepoProject-2's byte check passed
+the held set (R-421), finding one difference, the declared join in the
+classification block. The deltas hold 62, 35 and 8 scenarios, the one more
+being PR #19's, round (s)'s in the classification block, so that of the carried
+scenarios 76 are byte-exact and 4 edited, beside 7 added in MODIFIED blocks. Of
+the 21 items here, 9 are applied and 12 need no action (B-131, B-133, B-134,
+B-136, B-140, B-142, round (s)'s other changes to PR #19's design, W152's read,
+R-410, CI and SonarCloud at `37c0c23`, Codex and the re-wrap); none is
+declined, and the row for lane 2's check is left out of the count. The round
+commits the deltas first, then the design, then this record with the Status,
+the key (PR #19 at `dab8a64`, its round (s), for the classification and batch
+requirements and, as `PR19/rs`, for the preservation and revalidation
+requirements, and `54e869b`, its round (t) and its head, keeping each text, the
+ruling range to B-142, M1 and M3 with R-413, and W141 and W146 as citation
+forms), What Changes, Capabilities, Dependencies and Sequencing, Decisions (L-1
+and L-15, CD-4), Open Questions and `tasks.md` 1.1, 1.4, 1.5 and 2.1, which
+name each block's base. The ranges that lane openRepoProject-4's spec 005 pins
+keep their bytes, as `cmp` against `37c0c23` confirms, though their line
+numbers move. `specs/project-overview/spec.md` is not edited.
+
+| Finding | Severity | Ruling | Section edited |
+| --- | --- | --- | --- |
+| B-135 and B-139: PR #19's round (s) at `dab8a64` (R-412; validate 9 of 9, scenario counts 74, 25 and 26) changes four of the eight blocks that this change carries, the classification, batch, preservation and revalidation blocks, and its round (t) at `54e869b` (R-415; counts 75, 25 and 26) none; the retire, bounds, reconcilable-result and narrow-guarantee blocks are unchanged since `4512441` | not graded | applied: by `cmp`, each block's source at its base at `37c0c23` equals its block at `dab8a64` save those four, and all eight are byte-identical at `dab8a64` and `54e869b`; so the four are re-based on `dab8a64`, the round that last changed each (B-128), each built two ways with the same bytes (this change's hunks re-applied, and `git merge-file --diff3` from this change's block at `37c0c23`), and the other four keep their bases, the retire block `4512441`, the bounds and reconcilable-result blocks `818311a` and the narrow guarantee `f0bf538`; PR #19's text is carried byte for byte, its word edits being 2 in classification, 3 in batch, 1 in preservation and 1 in revalidation, and this change's word edits, 3 in classification, 4 in batch, 5 in preservation and 5 in revalidation, are the same on the new base as on the old, with no adaptation; two places where both sides change the same or adjacent lines are joined by position with no word changed, classification's added scenarios, PR #19's "The main worktree's recommendation" before this change's one, and revalidation's status step, this change's five lines in place of the base line that round (s) leaves and round (s)'s four reworded lines after them; round (s) removes spec lines at exactly three sites, PR19/rs:9-11, PR19/rs:112-114 and PR19/pc:812-814 at `4512441`, all of them Q2 (2)'s wording, and the classification block only gains lines; the deltas' change is 27 lines added and 3 removed in `project-clean` and 8 and 6 in `project-clean-review-safety`; the key, What Changes, Capabilities, Dependencies and Sequencing, L-1 and L-15, CD-4 and Open Questions, and design's key, Context, Goals, D4, D10, D14 and Migration Plan, name the new bases, the cites into the four blocks taking their bases' lines; the Status, both ruling ranges, design's ruling table and `tasks.md` 1.1, 1.4, 1.5 and 2.1 record the round | `specs/project-clean/spec.md` (classification and batch blocks); `specs/project-clean-review-safety/spec.md` (preservation and revalidation blocks); `design.md` key, Context, Goals, D4, D10, D14, Migration Plan, ruling table; Status; key; What Changes; Capabilities; Dependencies and Sequencing; Decisions (L-1 and L-15, CD-4); Open Questions; `tasks.md` 1.1, 1.4, 1.5, 2.1 |
+| B-135's note and lane 2's correction of R-408 (received 2026-10-23 at 21:06:04Z): R-412 names the preservation block's `contains-submodule` clause, though R-408 said that PR19/rs:10-14 would not be touched and B-131 recorded that; PR19/rs:9-11 at `4512441` becomes rs:9-12 at `dab8a64`, the text after it reflowing by one line | not graded | applied: of PR19/rs:10-14 at `4512441`, round (s) rewords :10, which ends the `contains-submodule` clause, and reflows :11, and :12-14 are byte-identical at `dab8a64` :13-15; the registration-mismatch sentence, PR19/rs:12-16 at `4512441` and rs:13-17 at `dab8a64` (344 bytes), is byte-identical at `dab8a64` and `54e869b` and found once in this change's `project-clean-review-safety`, at :15-19, with no line of this change's own inside it; this change's own text beside it, the opening's cache exception and the closing sentence, restates neither and needs no change; design's B-127 row is corrected in place with a note (the row for B-132); the records that give round (s)'s first account, round B25's paragraph and its rows for B-127 and for R-408 and B-131, stay as history (A-70) | `specs/project-clean-review-safety/spec.md` (preservation block); `design.md` ruling table |
+| B-136: round B26 commits once, on PR #19's round (t): stage 1 finishes on `dab8a64` and holds, its MANIFEST recording that round (t) may change the preservation block's registration-mismatch sentence or the classification block, and that this change adds nothing inside that sentence | not graded | recorded: round (t) at `54e869b` changes neither (R-415, B-139), its one spec change being the scenario "A worktree whose path holds the main worktree" of "Clean reports local worktree state", which this change does not carry; the held set's MANIFEST records that, so that stage 1 continued on `54e869b` for no block, and lane 2 byte-checked the one held set (R-421); no action beyond B-139 | none |
+| B-137: the lead's answers to round B26's three questions: PR #19's new warm-cache figure for the `lstat` calls, about 0.25 s to a run at 50,000 tracked directories (R-406), stated in PR #19's words and counted in none of this change's figures; the classification block's added scenario's phrase carried unchanged; and the ruling range to the last B ruling at stage 2 | not graded | applied: D4 quotes PR #19's "All of a row's `lstat`s run in one filesystem call under one budget, `min(5 s, work remaining)`" and "On a warm cache they add about 0.25 s to a run at 50,000 tracked directories (the lead's R-406); on a cold cache or a deeply nested tree their cost is unmeasured" (its design.md:598-614 and :637-639 at `54e869b`) and counts them in no figure, as no figure of PR #19's D14 does, so that no figure moves: D14 (its design.md:1107-1281 at `54e869b`, sha256 `0f5fead479e50413`) and task 2.1 (its tasks.md:176-229, sha256 `36430530392798c2`) are byte-identical at `4512441`, `dab8a64` and `54e869b`; the classification block's added scenario keeps this change's words "with the recommendation that every `merged-removable` row carries", lane 3's combined read (B-133) being asked whether they hold now that the main worktree's row carries its own; the ruling ranges run to B-142, the last B ruling when this stage commits | `design.md` key, D4, ruling table; key |
+| W146 (lane 3, `4512441..dab8a64`): its confirm read of PR #19's round (s), and its items for this change: five blocks owed, the preservation block's Q2 (2) clause (this change's `project-clean-review-safety` :11-12 at `37c0c23`), the revalidation block's listing sentence (:133-134), the classification block's paragraph for the main worktree's row and its scenario (after `project-clean` :42) and the batch block's gate (:437-442); round B25's statements that the preservation block is untouched (design.md:444, proposal.md:3498-3499 and `tasks.md`:116-121 at `37c0c23`), which hold only for the registration-mismatch sentence; and three cites | not graded | B-138: applied: the five are the first row's four blocks, the classification block's two changes counted apart, now at `project-clean-review-safety` :11-14 and :135-138 and `project-clean` :44-52, :145-157 and :462-466, each of round (s)'s 31 non-blank added lines found once in the deltas; `tasks.md` 2.1 and design's B-127 row, corrected in place with a note, say that round (s) leaves the preservation block's registration-mismatch sentence, PR19/rs:13-17 at `dab8a64`, and that sentence only; D4 and D10 cite PR19/rs:98-101 at `4512441` as rs:99-102 at `dab8a64`, its text equal; `tasks.md` 2.1 cites at `dab8a64` the text that PR19/rs:111-112 and PR19/pc:811-812 held at `4512441`, the batch gate at PR19/pc:833-838, the preservation clause at PR19/rs:9-11 and the revalidation step at PR19/rs:112-114, and design's B-138 row gives the lines that round (s) removes, PR19/rs:112-114 and PR19/pc:812-814 at `4512441` (B-141); W146's "M1 and M3 still before Brett Heap", written before R-413, is answered by the row for R-413; round B25's paragraph and rows stay as history (A-70) | `design.md` D4, D10, ruling table; `tasks.md` 2.1 |
+| B-138's last item, W146's note: besides D7's phrase and the M1 label that R-408 named, round (s) changes D7's planning half, D18 and M3's lead-in in PR #19's design, none of which this change carries | not graded | recorded: at `dab8a64`, round (s) changes PR #19's Context (its design.md:85-87), D7's planning half (:588-611), which takes Q2 (2)'s scope to round (s)'s words and runs all of a row's `lstat`s in one filesystem call under one budget, and its revalidation half (:631-640), one call for the target as at planning; D18 (:1533-1550), which gives the main worktree's row its own recommendation by the parity reading; and its Open Questions, where M1's entry names the parity rule in place of FR-064 and M3's lead-in adds Q3 (b)'s dry-run warning (:2442-2469), and the account of Brett Heap's answers gives Q2's scope in round (s)'s words and the main worktree's recommendation (:2616-2635); round (t) then moves M1 and M3 out of the Open Questions, as ruled (R-413); this change carries none of them as spec text, and D4 quotes D7's new sentences and D10 cites its revalidation half at `54e869b` (the B-137 row); every string that this change quotes from PR #19's design is present at `54e869b`; no action beyond those rows | none |
+| This change's own restatements of the texts that round (s) changes: Q2 (2)'s scope, "every directory ... holding an index entry", which round (s) takes to a directory that holds one directly or below it, other than the worktree's own top level, with the gate's one call under one budget, and the classification block's recommendations, beside which round (s) states the main worktree's | not graded | applied: the Capabilities bullets for the classification, batch, preservation and revalidation blocks, design D4 and D10 and `tasks.md` 2.1 give the scope in round (s)'s words, the batch bullet and D4 the one call under one budget, and the classification bullet the main worktree's recommendation, "The main worktree is never removed by project clean.", and its scenario, among six; D10's paragraph on the order names the hidden-state probe's `lstat` in round (s)'s words; the key names lane 3's W141 and W146 reads and "W141's MEDIUM-1" as citation forms; no other live text gave round (r)'s scope as PR #19's current words, as the round's cite check finds; the round records, which quote the earlier words, stay as history | Capabilities; key; `design.md` D4, D10; `tasks.md` 2.1 |
+| B-139's currency: PR #19's current head for this change is `54e869b`, its round (t), which lane 2 accepted (R-415), every cite of PR #19's design, proposal and tasks checked by content there | not graded | applied: the key, design's key, Goals, D4, D10, D14, the Migration Plan, What Changes, Capabilities, Dependencies and Sequencing, L-1 and L-15, CD-4, Open Questions and `tasks.md` 2.1 name `54e869b` as PR #19's head, which keeps each text that this change carries and every string that it quotes; D11 cites change 1's `contains-submodule` step at PR #19's design.md:1431-1434 at `54e869b`, the string the same at `4512441` and `dab8a64`; the cited ranges keep their bytes at `54e869b`, save the regions of D18 and of the Open Questions that rounds (s) and (t) edit, each holding by the strings that it quotes; the records that name `4512441` as PR #19's head stay as history | `design.md` key, Goals, D4, D10, D11, D14, Migration Plan; key; What Changes; Capabilities; Dependencies and Sequencing; Decisions (L-1 and L-15, CD-4); Open Questions; `tasks.md` 2.1 |
+| R-413: Brett Heap answered PR #19's M1 and M3 "yes, recommended for M1 and M3" (2026-10-23 at 21:10:31Z), a ruling on PR #19's open questions, which its round (t) builds; B-139 names them as ruled wherever this change names them as open | not graded | applied: the key gives M1 and M3 with R-413 beside Q1 to Q9; design's Context, the Dependencies and Sequencing bullet "Written on change 1 and change 2 (L-1, L-15)" and the L-1 and L-15 decision name them as ruled, and the note of design's B-127 row says that M1 changes no spec text; no live text named them as open, and round B25's row for R-408 and B-131, "Brett Heap's M1 and M3 being unanswered", stays as history (A-70); Brett Heap's M4, for which lane 2 holds round (u), is named nowhere here as ruled | key; `design.md` Context, ruling table; Dependencies and Sequencing; Decisions (L-1 and L-15) |
+| B-132: round B25 is accepted at `37c0c23`, the three committed spec files equal to the state that lane openRepoProject-2 checked (R-400); and the lead's three answers for round B26: take the ruling ranges past B-131 to this round's last ruling, with design rows from B-131 on; correct design's B-127 row in place with a note, since it gives round (s)'s first account; and fix the weak T8 pointer of design's round B22 Context sentence, record-only | not graded | applied: the key and design's key give B-109 to B-142 and B-1 to B-142, and design's ruling table gains rows B-131 to B-142; the B-127 row cites the registration-mismatch sentence as PR19/rs:12-16 at `4512441` and gives in a note what it first cited, PR19/rs:10-14, and which of those lines round (s) changes (the second row); the round B22 sentence's pointer reads "(its words at `2250830`, which round (q) extends by Brett Heap's Q3 (b), the warning to run `git worktree prune --dry-run` first, as the bounds block's scenario "Row cap and planning failures" carries it at `818311a`)" | `design.md` key, Context, ruling table; key |
+| B-131: round B25's stage 2 finishes on PR #19's round (r), its record giving round (s)'s scope as R-408 gives it, and round B26 re-bases the blocks that round (s) changes once lane 2 sends its accepted sha, with lane 2's byte check again | not graded | recorded: done: round B25 committed at `37c0c23` (B-132), and the first row re-bases the four blocks that R-412 names, the preservation block among them, which R-408 left out (the second row); no action beyond those rows | none |
+| R-410: lane openRepoProject-2's check of this change's commit at `37c0c23` (received 2026-10-23 at 19:39:30Z): all seven carried blocks equal R-400's held set byte for byte, and the narrow guarantee is unchanged since `d95eea2`; round (s) gains lane 3's W139 items, a note in D7 on the nested `lstat`s' single-call budget and a design-only sentence | not graded | recorded: the note's budget is the batch gate's one call under one budget, which round (s) also states in the batch block (the first row) and D4 quotes (the B-137 row); the design-only sentence is in no block that this change carries; no action | none |
+| B-133: lane 3 reads rounds B25 and B26 in one pass once round B26 is final, from `d95eea2` to this round's head, covering round B25's items, the carry at this round's basis and this round's rows | not graded | recorded: round B25's acceptance stands meanwhile (B-132, R-410), and B-137 asks that read whether the classification scenario's phrase still holds (the B-137 row); no action | none |
+| B-134: this change's status section on its pull request is accepted at `37c0c23` | not graded | recorded: the lane's poster replaced only that section on 2026-10-23 at 19:43:42Z, and it read back byte-identical; this round posts nothing; no action | none |
+| B-140: round B26's stage 1 resumes on `54e869b` by a fresh writer, from the checkpoint's tree | not graded | recorded: before any edit, the tree's diff equalled the checkpoint's saved diff by `cmp` (sha256 `38c7b09f5bac81b2`), the spec deltas re-based and the design and record work not begun; the held set's MANIFEST is `195d4e791ca0cc65` and its SHA256SUMS `8ef050735d34b9aa`; no action | none |
+| B-141: round B26's stage 1 is accepted as held, its held set going to lane openRepoProject-2, with the lead's answers to its four questions | not graded | applied: this stage writes the Status, both ruling ranges, this table with its rows for round (s)'s other design changes and for lane 2's check, design's rows B-141 and B-142, and `tasks.md` 1.1, 1.4 and 1.5, task 2.1's base list standing as stage 1 wrote it; design's B-138 row gives the lines that round (s) removes at `4512441` by its hunks, PR19/rs:112-114 and PR19/pc:812-814 | Status; key; this table; `design.md` key, ruling table; `tasks.md` 1.1, 1.4, 1.5 |
+| B-142: lane 2's byte check passes (R-421), and round B26's stage 2 runs on `54e869b`; round (u) gets a round of its own | not graded | recorded: this stage commits on the first row's bases; PR #19's round (u) has not started, lane 2 holding it for Brett Heap's M4, the inspection-incomplete remedy beside an enclosing or shared-path row, to take it with W146's LOW at PR19/pc:836-838 at `dab8a64`, the batch block's single-call budget sentence, this change's `project-clean` :464-466; a round (u) that changes a block that this change carries re-bases that block in a round of its own; no action | none |
+| W152 (lane 3): its read of PR #19's round (t) at `54e869b` (received 2026-10-23 at 22:34:05Z) | not graded | recorded: 0 HIGH, 0 MEDIUM, 0 LOW and 3 OBS, and nothing for this change to change; validate 9 of 9 and counts 75, 25 and 26; only "Clean reports local worktree state" changes, which this change does not carry, and the eight blocks are byte-identical at `dab8a64` and `54e869b`, confirming R-415; no action | none |
+| CI and SonarCloud at `37c0c23` | not graded | recorded: CI's six test jobs and SonarCloud pass at `37c0c23`, round B25's head, all completed by 2026-10-23 at 19:33:45Z, as the lead read the check runs (B-132); no action | none |
+| Codex's review of `37c0c23` | not graded | recorded: not requested; this round posts nothing on GitHub; no action | none |
+| The re-wrap (B-106's rule): this round's edits re-wrap the lines they touch at 79 columns, a code span of at most 40 characters kept on one line, so that lines move though their words do not: in the deltas, the four blocks take PR #19's lines with its text, with no re-wrap of this change's own; in `design.md`, the key, the Context sentences of rounds B22 and B26, Goals, D4's gate list and its paragraph on PR #19's measured costs, D10's paragraphs on the targeted revalidation and on the order, D11's quote of the `contains-submodule` step, D14's counts paragraph and the Migration Plan's step 2 and its paragraph on the two diffs; in this file, the Status, the key's paragraphs on `PR19/pc`, on `PR19/rs`, on the rulings and on citation forms, the What Changes bullets on the caps and on revalidating a cache target, the Capabilities bullets for the classification, retire, batch, bounds, reconcilable-result, preservation, revalidation and narrow-guarantee blocks, the Dependencies and Sequencing bullet "Written on change 1 and change 2 (L-1, L-15)", the Decisions bullets L-1 and L-15 and CD-4 and the Open Questions bullet on the caps; in `tasks.md`, 1.4 and 2.1 | not graded | recorded: in each, the words are unchanged from `37c0c23` except where `git diff --word-diff 37c0c23` shows a change; no action | none |
+| Lane openRepoProject-2's byte check of the held set (R-421, received 2026-10-23 at 22:39:30Z) | not graded | recorded: it passes, and stage 2 may commit: the MANIFEST (`195d4e791ca0cc65`) and SHA256SUMS (`8ef050735d34b9aa`) match what this lane declared, and every SHA256SUMS line checks; for each of the four re-based blocks, this lane's copy of PR #19's block equals PR #19's at `dab8a64`, each base is current at `54e869b`, the held block equals the tree's, and this change's own word edits are kept; PR #19's edits are carried exactly in the batch, preservation and revalidation blocks, and the classification block's one difference is a pure rotation of PR #19's new scenario "The main worktree's recommendation" (120 tokens) around "#### Scenario:", the declared join, PR #19's scenario before this change's; the retire, reconcilable-result, bounds and narrow-guarantee blocks are unchanged from `37c0c23` in the tree | none |
