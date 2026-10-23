@@ -670,6 +670,19 @@ NOTE_CODES = {
     "row": ("partially-removed",),
 }
 
+# The warning that Brett Heap's Q3 (b) appends to the plain form of every text
+# that names `git worktree prune` ("yes, recommended for Q1-Q9", lead R-380;
+# lane 2's wave 22 triage T3, sr-removal F2, sr-evidence M-1): prune acts on
+# the whole repository with an expiry of now, and deletes the administrative
+# directory, and with it the HEAD reflog and the worktree-only commits, of
+# every unlocked entry whose path is missing, a worktree moved or on a drive
+# not mounted among them. The plain forms are the ones printed where no row of
+# the plan has a path that could not be read; the forms beside such a row keep
+# their own warning, unchanged. A recommendation ends in "." after it.
+PRUNE_DRY_RUN = ("; git worktree prune also deletes the entry, and so the HEAD reflog, of every other worktree whose "
+                 "path is missing, one moved or on an unmounted drive included, so run git worktree prune --dry-run "
+                 "first and remount or repair any it lists that still exists")
+
 # Human text: every new line of design.md D14 and D18, the lines the contract
 # fixes beyond D18 (plan review M8), and three baseline texts kept. Each
 # placeholder is a str.format field named as the docs spell it, so a line with
@@ -720,23 +733,17 @@ TEXT = {
     # `.git` and its registry entry present, and made no `.git` read that
     # failed (partial_removal_text()): Git then refuses `git worktree
     # remove --force` ("validation failed" with the `.git` file gone, "is not
-    # a working tree" with the entry gone) and accepts `git worktree prune`
-    # (lane 3's W52 F-1; Brett Heap's ruling "F-1: prune-then-delete", lead
-    # ruling R-263, amending ratified 0050f3e pcl:922-926).
+    # a working tree" with the entry gone) (lane 3's W52 F-1; Brett Heap's
+    # ruling "F-1: prune-then-delete", lead ruling R-263). It names the
+    # target's own administrative directory, {ADMIN},
+    # `<common_dir>/worktrees/<admin_id>` escaped as paths are, in place of
+    # `git worktree prune`, which acts on the whole repository, in every mode
+    # and beside any row (Brett Heap's Q3 (a), "yes, recommended for Q1-Q9",
+    # lead R-380). Q3 (a) supersedes R-365's form beside an unread row,
+    # `partial_removal_note_prune_unread`, which this replaces; the key keeps
+    # its name.
     "partial_removal_note_prune":
-        "Probable partial removal: inspect, then git worktree prune and delete {PATH} by hand.",
-    # The prune note's form where any row of the plan has a path that could
-    # not be read, its planning lstat having failed (`present` null;
-    # unread_paths(), partial_removal_text()): it advises no `git worktree
-    # prune` and warns against it, since prune acts on the whole repository
-    # and deletes the admin directory of a live worktree whose path Git
-    # cannot stat (EACCES), whichever worktree the note is about. Its
-    # warning also names `git worktree remove` and `git gc`, as the other
-    # no-prune texts do (lane 3's W52 F-1 (b) beside an unread row; lead
-    # R-365, ruled by Brett Heap on 2026-10-23, "Yes, warn (Recommended)").
-    "partial_removal_note_prune_unread":
-        "Probable partial removal: inspect, then delete {PATH} by hand; a row's path could not be read, "
-        "so do not run git worktree prune, git worktree remove or git gc until it can.",
+        "Probable partial removal: inspect, then delete {PATH} and its administrative directory {ADMIN} by hand.",
     # The ceiling's note where the rescan's lstat of the target's `.git`
     # failed other than for its absence or was cut, whatever it found of the
     # registry entry: `git worktree prune` deletes the admin directory of a
@@ -755,16 +762,18 @@ TEXT = {
         "Probable partial removal: inspect, unlock it, then git worktree remove --force {PATH} by hand.",
     # D18: the gate refusal and the remedies of the plan-blocking refusals.
     "target_excluded_gate": "Worktree is excluded: {REASON}; {NEXT_STEP}",
+    # Each plain remedy that names `git worktree prune` carries Q3 (b)'s
+    # warning (PRUNE_DRY_RUN; lead R-380), in either mode.
     "remedy_inspection_incomplete":
         "repair or remove the inspection-error rows first: git worktree repair, git worktree prune, "
-        "or remove the row by hand after review",
+        "or remove the row by hand after review" + PRUNE_DRY_RUN,
     # The variant where any row the refusal counts is excluded as
     # `registration-mismatch`, a linked worktree redirected by core.worktree or
     # core.bare (#19's round (h) at b3228bb, design.md D18; lane 2's R-258).
     "remedy_inspection_incomplete_redirect":
         "repair or remove the inspection-error rows first: git worktree repair, git worktree prune, "
         "unset core.worktree and core.bare in the repository's config or in a worktree's config.worktree, "
-        "or remove the row by hand after review",
+        "or remove the row by hand after review" + PRUNE_DRY_RUN,
     # The two remedies above where any row of the plan, a deadline-stopped row
     # included, has a path that could not be read, its planning lstat having
     # failed (`present` null; unread_paths()), the redirect's where that
@@ -815,11 +824,12 @@ TEXT = {
     # cannot stat (EACCES), on Git 2.43.0 and 2.36.6 (lane 3's W86 NM-1;
     # R-320, ruled by Brett Heap, "R-320: yes", lead R-321). The warning also
     # names `git worktree remove` and `git gc` (R-324, ruled by Brett Heap,
-    # "R-324: yes", lead R-343).
+    # "R-324: yes", lead R-343). It carries Q3 (b)'s warning too
+    # (PRUNE_DRY_RUN; lead R-380).
     "remedy_inspect_cap":
         "{N} rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale entries by hand; if a "
         "worktree's path cannot be read, do not run git worktree prune, git worktree remove or git gc until it "
-        "can",
+        "can" + PRUNE_DRY_RUN,
     "remedy_deadline_exceeded": "the run ran out of time; remove worktrees explicitly or re-run",
     # The contract beyond D18 (plan review M8): progress, kept branches and the
     # message of each refusal code that has no baseline message.
@@ -885,9 +895,14 @@ TEXT = {
     # The report's recommendation for the main worktree's row where the
     # ladder says merged-removable or merged-current, and for a locked stale
     # row: feature 004's own texts, which #19 at 4f1c0e0 does not carry (lane
-    # 3's W52 F-6 and F-10).
+    # 3's W52 F-6 and F-10). The stale row's, `recommendation_stale_worktree`
+    # (RECOMMENDATIONS's text) and the locked form carry Q3 (b)'s warning,
+    # ending in "." (PRUNE_DRY_RUN; lead R-380).
     "recommendation_main_worktree": "The main worktree is never removed by project clean.",
-    "recommendation_stale_locked": "Review, unlock it, then prune stale worktree metadata manually.",
+    "recommendation_stale_worktree":
+        "Review and prune stale worktree metadata manually" + PRUNE_DRY_RUN + ".",
+    "recommendation_stale_locked":
+        "Review, unlock it, then prune stale worktree metadata manually" + PRUNE_DRY_RUN + ".",
     # RECOMMENDATIONS's `stale-worktree` text and the locked form above where
     # any row of the plan has a path that could not be read, its planning
     # lstat having failed (`present` null; unread_paths()): each with the
@@ -957,10 +972,12 @@ NEXT_STEPS = {
         "or tag, or review, then git worktree remove yourself",
     # LQ-11 (the lead's R-125; #19 at 2e819ad, D18), naming both files from
     # which Git applies the redirect (#19 at 4f1c0e0; W52 F-3, R-248).
+    # Each carries Q3 (b)'s warning (PRUNE_DRY_RUN; lead R-380).
     "registration-mismatch":
         "review, then git worktree repair or git worktree prune, unset core.worktree and core.bare in the "
-        "repository's config, or in that worktree's config.worktree, or remove the row by hand",
-    "inspection-error": "review, then git worktree repair or git worktree prune, or remove the row by hand",
+        "repository's config, or in that worktree's config.worktree, or remove the row by hand" + PRUNE_DRY_RUN,
+    "inspection-error":
+        "review, then git worktree repair or git worktree prune, or remove the row by hand" + PRUNE_DRY_RUN,
     "locked-worktree": "unlock it yourself if it should go",
     # The contract's next steps for the three reasons D18 gives none (T052;
     # lead rulings R-57 H1, R-58 (b) and R-62 (b)).
@@ -3359,12 +3376,15 @@ def row_evidence(record, raw, main, read, refs, merged, target):
     returning the WorktreeRow, its document fields in WORKTREE_ROW_KEYS's
     order with `prunable` only on a stale row whose record says so (M11),
     then classify()'s class and partial_removal_note()'s notes. classify()'s
-    recommendation stands but in two cases (lane 3's W52 F-6 and F-10): the
+    recommendation stands but in three cases (lane 3's W52 F-6 and F-10): the
     main worktree's row, where the ladder says merged-removable or
     merged-current, takes TEXT's `recommendation_main_worktree`, since no
-    removal of it can succeed, and a locked stale row takes
+    removal of it can succeed; a locked stale row takes
     `recommendation_stale_locked`, since `git worktree prune` keeps a locked
-    entry. The class is unchanged in both. A plan then gives each stale row
+    entry; and any other stale row `recommendation_stale_worktree`,
+    RECOMMENDATIONS's text with Q3 (b)'s warning, since prune acts on the
+    whole repository (Brett Heap's Q3 (b), lead R-380). The class is
+    unchanged in all three. A plan then gives each stale row
     the form of its text that warns against `git worktree prune` wherever
     any of its rows' paths could not be read, which no one row's evidence
     shows (stale_recommendations(); R-320). record is
@@ -3429,6 +3449,8 @@ def row_evidence(record, raw, main, read, refs, merged, target):
         values["recommendation"] = TEXT["recommendation_main_worktree"]  # W52 F-6: never removed
     elif values["classification"] == "stale-worktree" and values["locked"]:
         values["recommendation"] = TEXT["recommendation_stale_locked"]  # W52 F-10: prune keeps a locked entry
+    elif values["classification"] == "stale-worktree":
+        values["recommendation"] = TEXT["recommendation_stale_worktree"]  # Q3 (b): prune's dry run first
     values["notes"] = partial_removal_note(values, status, main)
     if present is False and record["prunable"]:
         values["prunable"] = True
@@ -4513,7 +4535,7 @@ def stale_recommendations(plan):
     planning (unread_paths()), give each `stale-worktree` row of plan.rows
     TEXT's `recommendation_stale_worktree_unread` as its recommendation, or
     `recommendation_stale_locked_unread` for a locked row, in place of
-    RECOMMENDATIONS's text or `recommendation_stale_locked`, the one
+    `recommendation_stale_worktree` or `recommendation_stale_locked`, the one
     row_evidence() chose: each the same advice with a warning against `git
     worktree prune` appended, since prune deletes the admin directory of a
     live worktree whose path Git cannot stat (EACCES), and acts on the whole
@@ -5137,7 +5159,12 @@ def gate_rows(rows, plan, run):
 
 def next_step(reason):
     """D18's next step for an exclusion reason: NEXT_STEPS's, else the class's
-    recommendation (RECOMMENDATIONS); None for a reason with neither."""
+    recommendation (RECOMMENDATIONS), the `stale-worktree` class's being the
+    form a stale row's own recommendation takes, TEXT's
+    `recommendation_stale_worktree`, with Q3 (b)'s warning (lead R-380);
+    None for a reason with neither."""
+    if reason == "stale-worktree":
+        return TEXT["recommendation_stale_worktree"]
     return NEXT_STEPS.get(reason) or RECOMMENDATIONS.get(reason)
 
 
@@ -7024,20 +7051,18 @@ def branch_not_confirmed(target):
     return present is False or (present is None and target["stage"] in RESCANNED_STAGES)
 
 
-def partial_removal_text(target, plan_unread):
+def partial_removal_text(target):
     """The TEXT key of the partial-removal note of a target noted
     `partially-removed` at its removal ceiling (lane 3's W52 F-1; Brett
     Heap's ruling "F-1: prune-then-delete", lead ruling R-263), a pure
-    function; plan_unread says whether any row of the plan has a path that
-    could not be read at planning (bool(unread_paths(plan)), which
-    print_result() passes). First, `partial_removal_note_unread`, which
-    advises no prune, wherever the rescan made its `.git` lstat
-    (`git_file_read` true) and it gave no value (`git_file_present` None: it
-    failed other than for the file's absence, was cut at its budget, or met a
-    second SIGINT), whatever the rescan found of the registry entry, since
-    `git worktree prune` deletes the admin directory of a live worktree whose
-    `.git` Git cannot stat (#19's round (i) at 1a4785e; lane 3's W73 M-1,
-    lead ruling R-284). The `.git` is as unread where the rescan's lstat of the target's own
+    function. First, `partial_removal_note_unread`, which advises no prune,
+    wherever the rescan made its `.git` lstat (`git_file_read` true) and it
+    gave no value (`git_file_present` None: it failed other than for the
+    file's absence, was cut at its budget, or met a second SIGINT), whatever
+    the rescan found of the registry entry, since `git worktree prune`
+    deletes the admin directory of a live worktree whose `.git` Git cannot
+    stat (#19's round (i) at 1a4785e; lane 3's W73 M-1, lead ruling R-284).
+    The `.git` is as unread where the rescan's lstat of the target's own
     path failed other than for absence (`path_present` null in the
     reconciliation record, as where a directory above the target denies
     search), since the rescan then makes no `.git` read: the same note,
@@ -7047,31 +7072,39 @@ def partial_removal_text(target, plan_unread):
     remove --force` Git accepts, only where the rescan showed both the
     registry entry (`registry_entry_present` true) and the target's `.git`
     (`git_file_present` true) present, and `partial_removal_note_prune`
-    otherwise: the `.git` shown absent, or the entry gone with the `.git` shown
-    absent or not reached, since Git refuses that command once the `.git`
-    file is gone ("validation failed") or the entry is gone ("is not a
-    working tree"), and a value not established never shows both present.
-    That last note, where plan_unread is true, is
-    `partial_removal_note_prune_unread` instead: `git worktree prune` acts on
-    the whole repository and deletes the admin directory of a live worktree
-    whose path Git cannot stat (EACCES), whichever worktree this note is
-    about, so it advises deleting the target's path by hand and warns against
-    prune, as the plan's unread-row texts do (lane 3's W52 F-1 (b) beside an
-    unread row; lead R-365, ruled by Brett Heap, "Yes, warn (Recommended)").
-    `partial_removal_note_unread` and `partial_removal_note` do not change:
-    `git worktree remove --force P` acts on P alone, and the first already
-    advises no prune. A target that is a plain dict carries no `.git` read.
-    print_result()'s alone; a report row's note is partial_removal_note()'s
-    and keeps its own text."""
+    otherwise: the `.git` shown absent, or the entry gone with the `.git`
+    shown absent or not reached, since Git refuses that command once the
+    `.git` file is gone ("validation failed") or the entry is gone ("is not
+    a working tree"), and a value not established never shows both present.
+    That note names the target's own administrative directory, never `git
+    worktree prune`, which acts on the whole repository, so it is the same
+    in every mode and beside any row of the plan (Brett Heap's Q3 (a), "yes,
+    recommended for Q1-Q9", lead R-380, superseding R-365's form beside a
+    row whose path could not be read, which needed the plan). A target that
+    is a plain dict carries no `.git` read. print_result()'s alone; a report
+    row's note is partial_removal_note()'s and keeps its own text."""
     git_file = getattr(target, "git_file_present", None)
     record = target["reconciliation"] or {}
     unread = getattr(target, "git_file_read", False) or ("path_present" in record and record["path_present"] is None)
     if unread and git_file is None:
         return "partial_removal_note_unread"
-    entry = record.get("registry_entry_present")
-    if entry is True and git_file is True:
+    if record.get("registry_entry_present") is True and git_file is True:
         return "partial_removal_note"
-    return "partial_removal_note_prune_unread" if plan_unread else "partial_removal_note_prune"
+    return "partial_removal_note_prune"
+
+
+def partial_removal_admin(target):
+    """ADMIN of the ceiling's `partial_removal_note_prune` (Brett Heap's Q3
+    (a), lead R-380): the target's administrative directory,
+    `<common_dir>/worktrees/<admin_id>`, as bytes, from the plan's
+    repository identity and the target's row, both verified again at its
+    revalidation (steps 1 and 5), nothing read; None for a target that
+    carries neither, a plain dict."""
+    identity = getattr(target, "identity", None) or {}
+    admin_id = getattr(getattr(target, "row", None), "admin_id", None)
+    if identity.get("common_dir") is None or admin_id is None:
+        return None
+    return os.path.join(identity["common_dir"], b"worktrees", admin_id)
 
 
 def print_result(plan, targets, run):
@@ -7081,9 +7114,10 @@ def print_result(plan, targets, run):
     write recorded, never raised. First, D18's partial-removal note for each
     target noted `partially-removed`, in canonical order, its PATH in the
     command form (lead ruling R-83, P-2), its text partial_removal_text()'s
-    (W52 F-1, R-263), given whether any row of the plan has a path that could
-    not be read (unread_paths(); R-365). Then, when every target is
-    `removed` with reason null, `Removed N; branches kept: B1, B2.`, naming
+    (W52 F-1, R-263), its ADMIN partial_removal_admin()'s in the same form,
+    or `unknown` where none is carried (Q3 (a), lead R-380). Then, when
+    every target is `removed` with reason null, `Removed N; branches kept:
+    B1, B2.`, naming
     every selected target's branch, since the apply phase deletes no branch;
     otherwise D18's stop block at the first target that is not, its `Not
     attempted:` naming the `not-attempted` targets (`none` when there is
@@ -7096,8 +7130,10 @@ def print_result(plan, targets, run):
     their command form."""
     for target in targets:
         if "partially-removed" in (target["notes"] or ()):
-            key = partial_removal_text(target, bool(unread_paths(plan)))  # R-365: any row of the plan
-            say(run, TEXT[key].format(PATH=human_path(target["path"], command=True)))
+            admin = partial_removal_admin(target)
+            say(run, TEXT[partial_removal_text(target)].format(
+                PATH=human_path(target["path"], command=True),
+                ADMIN="unknown" if admin is None else human_path(admin, command=True)))
     stop = next((target for target in targets
                  if not (target["stage"] == "removed" and target["reason"] is None)), None)
     if stop is None:

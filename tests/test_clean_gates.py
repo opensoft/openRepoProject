@@ -1345,11 +1345,17 @@ class GatesTests(clean_support.CleanCase):
         # a single removal naming W, push and delete-branch (round (h)'s
         # fixtures, on Git 2.43.0 and 2.36.6). A plain inspection-error row, a
         # reflog read that fails with EISDIR, keeps the base remedy; beside a
-        # redirected row the variant prints.
+        # redirected row the variant prints. Both remedies end in Q3 (b)'s
+        # dry-run warning (Brett Heap's Q3 (b), "yes, recommended for Q1-Q9",
+        # lead R-380).
         variant = TEXT.get("remedy_inspection_incomplete_redirect")
         self.assertEqual(variant, "repair or remove the inspection-error rows first: git worktree repair, git worktree "
                                   "prune, unset core.worktree and core.bare in the repository's config or in a "
-                                  "worktree's config.worktree, or remove the row by hand after review")
+                                  "worktree's config.worktree, or remove the row by hand after review; git worktree "
+                                  "prune also deletes the entry, and so the HEAD reflog, of every other worktree "
+                                  "whose path is missing, one moved or on an unmounted drive included, so run git "
+                                  "worktree prune --dry-run first and remount or repair any it lists that still "
+                                  "exists")
 
         def refused(remedy):
             return "REFUSED: " + TEXT["plan_incomplete"].format(CODE="inspection-incomplete", REMEDY=remedy) + "\n"
@@ -1850,15 +1856,22 @@ class GatesTests(clean_support.CleanCase):
         # takes T6 (the locked row is excluded as locked-worktree, gate 4),
         # in the --all-safe preview and that single removal's. The exit
         # codes and every other line are as before, and nothing is removed.
-        # With the path readable again, the plain texts print.
+        # With the path readable again, the plain texts print, each ending in
+        # Q3 (b)'s dry-run warning (Brett Heap's Q3 (b), "yes, recommended
+        # for Q1-Q9", lead R-380).
         root = self.repo()
         self.bare_remote()
         merged = self.merged_worktree("001-merged", path=self.base / "001-merged")
         stale = self.stale_worktree(root, "002-stale")
         locked = self.stale_worktree(root, "003-locked", locked=True)
         tree, restore = self.unread_worktree(root, "004-unread")
-        plain, plain_locked = ("Review and prune stale worktree metadata manually.",
-                               "Review, unlock it, then prune stale worktree metadata manually.")
+        dry_run = ("; git worktree prune also deletes the entry, and so the HEAD reflog, of every other worktree "
+                   "whose path is missing, one moved or on an unmounted drive included, so run git worktree prune "
+                   "--dry-run first and remount or repair any it lists that still exists")
+        plain, plain_locked = ("Review and prune stale worktree metadata manually" + dry_run + ".",
+                               "Review, unlock it, then prune stale worktree metadata manually" + dry_run + ".")
+        self.assertEqual((TEXT["recommendation_stale_worktree"], TEXT["recommendation_stale_locked"]),
+                         (plain, plain_locked))
         unread, unread_locked = (
             "Review and prune stale worktree metadata manually; a row's path could not be read, so do not run "
             "git worktree prune, git worktree remove or git gc until it can.",

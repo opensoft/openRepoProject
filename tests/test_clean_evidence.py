@@ -114,6 +114,11 @@ RECOMMENDATIONS = {
     "pushed-unmerged": "Continue through the repository's normal pull-request or merge process.",
 }
 IGNORED_STATE = "Preserve this worktree; Git could not establish its ignored-file state."
+# Brett Heap's Q3 (b), "yes, recommended for Q1-Q9" (lead R-380): the warning the
+# plain form of every text that names `git worktree prune` ends in.
+PRUNE_DRY_RUN = ("; git worktree prune also deletes the entry, and so the HEAD reflog, of every other worktree "
+                 "whose path is missing, one moved or on an unmounted drive included, so run git worktree prune "
+                 "--dry-run first and remount or repair any it lists that still exists")
 MERGE_STATE = "Merge state could not be established from local refs; preserve it for review."
 
 # A clean, pushed, unmerged row of branch `f`: the ladder's last rung.
@@ -858,7 +863,12 @@ class EvidenceTests(clean_support.CleanCase):
                     keys = ROW_KEYS[:14] + (["prunable"] if "prunable" in expected else []) + ROW_KEYS[14:]
                     self.assertEqual(list(row), keys)
                     self.assertEqual({key: row[key] for key in expected}, expected)
-                    self.assertEqual(row["recommendation"], project.classify(row, "main")[1])
+                    # classify()'s text but on an unlocked stale row, which takes the
+                    # baseline's text with Q3 (b)'s dry-run warning (lead R-380).
+                    self.assertEqual(row["recommendation"],
+                                     TEXT["recommendation_stale_worktree"]
+                                     if row["classification"] == "stale-worktree"
+                                     else project.classify(row, "main")[1])
                     self.assertIs(row.detached, entry["branch"] is None, "the flag, not the text of `branch`")
                     self.assertNotIn("detached", row, "a document never writes the flag")
                     self.assertEqual([getattr(row, name) for name in ("raw_path", "main", "dev", "ino", "registered",
@@ -916,12 +926,18 @@ class EvidenceTests(clean_support.CleanCase):
             ("the main worktree on the target", record(b"refs/heads/main"), True, read(),
              ("protected-default", RECOMMENDATIONS["protected-default"])),
             ("a locked stale row", record(locked=True), False, stale, ("stale-worktree", locked_text)),
-            ("an unlocked stale row", record(), False, stale, ("stale-worktree", RECOMMENDATIONS["stale-worktree"])),
+            ("an unlocked stale row", record(), False, stale,
+             ("stale-worktree", TEXT["recommendation_stale_worktree"])),
             ("a locked present row", record(locked=True), False, read(),
              ("merged-removable", RECOMMENDATIONS["merged-removable"])),
         ]
         self.assertEqual((main_text, locked_text), ("The main worktree is never removed by project clean.",
-                                                    "Review, unlock it, then prune stale worktree metadata manually."))
+                                                    "Review, unlock it, then prune stale worktree metadata manually"
+                                                    + PRUNE_DRY_RUN + "."))
+        # Brett Heap's Q3 (b) (lead R-380): the stale row's plain text and its
+        # locked form end in the dry-run warning; classify() keeps the baseline's.
+        self.assertEqual(TEXT["recommendation_stale_worktree"],
+                         RECOMMENDATIONS["stale-worktree"].removesuffix(".") + PRUNE_DRY_RUN + ".")
         with self.no_io():
             for label, entry, main, reads, expected in cases:
                 with self.subTest(label):
@@ -935,8 +951,10 @@ class EvidenceTests(clean_support.CleanCase):
         # in the report and its JSON row; the explicit removal the baseline
         # text invited refuses (main-worktree, exit 2). A locked worktree whose
         # directory was moved away reads stale-worktree with
-        # recommendation_stale_locked, while an unlocked one keeps the
-        # baseline's text; `git worktree prune` keeps the locked entry until
+        # recommendation_stale_locked, while an unlocked one takes the
+        # baseline's text with Q3 (b)'s dry-run warning,
+        # recommendation_stale_worktree (lead R-380); `git worktree prune`
+        # keeps the locked entry until
         # `git worktree unlock`, then prunes it.
         root = self.repo()
         self.bare_remote()
@@ -965,7 +983,7 @@ class EvidenceTests(clean_support.CleanCase):
                           advice(outside, f"STALE-WORKTREE: {locked} [002-locked] "),
                           advice(outside, f"STALE-WORKTREE: {gone} [003-gone] ")],
                          ["  " + main_text, "  " + main_text, "  " + locked_text,
-                          "  " + RECOMMENDATIONS["stale-worktree"]], "\n" + clean_support.transcript(outside))
+                          "  " + TEXT["recommendation_stale_worktree"]], "\n" + clean_support.transcript(outside))
         rows = {row["path"]: row for row in self.run_json("clean", root, "--json").document["worktrees"]}
         self.assertEqual([(rows[str(path)]["classification"], rows[str(path)]["recommendation"])
                           for path in (root, locked)],

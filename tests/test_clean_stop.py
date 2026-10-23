@@ -102,16 +102,26 @@ def note_line(path):
     return TEXT["partial_removal_note"].format(PATH=shlex.quote(os.fsdecode(path)))
 
 
+# The administrative directory a literal Target carries (with_git_file()), as
+# the ceiling's second note prints it, in the command form (Q3 (a), lead R-380).
+ADMIN, ADMIN_SHOWN = b"/r/.git/worktrees/p 2", "'/r/.git/worktrees/p 2'"
+
+
 def with_git_file(target, present, read=None):
     """target, a literal target, as a project.Target whose rescan read its
     `.git` file as present (true, false or None, not read or no value), the
     one read the partial-removal note's text follows beside the registry
     entry (lane 3's W52 F-1; lead ruling R-263); read, whether the rescan
     made that read, by default whether present has a value, and true with
-    present None for a read that failed or was cut (W73 M-1, R-284)."""
+    present None for a read that failed or was cut (W73 M-1, R-284). It
+    carries the plan's identity and its row, whose admin id names ADMIN
+    (partial_removal_admin(); Q3 (a), lead R-380)."""
     target = project.Target(target)
     target.git_file_present = present
     target.git_file_read = present is not None if read is None else read
+    target.identity = {"root": b"/r", "common_dir": b"/r/.git", "dev": 1, "ino": 2}
+    target.row = project.WorktreeRow()
+    target.row.admin_id = b"p 2"
     return target
 
 
@@ -409,10 +419,16 @@ class StopTests(clean_support.CleanCase):
         # rescan whose lstat of the target's own path failed other than for
         # absence (the path null, as where a directory above it denies
         # search), which could make no `.git` read: #19's ceiling scenario
-        # (lane 3's W90 M-1, lead ruling R-329).
+        # (lane 3's W90 M-1, lead ruling R-329). The second note names the
+        # target's own administrative directory, ADMIN, in place of `git
+        # worktree prune`, which acts on the whole repository (Brett Heap's Q3
+        # (a), "yes, recommended for Q1-Q9", lead R-380).
         prune = TEXT.get("partial_removal_note_prune")
-        self.assertEqual(prune, "Probable partial removal: inspect, then git worktree prune and delete {PATH} by "
-                                "hand.")
+        self.assertEqual(prune, "Probable partial removal: inspect, then delete {PATH} and its administrative "
+                                "directory {ADMIN} by hand.")
+        self.assertEqual(prune.format(PATH="'/w/p 2'", ADMIN=ADMIN_SHOWN),
+                         "Probable partial removal: inspect, then delete '/w/p 2' and its administrative directory "
+                         "'/r/.git/worktrees/p 2' by hand.")
         unread = TEXT.get("partial_removal_note_unread")
         self.assertEqual(unread, "Probable partial removal: inspect {PATH} by hand; its .git could not be read, so "
                                  "do not run git worktree prune, git worktree remove or git gc until it can.")
@@ -438,40 +454,40 @@ class StopTests(clean_support.CleanCase):
                 target = with_git_file(literal_target(
                     "unknown", "removal-ceiling", path=b"/w/p 2", branch="b2", notes=[NOTE],
                     reconciliation=record(entry, path, True, SHA_B), exit_status=137), git_file, read)
-                self.assertEqual(project.partial_removal_text(target, False), key)
+                self.assertEqual(project.partial_removal_text(target), key)
+                self.assertEqual(project.partial_removal_admin(target), ADMIN)
                 run = types.SimpleNamespace(human=io.StringIO(), write_error=None)
                 project.print_result(plan, [target], run)
                 lines = run.human.getvalue().splitlines()
-                self.assertEqual([line for line in lines if line.startswith("Probable partial removal:")],
-                                 [TEXT[key].format(PATH="'/w/p 2'")])
-                self.assertEqual(lines[0], TEXT[key].format(PATH="'/w/p 2'"), "the note prints first")
-        with self.subTest("a plain dict carries no .git read"):
+                note = TEXT[key].format(PATH="'/w/p 2'", ADMIN=ADMIN_SHOWN)
+                self.assertEqual([line for line in lines if line.startswith("Probable partial removal:")], [note])
+                self.assertEqual(lines[0], note, "the note prints first")
+        with self.subTest("a plain dict carries no .git read and no administrative directory"):
             target = literal_target("unknown", "removal-ceiling", notes=[NOTE],
                                     reconciliation=record(True, True, True, SHA_B), exit_status=137)
-            self.assertEqual(project.partial_removal_text(target, False), "partial_removal_note_prune")
+            self.assertEqual(project.partial_removal_text(target), "partial_removal_note_prune")
+            self.assertIsNone(project.partial_removal_admin(target))
+            run = types.SimpleNamespace(human=io.StringIO(), write_error=None)
+            project.print_result(types.SimpleNamespace(root=b"/r oot"), [target], run)
+            self.assertEqual(run.human.getvalue().splitlines()[0],
+                             TEXT["partial_removal_note_prune"].format(PATH="/w/p1", ADMIN="unknown"))
 
-    def test_clean_the_prune_note_beside_an_unread_row_warns_against_prune(self):
-        # Lead R-365, ruled by Brett Heap on 2026-10-23 ("Yes, warn
-        # (Recommended)"), for lane 3's W52 F-1 (b): `git worktree prune` acts
-        # on the whole repository and deletes the admin directory of a live
-        # worktree whose path Git cannot stat (EACCES), so where any row of
-        # the plan has a path whose planning lstat failed (`present` null, a
-        # row the work deadline stopped included; unread_paths()) the ceiling's
-        # prune note, which names prune, is the form that advises deleting the
-        # target's path by hand and warns against prune, git worktree remove
-        # and git gc. The other two notes do not change: `git worktree remove
-        # --force P` acts on P alone, and the unread-`.git` note advises no
-        # prune already. A stale row, `present` false, reads its path, and
-        # does not count.
-        unread_key = "partial_removal_note_prune_unread"
-        expected = ("Probable partial removal: inspect, then delete {PATH} by hand; a row's path could not be "
-                    "read, so do not run git worktree prune, git worktree remove or git gc until it can.")
-        self.assertEqual(TEXT.get(unread_key), expected)
-        self.assertEqual(project.TEXT.get(unread_key), expected)
-        self.assertEqual(expected.format(PATH="'/w/p 2'"),
-                         "Probable partial removal: inspect, then delete '/w/p 2' by hand; a row's path could "
-                         "not be read, so do not run git worktree prune, git worktree remove or git gc until "
-                         "it can.")
+    def test_clean_the_ceiling_s_second_note_names_no_prune_beside_any_row(self):
+        # Brett Heap's Q3 (a), "yes, recommended for Q1-Q9" (lead R-380; lane
+        # 2's wave 22 triage T3, sr-removal F2): `git worktree prune` acts on
+        # the whole repository and deletes the administrative directory, and
+        # the HEAD reflog, of every other worktree whose path is missing, a
+        # moved or unmounted one included, so the ceiling's second note names
+        # the target's own administrative directory instead, whatever the
+        # plan's other rows. It supersedes R-365's form beside a row whose
+        # planning lstat failed, `partial_removal_note_prune_unread`, which is
+        # gone: the note is the same beside an unread row, a row the deadline
+        # stopped or a stale row as beside readable rows only, and print_result()
+        # reads no row of the plan for it.
+        self.assertNotIn("partial_removal_note_prune_unread", TEXT)
+        self.assertNotIn("partial_removal_note_prune_unread", project.TEXT)
+        for key in ("partial_removal_note_prune", "partial_removal_note_unread"):
+            self.assertNotIn("git worktree prune and", project.TEXT[key])
         deadline = [{"code": "deadline-exceeded", "message": TEXT["row_error_deadline_exceeded"].format(
             OPERATION="lstat")}]
         sibling, stale = plan_row(True, b"/w/other"), plan_row(False, b"/w/gone")
@@ -502,24 +518,17 @@ class StopTests(clean_support.CleanCase):
         for plan_label, plan, beside in plans:
             self.assertIs(bool(project.unread_paths(plan)), beside, plan_label)
             for label, entry, path, git_file, read, key in ceiling:
-                if beside and key == "partial_removal_note_prune":
-                    key = unread_key
                 with self.subTest(plan_label, note=label):
                     target = with_git_file(literal_target(
                         "unknown", "removal-ceiling", path=b"/w/p 2", branch="b2", notes=[NOTE],
                         reconciliation=record(entry, path, True, SHA_B), exit_status=137), git_file, read)
-                    self.assertEqual(project.partial_removal_text(target, bool(project.unread_paths(plan))), key)
+                    self.assertEqual(project.partial_removal_text(target), key)
                     run = types.SimpleNamespace(human=io.StringIO(), write_error=None)
                     project.print_result(plan, [target], run)
                     lines = run.human.getvalue().splitlines()
-                    self.assertEqual([line for line in lines if line.startswith("Probable partial removal:")],
-                                     [TEXT[key].format(PATH="'/w/p 2'")])
-                    self.assertEqual(lines[0], TEXT[key].format(PATH="'/w/p 2'"), "the note prints first")
-        with self.subTest("a plain dict carries no .git read"):
-            target = literal_target("unknown", "removal-ceiling", notes=[NOTE],
-                                    reconciliation=record(True, True, True, SHA_B), exit_status=137)
-            self.assertEqual(project.partial_removal_text(target, True), unread_key)
-            self.assertEqual(project.partial_removal_text(target, False), "partial_removal_note_prune")
+                    note = TEXT[key].format(PATH="'/w/p 2'", ADMIN=ADMIN_SHOWN)
+                    self.assertEqual([line for line in lines if line.startswith("Probable partial removal:")], [note])
+                    self.assertEqual(lines[0], note, "the note prints first")
 
 
 class KilledDuringDeletionTests(clean_support.CleanCase):

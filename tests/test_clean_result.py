@@ -23,6 +23,7 @@ import json
 import os
 from pathlib import Path
 import shlex
+import shutil
 import signal
 import subprocess
 import sys
@@ -797,10 +798,17 @@ class ResultTests(clean_support.CleanCase):
         # kill part way through `git worktree remove` leaves it), or with its
         # entry gone and its `.git` file kept (unregister). The rescan's reads
         # pick the partial-removal note: `git worktree remove --force` only
-        # where both are present, otherwise prune, then delete by hand. The
-        # Git first on PATH then answers each note as it says: --force
-        # accepted, or refused (128) with prune accepted and the path left a
-        # plain directory, unregistered, for deletion by hand.
+        # where both are present, otherwise the deletion by hand of the path
+        # and of its own administrative directory, ADMIN (Brett Heap's Q3 (a),
+        # "yes, recommended for Q1-Q9", lead R-380). The Git first on PATH
+        # then answers each note as it says: --force accepted, or refused
+        # (128), and the note followed: the path and ADMIN deleted, the entry
+        # gone from the registry. Following it never prunes, so a sibling
+        # whose path is missing, here the second worktree moved away as a
+        # drive that is not mounted, keeps its administrative directory and a
+        # commit its HEAD reflog alone holds, which `git worktree prune
+        # --dry-run` shows prune would delete (lane 2's wave 22 triage T3,
+        # sr-removal F2).
         table = clean_support.timing_table(removal_ceiling=1.5, term_grace=0.5, reap_wait=0.5)
         for mode, entry, git_file, key, refused in (
                 ("hang", True, True, "partial_removal_note", None),
@@ -821,7 +829,9 @@ class ResultTests(clean_support.CleanCase):
                 self.assertEqual(first["reconciliation"], record(entry, True, True, planned[0]))
                 self.assertEqual((second["stage"], second["reason"]), ("not-attempted", "batch-stopped"))
                 self.assertEqual(((trees[0] / ".git").exists(), trees[0].is_dir()), (git_file, True))
-                note = TEXT[key].format(PATH=quoted(trees[0]))
+                admin = self.common_dir(root) / "worktrees" / trees[0].name
+                self.assertIs(admin.is_dir(), entry, "the admin directory goes with the entry")
+                note = TEXT[key].format(PATH=quoted(trees[0]), ADMIN=quoted(admin))
                 self.assertEqual([line for line in result.stderr.splitlines()
                                   if line.startswith("Probable partial removal:")], [note], result.stderr)
                 force = subprocess.run([REAL_GIT, "-C", str(root), "worktree", "remove", "--force", str(trees[0])],
@@ -832,40 +842,56 @@ class ResultTests(clean_support.CleanCase):
                     continue
                 self.assertEqual(force.returncode, 128, force.stderr)
                 self.assertIn(refused, force.stderr)
-                self.git(root, "worktree", "prune")
+                self.assertEqual(note, f"Probable partial removal: inspect, then delete {quoted(trees[0])} and its "
+                                       f"administrative directory {quoted(admin)} by hand.")
+                sibling = trees[1]
+                self.git(sibling, "checkout", "-q", "--detach")
+                (sibling / "only-here").write_text("held only by this worktree's HEAD reflog")
+                held = self.commit(sibling, "held")
+                self.git(sibling, "checkout", "-q", NAMES[1])
+                offline = sibling.with_name(sibling.name + "-offline")
+                sibling.rename(offline)
+                shutil.rmtree(trees[0])  # the note, followed: the path, then its own admin directory
+                if admin.exists():
+                    shutil.rmtree(admin)
                 listed = self.git(root, "worktree", "list", "--porcelain")
                 self.assertNotIn(f"worktree {trees[0]}\n", listed)
-                self.assertTrue(trees[0].is_dir(), "left for deletion by hand")
-                self.assertEqual(self.git(root, "worktree", "prune", "--dry-run", "--verbose"), "")
+                self.assertIn(f"worktree {sibling}\n", listed)
+                dry = subprocess.run([REAL_GIT, "-C", str(root), "worktree", "prune", "--dry-run", "--verbose"],
+                                     env=self.env, capture_output=True, text=True, timeout=TIMEOUT)
+                self.assertEqual(dry.returncode, 0, dry.stderr)
+                self.assertIn(f"Removing worktrees/{sibling.name}: ", dry.stdout + dry.stderr,
+                              "prune would delete the moved sibling's admin directory")
+                self.assertNotIn(f"worktrees/{trees[0].name}:", dry.stdout + dry.stderr)
+                self.assertTrue((self.common_dir(root) / "worktrees" / sibling.name).is_dir())
+                offline.rename(sibling)
+                self.assertIn(held, self.git(sibling, "log", "-g", "--format=%H", "HEAD").split(),
+                              "the sibling's commit is still held")
 
     @clean_support.not_root
-    def test_clean_the_ceiling_s_prune_note_beside_an_unread_sibling_warns_against_prune(self):
-        # Lead R-365, ruled by Brett Heap on 2026-10-23 ("Yes, warn
-        # (Recommended)"), for lane 3's W52 F-1 (b): in mode single only P's
-        # own row counts for the plan's completeness, so a plan that holds
-        # another worktree whose path cannot be read, its planning lstat
-        # having failed (EACCES; `present` null), applies P. `git worktree
-        # prune`, which the ceiling's prune note names, deletes the admin
-        # directory of that live worktree, so there the note is the form that
-        # advises deleting P's path by hand and warns against prune, git
-        # worktree remove and git gc. The ceiling child leaves P with its
-        # `.git` file gone (unlink-git) or its entry gone (unregister), the
-        # two (b) notes; without the unread sibling the note is the prune
-        # note, as before. Where P keeps both (hang), the note is the --force
-        # form either way, since `git worktree remove --force P` acts on P
-        # alone. The apply result record carries no note text.
+    def test_clean_the_ceiling_s_second_note_beside_an_unread_sibling_names_no_prune(self):
+        # Brett Heap's Q3 (a), "yes, recommended for Q1-Q9" (lead R-380),
+        # superseding R-365's form of the note beside an unread row: in mode
+        # single only P's own row counts for the plan's completeness, so a plan
+        # that holds another worktree whose path cannot be read, its planning
+        # lstat having failed (EACCES; `present` null), applies P. The
+        # ceiling's second note names P's path and P's own administrative
+        # directory and no prune, beside that sibling as without it. The
+        # ceiling child leaves P with its `.git` file gone (unlink-git) or its
+        # entry gone (unregister); where P keeps both (hang), the note is the
+        # --force form either way, since `git worktree remove --force P` acts
+        # on P alone. The apply result record carries no note text.
         table = clean_support.timing_table(removal_ceiling=1.5, term_grace=0.5, reap_wait=0.5)
-        unread = ("Probable partial removal: inspect, then delete {PATH} by hand; a row's path could not be read, "
-                  "so do not run git worktree prune, git worktree remove or git gc until it can.")
-        self.assertEqual(TEXT["partial_removal_note_prune_unread"], unread)
-        for mode, entry, plain in (("unlink-git", True, "partial_removal_note_prune"),
-                                   ("unregister", False, "partial_removal_note_prune"),
-                                   ("hang", True, "partial_removal_note")):
+        self.assertNotIn("partial_removal_note_prune_unread", TEXT)
+        for mode, entry, key in (("unlink-git", True, "partial_removal_note_prune"),
+                                 ("unregister", False, "partial_removal_note_prune"),
+                                 ("hang", True, "partial_removal_note")):
             for beside in (True, False):
                 with self.subTest(mode=mode, unread_sibling=beside):
                     root, trees = self.batch(f"single-{mode}-{'unread' if beside else 'read'}", count=2,
                                              own_parent=True)
                     planned = [self.head(tree) for tree in trees]
+                    admin = self.common_dir(root) / "worktrees" / trees[0].name
                     parent = trees[1].parent
                     self.addCleanup(os.chmod, parent, 0o755)
                     if beside:
@@ -881,14 +907,11 @@ class ResultTests(clean_support.CleanCase):
                     self.assertEqual((first["path"], first["stage"], first["reason"], first["notes"]),
                                      (str(trees[0]), "unknown", "removal-ceiling", notes))
                     self.assertEqual(first["reconciliation"], record(entry, True, True, planned[0]))
-                    key = "partial_removal_note_prune_unread" if beside and plain == "partial_removal_note_prune" \
-                        else plain
-                    note = TEXT[key].format(PATH=quoted(trees[0]))
+                    note = TEXT[key].format(PATH=quoted(trees[0]), ADMIN=quoted(admin))
                     self.assertEqual([line for line in result.stderr.splitlines()
                                       if line.startswith("Probable partial removal:")], [note], result.stderr)
                     self.assertNotIn("Probable partial removal", result.stdout, "the record carries no note text")
-                    if key == "partial_removal_note_prune_unread":
-                        self.assertEqual(note, unread.format(PATH=quoted(trees[0])))
+                    self.assertNotIn("git worktree prune", note)
                     self.assertTrue(trees[1].is_dir(), "the sibling is untouched")
 
     @clean_support.not_root
