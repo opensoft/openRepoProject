@@ -178,8 +178,8 @@ verdict) to no section here; no spec delta changes (proposal, "Re-read and Codex
 Findings (round A23)"). Round A24 maps A-98 as A-100 splits it (the lane's
 reader RA2 of the review wave of 2026-10-23: its HIGH L3, the holder advice,
 which re-opens A-45 and A-60, its MEDIUM L1 and L2 and its LOW L4 to L7, N1 and
-N2), with the reader RD's L1, lane openRepoProject-3's W120 L-2, the reader RE's
-RE23-2, RE23-4, RE2-2 and RE-4 and A-91's record lines, to the Context table
+N2), with the reader RD's L1, lane openRepoProject-3's W120 L-2 and the reader
+RE's RE23-2, RE23-4, RE2-2 and RE-4, to the Context table
 (round A24's rows) and its account of feature 004, D3 (the branch kind), D4
 (the lines' account), D5 (`post_check_sha`), D7 (RE-4 at `f3724fc`, N2), D8
 (the holder, `reflog-unmerged`, `git-refused`, moved, `Unconfirmed` and summary
@@ -189,9 +189,13 @@ deltas edit the ADDED requirement's `branch_retirement` fields, its summary,
 four ADDED scenarios, and edit the review-safety scenario's THEN and add an AND
 to it (proposal, "Re-read and Codex Findings (round A24)"); PR #19's round
 (p), its F-1 (b) and the other items that wait on it or on Brett Heap's Q8 are
-round A25's (ruling A-100). Its ruling A-103, on the writer's five decisions,
-maps to D8 (the main-worktree holder line, which names the detach or a checkout
-of MERGE_TARGET there, one text whatever the upstream's state, narrowing A-45)
+round A25's (ruling A-100), the (b) text not fitting the holder whose path
+could not be read, which keeps R-324's clause (ruling A-101; D8); A-91's record
+lines, lane openRepoProject-3's W109 LOW-1 and LOW-2 on round A23's table, map
+to the proposal's table alone. Its ruling A-103, on the writer's five
+decisions, maps to D8 (the main-worktree holder line, which names the detach or
+a checkout of MERGE_TARGET there, one text whatever the upstream's state,
+narrowing A-45)
 and Risks (the checkout's residual); the spec deltas edit that line's template
 and the two literals of the scenario that carries it, adding no scenario.
 
