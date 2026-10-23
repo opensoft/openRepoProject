@@ -8,10 +8,11 @@ Lane: openRepoProject-4
 
 **Status**: Draft. Created before feature 004 merges, on Brett Heap's word
 (below), and planned before it on his word of 2026-10-22, "lane 4 plans 005
-now" (the plan at `a80f10b`, its revisions 1 to 5 at `aeb0bb2`, `6fb619c`,
-`664461f`, `06b16e1` and `464c361`); the tasks and the implementation still
-wait for his word, as the implementation does for feature 004's merge into
-`main` (Clarifications, C-56).
+now" (the plan at `a80f10b`); the tasks and the implementation still wait for
+his word, as the implementation does for feature 004's merge into `main`
+(Clarifications, C-56). Later plan revisions, each recorded in the plan's
+research.md (its "Revision" sections), take the lane readers' findings and
+re-pin to peer heads; none changes a ruling.
 
 **Input**: User description: "Realize the ratified OpenSpec change
 add-project-overview: a read-only `project overview [--root D]...
@@ -78,7 +79,7 @@ implementation re-pin every citation against the `main` of its day (proposal,
 "Dependencies and Sequencing").
 
 **Re-checked on 2026-10-21**: Every pin above stays. Feature 004's branch head
-is now `2cf34d3`, which changes the documents after `96a08d4` by doc rounds 7
+was then `2cf34d3`, which changes the documents after `96a08d4` by doc rounds 7
 to 12 (lead rulings R-63 to R-96; merged as `3de0e69`, `48d6c08`, `3527eb2`,
 `e87e57c`, `e7448a3` and `1057942`), the hand-run record `hand-runs.md` (T132)
 and its traceability record, and its code by every remaining task: the US1
@@ -679,15 +680,11 @@ that lane agreed on 2026-10-21 to carry it in.
   still change. On Brett Heap's word typed at 2026-10-22T19:46:57Z, "lane 4
   plans 005 now", recorded by lane openRepoProject-4 as a RULED line at
   19:49:51Z (issue #10), the plan step starts before that merge, as C-21's word
-  moved the specify step: the plan was committed at `a80f10b`, its revisions 1
-  and 2 at `aeb0bb2` and `6fb619c`, its revision 3 at `664461f` (R20's five
-  chosen and six open items after C-72; O11's part 1 built, its part 2 held),
-  its revision 4 at `06b16e1` (D5's clause 2 only through O6's text; C-72's
-  ordering sentence; feature 004 read at `d6bac50` and #19 at `88d0d36`) and
-  its revision 5 at `464c361` (C-72's open items at `54dc025` word for word;
-  O11's part 2 (A) with its own remedy row; #27 at `288fc34`), and
-  the tasks and the implementation still wait for his word. Where applied:
-  header, Status; Assumptions; Dependencies.
+  moved the specify step: the plan was committed at `a80f10b`, and the tasks
+  and the implementation still wait for his word; later plan revisions, each
+  recorded in the plan's research.md (its "Revision" sections), take the lane
+  readers' findings and re-pin to peer heads; none changes a ruling. Where
+  applied: header, Status; Assumptions; Dependencies.
 - **C-57** Q: Should the overview's tests also run in the Git 2.36 floor job?
   -> A: Q3 B: A small set: the version check accepting Git 2.36, and one
   end-to-end run over a fixture with linked worktrees, merge targets and a
@@ -3552,9 +3549,10 @@ and [P] are change 1's requirements as the header names them.
   before feature 004 merges on Brett Heap's word of 2026-10-11T16:14:21Z,
   for the specify step only (header; change `tasks.md` 3.1 and Speckit
   Handoff), and planned before it on his word of 2026-10-22T19:46:57Z, "lane 4
-  plans 005 now", for the plan step only, the plan at `a80f10b` and its
-  revisions 1 to 5 at `aeb0bb2`, `6fb619c`, `664461f`, `06b16e1` and `464c361`
-  (C-56).
+  plans 005 now", for the plan step only, the plan at `a80f10b` (C-56); later
+  plan revisions, each recorded in the plan's research.md (its "Revision"
+  sections), take the lane readers' findings and re-pin to peer heads; none
+  changes a ruling.
 - workBenches' `onp` and any other installed copy of `project` gain the
   overview only when their owners move their pins; this feature edits
   nothing outside this repository (proposal, "What This Repository Does Not
@@ -4909,12 +4907,13 @@ and [P] are change 1's requirements as the header names them.
   `config` that is a directory, on real Git, for rows 4c and 4b (`2057c31`) and
   its doc round 23, and its `f3724fc`, doc round 24, changes its documents
   alone, `project` and its tests as at `d6bac50`; this spec keeps #19 at
-  `2250830` and its feature 004 pins as they stand, and the plan, at its
-  revisions 4 and 5, `06b16e1` and `464c361`, reads #19 at `88d0d36` and
-  feature 004 at `d6bac50`. So PR #34 does not merge before #19's ratification
-  of those commits; should Brett Heap want #34 sooner, the four items move to a
-  later amendment of change 2, and A1 lands without them (its :1281-1284), the
-  parts of this spec that follow them following that amendment instead.
+  `2250830` and its feature 004 pins as they stand; later plan revisions, each
+  recorded in the plan's research.md (its "Revision" sections), take the lane
+  readers' findings and re-pin to peer heads; none changes a ruling. So PR #34
+  does not merge before #19's ratification of those commits; should Brett Heap
+  want #34 sooner, the four items move to a later amendment of change 2, and A1
+  lands without them (its :1281-1284), the parts of this spec that follow them
+  following that amendment instead.
   - LQ-10, on PR #19 at `ea697ba`, pending its ratification: every status
     probe, the hidden-state probe and the removal pass `-c core.trustctime=true
     -c core.checkStat=default` after `-c core.fsmonitor=false`, four status

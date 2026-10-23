@@ -1210,6 +1210,25 @@ Lane: openRepoProject-4
   deltas at `e4a30fc` (64 of 64). A1 stays cited at `e4a30fc`, and
   `clarify-questions.md` is unchanged. Re-validation: 16 of 16 items pass, with
   the checks of iteration 2 re-run by script on the edited spec.
+- 2026-10-23, a thirty-eighth pass, by the lead's commit 3aj decisions: the
+  spec no longer lists the plan's revisions by sha, since each new plan
+  revision made those lists stale and called for another spec commit. The
+  Status, C-56, the Assumptions and the round (n) record keep the plan at
+  `a80f10b`, its step begun before feature 004's merge on Brett Heap's word,
+  and in place of each list say that later plan revisions, each recorded in the
+  plan's research.md (its "Revision" sections), take the lane readers' findings
+  and re-pin to peer heads, none changing a ruling. A revision that the spec
+  cites for a fact keeps its sha: R20 at `664461f`, "five chosen, six open", as
+  C-72's question has it; O11 added in the plan's revision 3 at `664461f`
+  (C-72, FR-007, the A1 bullet); and R4 at `6fb619c` (the feature 004 bullet).
+  Lane openRepoProject-3's W111 read of 3ai is taken: its LOW-1, C-56's "word
+  for word" for revision 5, goes with C-56's list, and its OBS-A, "is now
+  `2cf34d3`" in the re-check dated 2026-10-21, reads "was then". No pin moves.
+  No checklist category changes, and the totals below were recounted by script.
+  Traceability is checked against A1's ratified deltas at `e4a30fc` (64 of 64).
+  A1 stays cited at `e4a30fc`, and `clarify-questions.md` is unchanged.
+  Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run by
+  script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -1334,4 +1353,4 @@ to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
 passes of that day, and after the thirteenth to thirty-fourth passes on
-2026-10-22 and the thirty-fifth to thirty-seventh on 2026-10-23.
+2026-10-22 and the thirty-fifth to thirty-eighth on 2026-10-23.
