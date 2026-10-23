@@ -38,12 +38,13 @@ Lane: openRepoProject-4
     children of #25, which the overview never starts, are recorded outside
     Q9 B's claim, the caller's environment passing to them unread (#29's D5 at
     `11a0ba2`, which records the residual at `79d196a`, the same at `86324ff`,
-    `2eeaec4`, `6b5bf8f`, `2ab3743`, `e1a9f84`, `a6080a7` and `a529310`;
-    EC-022, FR-040). Since A1's revision 6 at `d644517`, EC-022 and FR-040 also
-    record that LQ-10's status pins widen the clean-filter residual, as #19's
-    design Risks says (its `design.md:1420-1425` at `1ebdd90`) and A1 records
-    beside requirement 9's sentence after POD:717 (its `proposal.md:1443-1452`
-    at `e4a30fc`), ratified (lane openRepoProject-3's W25 L10).
+    `2eeaec4`, `6b5bf8f`, `2ab3743`, `e1a9f84`, `a6080a7`, `a529310` and
+    `5ba7984`; EC-022, FR-040). Since A1's revision 6 at `d644517`, EC-022 and
+    FR-040 also record that LQ-10's status pins widen the clean-filter
+    residual, as #19's design Risks says (its `design.md:1420-1425` at
+    `1ebdd90`) and A1 records beside requirement 9's sentence after POD:717
+    (its `proposal.md:1443-1452` at `e4a30fc`), ratified (lane
+    openRepoProject-3's W25 L10).
 - [x] CHK004 Is the treatment of those residuals decided (accept, scrub the
   trace variables, or drop the user's configuration)? [Completeness, Spec
   EC-022]
@@ -164,8 +165,8 @@ read of `08d5d79`, and CHK003 after A1's revision 3 at `367223a` and #29's
 #29's `2eeaec4`, and again after A1's revision 6 at `d644517`, and after its
 revision 7 at `0394be4` and #29's `6b5bf8f`, and after its revisions 8, 9 and
 10 at `177eadf`, `4261ff8` and `c193f7b`, and after its ratification at
-`e4a30fc`, CHK003 also after #29's `2ab3743`, `e1a9f84`, `a6080a7` and
-`a529310`, and CHK002 and CHK019 after #19's round (q) at `818311a`, whose
+`e4a30fc`, CHK003 also after #29's `2ab3743`, `e1a9f84`, `a6080a7`, `a529310`
+and `5ba7984`, and CHK002 and CHK019 after #19's round (q) at `818311a`, whose
 fifth status pin is O20, open (C-72), their categories unchanged. 25 items: 23
 pass, 1 fixed in the spec, 0 open, 1 plan notes, 0 new questions. An open item
 waits on the question or residual its result names; a plan note is for the

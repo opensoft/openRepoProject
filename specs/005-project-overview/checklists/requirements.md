@@ -1186,12 +1186,12 @@ Lane: openRepoProject-4
   plan's pins at `06b16e1`, #19 at `88d0d36` and feature 004 at `d6bac50`; this
   spec keeps #19 at `2250830` and its feature 004 pins, and no pin moves (#19's
   rounds (p) at `e0b1671` and (q) at `818311a` are recorded since as later
-  heads, by the forty-first pass, the spec keeping its reading at `2250830`).
-  No checklist category changes, and the totals below were recounted by script.
-  Traceability is checked against A1's ratified deltas at `e4a30fc` (64 of 64).
-  A1 stays cited at `e4a30fc`, and `clarify-questions.md` is unchanged.
-  Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run by
-  script on the edited spec.
+  heads, by the forty-first pass, and (r) at `4512441` by the forty-second, the
+  spec keeping its reading at `2250830`). No checklist category changes, and
+  the totals below were recounted by script. Traceability is checked against
+  A1's ratified deltas at `e4a30fc` (64 of 64). A1 stays cited at `e4a30fc`,
+  and `clarify-questions.md` is unchanged. Re-validation: 16 of 16 items pass,
+  with the checks of iteration 2 re-run by script on the edited spec.
 - 2026-10-23, a thirty-seventh pass, by the lead's commit 3ai decisions: lane
   openRepoProject-3's W105 read of 3ah is taken. LOW-10: C-72 says what O9's
   (C) is, the overview following feature 004 (the plan's R20 O9 (C)). LOW-11:
@@ -1360,12 +1360,46 @@ Lane: openRepoProject-4
   C-72's "Where applied" names FR-016, FR-032 and SC-004, and this file's
   thirty-sixth and fortieth passes point to the record. #19's round (r) at
   `4512441` is not recorded, the map of this spec's cites at that head not
-  being complete when this pass reached it (18:08:12Z); #27 stays at `d95eea2`
-  and feature 004 at `d8724e2`. No checklist category changes, and the
-  totals below were recounted by script. Traceability is checked against A1's
-  ratified deltas at `e4a30fc` (64 of 64). A1 stays cited at `e4a30fc`, and
-  `clarify-questions.md` is unchanged. Re-validation: 16 of 16 items pass, with
-  the checks of iteration 2 re-run by script on the edited spec.
+  being complete when this pass reached it (18:08:12Z; it is recorded since, by
+  the forty-second pass, the spec keeping its reading at `2250830`); #27 stays
+  at `d95eea2` and feature 004 at `d8724e2`. No checklist category changes, and
+  the totals below were recounted by script. Traceability is checked against
+  A1's ratified deltas at `e4a30fc` (64 of 64). A1 stays cited at `e4a30fc`,
+  and `clarify-questions.md` is unchanged. Re-validation: 16 of 16 items pass,
+  with the checks of iteration 2 re-run by script on the edited spec.
+- 2026-10-23, a forty-second pass, by the lead's commit 3an decisions. #19's
+  round (r) at `4512441` (the lead's R-391, on lane openRepoProject-3's W133
+  MEDIUM-2, MEDIUM-4 and LOW-1 and its W131 LOW-3) is recorded beside rounds
+  (p) and (q) in the round (n) record, by lane openRepoProject-4's map of this
+  spec's cites at that head, the record saying that this spec keeps its reading
+  of #19 at `2250830`. The cites set at `818311a` move to their lines at
+  `4512441`, sha and lines both, the cited text byte-identical by `cmp`:
+  FR-016's and the LQ-10 bullet's pcm:158-168, FR-032's and the LQ-10 bullet's
+  pcl:809-815, FR-032's prs:12-16, FR-028's pcl:166, proposal :2867-2872 and
+  design :1491-1500 and :1476-1490 (round (r) starting a sentence of its own on
+  :1500), FR-035's design :1397-1403, the A1 bullet's row 4b at design
+  :550-554, and the record's list of the round (n) and round (o) records'
+  cites, pcl:166, :400-404, :1268-1273 and :587-592, design :550-554 and :73
+  and proposal :2897-2908; and EC-033's pcm:265-271 and design D1's :174-191,
+  which round (r) edits. EC-033 carries round (r)'s qualifier, "under Git's
+  default `core.warnAmbiguousRefs`" (pcm:268-271), on its `refs/heads/HEAD`
+  consequence, and #19's record of that setting false; FR-028 cites [L]'s
+  statement of the four stale forms (pcl:188-213) beside the design cites, O18
+  staying open; and the record names round (r)'s edits, its open questions M1
+  and M3, texts that the overview never shows, and the requirements it edits
+  that #27's and #29's blocks carry. C-72 is unchanged: its "round (q) at
+  `818311a`" names the round that raised O17 to O20, whose texts round (r)
+  leaves byte for byte, and the four stay open. In security.md, CHK003 adds
+  #29's `5ba7984`, whose D5 residual is byte-identical to its text at
+  `a529310`, its Evaluation recording the re-read; the round (q) notes of
+  security.md's CHK002 and CHK019 and idempotency.md's CHK008 hold at
+  `4512441`, pcm:158-168 being byte-identical there. #27 stays at `d95eea2` and
+  feature 004 at `d8724e2`, and no pin moves. No checklist category changes,
+  and the totals below were recounted by script. Traceability is checked
+  against A1's ratified deltas at `e4a30fc` (64 of 64). A1 stays cited at
+  `e4a30fc`, and `clarify-questions.md` is unchanged. Re-validation: 16 of 16
+  items pass, with the checks of iteration 2 re-run by script on the edited
+  spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -1490,4 +1524,4 @@ to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
 passes of that day, and after the thirteenth to thirty-fourth passes on
-2026-10-22 and the thirty-fifth to forty-first on 2026-10-23.
+2026-10-22 and the thirty-fifth to forty-second on 2026-10-23.
