@@ -115,6 +115,15 @@ def with_git_file(target, present, read=None):
     return target
 
 
+def plan_row(present, path, errors=()):
+    """A row of a plan, as unread_paths() reads it (R-365): `present`, its
+    planning lstat's result (true, false for a path gone, or None for an
+    lstat that failed other than for absence or was cut), and `raw_path`."""
+    row = project.WorktreeRow(present=present, errors=list(errors))
+    row.raw_path = path
+    return row
+
+
 class StopTests(clean_support.CleanCase):
 
     def counting(self, hooks=None):
@@ -429,7 +438,7 @@ class StopTests(clean_support.CleanCase):
                 target = with_git_file(literal_target(
                     "unknown", "removal-ceiling", path=b"/w/p 2", branch="b2", notes=[NOTE],
                     reconciliation=record(entry, path, True, SHA_B), exit_status=137), git_file, read)
-                self.assertEqual(project.partial_removal_text(target), key)
+                self.assertEqual(project.partial_removal_text(target, False), key)
                 run = types.SimpleNamespace(human=io.StringIO(), write_error=None)
                 project.print_result(plan, [target], run)
                 lines = run.human.getvalue().splitlines()
@@ -439,7 +448,78 @@ class StopTests(clean_support.CleanCase):
         with self.subTest("a plain dict carries no .git read"):
             target = literal_target("unknown", "removal-ceiling", notes=[NOTE],
                                     reconciliation=record(True, True, True, SHA_B), exit_status=137)
-            self.assertEqual(project.partial_removal_text(target), "partial_removal_note_prune")
+            self.assertEqual(project.partial_removal_text(target, False), "partial_removal_note_prune")
+
+    def test_clean_the_prune_note_beside_an_unread_row_warns_against_prune(self):
+        # Lead R-365, ruled by Brett Heap on 2026-10-23 ("Yes, warn
+        # (Recommended)"), for lane 3's W52 F-1 (b): `git worktree prune` acts
+        # on the whole repository and deletes the admin directory of a live
+        # worktree whose path Git cannot stat (EACCES), so where any row of
+        # the plan has a path whose planning lstat failed (`present` null, a
+        # row the work deadline stopped included; unread_paths()) the ceiling's
+        # prune note, which names prune, is the form that advises deleting the
+        # target's path by hand and warns against prune, git worktree remove
+        # and git gc. The other two notes do not change: `git worktree remove
+        # --force P` acts on P alone, and the unread-`.git` note advises no
+        # prune already. A stale row, `present` false, reads its path, and
+        # does not count.
+        unread_key = "partial_removal_note_prune_unread"
+        expected = ("Probable partial removal: inspect, then delete {PATH} by hand; a row's path could not be "
+                    "read, so do not run git worktree prune, git worktree remove or git gc until it can.")
+        self.assertEqual(TEXT.get(unread_key), expected)
+        self.assertEqual(project.TEXT.get(unread_key), expected)
+        self.assertEqual(expected.format(PATH="'/w/p 2'"),
+                         "Probable partial removal: inspect, then delete '/w/p 2' by hand; a row's path could "
+                         "not be read, so do not run git worktree prune, git worktree remove or git gc until "
+                         "it can.")
+        deadline = [{"code": "deadline-exceeded", "message": TEXT["row_error_deadline_exceeded"].format(
+            OPERATION="lstat")}]
+        sibling, stale = plan_row(True, b"/w/other"), plan_row(False, b"/w/gone")
+        unread, cut = plan_row(None, b"/w/par/wt"), plan_row(None, b"/w/slow", deadline)
+        plans = [("no rows", types.SimpleNamespace(root=b"/r oot"), False),
+                 ("an empty plan", types.SimpleNamespace(root=b"/r oot", rows=[]), False),
+                 ("readable rows only", types.SimpleNamespace(root=b"/r oot", rows=[sibling]), False),
+                 ("a stale row beside a readable one", types.SimpleNamespace(root=b"/r oot", rows=[sibling, stale]),
+                  False),
+                 ("an unread row", types.SimpleNamespace(root=b"/r oot", rows=[sibling, unread]), True),
+                 ("an unread row alone", types.SimpleNamespace(root=b"/r oot", rows=[unread]), True),
+                 ("a row the deadline stopped", types.SimpleNamespace(root=b"/r oot", rows=[cut, sibling]), True),
+                 ("an unread row beside a stale one", types.SimpleNamespace(root=b"/r oot", rows=[stale, unread]),
+                  True)]
+        ceiling = [
+            ("the entry and the .git file present", True, True, True, None, "partial_removal_note"),
+            ("the .git file gone", True, True, False, None, "partial_removal_note_prune"),
+            ("the .git file not reached", True, True, None, False, "partial_removal_note_prune"),
+            ("the entry gone, the path left", False, True, None, None, "partial_removal_note_prune"),
+            ("the entry not established", None, True, None, None, "partial_removal_note_prune"),
+            ("the path gone, the entry left", True, False, None, None, "partial_removal_note_prune"),
+            ("the .git read failed or cut", True, True, None, True, "partial_removal_note_unread"),
+            ("the .git read failed or cut, the entry gone", False, True, None, True,
+             "partial_removal_note_unread"),
+            ("the path lstat failed", True, None, None, None, "partial_removal_note_unread"),
+            ("the path lstat failed, the entry not established", None, None, None, None,
+             "partial_removal_note_unread")]
+        for plan_label, plan, beside in plans:
+            self.assertIs(bool(project.unread_paths(plan)), beside, plan_label)
+            for label, entry, path, git_file, read, key in ceiling:
+                if beside and key == "partial_removal_note_prune":
+                    key = unread_key
+                with self.subTest(plan_label, note=label):
+                    target = with_git_file(literal_target(
+                        "unknown", "removal-ceiling", path=b"/w/p 2", branch="b2", notes=[NOTE],
+                        reconciliation=record(entry, path, True, SHA_B), exit_status=137), git_file, read)
+                    self.assertEqual(project.partial_removal_text(target, bool(project.unread_paths(plan))), key)
+                    run = types.SimpleNamespace(human=io.StringIO(), write_error=None)
+                    project.print_result(plan, [target], run)
+                    lines = run.human.getvalue().splitlines()
+                    self.assertEqual([line for line in lines if line.startswith("Probable partial removal:")],
+                                     [TEXT[key].format(PATH="'/w/p 2'")])
+                    self.assertEqual(lines[0], TEXT[key].format(PATH="'/w/p 2'"), "the note prints first")
+        with self.subTest("a plain dict carries no .git read"):
+            target = literal_target("unknown", "removal-ceiling", notes=[NOTE],
+                                    reconciliation=record(True, True, True, SHA_B), exit_status=137)
+            self.assertEqual(project.partial_removal_text(target, True), unread_key)
+            self.assertEqual(project.partial_removal_text(target, False), "partial_removal_note_prune")
 
 
 class KilledDuringDeletionTests(clean_support.CleanCase):

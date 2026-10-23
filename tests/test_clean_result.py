@@ -838,6 +838,59 @@ class ResultTests(clean_support.CleanCase):
                 self.assertEqual(self.git(root, "worktree", "prune", "--dry-run", "--verbose"), "")
 
     @clean_support.not_root
+    def test_clean_the_ceiling_s_prune_note_beside_an_unread_sibling_warns_against_prune(self):
+        # Lead R-365, ruled by Brett Heap on 2026-10-23 ("Yes, warn
+        # (Recommended)"), for lane 3's W52 F-1 (b): in mode single only P's
+        # own row counts for the plan's completeness, so a plan that holds
+        # another worktree whose path cannot be read, its planning lstat
+        # having failed (EACCES; `present` null), applies P. `git worktree
+        # prune`, which the ceiling's prune note names, deletes the admin
+        # directory of that live worktree, so there the note is the form that
+        # advises deleting P's path by hand and warns against prune, git
+        # worktree remove and git gc. The ceiling child leaves P with its
+        # `.git` file gone (unlink-git) or its entry gone (unregister), the
+        # two (b) notes; without the unread sibling the note is the prune
+        # note, as before. Where P keeps both (hang), the note is the --force
+        # form either way, since `git worktree remove --force P` acts on P
+        # alone. The apply result record carries no note text.
+        table = clean_support.timing_table(removal_ceiling=1.5, term_grace=0.5, reap_wait=0.5)
+        unread = ("Probable partial removal: inspect, then delete {PATH} by hand; a row's path could not be read, "
+                  "so do not run git worktree prune, git worktree remove or git gc until it can.")
+        self.assertEqual(TEXT["partial_removal_note_prune_unread"], unread)
+        for mode, entry, plain in (("unlink-git", True, "partial_removal_note_prune"),
+                                   ("unregister", False, "partial_removal_note_prune"),
+                                   ("hang", True, "partial_removal_note")):
+            for beside in (True, False):
+                with self.subTest(mode=mode, unread_sibling=beside):
+                    root, trees = self.batch(f"single-{mode}-{'unread' if beside else 'read'}", count=2,
+                                             own_parent=True)
+                    planned = [self.head(tree) for tree in trees]
+                    parent = trees[1].parent
+                    self.addCleanup(os.chmod, parent, 0o755)
+                    if beside:
+                        parent.chmod(0o000)
+                    bin_dir = self.base / f"single-{mode}-{'unread' if beside else 'read'}-bin"
+                    ceiling_git(bin_dir, mode)
+                    result = self.run_json("clean", root, "--apply", "--action", "remove", "--worktree", trees[0],
+                                           "--yes", "--json", timing=table, env=self.path_first(bin_dir))
+                    os.chmod(parent, 0o755)
+                    self.assert_status(result, 1)
+                    [first] = result.document["targets"]
+                    notes = ["partially-removed"] if entry else ["orphaned-directory", "partially-removed"]
+                    self.assertEqual((first["path"], first["stage"], first["reason"], first["notes"]),
+                                     (str(trees[0]), "unknown", "removal-ceiling", notes))
+                    self.assertEqual(first["reconciliation"], record(entry, True, True, planned[0]))
+                    key = "partial_removal_note_prune_unread" if beside and plain == "partial_removal_note_prune" \
+                        else plain
+                    note = TEXT[key].format(PATH=quoted(trees[0]))
+                    self.assertEqual([line for line in result.stderr.splitlines()
+                                      if line.startswith("Probable partial removal:")], [note], result.stderr)
+                    self.assertNotIn("Probable partial removal", result.stdout, "the record carries no note text")
+                    if key == "partial_removal_note_prune_unread":
+                        self.assertEqual(note, unread.format(PATH=quoted(trees[0])))
+                    self.assertTrue(trees[1].is_dir(), "the sibling is untouched")
+
+    @clean_support.not_root
     def test_clean_the_ceiling_s_recovery_text_where_the_git_file_cannot_be_read(self):
         # #19's round (i) at 1a4785e (lane 3's W73 M-1, lead ruling R-284),
         # through the launcher with the ceiling's table above. The ceiling

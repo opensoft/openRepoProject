@@ -43,6 +43,10 @@ STATUS_PINS = ["-c", "core.untrackedCache=false", "-c", "core.fsmonitor=false",
 CANCELLED = "Cancelled."
 FRESHNESS = "local refs only; no fetch"
 STALE = "Review the stale worktree metadata before pruning it manually."
+# T9 (lead R-365, ruled by Brett Heap on 2026-10-23, "Yes, add T9 (Recommended)"): that text where any
+# row of the listing has a path that could not be read, with the warning against prune appended.
+STALE_UNREAD = ("Review the stale worktree metadata before pruning it manually; a row's path could not be read, "
+                "so do not run git worktree prune, git worktree remove or git gc until it can.")
 MISSING_CHECKOUT = "Missing checkout; use the estate's bootstrap/siblings command"
 CLEAN_TRACKING = "Project updates require a clean tracking checkout; preserve feature work first."
 CHILD_WORK = "Child has work to preserve: {PATH}"
@@ -799,6 +803,58 @@ class StatusDoctorUpdateTests(clean_support.CleanCase):
         self.assert_status(result, 2)
         self.assertEqual(result.stderr, "REFUSED: " + CHILD_WORK.format(PATH=leg) + "\n")
         self.assertFalse(runs.exists(), "the owner tool was never invoked")
+
+    @clean_support.not_root
+    def test_status_a_stale_worktree_beside_an_unread_row_warns_against_prune(self):
+        # T9, lead R-365 (ruled by Brett Heap on 2026-10-23, "Yes, add T9
+        # (Recommended)"), the status counterpart of clean's R-320: `git
+        # worktree prune`, which the stale recommendation names, deletes the
+        # admin directory of a live worktree whose path Git cannot stat
+        # (EACCES). So where any row of the listing has a null `present`, its
+        # lstat having failed other than for the path's absence, the stale
+        # row's recommendation also warns against prune, git worktree remove
+        # and git gc; where none has, it is the baseline text, byte for byte.
+        # The unread row's own path denies search through its parent, as
+        # clean's W73 layout does. status and doctor read one state.
+        root = self.repo()
+        stale = self.base / "stale-tree"
+        self.git(root, "worktree", "add", "-b", "001-stale", stale)
+        stale.rename(self.base / "stale-tree-moved")
+        parent = self.base / "par"
+        parent.mkdir()
+        unread = parent / "wt"
+        self.git(root, "worktree", "add", "-b", "002-unread", unread)
+        mode = parent.stat().st_mode & 0o7777
+        self.addCleanup(os.chmod, parent, mode)
+        self.assertEqual(STALE_UNREAD, STALE[:-1] + "; a row's path could not be read, so do not run git worktree "
+                                                    "prune, git worktree remove or git gc until it can.")
+
+        def rows(name):
+            """status or doctor's worktree entries, by path, with their exit status."""
+            result = self.run_json(name, root, "--json")
+            repository = result.document["repository"]
+            return result.returncode, {entry["path"]: entry for entry in repository["worktrees"]}
+
+        for state, change, text in (("no row unread", lambda: None, STALE),
+                                    ("a row unread", lambda: parent.chmod(0o000), STALE_UNREAD),
+                                    ("the row readable again", lambda: parent.chmod(mode), STALE)):
+            change()
+            for name in ("status", "doctor"):
+                with self.subTest(state, command=name):
+                    code, found = rows(name)
+                    entry = found[str(stale)]
+                    self.assertEqual((entry["present"], entry["classification"], entry["recommendation"]),
+                                     (False, "stale-worktree", text))
+                    if text is STALE_UNREAD:
+                        self.assertEqual(code, 1 if name == "doctor" else 0)
+                        self.assertEqual((found[str(unread)]["present"], found[str(unread)]["classification"]),
+                                         (None, "inspection-error"))
+                        self.assertNotIn("recommendation", found[str(unread)])
+                    else:
+                        self.assertEqual(code, 0)
+                        self.assertEqual((found[str(unread)]["present"], found[str(unread)]["dirty"]), (True, False))
+                        self.assertNotIn("recommendation", found[str(unread)])
+                    self.assertNotIn("recommendation", found[str(root)])
 
     def test_status_a_submodule_checkout_is_reported(self):
         # FR-055, analyze H4, lead ruling R-42: status and doctor report what
