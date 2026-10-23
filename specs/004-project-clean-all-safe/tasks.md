@@ -1009,7 +1009,10 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   `test_clean_row_4c_reads_a_real_repository_s_keys` (Git's own answers on the
   Git in use: a key not set exits 1 with nothing printed, which reads false,
   and a value that is not a boolean exits 128 with a fatal line, which reads
-  true; and, in a subtest, "the common directory's config is a directory", where Git 2.43.0 and 2.36.6 exit 1 with only `warning:` lines and nothing on standard output, so that row 4c reads true, one child shown by a spy; lane 3's W100 LOW-B, routed by the lead's R-344; writer's `2057c31`);
+  true; and, in a subtest, "the common directory's config is a directory",
+  where Git 2.43.0 and 2.36.6 exit 1 with only `warning:` lines and nothing on
+  standard output, so that row 4c reads true; lane 3's W100 LOW-B, routed by
+  the lead's R-344; writer's `2057c31`);
   `test_clean_a_row_4c_exit_1_that_printed_gives_each_linked_row_its_work_tree_probe`
   (a fake Git answering row 4c with exit 1: nothing printed probes no linked
   row's work tree, anything printed probes each, and the plan stays complete);
@@ -1033,7 +1036,14 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   `test_clean_row_4b_reads_a_real_repository_s_unset_core_worktree_as_unset`
   (Git's own answer on the Git in use: an unset `core.worktree` exits 1 with
   nothing printed, which reads as the key unset, and a set value reads as
-  before, a relative one against the git directory; and, in a subtest, "the common directory's config is a directory", where Git exits 1 with only `warning:` lines and nothing on standard output, so that `main_worktree()`, which the subtest calls directly, since a whole `clean` run stops earlier there, Git exiting 128 for `rev-parse` and `worktree list`, returns `(None, "unreadable")`, one child shown by a spy; lane 3's W100 LOW-B, routed by the lead's R-344; writer's `2057c31`). A mutant `config_key_unset()` that reads any exit 1 as unset fails both subtests.
+  before, a relative one against the git directory; and, in a subtest, "the
+  common directory's config is a directory", where Git exits 1 with only
+  `warning:` lines and nothing on standard output, so that `main_worktree()`,
+  which the subtest calls directly, since a whole `clean` run stops earlier
+  there, Git exiting 128 for `rev-parse` and `worktree list`, returns `(None,
+  "unreadable")`, one child shown by a spy; lane 3's W100 LOW-B, routed by the
+  lead's R-344; writer's `2057c31`). A mutant `config_key_unset()` that reads
+  any exit 1 as unset fails both subtests.
   Rule 1 would give PR #19's two scenario tests the prefix `test_status_`;
   they take `test_clean_`, which the floor job's `-k` selects as well. Since
   R-116, `test_status_a_git_that_floods_standard_error` reads its row
@@ -4677,7 +4687,7 @@ verification.
   — verify: `python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table' && python3 -c "import glob,re,sys;d=open('openspec/changes/add-project-clean-all-safe/design.md').read();x=lambda a,b:d.split('### '+a+'.')[1].split('### '+b+'.')[0];s=x('D14','D15')+x('D18','D19');B,Q=chr(96),chr(34);S=[' '.join(v.split()) for v in re.findall(B+'([^'+B+']+)'+B,s)+re.findall(Q+'([^'+Q+']+)'+Q,s)];R={l[17:].strip() for f in glob.glob('openspec/changes/add-project-clean-all-safe/specs/*/spec.md') for l in open(f) if l.startswith('### Requirement: ')};X=('these deferred rows will not drain while the 16 rows ahead of them are contains-submodule; review those worktrees, then remove them yourself','Not protected: ignored files created or index flags set after the last check, and any change after Git'+chr(39)+'s own check.');S=[v for v in S if ' ' in v and not v.startswith(('Cleanup plan for','selected:','rev-parse ')) and v not in R and v not in X];t=open('tests/clean_support.py').read();W=r'\b(?:'+chr(124).join(('ROOT','PATH','BRANCH','NAME','SOURCE','NEXT STEP','SAMPLE','CLASS','REASON','REASONS','CODES','B1','B2','P1','P2','N','K','M'))+r')\b';M=[v for v in S if not all(f.strip() in t for f in re.split(W,v) if len(f.strip())>2)];[print('no literal:',v) for v in M];print(len(S),'D14 and D18 spans');sys.exit(1 if M or not S else 0)" && python3 -c "import ast,glob,os,sys;F=sorted(glob.glob('tests/test_clean_*.py'))+['tests/test_status_doctor_update.py'];W={f:list(ast.walk(ast.parse(open(f).read()))) for f in F if os.path.isfile(f)};I=lambda w:[n for n in w if isinstance(n,ast.Import) and any('clean_support' in a.name for a in n.names)]+[n for n in w if isinstance(n,ast.ImportFrom) and ('clean_support' in (n.module or '') or any(a.name=='clean_support' for a in n.names))];ok=lambda n:all(a.name=='clean_support' for a in n.names) if isinstance(n,ast.Import) else (n.module=='clean_support' and n.level==0);sp=lambda w:[n for n in w if isinstance(n,ast.Attribute) and n.attr in ('insert','append','extend') and isinstance(n.value,ast.Attribute) and n.value.attr=='path' and isinstance(n.value.value,ast.Name) and n.value.value.id=='sys']+[n for n in w if isinstance(n,(ast.Subscript,ast.Attribute)) and isinstance(n.ctx,ast.Store) and ast.unparse(n).startswith('sys.path')];X=[f for f in F if f not in W];B=[f for f in W if not I(W[f]) or not all(ok(n) for n in I(W[f])) or sp(W[f])];T=[f for f in ['tests/test_clean_timing.py'] if any(isinstance(n,ast.FunctionDef) and n.name=='timing_repo' for n in W.get(f,[]))];print('missing:',X,'off the one import idiom:',B,'timing_repo still defined in:',T);sys.exit(1 if X or B or T else 0)" && python3 -m unittest discover -s tests -p 'test_clean_timing.py' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' && python3 -m unittest discover -s tests -p 'test_clean_scrub.py' && python3 -m unittest discover -s tests -p 'test_clean_parsers.py' && python3 -m unittest discover -s tests -p 'test_clean_escaping.py' && python3 -m unittest discover -s tests -p 'test_clean_runner.py' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' && python3 -m unittest discover -s tests -p 'test_clean_guard.py' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' && python3 -m unittest discover -s tests -p 'test_clean_apply.py' && python3 -m unittest discover -s tests -p 'test_clean_reflog.py' && python3 -m unittest discover -s tests -p 'test_clean_gates.py' && python3 -m unittest discover -s tests -p 'test_clean_single.py' && python3 -m unittest discover -s tests -p 'test_clean_push.py' && python3 -m unittest discover -s tests -p 'test_clean_revalidation.py' && python3 -m unittest discover -s tests -p 'test_clean_result.py' && python3 -m unittest discover -s tests -p 'test_clean_stop.py' && python3 -m unittest discover -s tests -p 'test_clean_bounds.py' && python3 -m unittest discover -s tests -p 'test_clean_resolution.py' && python3 -m unittest discover -s tests -p 'test_clean_paths.py' && python3 -m unittest discover -s tests -p 'test_status_doctor_update.py'`
 - [x] T128 [S] Run the whole suite in this worktree: `python3 -m unittest discover
   -s tests -v` passes; record the test count and the elapsed time, under 8
-  minutes in `py-bench` (R11); run it under Python 3.10 too where an
+  minutes in an idle `py-bench` (R11); run it under Python 3.10 too where an
   interpreter is available, where an empty `discover` exits 0, so that a
   selection naming an absent module passes vacuously: check the module
   count in its output, which must equal the number of `tests/test_*.py`
@@ -4686,6 +4696,11 @@ verification.
   `test_clean_revalidates_a_worktree_after_confirmation` and adds the one
   `sys.modules` line to the loader, every other method's `ast` source being
   identical.
+  Note, 2026-10-23 (lead ruling R-360): R11's bound stands, and so does the
+  verify's `timeout 480`. The suite's measured times are 445 s at a load of
+  about 5 to 6 (lane 3's W102), 468 s at a load of 9 (T125) and 661 s at
+  `28db786` at a load of about 26 (the lead's R-355). On a busy bench the
+  verify's `timeout 480` can exit 124; it is then re-run on an idle one.
   — files: (none)
   — verify: `timeout 480 python3 -m unittest discover -s tests && python3 -c "import ast,subprocess as s,sys;o=ast.parse(s.run(['git','show','961c405:tests/test_project.py'],capture_output=True,text=True,check=True).stdout);n=ast.parse(open('tests/test_project.py').read());d=lambda m:{(c.name if isinstance(c,ast.ClassDef) else '')+'.'+x.name:ast.dump(x) for c in [m]+[y for y in m.body if isinstance(y,ast.ClassDef)] for x in c.body if isinstance(x,ast.FunctionDef)};top=lambda m:[ast.dump(x) for x in m.body if not isinstance(x,(ast.FunctionDef,ast.ClassDef))];A,B=d(o),d(n);K=set(sys.argv[1:]);M=[k for k in set(A).union(B) if k.split('.')[-1] not in K and not A.get(k)==B.get(k)];E=[k for k in K if not any(x.endswith('.'+k) for x in A) or not any(x.endswith('.'+k) for x in B)];add=[x for x in top(n) if x not in top(o)];rem=[x for x in top(o) if x not in top(n)];line=ast.dump(ast.parse('sys.modules[loader.name] = module').body[0]);[print('changed method:',k) for k in M];[print('missing method:',k) for k in E];print('module-level added',len(add),'removed',len(rem));sys.exit(0 if not M and not E and not rem and add==[line] else 1)" test_clean_revalidates_a_worktree_after_confirmation`
 - [x] T129 [S] Run quickstart.md's "The Git 2.36 floor run", as plan review M18
@@ -4722,7 +4737,9 @@ verification.
   as a defect against these tasks before the realization goes to the lead.
   The lead runs them, through tmux, or Brett Heap does; no subagent
   dispatches them. The record is
-  `specs/004-project-clean-all-safe/hand-runs.md` (lead ruling R-50).
+  `specs/004-project-clean-all-safe/hand-runs.md` (lead ruling R-50). The walk
+  recorded there is at `project` e69f6ef and is owed again at the landing head,
+  as the dated note in that file says (lead ruling R-360).
   — files: `specs/004-project-clean-all-safe/hand-runs.md`
   — verify: `python3 -c "import os,sys;f='specs/004-project-clean-all-safe/hand-runs.md';t=open(f).read() if os.path.isfile(f) else '';print('missing file:',f) if not t else 0;M=[k for k in ['Lane: openRepoProject-2']+['User Story '+str(i) for i in range(1,10)] if k not in t];print('absent:',M);sys.exit(1 if M or not t.startswith('Lane: openRepoProject-2') else 0)"`
 - [x] T133 [S] In `openspec/changes/add-project-clean-all-safe/tasks.md`, under
