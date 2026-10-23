@@ -783,7 +783,7 @@ class ApplyTests(clean_support.CleanCase):
             killed = project.DriverOutcome(["git"], "timeout", status=-signal.SIGKILL)
             self.assertEqual(project.decide_stage(held, killed, found),
                              ("unknown", "removal-ceiling", ["partially-removed"]))
-            self.assertEqual(project.partial_removal_text(held), "partial_removal_note_unread",
+            self.assertEqual(project.partial_removal_text(held, False), "partial_removal_note_unread",
                              "the third note: no prune advice where the path could not be read")
         found, _, _ = rescan()
         self.assertEqual((found, entry.git_file_present), (kept, True), "the fixture is restored")

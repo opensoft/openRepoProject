@@ -627,6 +627,11 @@ TEXT_FIXTURES = {
     # The ceiling's note where the rescan does not show both the target's .git and its
     # registry entry present (W52 F-1; Brett Heap's ruling "F-1: prune-then-delete", R-263).
     "partial_removal_note_prune": "Probable partial removal: inspect, then git worktree prune and delete {PATH} by hand.",
+    # The prune note where any row of the plan has a path that could not be read (its planning
+    # lstat failed, present null): it advises no prune, and warns against it, since prune deletes
+    # the admin directory of a live worktree whose path Git cannot stat (EACCES). Copied exactly
+    # from the lead's message (R-365, ruled by Brett Heap on 2026-10-23, "Yes, warn (Recommended)").
+    "partial_removal_note_prune_unread": "Probable partial removal: inspect, then delete {PATH} by hand; a row's path could not be read, so do not run git worktree prune, git worktree remove or git gc until it can.",
     # The ceiling's note where the rescan's .git read failed or was cut, which advises no
     # prune (#19's round (i) at 1a4785e; W73 M-1, R-284), copied exactly from the lead's message.
     # Its warning also names git worktree remove and git gc (R-324, ruled by Brett Heap,

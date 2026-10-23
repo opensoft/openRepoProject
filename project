@@ -725,6 +725,18 @@ TEXT = {
     # ruling R-263, amending ratified 0050f3e pcl:922-926).
     "partial_removal_note_prune":
         "Probable partial removal: inspect, then git worktree prune and delete {PATH} by hand.",
+    # The prune note's form where any row of the plan has a path that could
+    # not be read, its planning lstat having failed (`present` null;
+    # unread_paths(), partial_removal_text()): it advises no `git worktree
+    # prune` and warns against it, since prune acts on the whole repository
+    # and deletes the admin directory of a live worktree whose path Git
+    # cannot stat (EACCES), whichever worktree the note is about. Its
+    # warning also names `git worktree remove` and `git gc`, as the other
+    # no-prune texts do (lane 3's W52 F-1 (b) beside an unread row; lead
+    # R-365, ruled by Brett Heap on 2026-10-23, "Yes, warn (Recommended)").
+    "partial_removal_note_prune_unread":
+        "Probable partial removal: inspect, then delete {PATH} by hand; a row's path could not be read, "
+        "so do not run git worktree prune, git worktree remove or git gc until it can.",
     # The ceiling's note where the rescan's lstat of the target's `.git`
     # failed other than for its absence or was cut, whatever it found of the
     # registry entry: `git worktree prune` deletes the admin directory of a
@@ -6847,18 +6859,20 @@ def branch_not_confirmed(target):
     return present is False or (present is None and target["stage"] in RESCANNED_STAGES)
 
 
-def partial_removal_text(target):
+def partial_removal_text(target, plan_unread):
     """The TEXT key of the partial-removal note of a target noted
     `partially-removed` at its removal ceiling (lane 3's W52 F-1; Brett
     Heap's ruling "F-1: prune-then-delete", lead ruling R-263), a pure
-    function. First, `partial_removal_note_unread`, which advises no prune,
-    wherever the rescan made its `.git` lstat (`git_file_read` true) and it
-    gave no value (`git_file_present` None: it failed other than for the
-    file's absence, was cut at its budget, or met a second SIGINT), whatever
-    the rescan found of the registry entry, since `git worktree prune`
-    deletes the admin directory of a live worktree whose `.git` Git cannot
-    stat (#19's round (i) at 1a4785e; lane 3's W73 M-1, lead ruling R-284).
-    The `.git` is as unread where the rescan's lstat of the target's own
+    function; plan_unread says whether any row of the plan has a path that
+    could not be read at planning (bool(unread_paths(plan)), which
+    print_result() passes). First, `partial_removal_note_unread`, which
+    advises no prune, wherever the rescan made its `.git` lstat
+    (`git_file_read` true) and it gave no value (`git_file_present` None: it
+    failed other than for the file's absence, was cut at its budget, or met a
+    second SIGINT), whatever the rescan found of the registry entry, since
+    `git worktree prune` deletes the admin directory of a live worktree whose
+    `.git` Git cannot stat (#19's round (i) at 1a4785e; lane 3's W73 M-1,
+    lead ruling R-284). The `.git` is as unread where the rescan's lstat of the target's own
     path failed other than for absence (`path_present` null in the
     reconciliation record, as where a directory above the target denies
     search), since the rescan then makes no `.git` read: the same note,
@@ -6872,9 +6886,18 @@ def partial_removal_text(target):
     absent or not reached, since Git refuses that command once the `.git`
     file is gone ("validation failed") or the entry is gone ("is not a
     working tree"), and a value not established never shows both present.
-    A target that is a plain dict carries no `.git` read. print_result()'s
-    alone; a report row's note is partial_removal_note()'s and keeps its own
-    text."""
+    That last note, where plan_unread is true, is
+    `partial_removal_note_prune_unread` instead: `git worktree prune` acts on
+    the whole repository and deletes the admin directory of a live worktree
+    whose path Git cannot stat (EACCES), whichever worktree this note is
+    about, so it advises deleting the target's path by hand and warns against
+    prune, as the plan's unread-row texts do (lane 3's W52 F-1 (b) beside an
+    unread row; lead R-365, ruled by Brett Heap, "Yes, warn (Recommended)").
+    `partial_removal_note_unread` and `partial_removal_note` do not change:
+    `git worktree remove --force P` acts on P alone, and the first already
+    advises no prune. A target that is a plain dict carries no `.git` read.
+    print_result()'s alone; a report row's note is partial_removal_note()'s
+    and keeps its own text."""
     git_file = getattr(target, "git_file_present", None)
     record = target["reconciliation"] or {}
     unread = getattr(target, "git_file_read", False) or ("path_present" in record and record["path_present"] is None)
@@ -6883,7 +6906,7 @@ def partial_removal_text(target):
     entry = record.get("registry_entry_present")
     if entry is True and git_file is True:
         return "partial_removal_note"
-    return "partial_removal_note_prune"
+    return "partial_removal_note_prune_unread" if plan_unread else "partial_removal_note_prune"
 
 
 def print_result(plan, targets, run):
@@ -6893,7 +6916,8 @@ def print_result(plan, targets, run):
     write recorded, never raised. First, D18's partial-removal note for each
     target noted `partially-removed`, in canonical order, its PATH in the
     command form (lead ruling R-83, P-2), its text partial_removal_text()'s
-    (W52 F-1, R-263). Then, when every target is
+    (W52 F-1, R-263), given whether any row of the plan has a path that could
+    not be read (unread_paths(); R-365). Then, when every target is
     `removed` with reason null, `Removed N; branches kept: B1, B2.`, naming
     every selected target's branch, since the apply phase deletes no branch;
     otherwise D18's stop block at the first target that is not, its `Not
@@ -6907,7 +6931,8 @@ def print_result(plan, targets, run):
     their command form."""
     for target in targets:
         if "partially-removed" in (target["notes"] or ()):
-            say(run, TEXT[partial_removal_text(target)].format(PATH=human_path(target["path"], command=True)))
+            key = partial_removal_text(target, bool(unread_paths(plan)))  # R-365: any row of the plan
+            say(run, TEXT[key].format(PATH=human_path(target["path"], command=True)))
     stop = next((target for target in targets
                  if not (target["stage"] == "removed" and target["reason"] is None)), None)
     if stop is None:
@@ -7149,7 +7174,11 @@ def repo_state(root):
     baseline keys and adds `path_valid_utf8`, `ignored_samples` (`{path,
     path_valid_utf8}` objects) where its probe ran, and `classification` and
     `errors` only when it cannot be inspected; a stale entry keeps its
-    baseline class and text."""
+    baseline class and text, except that where any row of the listing has a
+    path that could not be read (path_unread(): its lstat failed other than
+    for the path's absence, `present` null) the text also warns against
+    `git worktree prune` (T9; lead R-365, ruled by Brett Heap, "Yes, add T9
+    (Recommended)")."""
     run = current_invocation()
     raw = os.fsencode(root)
     text, valid = json_path(raw)
@@ -7167,14 +7196,22 @@ def repo_state(root):
     def head(value):
         return value if value and value.strip("0") else None  # an unborn branch has none
 
-    def entry(row):
+    def entry(row, unread):
         tree = {"path": row["path"], "path_valid_utf8": row["path_valid_utf8"], "present": row["present"],
                 "head": head(row["head"]), "branch": row["branch"]}
         if row.get("prunable"):
             tree["prunable"] = True
         if row["present"] is False:
             tree["classification"] = "stale-worktree"
-            tree["recommendation"] = "Review the stale worktree metadata before pruning it manually."
+            # T9 (lead R-365, ruled by Brett Heap, "Yes, add T9 (Recommended)"): `git worktree prune`
+            # deletes the admin directory of a live worktree whose path Git cannot stat (EACCES),
+            # whichever row it is run for, so where any row of this listing has a null `present`
+            # (path_unread(), the lstat result each row records) the advice warns against it, as clean's
+            # stale recommendation does (stale_recommendations(); R-320). Otherwise the baseline's text.
+            tree["recommendation"] = (
+                "Review the stale worktree metadata before pruning it manually; a row's path could not be "
+                "read, so do not run git worktree prune, git worktree remove or git gc until it can."
+                if unread else "Review the stale worktree metadata before pruning it manually.")
             return tree
         tree["dirty"] = row["dirty"]
         tree["ignored_files"] = row["ignored_files"]
@@ -7220,10 +7257,11 @@ def repo_state(root):
         return uninspectable(None if own is None else own["present"], list(repo["errors"]))
     if own is None:  # Git names another toplevel for root, as the baseline's check did
         return absent()
+    unread = any(path_unread(row) for row in rows)  # T9: a row whose lstat failed
     state = {"path": text, "path_valid_utf8": valid, "present": own["present"], "branch": own["branch"],
              "head": head(own["head"]), "dirty": own["dirty"], "upstream": own["upstream"],
              "ahead": own["ahead"], "behind": own["behind"], "tracking_freshness": freshness,
-             "worktrees": [entry(row) for row in rows]}
+             "worktrees": [entry(row, unread) for row in rows]}
     if own["classification"] == "inspection-error":
         state["classification"] = "inspection-error"
         state["errors"] = own["errors"]
