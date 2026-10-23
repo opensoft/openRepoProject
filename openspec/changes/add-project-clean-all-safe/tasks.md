@@ -112,7 +112,12 @@ duplicate them, and nothing here is an implementation step.
   add T9 (Recommended)" on `project status`'s stale recommendation, with lane
   5's RD2 M1 and the landing of feature 004's `tasks.md` hunks, under the lead's
   R-377 (the commit titled 'Amend change 1: round (p), Brett Heap's answers on
-  F-1's (b) and T9, landing hunks, RD2 M1 (R-365, R-377)'); verified by the
+  F-1's (b) and T9, landing hunks, RD2 M1 (R-365, R-377)'); and round (q),
+  Brett Heap's answer of 2026-10-23 to the nine questions of lane 2's wave 22
+  triage, "yes, recommended for Q1-Q9" (R-380), with T9's clause in
+  `project-command` (R-378) and lane 3's W126 read of round (p) (R-382) (the
+  commit titled 'Amend change 1: round (q), Brett Heap's Q1 to Q9, T9 in
+  project-command, W126 (R-378, R-380, R-382)'); verified by the
   table "Questions Resolved by the Alignment Review" in `proposal.md` and the
   later-rulings list under it, which name the section each ruling edited.
 - [x] 1.3 Council resolved: every concern is VALID, none dismissed, the verdicts
@@ -120,14 +125,15 @@ duplicate them, and nothing here is an implementation step.
   recorded as N1 to N5 in `clarifications.md` (`1d4ed5b`); verified by
   `design.md`, whose D1 to D5 answer N1 to N5 one for one.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md` modifies
-  five requirements and adds six (71 scenarios, one added under each of Brett
-  Heap's rulings LQ-15, LQ-13 and LQ-14, one under the lead's R-126 and two
-  under R-147), `specs/project-clean-review-safety/spec.md` modifies two and
-  adds one (22 scenarios, one added under R-22, one under each of LQ-13 and
-  LQ-14, one under R-146 and one under R-190), and
-  `specs/project-command/spec.md` modifies two and adds one (24 scenarios, of
+  five requirements and adds six (72 scenarios, one added under each of Brett
+  Heap's rulings LQ-15, LQ-13 and LQ-14 and his Q1, one under the lead's R-126
+  and two under R-147), `specs/project-clean-review-safety/spec.md` modifies two
+  and adds one (24 scenarios, one added under R-22, one under each of LQ-13 and
+  LQ-14, one under R-146, one under R-190 and two under his Q2), and
+  `specs/project-command/spec.md` modifies two and adds one (26 scenarios, of
   which the push-child exception added one, Brett Heap's rulings Q9 B, LQ-15,
-  LQ-10, LQ-12 and LQ-11 one each, and the lead's R-125 one), every canonical
+  LQ-10, LQ-12 and LQ-11 one each, the lead's R-125 one, and his Q1 and his
+  T9 one each), every canonical
   scenario of each modified requirement kept; `design.md` holds D1 to D22,
   mapping the packet's 35 validation scenarios to the deltas (D20), D21 and D22
   added under LQ-13 and LQ-14; verified by the scenario counts in the commit

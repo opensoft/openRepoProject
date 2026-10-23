@@ -188,13 +188,15 @@ every `merged-removable` or `merged-current` row does.
 A linked worktree's `dirty` row whose status records are all deletions of
 tracked files in the working tree, while its `.git` file and its registry entry
 are present, SHALL carry the row note `partially-removed`: the human report
-SHALL show a probable partial removal with the recovery text "inspect, then `git
+SHALL show a probable partial removal with the recovery text "check that `git
+-C <path> status --short --ignored` lists only deleted files, then `git
 worktree remove --force <path>` by hand" beside the `dirty` advice, never
 instead of it. For a locked worktree, which `git worktree remove --force`
-refuses, the recovery text SHALL instead be "inspect, unlock it, then `git
-worktree remove --force <path>` by hand". A status stream stopped at its record
-bound SHALL be judged on the records read. The note SHALL be advisory and SHALL
-NOT change the row's classification, the ladder or any gate.
+refuses, the recovery text SHALL instead be "check that `git -C <path> status
+--short --ignored` lists only deleted files, unlock it, then `git worktree
+remove --force <path>` by hand". A status stream stopped at its record bound
+SHALL be judged on the records read. The note SHALL be advisory and SHALL NOT
+change the row's classification, the ladder or any gate.
 
 #### Scenario: Dirty or unmerged work is preserved
 
@@ -231,8 +233,9 @@ NOT change the row's classification, the ladder or any gate.
 - **THEN** it is classified `dirty` with the dirty advice, the human report
   shows the probable partial-removal note and the recovery text beside that
   advice, and the JSON row carries `notes: ["partially-removed"]`
-- **AND** when that worktree is also locked, the recovery text shown is
-  "inspect, unlock it, then `git worktree remove --force <path>` by hand"
+- **AND** when that worktree is also locked, the recovery text shown is "check
+  that `git -C <path> status --short --ignored` lists only deleted files,
+  unlock it, then `git worktree remove --force <path>` by hand"
 - **AND** a worktree with one deleted tracked file and one untracked file
   carries no such note
 
@@ -332,11 +335,14 @@ removal, single or batch, SHALL follow one sequence: revalidate the target as
 5 s removal floor of the work deadline remains, the non-force command `git -c
 status.showUntrackedFiles=normal -c core.untrackedCache=false -c
 core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default -c
-protocol.allow=never -c protocol.file.allow=never -c
+core.ignoreCase=false -c protocol.allow=never -c protocol.file.allow=never -c
 protocol.ssh.allow=never -c protocol.git.allow=never -c
 protocol.http.allow=never -c protocol.https.allow=never -c
 protocol.ext.allow=never -C <command directory> worktree remove <path>` in its
-own process group; wait for it; and reconcile by rescan as
+own process group; the `core.ignoreCase` pin also makes Git resolve `<path>` to
+the entry of exactly that spelling, where under `core.ignoreCase=true` it can
+resolve it to another worktree whose path differs only in case; wait for it;
+and reconcile by rescan as
 "Clean records a reconcilable result for every removal target" states. Removal
 SHALL stop after the first target whose result is not a plain `removed`, with no
 continuation, rollback or automatic retry.
@@ -348,17 +354,11 @@ group. The rescan SHALL then decide the target: `removed` when its registry
 entry and path are gone, and otherwise `unknown` with the note
 `partially-removed` and the recovery text "inspect, then `git worktree remove
 --force <path>` by hand" where the rescan finds both its `.git` file and its
-registry entry present, and "inspect, then `git worktree prune` and delete
-`<path>` by hand" otherwise, as where either is gone, Git refusing `git worktree
-remove --force` while the path remains; the reason SHALL be `removal-ceiling` in
-both cases. Where any row of the plan has a path whose planning `lstat` failed
-other than for the path's absence, or was cut at its budget, a row whose `lstat`
-the deadline stopped included, so that its `present` is null, the second of
-those texts SHALL instead be "inspect, then delete `<path>` by hand; a row's
-path could not be read, so do not run `git worktree prune`, `git worktree
-remove` or `git gc` until it can", since `git worktree prune` acts on the whole
-repository and so deletes that row's administrative directory, whichever row it
-is run for. Where the rescan cannot read that `.git` file, the read failing
+registry entry present, and "inspect, then delete `<path>` and its
+administrative directory `<common_dir>/worktrees/<admin_id>` by hand"
+otherwise, as where either is gone, Git refusing `git worktree remove --force`
+while the path remains; the reason SHALL be `removal-ceiling` in both cases.
+Where the rescan cannot read that `.git` file, the read failing
 other than for the file's absence or cut at its budget, the recovery text SHALL
 instead be "inspect `<path>` by hand; its `.git` could not be read, so do not
 run `git worktree prune`, `git worktree remove` or `git gc` until it can", since
@@ -485,6 +485,13 @@ target there, and then retrying.
 - **THEN** Git refuses the removal with exit status 128, the target is `failed`
   with `git-refused`, the file survives, and the exit status is 128
 
+#### Scenario: Two worktree paths that differ only in case
+
+- **WHEN**, under `core.ignoreCase=true`, an eligible `WT-X` sits beside an
+  excluded `wt-x` whose HEAD reflog alone holds a commit
+- **THEN** `--all-safe --apply --yes` removes `WT-X`, and `wt-x` and its
+  commit remain
+
 #### Scenario: A named removal beside another row's inspection error
 
 - **WHEN** `--apply --action remove --worktree P --yes` names an eligible P
@@ -534,17 +541,11 @@ target there, and then retrying.
   `not-attempted`, and the exit status is 1
 - **AND** the recovery text is "inspect, then `git worktree remove --force
   <path>` by hand" while the target's `.git` file and registry entry both
-  remain, and "inspect, then `git worktree prune` and delete `<path>` by hand"
-  once the `.git` file is gone, its path and registry entry remaining, or once
-  the registry entry is gone, its path remaining
-- **AND** in `mode: "single"`, where the removal of the one named worktree is
-  cut at the ceiling beside another row whose path could not be read, as when a
-  directory above it denies search, and the rescan, having read the target's
-  `.git` file, finds that file gone or the registry entry gone, the recovery
-  text is instead "inspect, then delete `<path>` by hand; a row's path could not
-  be read, so do not run `git worktree prune`, `git worktree remove` or `git gc`
-  until it can", since `git worktree prune` acts on the whole repository and so
-  would delete that row's administrative directory, whichever row it is run for
+  remain, and "inspect, then delete `<path>` and its administrative directory
+  `<common_dir>/worktrees/<admin_id>` by hand" once the `.git` file is gone,
+  its path and registry entry remaining, or once the registry entry is gone,
+  its path remaining, in either mode, and in `mode: "single"` beside another
+  row whose path could not be read as well
 - **AND** where the rescan cannot read the target's `.git` file, as when a
   directory above it denies search, the recovery text is instead "inspect
   `<path>` by hand; its `.git` could not be read, so do not run `git worktree
@@ -574,9 +575,12 @@ user supplied explicit confirmation and action targets.
 
 `--all-safe` SHALL count as an explicit action target: the set that the fresh
 plan of that same invocation selects. `--yes` SHALL count as explicit
-confirmation of that fresh plan. `--apply` on a standard input that is not a
-terminal and without `--yes` SHALL refuse with `confirmation-required` and exit
-status 2 before any mutation.
+confirmation of that fresh plan. `--apply` of a removal, single or batch, on a
+standard input that is not a terminal and without `--yes` SHALL refuse with
+`confirmation-required` and exit status 2 before any mutation; push and branch
+deletion keep the baseline's refusal, `Type yes to run this plan: Supply
+explicit options when stdin is not a terminal.`, with exit status 2 and no
+code.
 
 #### Scenario: Pushed feature branch has an open review path
 
@@ -765,8 +769,11 @@ being the limit, SHALL leave the row unprobed and the plan incomplete with
 `deadline-exceeded` and leave the row unprobed and the plan incomplete with
 `deadline-exceeded`, not `inspection-incomplete`, as for every other filesystem
 read. A row SHALL be excluded as `contains-submodule`
-when its index holds any gitlink or its worktree administrative directory holds
-a `modules` entry, and as
+when its index holds any gitlink, its worktree administrative directory holds a
+`modules` entry, or an `lstat` of `<dir>/.git`, for any directory `<dir>` of
+the worktree that holds an index entry, finds an entry; those `lstat`s SHALL be
+counted in the filesystem budget, and one that fails other than with `ENOENT`
+or `ENOTDIR` SHALL make the row `inspection-error`. A row SHALL be excluded as
 `hidden-local-state` when its index flags any entry assume-unchanged or
 skip-worktree, sparse checkouts included; the index SHALL be read inside the
 row's own worktree, and both gates SHALL be checked only for rows that pass
@@ -1116,8 +1123,12 @@ plan's `probes.estimated` SHALL count those extra children.
 - **AND** where the cause is the row cap, that refusal names the remedy "{N}
   rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale
   entries by hand; if a worktree's path cannot be read, do not run git worktree
-  prune, git worktree remove or git gc until it can", whether or not any
-  inspected row's path was read, since the rows past the cap are never read
+  prune, git worktree remove or git gc until it can; git worktree prune also
+  deletes the entry, and so the HEAD reflog, of every other worktree whose path
+  is missing, one moved or on an unmounted drive included, so run git worktree
+  prune --dry-run first and remount or repair any it lists that still exists",
+  whether or not any inspected row's path was read, since the rows past the
+  cap are never read
 
 #### Scenario: Twenty rows pass every gate before deferred-target-cap
 
@@ -1212,16 +1223,9 @@ the ceiling, or its exit could not be observed, and the rescan shows its
 registry entry or its path remaining; a `partially-removed` target SHALL show
 the recovery text "inspect, then `git worktree remove --force <path>` by hand"
 where the rescan finds both its `.git` file and its registry entry present, and
-"inspect, then `git worktree prune` and delete `<path>` by hand" otherwise, as
-where either is gone, Git refusing `git worktree remove --force` while the path
-remains. Where any row of the plan has a path whose planning `lstat` failed
-other than for the path's absence, or was cut at its budget, a row whose `lstat`
-the deadline stopped included, so that its `present` is null, the second of
-those texts SHALL instead be "inspect, then delete `<path>` by hand; a row's
-path could not be read, so do not run `git worktree prune`, `git worktree
-remove` or `git gc` until it can", since `git worktree prune` acts on the whole
-repository and so deletes that row's administrative directory, whichever row
-it is run for.
+"inspect, then delete `<path>` and its administrative directory
+`<common_dir>/worktrees/<admin_id>` by hand" otherwise, as where either is
+gone, Git refusing `git worktree remove --force` while the path remains.
 The rescan SHALL read the `.git` file by one `lstat`, a filesystem call
 that starts no Git child. Where that `lstat` fails other than for the file's
 absence, or is cut at its budget, the recovery text SHALL instead be "inspect

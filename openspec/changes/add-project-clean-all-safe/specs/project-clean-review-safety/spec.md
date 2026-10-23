@@ -5,11 +5,14 @@
 Cleanup SHALL treat ignored local files, dirty work, detached state, an unknown
 default branch, and remote divergence as preservation or review states. It SHALL
 also treat as preservation states the main worktree; a locked worktree; a
-worktree whose index holds a gitlink or whose administrative directory holds a
-`modules` entry (`contains-submodule`); a worktree whose index flags any entry
-assume-unchanged or skip-worktree, sparse checkouts included
+worktree whose index holds a gitlink, whose administrative directory holds a
+`modules` entry, or a directory of which, holding an index entry, also holds an
+entry named `.git` (`contains-submodule`); a worktree whose index flags any
+entry assume-unchanged or skip-worktree, sparse checkouts included
 (`hidden-local-state`); a worktree whose registration disagrees in either
-direction, or whose effective work tree is not its registered path
+direction, whose effective work tree is not its registered path, or whose path
+is the common directory, the main worktree or another row's path, or an
+ancestor of one, or whose registered path is a symbolic link
 (`registration-mismatch`); a path that is not valid UTF-8
 (`unsupported-path-bytes`); a branch whose reflog shows no movement since its
 anchor, its last entry whose old object is all zeros, as any entry that creates
@@ -62,6 +65,25 @@ null, never false or 0, and SHALL keep its row out of every removal.
   merged, clean, published linked worktree that is locked
 - **THEN** removal is refused with `target-excluded`, reason `main-worktree` or
   `locked-worktree`, and exit 2, and nothing is removed
+
+#### Scenario: A repository nested in a tracked directory
+
+- **WHEN** an otherwise eligible linked worktree has a tracked directory in
+  which `git init` was run and a commit made, so that the directory holds an
+  entry named `.git` that neither the status probe nor Git's own check reports
+- **THEN** `--all-safe` excludes the worktree as `contains-submodule`, and
+  `--all-safe --apply --yes` removes neither the worktree nor that nested
+  repository, whose commit stays reachable there
+
+#### Scenario: The main worktree inside a linked worktree
+
+- **WHEN** the main worktree of a repository with several local branches and a
+  stash entry sits inside a tracked directory of an otherwise eligible linked
+  worktree W, whose registration agrees in both directions
+- **THEN** W reads `registration-mismatch`, and neither `--all-safe --apply
+  --yes` nor `--apply --action remove --worktree W --yes` removes anything, so
+  that the main worktree, the common directory, every local branch and the
+  stash entry remain
 
 ### Requirement: Cleanup revalidates destructive actions
 
@@ -143,10 +165,10 @@ re-inspection, and SHALL refuse with `inspection-incomplete`, `inspect-cap` or
 `deadline-exceeded` and exit 2 when it is incomplete. Git's own non-force check
 SHALL be the last defense only on the pinned configuration that the removal
 command carries: `status.showUntrackedFiles=normal`,
-`core.untrackedCache=false`, `core.fsmonitor=false`, `core.trustctime=true` and
-`core.checkStat=default`; the protocol pins that every Git child, except the
-push child, carries (`-c protocol.allow=never` and the six per-protocol pins)
-are no part of that defense.
+`core.untrackedCache=false`, `core.fsmonitor=false`, `core.trustctime=true`,
+`core.checkStat=default` and `core.ignoreCase=false`; the protocol pins that
+every Git child, except the push child, carries (`-c protocol.allow=never` and
+the six per-protocol pins) are no part of that defense.
 
 #### Scenario: Worktree changes while confirmation is pending
 

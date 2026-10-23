@@ -158,11 +158,15 @@ reaches, and `0` turns that target off, so that no trace2 target opens.
 Read-only probes SHALL also set `GIT_OPTIONAL_LOCKS=0`. Every status probe,
 and the hidden-state probe that reads a worktree's index flags, SHALL pass `-c
 core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c
-core.checkStat=default`, which also override `GIT_CONFIG_GLOBAL` and
-`GIT_CONFIG_SYSTEM`; the last two restore Git's full stat comparison, because
-Git compares a file's ctime only while both settings keep these values, so
-that an edit that keeps a file's size and restores its mtime would otherwise
-read unchanged. Every Git child, of every kind,
+core.checkStat=default -c core.ignoreCase=false`, which also override
+`GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`; `core.trustctime` and
+`core.checkStat` restore Git's full stat comparison, because Git compares a
+file's ctime only while both settings keep these values, so that an edit that
+keeps a file's size and restores its mtime would otherwise read unchanged, and
+`core.ignoreCase=false` keeps in the records an untracked file whose name
+differs only in case from a tracked one, which Git leaves out under
+`core.ignoreCase=true` on a case-sensitive file system. Every Git child, of
+every kind,
 except the push child of `clean --action push`, SHALL also pass `-c
 protocol.allow=never -c protocol.file.allow=never -c protocol.ssh.allow=never -c
 protocol.git.allow=never -c protocol.http.allow=never -c
@@ -258,7 +262,13 @@ both SHALL be null when the probe did not run or failed, and a stream stopped
 before any ignored record SHALL leave `ignored_files` null with `dirty` true. A
 probe that fails or times out before `dirty` is established SHALL leave `dirty`
 null, record `probe-failed`, `probe-timeout` or `deadline-exceeded`, and make
-the row `inspection-error`.
+the row `inspection-error`. A probe that exits 0 having written to standard
+error any line other than Git's advice lines (`hint:` alone or `hint: TEXT`),
+or more than the 4 KiB kept, SHALL be treated as one that fails, since Git
+exits 0 when it cannot read a directory and leaves what it could not read out
+of its records; so a repository holding `refs/heads/HEAD`, for which Git warns
+`refname 'HEAD' is ambiguous.` in every status probe, has every row
+`inspection-error`.
 
 Termination: each Git child's standard output SHALL be read as bytes as it
 streams, and its standard error SHALL be drained while standard output is read,
@@ -286,12 +296,24 @@ SHALL read at most 1 MiB of it, and a larger manifest SHALL be
 `manifest-invalid`. A manifest over the cap SHALL be detected from its `st_size`
 before the read, and the read itself SHALL never exceed 1 MiB.
 
+Stale entries: where any row of a repository's worktree listing has a path
+that could not be read, its `lstat` failing other than for the path's absence,
+or cut at its budget, so that its `present` is null, the `recommendation` of a
+`stale-worktree` row of that listing, in `project status` and in `project
+doctor` and `project update`, which share its inspection, SHALL read "Review
+the stale worktree metadata before pruning it manually; a row's path could not
+be read, so do not run git worktree prune, git worktree remove or git gc until
+it can.", since `git worktree prune`, run for a stale entry's sake, also
+deletes the administrative directory of a worktree whose path Git cannot stat;
+with no such row it is the baseline's, "Review the stale worktree metadata
+before pruning it manually."
+
 Values SHALL equal those of the inspection this model replaces, except where a
 requirement states a change.
 
 #### Scenario: A git that floods standard error
 - **WHEN** a fake `git` writes more than 64 KiB to standard error before printing its status records
-- **THEN** the probe completes with its records and no `probe-timeout`, and the standard error kept is capped
+- **THEN** the probe completes with no `probe-timeout`, the standard error kept is capped, and the row is `inspection-error` with `probe-failed`
 
 #### Scenario: A git that ignores SIGTERM
 - **WHEN** a fake `git` status probe ignores SIGTERM and outlives its budget
@@ -336,12 +358,16 @@ requirement states a change.
 - **THEN** every Git child runs with `GIT_INTERNAL_SUPER_PREFIX` removed from its environment, and the inspection succeeds, where with that variable kept every command on 2.36 fails closed
 
 #### Scenario: The pinned status configuration
-- **WHEN** `core.untrackedCache` and `core.fsmonitor` are set to true, `core.trustctime` to false and `core.checkStat` to `minimal` in the file that `GIT_CONFIG_GLOBAL` names
-- **THEN** a counting `git` wrapper records `-c core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default` on every status child, every hidden-state child and every removal child
+- **WHEN** `core.untrackedCache` and `core.fsmonitor` are set to true, `core.trustctime` to false, `core.checkStat` to `minimal` and `core.ignoreCase` to true in the file that `GIT_CONFIG_GLOBAL` names
+- **THEN** a counting `git` wrapper records `-c core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default -c core.ignoreCase=false` on every status child, every hidden-state child and every removal child
 
 #### Scenario: An edit that keeps its size and restores its mtime
 - **WHEN** a repository sets `core.trustctime=false` and `core.checkStat=minimal`, and a tracked file in an otherwise eligible linked worktree, whose index entry was written at least one second after the file's mtime so that the entry is not racily clean, is rewritten at least one second after that entry was recorded, keeping its size, and its mtime is then restored to the recorded value
 - **THEN** the status probe reports the file modified, the row is classified `dirty` and excluded, and `--all-safe --apply --yes` leaves the worktree and the edit in place, where without the two stat pins the probe and Git's own check read the worktree clean and the removal deleted the edit
+
+#### Scenario: A case-variant untracked file
+- **WHEN** `core.ignoreCase=true` and an eligible worktree holds an untracked `WORK-FEAT` beside its tracked `work-feat`
+- **THEN** the probe lists `?? WORK-FEAT`, the row is `dirty`, and the apply keeps it
 
 #### Scenario: A lazy fetch in a partial clone is refused locally
 - **WHEN** a status probe runs in a partial clone made with `--no-checkout --filter=tree:0`, so that the probe needs a tree object the clone does not hold, and the clone's `remote.origin.uploadpack` names a script that logs each run
@@ -361,3 +387,8 @@ requirement states a change.
 - **THEN** a `git` wrapper that records each child's environment records `GIT_TRACE2`, `GIT_TRACE2_EVENT` and `GIT_TRACE2_PERF` set to `0`, and none of the thirty-one names, on every Git child
 - **AND** none of the named files is created or written
 - **AND** with no trace variable in the caller's environment and `trace2.normalTarget`, `trace2.eventTarget` and `trace2.perfTarget` each naming a file in that global configuration, none of those files is created or written either
+
+#### Scenario: A stale entry beside a worktree whose path cannot be read
+- **WHEN** `project status --json`, `project doctor --json` and `project update --json` run on a project whose root repository has a stale worktree entry, its registered path missing, beside a linked worktree whose path cannot be read because its parent directory denies search permission
+- **THEN** in each document the stale entry's `recommendation` is "Review the stale worktree metadata before pruning it manually; a row's path could not be read, so do not run git worktree prune, git worktree remove or git gc until it can.", where before this change it was "Review the stale worktree metadata before pruning it manually."
+- **AND** once that worktree's path can be read again, the stale entry's `recommendation` is "Review the stale worktree metadata before pruning it manually." in each
