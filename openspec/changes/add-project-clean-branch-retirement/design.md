@@ -175,7 +175,21 @@ head then, with A-50's note) to D4, D7 and Risks; no spec delta changes
 `2250830`'s, with A-50's note) to D4, D7 and Risks, and A-87 and A-88 (lane
 openRepoProject-3's W104 read of round A22, two LOW in the proposal, and its
 verdict) to no section here; no spec delta changes (proposal, "Re-read and Codex
-Findings (round A23)").
+Findings (round A23)"). Round A24 maps A-98 as A-100 splits it (the lane's
+reader RA2 of the review wave of 2026-10-23: its HIGH L3, the holder advice,
+which re-opens A-45 and A-60, its MEDIUM L1 and L2 and its LOW L4 to L7, N1 and
+N2), with the reader RD's L1, lane openRepoProject-3's W120 L-2, the reader RE's
+RE23-2, RE23-4, RE2-2 and RE-4 and A-91's record lines, to the Context table
+(round A24's rows) and its account of feature 004, D3 (the branch kind), D4
+(the lines' account), D5 (`post_check_sha`), D7 (RE-4 at `f3724fc`, N2), D8
+(the holder, `reflog-unmerged`, `git-refused`, moved, `Unconfirmed` and summary
+lines, F-4 closed), D9, Risks and the Migration Plan (RD's L1, RE2-2); the spec
+deltas edit the ADDED requirement's `branch_retirement` fields, its summary,
+`Unconfirmed` and `Kept` lines and the literals of nine ADDED scenarios, add
+four ADDED scenarios, and edit the review-safety scenario's THEN and add an AND
+to it (proposal, "Re-read and Codex Findings (round A24)"); PR #19's round
+(p), its F-1 (b) and the other items that wait on it or on Brett Heap's Q8 are
+round A25's (ruling A-100).
 
 Citations follow `proposal.md`: packet files at `da33d92`, `CAS` for change 1,
 `APO` for change 2, `project:N` and `tests:N` at `961c405`, all but the packet
@@ -217,8 +231,16 @@ What in `project` shapes the approach:
   repository part (T085), and the result record (`result_document()`,
   `print_result()` and `apply_exit_status()`, T057). The stage is a tail of
   that seam, after `decide_stage()`; its branch child is one more kind for
-  `git_env` and `git_argv`, or reuses the `delegate` row's shape (not
-  read-only, no status pins, the protocol pins).
+  `git_env` and `git_argv`, a row `branch` of its own in `GIT_KINDS`, not
+  read-only, with no status pins and the protocol pins, and not the
+  `delegate` row reused: at `f3724fc` that table holds `probe`, `status`,
+  `hidden`, `removal`, `delegate` and `push` (`project:1090-1103`),
+  `child_budget` gives a `removal` or `delegate` child no budget and any
+  other kind, under a deadline, the 5 s probe budget or the time left
+  (`:1402-1417`), and only a read-only handle is put in `LIVE_PROBES`
+  (`:1161`, `:1189-1190`), so that a `branch` row, not read-only, gets that
+  budget and stays out of that registry (the reader RE's RE23-4; ruling
+  A-100).
 - `tests:857-878`, `test_clean_removes_only_merged_worktree_and_keeps_branch`,
   removes a worktree, sees its branch kept, then deletes it with
   `delete-branch`: the default path and the retry path in one test, kept
@@ -252,6 +274,13 @@ bare remote, `GIT_CONFIG_NOSYSTEM=1` and an empty global configuration:
 | a rebase of `b` in another worktree, `b` published and its upstream's remote-tracking ref deleted, the main worktree on the merge target (round A8; ruling A-35, lane openRepoProject-3's F4 and its `exp2`, re-run) | `branch -d -- b` refuses, "cannot delete branch 'b' used by worktree at", exit 1, as it does with the ref present and with no upstream configured; `git checkout <merge target>` in the main worktree, which already holds it, exits 0, and `branch -d b` still refuses, exit 1; after `rebase --abort` and `worktree remove` of that worktree, the same checkout and `branch -d b` delete the branch, exit 0; with no rebase and the main worktree moved to a branch that lacks `b`, Git refuses "the branch 'b' is not fully merged", exit 1, and the checkout of the merge target and `branch -d b` delete it, exit 0 |
 | `git worktree remove` given the main worktree, and the main worktree as the holder of a branch (round A14; ruling A-45, Codex's P2 on `1bf217c`), re-run on Git 2.43.0 and on the 2.36.6 floor | `git worktree remove <main>` and `git worktree remove --force <main>`, run from the main worktree or from a linked one, print "'<main>' is a main working tree", exit 128, and the main worktree stays; with the main worktree on a merged branch `b`, `branch -d b` run in it refuses, "cannot delete branch 'b' used by worktree at" (2.36.6: "Cannot delete branch 'b' checked out at"), exit 1, and so it does with a rebase of `b` stopped in it, which lists the main worktree `detached`, with a bisect of `b` in it, and again once `rebase --abort` or `bisect reset` leaves it on `b`; after `git checkout <other branch>`, or after `git checkout --detach`, `branch -d b` deletes it, exit 0; `git checkout <branch>` in the main worktree for a branch that a linked worktree holds is refused, "'topic' is already used by worktree at" (2.36.6: "already checked out at"), exit 128, so that a step that names a branch such as the merge target names a detach too, as `head-not-merge-target`'s linked case does |
 | a rebase of `b` stopped in the main worktree, and the switch that frees `b` (round A15; ruling A-51, lane openRepoProject-3's W54, LOW-1), re-run here on Git 2.43.0 and by W54 on 2.43.0 and on the 2.36.6 floor | while the rebase is stopped, `git switch --detach` and `git switch <other branch>` in the main worktree both refuse, "fatal: cannot switch branch while rebasing", exit 128, and `branch -d b` refuses, "cannot delete branch 'b' used by worktree at" (2.36.6: "Cannot delete branch 'b' checked out at"), exit 1; after `rebase --abort` or `rebase --continue` the main worktree lists `branch refs/heads/b` again and `branch -d b` still refuses, exit 1; only then does `git switch --detach` or a switch to another branch free `b`, and `branch -d b` deletes it, exit 0; a bisect of `b` in the main worktree is alike once `bisect reset` ends it (W54: `git switch --detach` mid-bisect runs, exit 0, and leaves `b` held on both builds), so that the wait for a rebase or bisect to end comes before the removal of a linked worktree and before the switch of the main one |
+| a linked holder of a merged, published branch `b` whose target worktree was already removed, on Git 2.43.0 and on the 2.36.6 floor (round A24; ruling A-98, reader RA2's L3) | clean: `git worktree remove` exits 0, and `branch -d -- b` then deletes `b`, exit 0; dirty, a tracked edit and an untracked file: the removal refuses, "contains modified or untracked files, use --force to delete it", exit 128; locked: it refuses, "cannot remove a locked working tree", exit 128; holding a submodule: "working trees containing submodules cannot be moved or removed", exit 128; an edit to a file flagged assume-unchanged or skip-worktree, or an ignored file, which `status --porcelain` does not print: the removal exits 0 and deletes it (as RA2's `p3b` found); in every case `git -C <holder> switch --detach` exits 0, changes no file, keeps the flags and the ignored file, and `branch -d -- b` then deletes `b`, exit 0, the holder remaining; `git checkout <other>` of a branch that differs at the flagged file refuses, "Your local changes to the following files would be overwritten by checkout", exit 1, the edit kept, but one of a branch that tracks the ignored file's path overwrites that file without a word, exit 0 |
+| such a holder whose parent directory denies search (round A24; RA2's L3) | `worktree list --porcelain` still lists it, `branch refs/heads/b` and `prunable gitdir file points to non-existent location`; `git -C <holder> switch --detach` fails, "cannot change to ...: Permission denied", exit 128; `branch -d -- b` refuses, "cannot delete branch 'b' used by worktree at" (2.36.6: "Cannot delete branch 'b' checked out at"), exit 1; `worktree prune -n -v` would remove its administrative directory; `git worktree remove <holder>` exits 0 and deletes that directory, the worktree's `.git` file then naming nothing, after which `branch -d -- b` deletes `b`; once search is restored, the detach exits 0 and `branch -d -- b` deletes `b` |
+| a merge stopped on a conflict in such a holder (round A24) | `git switch --detach` refuses, "cannot switch branch while merging", exit 128, `MERGE_HEAD` staying; `branch -d -- b` refuses, exit 1 |
+| the upstream's remote-tracking ref deleted (round A24; RA2's L4) | with a linked holder detached and the main worktree on a branch that lacks `b`, `branch -d -- b` refuses, "the branch 'b' is not fully merged", with Git's `-D` advice, exit 1, and deletes `b`, exit 0, once the main worktree checks out the merge target, or, where a linked worktree holds the merge target, so that the checkout is refused, exit 128, once the main worktree is detached at the merge target's tip; with the main worktree as the holder, a checkout there of a branch that lacks `b` leaves `branch -d` refused, exit 1, where a checkout of the merge target or `git switch --detach` lets it delete `b`, exit 0, as a checkout of any branch does with the ref present |
+| a commit U made on `b3` 40 days ago, which its merge target lacks, reset away now, then a default `git gc` (round A24; RA2's L1, its `p1c`) | `gc.reflogExpireUnreachable` drops U's `commit` entry and keeps the creation entry, the `commit: M` entry and the reset entry, whose old object is U: the gate's reading passes, `commit: M` being a movement after the creation anchor, the plan's proof prints U, and U is reachable; `git reflog show refs/heads/b3` and `git log -g` name U nowhere; `git -C <root> rev-parse --path-format=absolute --git-common-dir` prints the common directory, and `cat <it>/logs/refs/heads/b3`, run from `/`, prints U as the reset entry's old object; `branch -d -- b3` then deletes `b3`, exit 0, and `git fsck --unreachable` names U; the shape that the b3 AND writes by `git reflog expire` reads the same |
+| a branch moved, after its re-proof, to a commit merged into neither the merge target nor its upstream (round A24; RA2's L2, its `p2`) | `branch -d -- b` refuses, "the branch 'b' is not fully merged", exit 1, with the upstream ref present or absent; the post-check's listing shows the new head; `git reflog show refs/heads/b` names it, and still does once the branch is moved back to its planned SHA |
+| Git refusing for a cause that is no holder (round A24; RA2's N1) | a stale `packed-refs.lock` makes `branch -d -- b` exit 1, "Unable to create '.../packed-refs.lock': File exists", and a retry the same; a `reference-transaction` hook that rejects makes it exit 128, "ref updates aborted by hook"; `b` remains in both |
 
 The council's adversary engineer added, on Git 2.43.0 (council finding AE-1):
 a commit reset or amended away on a branch stays reachable through that
@@ -437,7 +466,9 @@ on branch `004-project-clean-all-safe` at `5a02c1a`). The branch child must
 stay out of that registry, as the removal child does: its `GIT_KINDS` row is a
 non-probe one, as the `removal` and `delegate` rows are, so `ChildHandle.start`
 never adds it, and its past-budget termination is driven by the driver's
-`advance()`, never by `kill_live_probes()`.
+`advance()`, never by `kill_live_probes()`. The row is `branch`, its own, and
+not the `delegate` row, which `child_budget` gives no budget (Context; reader
+RE's RE23-4).
 
 The compare is the re-read: the head it lists must equal the reconciliation
 record's `branch_sha`, with the other values of D4. The delete is Git's
@@ -664,15 +695,38 @@ in both its forms; `branch-in-use` with the main worktree as holder, a plan
 keep or the rescan's; and `branch-changed`, whose re-read stopped before its
 re-proof or whose stage never ran, which reads `; now at SHA2; its reflog is
 not proven merged into MERGE_TARGET; inspect it and git -C ROOT reflog show
-refs/heads/BRANCH before retrying: RETRY`. The other own steps keep their
-text: `branch-in-use` with a linked holder and `branch-shared` print `remove
-that worktree first` and no retry, and the run showed that step leaving the
-branch and its reflog in place; `reflog-unmerged` prints no retry and already
-names the inspection, `before any delete-branch`; and both `git-refused`
-lines keep their bare retry after their steps, their branch child having run
-after the re-proof proved the reflog, as for `spawn-error`, so that
-`git-refused` with the upstream ref absent no longer shares
-`head-not-merge-target`'s text. A target that the
+refs/heads/BRANCH before retrying: RETRY`. The holder lines follow ruling
+A-98, the reader RA2's HIGH L3, which re-opens rulings A-45 and A-60, since
+A-60 weighed only the branch's reflog and never the holder's own work:
+`remove that worktree first`, with no retry, only for a holder that this run
+read and found with none of the local state the plan protects, a holder the
+plan itself would remove, which only a `branch-shared` last holder that the run
+did not reach is, `not-attempted`, since a `branch-in-use` holder is a row the
+plan did not select, its later gates unread from the one that excluded it, its
+index unread where `not-requested` or `deferred-target-cap` excluded it, or a
+worktree the plan never read, and a last holder that the run reached and did
+not remove was refused, failed or left `unknown`; for a holder whose path could
+not be read, R-324's no-prune clause and never a removal; and for every other
+holder, its own work named as the work to save and a detach, `git -C PATH2
+switch --detach`, which changes none of its files, then the reflog inspection
+and the retry, the plan alone having proved the reflog. Round A24's Context
+rows show why: `git worktree remove` of a holder deletes its ignored and
+index-flagged files with exit 0, refuses a dirty one with Git's `--force`
+advice, and deletes the administrative directory of one whose path cannot be
+read, where the detach keeps every file and flag and frees the branch. The
+step names no checkout of another branch, which the ruling's text allows,
+because a checkout of a branch that tracks an ignored file's path overwrites
+that file without a word (Context). `reflog-unmerged` prints no retry and
+names, as its inspection, the reflog file that the gate read, since `git
+reflog show` prints no commit that the reflog names only as an old object, the
+shape a default `git gc` leaves (reader RA2's L1; D8). Both `git-refused` lines
+keep their bare retry after their steps, their branch child having run after
+the re-proof proved the reflog, as for `spawn-error`, so that `git-refused`
+with the upstream ref absent no longer shares `head-not-merge-target`'s text;
+and the line of any `retained` reason whose post-check listed the branch at a
+head other than the re-read's gives way to D8's moved line, which names that
+head and the reflog inspection before the retry, the move having written an
+entry that no proof saw (reader RA2's L2; D5). A target that the
 run did not reach gets no `Kept` line: its retry is the deferral line or the
 stop block's `Next:`, a flagged run that plans again and proves the reflog
 again.
@@ -803,6 +857,7 @@ unknown or not established (`CAS/pc:1128-1129`).
 | `branch` | the target's branch |
 | `planned_sha` | the target's planned head |
 | `observed_sha` | the head the re-read listed; null when it listed none or did not run |
+| `post_check_sha` | the head the post-check listed; null when it listed none, the branch absent, or did not run (reader RA2's L2) |
 | `command` | the branch child's argument vector; null when none was spawned |
 | `exit_status` | the branch child's status; null when none was spawned or its exit was not observed |
 | `probes_performed` | the stage's re-read children, its listing and its re-proof, and its post-check child, 0 to 3; the target's own `probes_performed` stays change 1's, its revalidation's children (lane openRepoProject-3's L5) |
@@ -873,6 +928,12 @@ RE-5), so feature 006 handles the stage's own exceptions inside the stage. At
 a non-probe handle with no budget (`project:1610-1628`) (reader RI's RI-7;
 ruling A-48).
 
+`post_check_sha` records what the post-check saw, so that a branch moved after
+the re-proof, which Git's own check then refuses, reads as a move in the record
+as well as in its line (D8), the reason staying the one the branch child's
+outcome gives, `git-refused` among them; it is null for a retired branch,
+absent at the post-check (reader RA2's L2; ruling A-100).
+
 `reconciliation` stays the rescan that decided the removal, so a retired
 target shows `branch_present: true` there and `retired` here; the record's two
 objects are two moments, and the sub-record is the later. A null `stage` makes
@@ -893,22 +954,26 @@ are change 1's):
 ```json
 "branch_retirement": {"stage": "retired", "reason": null, "branch": "f1",
                       "planned_sha": "<40 hex>", "observed_sha": "<40 hex>",
+                      "post_check_sha": null,
                       "command": ["git", "-c", "protocol.allow=never", "...",
                                   "-C", "<command directory>", "branch", "-d",
                                   "--", "f1"],
                       "exit_status": 0, "probes_performed": 3}
 "branch_retirement": {"stage": "retained", "reason": "state-changed",
                       "branch": "f1", "planned_sha": "<40 hex>",
-                      "observed_sha": "<40 hex>", "command": null,
-                      "exit_status": null, "probes_performed": 1}
+                      "observed_sha": "<40 hex>", "post_check_sha": null,
+                      "command": null, "exit_status": null,
+                      "probes_performed": 1}
 "branch_retirement": {"stage": "retained", "reason": "reflog-unmerged",
                       "branch": "f1", "planned_sha": "<40 hex>",
-                      "observed_sha": "<40 hex>", "command": null,
-                      "exit_status": null, "probes_performed": 2}
+                      "observed_sha": "<40 hex>", "post_check_sha": null,
+                      "command": null, "exit_status": null,
+                      "probes_performed": 2}
 "branch_retirement": {"stage": "not-attempted", "reason": "reflog-unmerged",
                       "branch": "f2", "planned_sha": "<40 hex>",
-                      "observed_sha": null, "command": null,
-                      "exit_status": null, "probes_performed": 0}
+                      "observed_sha": null, "post_check_sha": null,
+                      "command": null, "exit_status": null,
+                      "probes_performed": 0}
 ```
 
 ### D6. The stop rule and the exit status (A-4, as amended)
@@ -1000,7 +1065,14 @@ the phase stays `reconciling` from the rescan until the next target sets
 reserve, and a second SIGINT would raise `Interrupted` out of its probes
 (`project:1309-1318`), where this change lets a second SIGINT abandon only the
 post-check; and `count_child` counts only a removal under `operations`
-(`project:1285-1291`).
+(`project:1285-1291`). At `f3724fc` RE-4 still holds, as the reader RE found
+in the review wave of 2026-10-23 and this round re-read (ruling A-100):
+`child_budget` has no such term and gives the reserve while reconciling
+(`project:1402-1417`), the phase is set to `reconciling` in `remove_target`
+(`:6635`) and to `apply` before each target (`:6708`), a second SIGINT while
+reconciling still stops a probe (`interrupting()`, `:1443-1452`), and
+`count_child` still counts only a removal under `operations`
+(`:1419-1425`).
 
 The 64 s bound holds: a branch child spawns with more than 5 s of work left, so
 it ends or is stopped by the 50 s work deadline and is reaped within 4 s more;
@@ -1429,9 +1501,11 @@ changes. Where the plan read `extensions.worktreeConfig` as true, the case
 passes on PR #19's measured basis at `662be89` (above), so that A-9 there no
 longer waits on LQ-20. Wherever a run falls short, at the assumed
 costs or on D14's bases, a target the spawn limit stops is `not-attempted`
-with `deadline-exceeded` and a branch whose child it stops `retained` with
-`deadline-exceeded`, exit 1; the next run takes their worktrees, and such a
-branch keeps `delete-branch` as its retry, after the reflog inspection that
+with `deadline-exceeded` and a branch whose stage it stops, or whose branch
+child it keeps from starting, `retained` with `deadline-exceeded` (the reader
+RA2's N2: the deadline never stops a branch child once spawned), exit 1; the
+next run takes their worktrees, and such a branch keeps `delete-branch` as its
+retry, after the reflog inspection that
 its line names wherever its stage did not re-prove the reflog (Risks; D8;
 rulings A-53 and A-55).
 
@@ -1551,9 +1625,14 @@ The proposal puts the choice to Brett Heap (Open Questions).
 
 ### D8. What the person sees (A-6, A-7, A-19, P-2)
 
-All new text is ASCII, with `ROOT`, `PATH`, `PATH2`, `BRANCH`, `BRANCH2`,
-`SHA`, `SHA2`, `TARGET_SHA` (the merge target's SHA), `MERGE_TARGET`, `N`, `M`,
-`R`, `K`, `G`, `U` and `REASON` substituted, and the tests pin it. Paths, and
+All new text is ASCII, with `ROOT`, `PATH`, `PATH2`, `PATH3` (a linked
+worktree that holds the merge target, in a holder line), `BRANCH`, `BRANCH2`,
+`SHA`, `SHA2` (the head the re-read found, the head the post-check found in
+the moved line, or, where no re-read ran, the reconciliation record's
+`branch_sha`; the reader RA2's L5), `TARGET_SHA` (the merge target's SHA),
+`MERGE_TARGET`, `COMMON_DIR` (the plan's `repository.common_dir`, an absolute
+path), `N`, `M`, `R`, `K`, `G`, `U` and `REASON` substituted, and the tests
+pin it. Paths, and
 branch and
 merge-target names, follow change 1's path rule (`CAS/pc:1061-1066`; ruling
 A-22(b), Codex's P2 on `785a45e`): verbatim in prose and with POSIX shell
@@ -1577,10 +1656,20 @@ depends on change 1's `delete-branch` putting `--` before the name, and feature
 `git branch -d -f`, which answers "branch name required", exit 128, and leaves
 the branch, where `branch -d -- -f` deletes it, exit 0 (lane
 openRepoProject-3's W52, F-4, reproduced there on Git 2.43.0 and on the 2.36.6
-floor; ruling A-52). Lane openRepoProject-2 holds the fix, so the printed retry
-text is kept as it is, and the item stays open at the alignment with feature
-004, beside RE-4, RE-5, RE-7 and RE-8. Without the flag every line is change
-1's.
+floor; ruling A-52). That item is closed (ruling A-100; lane
+openRepoProject-3's W120, L-2, and the reader RE's RE23-2): feature 004 at
+`f3724fc` runs `git -C ROOT branch -d -- BRANCH` (`project:7040`), and PR #19's
+D18 records it at `88d0d36`, "feature 004 runs it as `git -C ROOT branch -d --
+BRANCH`, the `--` ending the options, so that a branch whose name begins with
+`-` is deleted rather than read as an option (W52 F-4, R-259)" (its
+`design.md:1436-1438`); W120 ran the printed retry `--branch=-f` against it on
+Git 2.43.0 and 2.36.6, and it deleted the branch, exit 0. The departure rests on
+lane openRepoProject-2's R-259, for Brett Heap's yes or no; if he declines, the
+`--` leaves that action and such a retry fails again as above. The printed
+retry text is unchanged, the spec's sentence on it being conditional. RE-4 and
+RE-5 stay for the alignment with feature 004, RE-7 being superseded by RE2-2,
+which the Migration Plan's step 4 now applies, and RE-8 holding for PR #29
+alone. Without the flag every line is change 1's.
 
 A command printed in the `$'...'` form needs a shell that implements that
 form, bash, zsh, ksh93 or a POSIX.1-2024 shell, and, for its `\u` and `\U`
@@ -1610,8 +1699,10 @@ as amended, Codex's P2 on `9ff8202`).
   `worktree` and `branch` singular for a count of 1: two worktrees on one
   branch read `Remove 2 worktrees and retire their 1 local branch? [yes/N]`,
   and one worktree `Remove 1 worktree and retire its local branch? [yes/N]`.
-- Summary, on every apply result under the flag: `Removed N; branches
-  retired: R; retained: K`, with `; already gone: G` when G is above 0 and
+- Summary, on every apply result under the flag: `Removed N; their branches
+  retired: R; retained: K`, "their" saying that R and K count the removed
+  worktrees' branches, not those that a stop block's retained list also
+  names (the reader RA2's L6), with `; already gone: G` when G is above 0 and
   `; unconfirmed: U` when U is above 0, so that R, K, G and U add up to the
   distinct branches of the removed targets, U counting a null `stage` (ruling
   A-31, RA's MEDIUM-3); then one line per such branch, a shared branch at its
@@ -1641,7 +1732,10 @@ as amended, Codex's P2 on `9ff8202`).
     the branch may be gone, so it is never a `Kept` line, never counted as
     retained and never named among a stopped run's retained branches, and the
     line carries the SHA and the restore that a deletion needs;
-    `rev-parse --verify` exits 128 for a ref that is gone (Context);
+    `rev-parse --verify` exits 128 for a ref that is gone (Context); the line
+    ends `; otherwise retry: RETRY`, for a branch that still exists, the ground
+    of `unconfirmed-retirement`'s retry, its branch child having run after the
+    re-proof proved the reflog (the reader RA2's L7);
   - `Kept BRANCH (head-not-merge-target); next: check out MERGE_TARGET in the
     main worktree; BRANCH's reflog was proven merged into MERGE_TARGET only at
     this run's plan; inspect git -C ROOT reflog show refs/heads/BRANCH before
@@ -1660,37 +1754,113 @@ as amended, Codex's P2 on `9ff8202`).
     proven (ruling A-63; lane openRepoProject-3's W78, LOW-2 and LOW-3);
     `git-refused` with the upstream ref absent keeps `then: RETRY` after the
     same checkout steps (below);
-  - `Kept BRANCH (branch-in-use); next: BRANCH is checked out at PATH2; remove
-    that worktree first`, or, when PATH2 is the main worktree, which Git
-    refuses to remove (`worktree remove` of it exits 128, "is a main working
-    tree"), `next: BRANCH is checked out at PATH2, the main worktree; switch it
-    off BRANCH, by checking out another branch there, such as MERGE_TARGET, or
-    by detaching it; BRANCH's reflog was proven merged into MERGE_TARGET only
-    at this run's plan; inspect git -C ROOT reflog show refs/heads/BRANCH
-    before retrying: RETRY` (ruling A-45, Codex's P2 on `1bf217c`; Context;
-    the inspection under ruling A-60, since neither the plan's keep nor the
-    rescan's re-proves the reflog, in ruling A-63's words); the
-    line names a detach too because a checkout of MERGE_TARGET is refused
-    while a linked worktree holds it, and the linked form prints no retry;
-  - `Kept BRANCH (branch-shared); next: BRANCH is checked out at PATH2; remove
-    that worktree first`, once, for a shared branch whose last holder PATH2
-    the run did not remove (its re-read, LOW-11), the first form alone: PATH2
-    is a selected row, and change 1's first gate, `main-worktree`
-    (`CAS/pc:576-578`), never selects the main worktree (ruling A-45); when
-    the run removed the last holder, the branch's line is that holder's;
+  - `Kept BRANCH (branch-in-use)` and `Kept BRANCH (branch-shared)`, the
+    latter once, for a shared branch whose last holder PATH2 the run did not
+    remove (its re-read, LOW-11), PATH2 being a selected row and so never the
+    main worktree, which change 1's first gate, `main-worktree`
+    (`CAS/pc:576-578`), never selects (ruling A-45), and when the run removed
+    the last holder, the branch's line being that holder's. Their next step
+    follows ruling A-98 (the reader RA2's HIGH L3; D4; Context, round A24):
+    - `next: BRANCH is checked out at PATH2; remove that worktree first`, and
+      no retry, only for a holder that this run read and found with none of
+      the local state the plan protects, a holder the plan itself would
+      remove: a `branch-shared` last holder that the run did not reach,
+      `not-attempted`, which the plan selected after every gate, its index
+      gates included;
+    - `next: BRANCH is checked out at PATH2; its path could not be read, so do
+      not run git worktree prune, git worktree remove or git gc until it can;
+      once it can, HOLD`, for a holder that is a plan row whose path could not
+      be read, its `present` null, which only a single-target removal can
+      meet, another row's `inspection-error` being a non-blocking omission
+      there: the clause is PR #19's ruled wording of R-324 at `88d0d36`, byte
+      for byte, the next step it gives an unread row of its own (its
+      `specs/project-clean/spec.md:89-91`, in "An unreadable worktree is one
+      row"), since `git worktree remove` of such a holder exits 0 and deletes
+      its administrative directory, and `git worktree prune` would too
+      (Context); round (p)'s F-1 (b) text at `e0b1671`, "inspect, then delete
+      `<path>` by hand; a row's path could not be read, ...", is not taken,
+      because its first clause tells the person to delete the path by hand,
+      the removal this line must never advise for a live holder (ruling
+      A-101);
+    - for the main worktree, which Git refuses to remove (`worktree remove` of
+      it exits 128, "is a main working tree"), `next: BRANCH is checked out
+      at PATH2, the main worktree; switch it off BRANCH, by checking out
+      another branch there, such as MERGE_TARGET, or by detaching it;
+      BRANCH's reflog was proven merged into MERGE_TARGET only at this run's
+      plan; inspect git -C ROOT reflog show refs/heads/BRANCH before
+      retrying: RETRY` (ruling A-45, Codex's P2 on `1bf217c`; Context; the
+      inspection under ruling A-60, since neither the plan's keep nor the
+      rescan's re-proves the reflog, in ruling A-63's words), which names a
+      detach too because a checkout of MERGE_TARGET is refused while a linked
+      worktree holds it, and which reads `by checking out MERGE_TARGET there
+      or by detaching it` when the branch's upstream remote-tracking ref is
+      absent, since Git then judges the retry against that worktree's `HEAD`,
+      which another branch that lacks BRANCH would make the retry fail (the
+      reader RA2's L4; Context);
+    - otherwise, `next: BRANCH is checked out at PATH2; HOLD`, HOLD being
+      `save its own work, uncommitted, ignored or flagged assume-unchanged or
+      skip-worktree, by keeping that worktree and switching it off BRANCH with
+      git -C PATH2 switch --detach, which changes none of its files; BRANCH's
+      reflog was proven merged into MERGE_TARGET only at this run's plan;
+      inspect git -C ROOT reflog show refs/heads/BRANCH before retrying:
+      RETRY`: a holder that a gate excluded for its local state, `dirty`,
+      `ignored-local-files`, `hidden-local-state` or `contains-submodule`, or
+      for another reason, its later gates unread; one that `not-requested` or
+      `deferred-target-cap` excluded before the index gates read its index; a
+      last holder that the run refused, failed or left `unknown`; and one that
+      appeared after the plan, which the stage's check 5 finds. Where the plan
+      also finds `head-not-merge-target`'s condition, the upstream ref absent
+      and the main worktree's `HEAD` not the merge target's SHA, the detach is
+      followed by that keep's checkout, `; then check out MERGE_TARGET in the
+      main worktree`, or, where a linked worktree at PATH3 holds MERGE_TARGET,
+      `; then, MERGE_TARGET being checked out at PATH3, check out its tip
+      TARGET_SHA detached in the main worktree`, since a detached holder
+      leaves the retry judged against that `HEAD` (Context, round A24). The
+      detach is the only switch the line names: a checkout of another branch
+      in the holder overwrites an ignored file at a path that branch tracks,
+      without a word, and refuses one whose flagged edit it would overwrite
+      (Context), and a linked holder cannot check out a branch that another
+      worktree holds, the merge target included;
   - `Kept BRANCH (branch-changed); now at SHA2; its reflog is not proven
     merged into MERGE_TARGET; inspect it and git -C ROOT reflog show
     refs/heads/BRANCH before retrying: RETRY`, the new head and the reflog
     both to be inspected, since the re-read stopped before its re-proof, or
-    no stage ran (ruling A-60);
+    no stage ran (ruling A-60), SHA2 being the re-read's `observed_sha` or,
+    for a target `removed` with `branch-advanced-after-removal`, whose
+    `observed_sha` is null, its reconciliation record's `branch_sha` (the
+    reader RA2's L5); the same step, the moved line, takes the place of the
+    line of any `retained` reason whose post-check listed the branch at a
+    head other than `observed_sha`, SHA2 being that `post_check_sha`, the
+    branch having moved after its re-proof (the reader RA2's L2): Git's own
+    check then refused it, and the bare retry's ground, a reflog the re-proof
+    proved, no longer holds, since the move wrote an entry no proof saw
+    (Context, round A24), so that a later move back to the planned SHA would
+    let the bare retry orphan that commit;
   - `Kept BRANCH (reflog-unmerged); its reflog is not proven merged into
-    MERGE_TARGET; inspect git -C ROOT reflog show refs/heads/BRANCH before any
-    delete-branch`, alike for a proof that printed a commit, one that failed
+    MERGE_TARGET; inspect every commit it names, the old and the new of each
+    entry, as cat REFLOG prints them, before any delete-branch`, REFLOG being
+    `COMMON_DIR/logs/refs/heads/BRANCH`, the file that the gate read and the
+    re-proof reads again, printed by the path rule as one word (the reader
+    RA2's L1): `git reflog show` prints only each entry's new commit, so that
+    a commit the reflog names only as an entry's old one, the shape a default
+    `git gc` leaves once `gc.reflogExpireUnreachable` drops the entry that its
+    commit wrote, would go unseen and the next `delete-branch` would orphan it
+    (Context, round A24). The line names the file and not the commit because
+    the plan records no reflog value and the result no commit (D4, D5): naming
+    the proof's commit would need a new key in `branch_plan` and in
+    `branch_retirement`, which the JSON reader would need as well, and a proof
+    that failed, or a re-proof that found the reflog missing, empty, at its
+    bound or undecidable, has no commit to name, where the file, from the
+    plan's own `repository.common_dir`, serves every case. The line is
+    alike for a proof that printed a commit, one that failed
     or timed out at the plan, and a re-proof that found the reflog missing,
     empty, at its bound or undecidable (lane openRepoProject-3's delta read,
     D4; a re-proof whose read or child failed or ran past its own budget
-    prints the next line, a `state-changed` one; rulings A-43 and A-44),
-    `show` and the full ref name because `show`, `expire`, `delete` and
+    prints the next line, a `state-changed` one; rulings A-43 and A-44). The
+    lines that name `git reflog show` for a branch whose reflog the plan proved
+    keep it: a commit written after the plan is the new object of the entry
+    that wrote it, which `reflog show` prints (Context, round A24), and they
+    name `show` and the full ref name because `show`, `expire`, `delete` and
     `exists` are valid branch names and also `git reflog` subcommands, and
     `git reflog show HEAD` reads the main worktree's own reflog (Context);
   - `Kept BRANCH (state-changed); BRANCH's reflog was proven merged into
@@ -1722,31 +1892,46 @@ as amended, Codex's P2 on `9ff8202`).
     which showed on Git 2.43.0 and 2.36.6, for `removal-ceiling` and both kinds
     of `state-changed`, that the inspection names the commit only the reflog
     holds and the retry then orphans it);
-  - `Kept BRANCH (git-refused); if a rebase or bisect in another worktree
-    holds BRANCH, wait for it to end, and then remove that worktree or, for
-    the main worktree, which Git refuses to remove, switch it off BRANCH, by
-    checking out another branch there, such as MERGE_TARGET, or by detaching
-    it; then retry: RETRY`, for `git-refused` with the upstream ref present
-    (ruling A-32, RA's LOW-5): the branch child's output is captured, so the
+  - `Kept BRANCH (git-refused); Git refused the deletion; if another worktree
+    holds BRANCH, a rebase or bisect of it there included, wait for any rebase
+    or bisect there to end, and then switch that worktree off BRANCH by
+    running git switch --detach there, which changes none of its files; then
+    retry: RETRY`, for `git-refused` with the upstream ref present, the
+    post-check finding the branch where the re-read found it (ruling A-32,
+    RA's LOW-5; reworded in round A24 under the reader RA2's N1 and ruling
+    A-98): the line says that Git refused and names a holder as one cause
+    among others, since a stale `packed-refs.lock` or a rejecting
+    `reference-transaction` hook gives the same refusal (Context, round A24),
+    and the retry, which feature 004's `delete-branch` runs with Git's
+    standard error relayed to the person (`RelayParser`, `project:7084` at
+    `f3724fc`), shows Git's own reason if the cause persists; printing Git's
+    first line in the `Kept` line is not taken, since it would need a field of
+    its own, capped and printed by the path rule, where D5's record keeps no
+    standard error; and the holder, which the listing does not name as
+    BRANCH's, is switched off the branch by a detach run there, never removed,
+    by A-98's rule for a holder this run did not read, the detach working in
+    the main worktree as in a linked one once a rebase or bisect there has
+    ended. The branch child's output is captured, so the
     person never sees Git's "used by worktree"; a worktree mid-rebase or
     mid-bisect is listed detached and Git refuses, and once the rebase or
     bisect ends that worktree holds the branch again and Git still refuses
-    until it is removed or, for the main worktree, switched off the branch
-    (Context), which is why the hint names both steps, the wait and the
-    removal or switch, and puts the wait ahead of both, since a rebase stopped
-    in the main worktree refuses every `git switch`, a detach included, with
+    until it is switched off the branch or removed (Context), which is why the
+    hint names both steps, the wait and the detach, and puts the wait ahead of
+    the detach, since a rebase stopped in the main worktree refuses every `git
+    switch`, a detach included, with
     exit 128, "cannot switch branch while rebasing" (Context; lane
     openRepoProject-3's W54, LOW-1; ruling A-51); the registry listing shows
     such a worktree detached,
     with no `branch` line, so that the line cannot say whether its holder is
-    linked or the main worktree and carries both forms (ruling A-45, Codex's
-    P2 on `1bf217c`); with the upstream ref absent, the same clause comes
-    before that line's own checkout step, `Kept BRANCH (git-refused); if a
-    rebase or bisect in another worktree holds BRANCH, wait for it to end, and
-    then remove that worktree or, for the main worktree, which Git refuses to
-    remove, switch it off BRANCH, by checking out another branch there, such as
-    MERGE_TARGET, or by detaching it; next: check out MERGE_TARGET in the main
-    worktree, then: RETRY`, or its detached-tip form where a linked worktree
+    linked or the main worktree, and the detach serves both (ruling A-45,
+    Codex's P2 on `1bf217c`, whose two forms the detach replaces); with the
+    upstream ref absent, the same clause comes before that line's own checkout
+    step, `Kept BRANCH (git-refused); Git refused the deletion; if another
+    worktree holds BRANCH, a rebase or bisect of it there included, wait for
+    any rebase or bisect there to end, and then switch that worktree off
+    BRANCH by running git switch --detach there, which changes none of its
+    files; next: check out MERGE_TARGET in the main worktree, then: RETRY`, or
+    its detached-tip form where a linked worktree
     holds MERGE_TARGET, because Git refuses a branch so held whether its
     upstream's ref is present or absent, or no upstream is configured, and the
     checkout alone, of a merge target the main worktree already holds, changes
@@ -1802,7 +1987,9 @@ as amended, Codex's P2 on `9ff8202`).
   the proposal say it alike.
 
 No line prints a retry the plan knows will fail, RETRY for a name that begins
-with `-` excepted while change 1's action passes no `--` (above), and none
+with `-` excepted wherever the action passes no `--` (above), the holder lines
+carrying `head-not-merge-target`'s checkout where the plan finds that keep's
+condition too, and none
 suggests `-D`: the branch child's output is captured like a probe's, so Git's
 own advice to run `git branch -D` never reaches the person from the batch, and
 the `head-not-merge-target` line names the checkout under which the retry
@@ -1853,7 +2040,16 @@ separately, at the stage's re-proof (lane openRepoProject-3's delta read, D7),
 one whose re-read listing hangs past its own budget and, separately, into the
 work deadline (lane openRepoProject-3's confirm read of round A10, LOW-2),
 and one that delays the re-proof by 2 s, which SIGINT reaches and does not
-stop (ruling A-34, RE-2); and branches named `topic;id` and
+stop (ruling A-34, RE-2); holders of a target's branch that are dirty, that
+hold an edit to a file flagged assume-unchanged or skip-worktree or an ignored
+file, whose path cannot be read, that `not-requested` excludes, and a shared
+branch's last holder that the run does not reach, each line's printed step
+run as printed and the holder's files and flags compared before and after
+(round A24, ruling A-98); a reflog that names a commit only as an old object,
+made by a commit dated 40 days back and a default `git gc`, whose line's `cat`
+command is run from another directory (the reader RA2's L1); a branch moved
+after its re-proof, for `post_check_sha` and the moved line (RA2's L2); and
+branches named `topic;id` and
 `topic`, U+202E and `x`, and, by hand, `-f` and `HEAD`, with a root path that
 holds a space, run through `dash` for the printed lines and through bash in a
 UTF-8 locale for the `$'...'` form. The Context table's facts, the reflog
@@ -1956,7 +2152,10 @@ proposal puts it before Brett Heap with L-4's recommendation.
   named only as the old object of the oldest surviving entry] -> Closed by
   A-16 as amended on 2026-10-19: the proof's input is every non-zero object a
   reflog entry names, new and old, so that commit is proven merged or the
-  branch is kept, with no extra child.
+  branch is kept, with no extra child; and the kept branch's line names, as
+  its inspection, the reflog file, whose lines print each entry's old object,
+  where `git reflog show` does not, a default `git gc` leaving that shape on
+  its own (the reader RA2's L1; D8).
 - [A branch moved to a commit the merge target lacks and back to its planned
   SHA between the plan and the stage, so that its head, upstream evidence and
   merge target all match the plan while its reflog names the commit] -> Closed
@@ -1967,7 +2166,8 @@ proposal puts it before Brett Heap with L-4's recommendation.
   and moved away after the re-proof's read is in the residual window (D3).
 - [A rebased or amended branch whose old commits the merge target lacks is
   kept, never retired] -> By design (A-16); `delete-branch` stays its explicit
-  path after the person inspects `git -C ROOT reflog show refs/heads/BRANCH`,
+  path after the person inspects every commit its reflog names, as `cat
+  COMMON_DIR/logs/refs/heads/BRANCH` prints them (D8; the reader RA2's L1),
   and the patch-equivalence
   alternative is an Open Question.
 - [A retention the stage discovers stops the run and leaves later eligible
@@ -1976,17 +2176,30 @@ proposal puts it before Brett Heap with L-4's recommendation.
   foresees never stops it (D6).
 - [A holder appearing only after the plan, or a branch whose later holder the
   run did not reach] -> `retained` with `branch-in-use` and a stop, or a line
-  naming the holder; once that worktree is removed, or, for the main worktree,
-  which Git refuses to remove, switched off the branch, `delete-branch`
-  retires the branch (ruling A-45).
+  naming the holder: its removal only for a holder the plan read and would
+  remove, a shared branch's last holder that the run did not reach; R-324's
+  no-prune clause for one whose path could not be read; and otherwise its own
+  work named and a detach, which changes none of its files, then
+  `delete-branch` after the reflog inspection, the main worktree switched off
+  the branch by a checkout or a detach (rulings A-45 and A-98; D8). No line
+  tells the person to remove a holder that the plan excluded, or this run
+  refused, for its local state, or one that this run did not read.
+- [A branch moved after its re-proof and moved back before the post-check]
+  -> The moved line covers a branch that the post-check finds at another head
+  (D8). Two moves by a concurrent writer, both after the re-proof and before
+  the post-check, are outside the contract, as the narrow guarantee states a
+  change after the re-proof, and the `git-refused` line's bare retry then
+  rests on that re-proof, as does the `Unconfirmed` line's, whose post-check
+  did not decide (the reader RA2's L2 and L7).
 - [A rebase or bisect of the branch in progress in another worktree, which the
   registry listing shows detached] -> A residual (ruling A-32, RA's LOW-5): no
   plan keep or check sees it, Git's own checked-out refusal does, so the
   branch is `retained` with `git-refused` and the run stops with exit 2; the
   `git-refused` line says to wait for the rebase or bisect to end, and then to
-  remove that worktree or, for the main worktree, to switch it off the branch,
-  before the retry (D8; Context; rulings A-45 and A-51). No commit is at
-  risk.
+  switch that worktree off the branch by a detach run there, which changes
+  none of its files, before the retry, a worktree this run did not read being
+  never one to remove (D8; Context; rulings A-45, A-51 and A-98). No commit is
+  at risk.
 - [A local branch whose configured upstream is the retired branch] -> Its
   upstream then reads gone, an unmerged one reads `remote-gone` under change
   1's ladder, and a later selected row on it is refused with `state-changed`,
@@ -2064,9 +2277,14 @@ Without the flag nothing changes: every run behaves as change 1 specifies.
    there (`tasks.md` 1.6 and 2.2); a re-base that changes either block's text
    returns that block to Brett Heap (lane openRepoProject-3's re-read, LOW-8).
 2. Before the handoff (`tasks.md` section 2): feature 004 merges and change 1
-   archives; "Clean reports local worktree state", the one block shared with
-   no other open change, is re-read against change 1's archived text and
-   re-copied from it with this change's one clause (`tasks.md` 2.1; lane
+   archives; "Clean reports local worktree state", which no open change
+   other than PR #19, the amendment of change 1, modifies, and which PR #19
+   modifies beyond round (l)'s AND, with its `relative-config-path`
+   paragraph, its scenario "A relative configuration path" and a changed
+   "The plain report exits by completeness" (lane openRepoProject-5's reader
+   RD, its L1 of 2026-10-23; ruling A-100), is re-read against change 1's
+   archived text, that amendment included, and re-copied from it with this
+   change's one clause (`tasks.md` 2.1; lane
    openRepoProject-5's reader RD, its M4; ruling A-33); PR #19 is resolved and
    the two blocks on its text, "Clean bounds
    its Git work and reports omitted work" and the project-command block
@@ -2080,8 +2298,13 @@ Without the flag nothing changes: every run behaves as change 1 specifies.
    `tasks.md` under "Speckit Handoff"; `/opsx:apply` runs only then.
 4. The feature implements D1 to D10 inside feature 004's seam, the README's
    "Clean up Git worktrees" (the flag, its flagged preview, the keeps, the
-   stop, the branch lines, the retry path and D8's note on the `$'...'` form)
-   and the tests of D9, merging
+   stop, the branch lines, the retry path and D8's note on the `$'...'` form;
+   the section is `README.md:189-573` in feature 004 at `f3724fc`, where the
+   edit also takes the sentences that say no run deletes a branch, `:264-265`
+   and `:489-491`, and the places the flag changes, the question at `:295`, the
+   deferral row at `:397`, the stop block at `:502-503` and the kept-branches
+   lines at `:498` and `:506-508`, re-pinned to the text that merged; the
+   reader RE's RE2-2) and the tests of D9, merging
    `main` into its branch as `main` moves, the cache-disposal feature included
    when it lands first, and never rebasing.
 5. The realization PR merges with green checks on every job that
@@ -2100,8 +2323,9 @@ Without the flag nothing changes: every run behaves as change 1 specifies.
    project-command block is re-based on the archived block of
    `add-project-overview-remote-merge-status` if that change archives first,
    or is the block it re-bases on (L-11); "Clean reports local worktree state"
-   is shared with no other open change and is re-read against change 1's
-   archived text (step 2).
+   is modified by no open change but PR #19, the amendment of change 1, and is
+   re-read against change 1's archived text, that amendment included (step
+   2).
 
    Every re-base and re-read is checked by two diffs (reader RF's M1; ruling
    A-37). The first, kept, is `diff -u` of the archived block against this
