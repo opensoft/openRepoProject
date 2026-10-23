@@ -648,6 +648,27 @@ class GatesTests(clean_support.CleanCase):
         result = self.run_json("clean", root, "--apply", "--action", "remove", "--worktree", tree, "--yes", "--json")
         self.assert_refused_target(result, tree, "contains-submodule", message)
         self.assertEqual(self.snapshot(root), before)
+        # The step names what --force deletes and keeps the submodule's commits
+        # first (Brett Heap's Q4 (c), "yes, recommended for Q1-Q9", lead R-380;
+        # lane 2's wave 22 triage T4, sr-removal F5, sr-classification M-3).
+        # Its repository is under this worktree's administrative directory,
+        # modules/, so a commit made in it and not pushed lives there alone;
+        # followed as worded, the commit is kept first, then --force deletes
+        # that repository with the worktree.
+        self.assertEqual(STEPS["contains-submodule"],
+                         "push or otherwise keep each submodule's commits first, since --force deletes its "
+                         "repository with this worktree's git directory, then git worktree remove --force yourself")
+        modules = self.common_dir(root) / "worktrees" / tree.name / "modules" / "sub"
+        self.assertTrue(modules.is_dir())
+        (tree / "sub" / "unpushed.txt").write_text("submodule work, nowhere else\n")
+        unpushed = self.commit(tree / "sub", "submodule work")
+        self.assertEqual(os.path.realpath(self.git(tree / "sub", "rev-parse", "--absolute-git-dir").strip()),
+                         os.path.realpath(modules))
+        source = self.base / "sub-source"
+        self.git(tree / "sub", "push", "-q", str(source), "HEAD:refs/heads/kept")
+        self.git(root, "worktree", "remove", "--force", tree)
+        self.assertFalse(modules.exists() or tree.exists(), "--force deleted the submodule's repository")
+        self.assertEqual(self.git(source, "cat-file", "-t", unpushed).strip(), "commit", "the kept commit remains")
 
     # Brett Heap's Q2, "yes, recommended for Q1-Q9" (lead R-380; lane 2's wave
     # 22 triage T2; sr-classification H-1, sr-evidence H-3). Git's directory
@@ -815,6 +836,52 @@ class GatesTests(clean_support.CleanCase):
         self.assertEqual(self.snapshot(root), before, "nothing removed")
         self.assertTrue((root / ".git").is_dir(), "the common directory remains")
         self.assertEqual(self.git(root, "rev-parse", "refs/heads/secret").strip(), secret)
+
+    def test_clean_a_registered_path_that_is_a_symbolic_link(self):
+        # Brett Heap's Q9 (b), "yes, recommended for Q1-Q9" (lead R-380; lane
+        # 2's wave 22 triage T12, sr-removal F7): a merged, pushed worktree
+        # moved by hand and a symbolic link left at its registered path. Its
+        # registration agrees through the link and its status prints nothing,
+        # so it was selected, and Git emptied the link's target, failed to
+        # remove the link, exit 255, and still deleted the administrative
+        # directory. The row is now registration-mismatch, unprobed and
+        # inspection-error: the plan is incomplete and nothing is removed, in
+        # batch and in single mode, the control beside it included.
+        root = self.repo()
+        self.bare_remote()
+        linked = self.merged_worktree("001-linked", path=self.base / "wt-a")
+        control = self.merged_worktree("002-control", path=self.base / "control")
+        elsewhere = self.base / "elsewhere"
+        elsewhere.mkdir()
+        moved = elsewhere / "wt-a"
+        linked.rename(moved)
+        linked.symlink_to(moved, target_is_directory=True)
+        self.assertTrue(linked.is_symlink())
+        admin = self.common_dir(root) / "worktrees" / "wt-a"
+        self.assertIn(f"worktree {linked}\n", self.git(root, "worktree", "list", "--porcelain"),
+                      "Git keeps the registered path")
+        self.assertEqual(self.git(linked, "status", "--porcelain=v1", "--untracked-files=normal", "--ignored",
+                                  env=dict(self.env, GIT_OPTIONAL_LOCKS="0")), "", "its status prints nothing")
+        before = self.snapshot(root)
+        result = self.preview(root)
+        self.assert_status(result, 1)
+        document = result.document
+        self.assertEqual([entry["path"] for entry in document["selected"]], [str(control)])
+        self.assertEqual(by_path(document), {str(root): "main-worktree", str(linked): "registration-mismatch"})
+        self.assertEqual((row_of(document, linked)["classification"], row_of(document, linked)["dirty"]),
+                         ("inspection-error", None))
+        self.assertEqual([refusal["code"] for refusal in document["refusals"]], ["inspection-incomplete"])
+        for words in (("--all-safe", "--apply", "--yes"),
+                      ("--apply", "--action", "remove", "--worktree", linked, "--yes")):
+            with self.subTest(words=words[:2]):
+                result, records = self.run_counted("clean", root, *words)
+                self.assert_status(result, 2)
+                self.assertTrue(result.stderr.startswith("REFUSED: The plan is incomplete (inspection-incomplete)"),
+                                result.stderr)
+                self.assertEqual(removals(records), [])
+        self.assertEqual(self.snapshot(root), before, "nothing removed")
+        self.assertTrue(linked.is_symlink() and admin.is_dir() and control.is_dir())
+        self.assertTrue((moved / "work-001-linked").is_file(), "the link's target keeps its files")
 
     def test_clean_enclosing_rows_decides_on_literal_values(self):
         # enclosing_rows() is a pure function of values already read: a linked

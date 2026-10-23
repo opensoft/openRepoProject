@@ -260,13 +260,15 @@ class StopTests(clean_support.CleanCase):
             # P-2), before the stop block; the result still ends with the stop
             # block, `Branches kept:` and the residual-window line (R-76 (d)).
             # Its `.git` file and registry entry both found present, the note
-            # keeps --force (W52 F-1, R-263).
+            # keeps --force (W52 F-1, R-263), with no check first: the
+            # ceiling's own note, not a report row's (Brett Heap's Q4, lead
+            # R-380).
             ("partially removed at the ceiling",
              [literal_target("removed", exit_status=0, **p1),
               with_git_file(literal_target("unknown", "removal-ceiling", path=b"/w/p 2", branch="b2", notes=[NOTE],
                                            reconciliation=record(True, True, True, SHA_B), exit_status=137), True),
               literal_target("not-attempted", "batch-stopped", **p3)],
-             [TEXT["partial_removal_note"].format(PATH="'/w/p 2'"),
+             [TEXT["partial_removal_note_ceiling"].format(PATH="'/w/p 2'"),
               stop_block("/w/p 2", "removal-ceiling", 1, 3, "/w/p3"),
               kept.format(BRANCHES="b1, b2, b3"), residual]),
         ]
@@ -331,8 +333,14 @@ class StopTests(clean_support.CleanCase):
         [at] = [index for index, line in enumerate(lines) if line.startswith(f"DIRTY: {gone} [001-gone] ")]
         self.assertEqual(lines[at + 1:at + 3], [REPORT_INDENT + DIRTY_ADVICE, REPORT_INDENT + note_line(gone)],
                          transcript)
-        self.assertEqual(note_line(gone), "Probable partial removal: inspect, then git worktree remove --force "
+        # The note names its check first (Brett Heap's Q4 (a) and (b), "yes,
+        # recommended for Q1-Q9", lead R-380), which here lists only deleted
+        # files, so the note keeps its --force on intact deletions (pcl:227-237).
+        self.assertEqual(note_line(gone), f"Probable partial removal: check that git -C '{gone}' status --short "
+                                          f"--ignored lists only deleted files, then git worktree remove --force "
                                           f"'{gone}' by hand.")
+        checked = self.git(gone, "status", "--short", "--ignored").splitlines()
+        self.assertTrue(checked and all(line.startswith(" D ") for line in checked), checked)
         [at] = [index for index, line in enumerate(lines) if line.startswith(f"DIRTY: {mixed} [002-mixed] ")]
         self.assertEqual(lines[at + 1], REPORT_INDENT + DIRTY_ADVICE, transcript)
         self.assertEqual([line for line in lines if "Probable partial removal" in line],
@@ -372,8 +380,9 @@ class StopTests(clean_support.CleanCase):
                     path.unlink()
             self.assertEqual([path.name for path in tree.iterdir()], [".git"])
         locked_note = TEXT["partial_removal_note_locked"].format(PATH=shlex.quote(os.fsdecode(locked)))
-        self.assertEqual(locked_note, "Probable partial removal: inspect, unlock it, then git worktree remove --force "
-                                      f"'{locked}' by hand.")
+        self.assertEqual(locked_note, f"Probable partial removal: check that git -C '{locked}' status --short "
+                                      f"--ignored lists only deleted files, unlock it, then git worktree remove "
+                                      f"--force '{locked}' by hand.")
 
         report = self.run_cli("clean", root)
         self.assert_status(report, 0)
@@ -399,9 +408,78 @@ class StopTests(clean_support.CleanCase):
                                  env=self.env, capture_output=True, text=True, timeout=clean_support.TIMEOUT)
         self.assertEqual(refused.returncode, 128, refused.stderr)
         self.assertIn("cannot remove a locked working tree", refused.stderr)
+        # The locked note's check first (Q4, lead R-380): only deletions.
+        checked = self.git(locked, "status", "--short", "--ignored").splitlines()
+        self.assertTrue(checked and all(line.startswith(" D ") for line in checked), checked)
         self.git(root, "worktree", "unlock", locked)
         self.git(root, "worktree", "remove", "--force", locked)
         self.assertFalse(os.path.lexists(locked), "the note's steps removed the worktree")
+
+    def test_clean_the_partial_removal_note_names_its_check_first(self):
+        # Brett Heap's Q4 (a) and (b), "yes, recommended for Q1-Q9" (lead
+        # R-380; lane 2's wave 22 triage T4, sr-removal F3 and F4). D4's note
+        # is judged on the status records read, so it also shows where work
+        # lies past them: (a) 4,100 tracked files deleted, then a modified
+        # tracked file and an untracked one past the 4,096-record bound (the
+        # triage's SC5), and (b) one deleted tracked file beside an ignored
+        # work file, which leaves the flag alone (F4). The note keeps every
+        # detection rule and names the check that shows that work, which the
+        # person runs before --force; the apply removes neither worktree.
+        root = self.repo()
+        self.bare_remote()
+        bound = project.LIMITS["status_records"]
+        self.assertEqual(bound, 4096)
+
+        def many(tree):
+            (tree / "d").mkdir()
+            for number in range(bound + 4):
+                (tree / "d" / f"{number:04d}.txt").write_text(f"{number}\n")
+            (tree / "z-mod.txt").write_text("before\n")
+
+        def ignoring(tree):
+            (tree / ".gitignore").write_text("local.env\n")
+
+        sc5 = self.merged_worktree("001-many", path=self.base / "many tree", setup=many)
+        f4 = self.merged_worktree("002-ignored", path=self.base / "ignored-tree", setup=ignoring)
+        for path in (sc5 / "d").iterdir():
+            path.unlink()
+        (sc5 / "d").rmdir()
+        (sc5 / "z-mod.txt").write_text("after: work\n")
+        (sc5 / "precious").write_text("work, nowhere else\n")
+        (f4 / "work-002-ignored").unlink()
+        (f4 / "local.env").write_text("SECRET=work, nowhere else\n")
+
+        document = self.run_json("clean", root, "--json").document
+        rows = {row["path"]: row for row in document["worktrees"]}
+        self.assertEqual([(rows[str(tree)]["classification"], rows[str(tree)]["notes"]) for tree in (sc5, f4)],
+                         [("dirty", [NOTE]), ("dirty", [NOTE])])
+        self.assertTrue(rows[str(sc5)]["ignored_files_truncated"], "the stream stopped at its bound")
+
+        report = self.run_cli("clean", root)
+        self.assert_status(report, 0)
+        lines = report.stdout.splitlines()
+        transcript = "\n" + clean_support.transcript(report)
+        for tree, branch in ((sc5, "001-many"), (f4, "002-ignored")):
+            with self.subTest(tree=tree.name):
+                shown = shlex.quote(str(tree))
+                self.assertEqual(note_line(tree), f"Probable partial removal: check that git -C {shown} status "
+                                                  f"--short --ignored lists only deleted files, then git worktree "
+                                                  f"remove --force {shown} by hand.")
+                [at] = [index for index, line in enumerate(lines) if line.startswith(f"DIRTY: {tree} [{branch}] ")]
+                self.assertEqual(lines[at + 1:at + 3], [REPORT_INDENT + DIRTY_ADVICE, REPORT_INDENT + note_line(tree)],
+                                 transcript)
+        # The check, as the note words it, shows the work past the bound and
+        # the ignored file, so the person stops before --force.
+        checked = {tree: self.git(tree, "status", "--short", "--ignored").splitlines() for tree in (sc5, f4)}
+        self.assertEqual([line for line in checked[sc5] if not line.startswith(" D ")],
+                         [" M z-mod.txt", "?? precious"])
+        self.assertEqual(len(checked[sc5]), bound + 6)
+        self.assertEqual(checked[f4], [" D work-002-ignored", "!! local.env"])
+
+        result = self.run_cli("clean", root, "--all-safe", "--apply", "--yes")
+        self.assert_status(result, 0)
+        self.assertIn(TEXT["empty_line"], result.stdout.splitlines(), "\n" + clean_support.transcript(result))
+        self.assertTrue((sc5 / "precious").is_file() and (f4 / "local.env").is_file())
 
     def test_clean_the_ceiling_s_partial_removal_note_follows_the_git_file_and_the_entry(self):
         # Lane 3's W52 F-1 (Brett Heap's ruling "F-1: prune-then-delete", lead
@@ -423,6 +501,10 @@ class StopTests(clean_support.CleanCase):
         # target's own administrative directory, ADMIN, in place of `git
         # worktree prune`, which acts on the whole repository (Brett Heap's Q3
         # (a), "yes, recommended for Q1-Q9", lead R-380).
+        # The first note keeps --force with no check (Brett Heap's Q4, lead
+        # R-380): the target was clean at its revalidation.
+        self.assertEqual(TEXT.get("partial_removal_note_ceiling"),
+                         "Probable partial removal: inspect, then git worktree remove --force {PATH} by hand.")
         prune = TEXT.get("partial_removal_note_prune")
         self.assertEqual(prune, "Probable partial removal: inspect, then delete {PATH} and its administrative "
                                 "directory {ADMIN} by hand.")
@@ -435,7 +517,7 @@ class StopTests(clean_support.CleanCase):
         self.assertEqual(project.TEXT.get("partial_removal_note_unread"), unread)
         plan = types.SimpleNamespace(root=b"/r oot")
         for label, entry, path, git_file, read, key in [
-                ("the entry and the .git file present", True, True, True, None, "partial_removal_note"),
+                ("the entry and the .git file present", True, True, True, None, "partial_removal_note_ceiling"),
                 ("the .git file gone", True, True, False, None, "partial_removal_note_prune"),
                 ("the .git file not reached", True, True, None, False, "partial_removal_note_prune"),
                 ("the entry gone, the path left", False, True, None, None, "partial_removal_note_prune"),
@@ -503,7 +585,7 @@ class StopTests(clean_support.CleanCase):
                  ("an unread row beside a stale one", types.SimpleNamespace(root=b"/r oot", rows=[stale, unread]),
                   True)]
         ceiling = [
-            ("the entry and the .git file present", True, True, True, None, "partial_removal_note"),
+            ("the entry and the .git file present", True, True, True, None, "partial_removal_note_ceiling"),
             ("the .git file gone", True, True, False, None, "partial_removal_note_prune"),
             ("the .git file not reached", True, True, None, False, "partial_removal_note_prune"),
             ("the entry gone, the path left", False, True, None, None, "partial_removal_note_prune"),

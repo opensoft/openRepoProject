@@ -535,6 +535,45 @@ class ApplyTests(clean_support.CleanCase):
             self.assertIsNone(project.revalidate(plan, entries["002-b-tree"], run))
         self.assertTrue((trees["001-a"] / "tools" / ".git").is_dir(), "nothing removed")
 
+    def test_clean_revalidate_a_nested_git_lstat_that_fails_or_is_cut(self):
+        # Brett Heap's Q2 (2) (lead R-380) at step 7: the hidden-state probe's
+        # listing is read again, and with it nested_git_check()'s one
+        # filesystem call, its lstats of `<dir>/.git`, under the same
+        # per-call budget. Made to raise PermissionError, or cut at its
+        # budget, it decides nothing, so the target is state-changed (R-195);
+        # cut by the work deadline, deadline-exceeded. Once each, its one
+        # directory named; the target stays.
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-a", setup=lambda tree: ((tree / "tools").mkdir(),
+                                                                (tree / "tools" / "run.sh").write_text("v1\n")))
+        real_fs_call = project.fs_call
+        for label, answer, expected in (
+                ("PermissionError", PermissionError(errno.EACCES, os.strerror(errno.EACCES)), "state-changed"),
+                ("cut at its budget", project.DriverOutcome(None, "timeout", detail="no answer within 5 s"),
+                 "state-changed"),
+                ("cut by the work deadline",
+                 project.DriverOutcome(None, "deadline", detail="no time was left to start it"), "deadline-exceeded")):
+            with self.subTest(label):
+                calls = []
+
+                def fs_call(fn, *args, **options):
+                    if fn is project.nested_git_entry:
+                        calls.append(args)
+                        if isinstance(answer, BaseException):
+                            raise answer
+                        return answer
+                    return real_fs_call(fn, *args, **options)
+
+                with self.in_process() as run:
+                    plan = self.plan_of(root, run, [tree])
+                    entry = project.make_target(plan, plan.selected[0])
+                    with mock.patch.object(project, "fs_call", fs_call):
+                        refused = project.revalidate(plan, entry, run)
+                self.assertEqual(refused[0], expected)
+                self.assertEqual(calls, [(os.fsencode(tree), [b"tools"])], "step 7 made the call once")
+                self.assertTrue(tree.is_dir())
+
     def test_clean_revalidate_records_a_refused_path_after_the_work_deadline(self):
         # Lead ruling R-101 (d), apply review F3: a difference found just as the
         # work deadline passes still records the planned path's presence, since
