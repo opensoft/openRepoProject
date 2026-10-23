@@ -41,7 +41,8 @@ TRACE2_OFF = {"GIT_TRACE2": "0", "GIT_TRACE2_EVENT": "0", "GIT_TRACE2_PERF": "0"
 
 # The seven protocol pins, as the contract spells them, and the status pins:
 # the contract's two, then the two stat pins of lead ruling R-102 (LQ-10,
-# approved by Brett Heap).
+# approved by Brett Heap), then core.ignoreCase=false (Brett Heap's Q1, lead
+# R-380).
 PROTOCOL = tuple("""
 -c protocol.allow=never -c protocol.file.allow=never
 -c protocol.ssh.allow=never -c protocol.git.allow=never
@@ -49,14 +50,15 @@ PROTOCOL = tuple("""
 -c protocol.ext.allow=never
 """.split())
 STATUS = ("-c", "core.untrackedCache=false", "-c", "core.fsmonitor=false",
-          "-c", "core.trustctime=true", "-c", "core.checkStat=default")
+          "-c", "core.trustctime=true", "-c", "core.checkStat=default", "-c", "core.ignoreCase=false")
 
 # Design D9's removal vector up to `-C`, character for character, with R-102's
-# two stat pins after core.fsmonitor=false.
+# two stat pins after core.fsmonitor=false and Q1's core.ignoreCase=false after
+# them (lead R-380).
 D9_REMOVAL = """git -c
 status.showUntrackedFiles=normal -c core.untrackedCache=false -c
 core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default -c
-protocol.allow=never -c protocol.file.allow=never -c
+core.ignoreCase=false -c protocol.allow=never -c protocol.file.allow=never -c
 protocol.ssh.allow=never -c protocol.git.allow=never -c
 protocol.http.allow=never -c protocol.https.allow=never -c
 protocol.ext.allow=never""".split()
@@ -218,6 +220,104 @@ class PinnedStatusTests(clean_support.CleanCase):
         self.assert_status(after, 0)
         self.assertEqual(after.document["selected"], [])
         self.assertIn((str(tree), "dirty"), [(entry["path"], entry["reason"]) for entry in after.document["excluded"]])
+
+        # Row 116's THEN (pc:342-344; lane 3's W115 LOW-2): `--all-safe --apply --yes` leaves the
+        # worktree and the edit in place. The apply plans afresh with the same pins, so it selects
+        # nothing and removes nothing; without them it would remove the worktree and lose the edit.
+        applied = self.run_json("clean", root, "--all-safe", "--apply", "--yes", "--json")
+        self.assert_status(applied, 0)
+        self.assertEqual((applied.document["selected"], applied.document["operations"]),
+                         ([], {"estimated": 0, "performed": 0}), "a plan with no target, and no removal run")
+        self.assertTrue(tree.is_dir(), "the worktree is kept")
+        self.assertEqual(tracked.read_text(), "edit", "the edit is kept")
+        self.assertEqual(tracked.stat().st_mtime_ns, old, "the file is untouched")
+        self.assertIn(f"worktree {tree}\n", self.git(root, "worktree", "list", "--porcelain"))
+        human = self.run_cli("clean", root, "--all-safe", "--apply", "--yes")
+        self.assert_status(human, 0)
+        self.assertTrue(tree.is_dir() and tracked.read_text() == "edit")
+
+    # Brett Heap's Q1, "yes, recommended for Q1-Q9" (lead R-380; lane 2's wave 22
+    # triage T1; sr-classification H-2, sr-evidence H-1 and H-2, sr-removal F1):
+    # core.ignoreCase=false joins the status pins, on the status and hidden-state
+    # probes and the removal. Under core.ignoreCase=true on a case-sensitive file
+    # system Git hid an untracked case variant, and `git worktree remove PATH`
+    # resolved PATH to another worktree whose path differs only in case.
+
+    def test_status_a_case_variant_untracked_file(self):
+        # A merged worktree holds an untracked WORK-... beside its tracked
+        # work-..., with core.ignoreCase=true read from the repository's config,
+        # or from the caller's global configuration alone. Git under that setting
+        # lists nothing, so the row read clean, was selected, and the apply
+        # deleted the file. The pinned probe lists `?? WORK-...`: the row is
+        # dirty, nothing is selected, and the apply keeps the worktree and the file.
+        for number, where in enumerate(("the repository's config", "GIT_CONFIG_GLOBAL")):
+            with self.subTest(where):
+                root = self.repo(f"icase-{number}")
+                self.bare_remote(root, name=f"icase-{number}.git")
+                tree = self.merged_worktree(f"00{number}-feat", path=self.base / f"icase-{number}-wt", root=root)
+                variant = tree / f"WORK-00{number}-FEAT"  # beside the tracked work-00N-feat
+                env = dict(self.env)
+                if number == 0:
+                    self.git(root, "config", "core.ignoreCase", "true")
+                else:
+                    config = self.base / "icase-global.gitconfig"
+                    config.write_text("[core]\n\tignoreCase = true\n")
+                    env["GIT_CONFIG_GLOBAL"] = str(config)
+                variant.write_text("my unique notes, found nowhere else\n")
+                self.assertEqual(self.git(tree, "status", "--porcelain", "--untracked-files=normal", "--ignored",
+                                          env=dict(env, GIT_OPTIONAL_LOCKS="0")), "",
+                                 "Git under that setting lists nothing")
+                preview = self.run_json("clean", root, "--all-safe", "--json", env=env)
+                self.assert_status(preview, 0)
+                self.assertEqual(preview.document["selected"], [])
+                [row] = [row for row in preview.document["worktrees"] if row["path"] == str(tree)]
+                self.assertEqual((row["dirty"], row["classification"]), (True, "dirty"))
+                self.assertIn((str(tree), "dirty"),
+                              [(entry["path"], entry["reason"]) for entry in preview.document["excluded"]])
+                applied = self.run_json("clean", root, "--all-safe", "--apply", "--yes", "--json", env=env)
+                self.assert_status(applied, 0)
+                self.assertEqual(applied.document["operations"], {"estimated": 0, "performed": 0})
+                self.assertTrue(variant.is_file(), "the case-variant file is kept")
+                self.assertIn(f"worktree {tree}\n", self.git(root, "worktree", "list", "--porcelain"))
+
+    def test_clean_two_worktree_paths_that_differ_only_in_case(self):
+        # Two merged worktrees, wt-x and WT-X, under core.ignoreCase=true. The
+        # first in the readdir order of the admin directories, the order Git's
+        # find_worktree() tries them in, holds a commit that its HEAD reflog
+        # alone holds, so it is excluded as worktree-only-commits; the other is
+        # eligible. Git, asked to remove the eligible path, removed the excluded
+        # worktree, and its commit with it. The removal's pin makes Git resolve
+        # the path to the entry of exactly that spelling: the eligible one is
+        # removed, and the excluded one and its commit remain.
+        root = self.repo()
+        self.bare_remote()
+        trees = {"wt-x": self.merged_worktree("001-lower", path=self.base / "wt-x"),
+                 "WT-X": self.merged_worktree("002-upper", path=self.base / "WT-X")}
+        branches = {"wt-x": "001-lower", "WT-X": "002-upper"}
+        order = [name for name in os.listdir(self.common_dir(root) / "worktrees") if name in trees]
+        self.assertEqual(sorted(order), sorted(trees))
+        held_name, eligible_name = order
+        held, eligible = trees[held_name], trees[eligible_name]
+        self.git(held, "checkout", "-q", "--detach")
+        (held / "precious").write_text("only here")
+        commit = self.commit(held, "held only by this worktree's HEAD reflog")
+        self.git(held, "checkout", "-q", branches[held_name])
+        self.git(root, "config", "core.ignoreCase", "true")
+        preview = self.run_json("clean", root, "--all-safe", "--json")
+        self.assert_status(preview, 0)
+        self.assertEqual([entry["path"] for entry in preview.document["selected"]], [str(eligible)])
+        self.assertIn((str(held), "worktree-only-commits"),
+                      [(entry["path"], entry["reason"]) for entry in preview.document["excluded"]])
+        applied = self.run_json("clean", root, "--all-safe", "--apply", "--yes", "--json")
+        self.assert_status(applied, 0)
+        self.assertEqual([(target["path"], target["stage"], target["reason"]) for target in applied.document["targets"]],
+                         [(str(eligible), "removed", None)])
+        self.assertFalse(eligible.exists(), "the eligible worktree is removed")
+        self.assertTrue(held.is_dir(), "the excluded worktree remains")
+        listed = self.git(root, "worktree", "list", "--porcelain")
+        self.assertIn(f"worktree {held}\n", listed)
+        self.assertNotIn(f"worktree {eligible}\n", listed)
+        self.assertIn(commit, self.git(held, "log", "-g", "--format=%H", "HEAD").split(), "its commit remains")
 
 
 # The env-dumping git, inline (lead ruling R-99 (d) 2). First on PATH, an sh

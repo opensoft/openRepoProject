@@ -47,13 +47,14 @@ RECONCILIATION_KEYS = ["registry_entry_present", "path_present", "branch_present
 OBSERVED_AT = re.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z")
 
 # The removal child's pins, as the contract writes them ("Git children"): the
-# five status pins, then the seven protocol pins, before `-C ROOT`.
+# six status pins, then the seven protocol pins, before `-C ROOT`.
 PROTOCOL_PINS = ["-c", "protocol.allow=never", "-c", "protocol.file.allow=never",
                  "-c", "protocol.ssh.allow=never", "-c", "protocol.git.allow=never",
                  "-c", "protocol.http.allow=never", "-c", "protocol.https.allow=never",
                  "-c", "protocol.ext.allow=never"]
 REMOVAL_PINS = ["-c", "status.showUntrackedFiles=normal", "-c", "core.untrackedCache=false",
                 "-c", "core.fsmonitor=false", "-c", "core.trustctime=true", "-c", "core.checkStat=default",
+                "-c", "core.ignoreCase=false",
                 *PROTOCOL_PINS]
 # The rescan's three children after `-C ROOT` (design D6, rows 3, 4 and 6).
 ROW_3 = ["rev-parse", "--path-format=absolute", "--show-toplevel", "--git-common-dir",
@@ -510,6 +511,69 @@ class ApplyTests(clean_support.CleanCase):
             self.assertEqual(project.revalidate(plan, entry, run),
                              ("state-changed", record(True, True, True, heads["004-identity"])))
 
+    def test_clean_revalidate_refuses_a_repository_nested_after_the_plan(self):
+        # Brett Heap's Q2 (2), "yes, recommended for Q1-Q9" (lead R-380): step
+        # 7's hidden-state probe also lstats `<dir>/.git` for every directory
+        # of its listing, so a repository `git init`-ed in a tracked directory
+        # after the plan, which no status record shows, refuses its target as
+        # contains-submodule, as a gitlink there would; the other target passes.
+        root = self.repo()
+        self.bare_remote()
+
+        def setup(tree):  # the second worktree holds tools/ already, from the first's merge
+            (tree / "tools").mkdir(exist_ok=True)
+            (tree / "tools" / "run.sh").write_text("v1\n")
+
+        trees = {name: self.merged_worktree(name, setup=setup) for name in ("001-a", "002-b")}
+        with self.in_process() as run:
+            plan = self.plan_of(root, run, trees.values())
+            entries = {Path(os.fsdecode(row.raw_path)).name: project.make_target(plan, row) for row in plan.selected}
+            self.git(trees["001-a"] / "tools", "init", "-q")
+            self.assertEqual(self.git(trees["001-a"], "status", "--porcelain", "--ignored"), "")
+            self.assertEqual(project.revalidate(plan, entries["001-a-tree"], run),
+                             ("contains-submodule", record(True, True, True, self.head(trees["001-a"]))))
+            self.assertIsNone(project.revalidate(plan, entries["002-b-tree"], run))
+        self.assertTrue((trees["001-a"] / "tools" / ".git").is_dir(), "nothing removed")
+
+    def test_clean_revalidate_a_nested_git_lstat_that_fails_or_is_cut(self):
+        # Brett Heap's Q2 (2) (lead R-380) at step 7: the hidden-state probe's
+        # listing is read again, and with it nested_git_check()'s one
+        # filesystem call, its lstats of `<dir>/.git`, under the same
+        # per-call budget. Made to raise PermissionError, or cut at its
+        # budget, it decides nothing, so the target is state-changed (R-195);
+        # cut by the work deadline, deadline-exceeded. Once each, its one
+        # directory named; the target stays.
+        root = self.repo()
+        self.bare_remote()
+        tree = self.merged_worktree("001-a", setup=lambda tree: ((tree / "tools").mkdir(),
+                                                                (tree / "tools" / "run.sh").write_text("v1\n")))
+        real_fs_call = project.fs_call
+        for label, answer, expected in (
+                ("PermissionError", PermissionError(errno.EACCES, os.strerror(errno.EACCES)), "state-changed"),
+                ("cut at its budget", project.DriverOutcome(None, "timeout", detail="no answer within 5 s"),
+                 "state-changed"),
+                ("cut by the work deadline",
+                 project.DriverOutcome(None, "deadline", detail="no time was left to start it"), "deadline-exceeded")):
+            with self.subTest(label):
+                calls = []
+
+                def fs_call(fn, *args, **options):
+                    if fn is project.nested_git_entry:
+                        calls.append(args)
+                        if isinstance(answer, BaseException):
+                            raise answer
+                        return answer
+                    return real_fs_call(fn, *args, **options)
+
+                with self.in_process() as run:
+                    plan = self.plan_of(root, run, [tree])
+                    entry = project.make_target(plan, plan.selected[0])
+                    with mock.patch.object(project, "fs_call", fs_call):
+                        refused = project.revalidate(plan, entry, run)
+                self.assertEqual(refused[0], expected)
+                self.assertEqual(calls, [(os.fsencode(tree), [b"tools"])], "step 7 made the call once")
+                self.assertTrue(tree.is_dir())
+
     def test_clean_revalidate_records_a_refused_path_after_the_work_deadline(self):
         # Lead ruling R-101 (d), apply review F3: a difference found just as the
         # work deadline passes still records the planned path's presence, since
@@ -783,7 +847,7 @@ class ApplyTests(clean_support.CleanCase):
             killed = project.DriverOutcome(["git"], "timeout", status=-signal.SIGKILL)
             self.assertEqual(project.decide_stage(held, killed, found),
                              ("unknown", "removal-ceiling", ["partially-removed"]))
-            self.assertEqual(project.partial_removal_text(held, False), "partial_removal_note_unread",
+            self.assertEqual(project.partial_removal_text(held), "partial_removal_note_unread",
                              "the third note: no prune advice where the path could not be read")
         found, _, _ = rescan()
         self.assertEqual((found, entry.git_file_present), (kept, True), "the fixture is restored")

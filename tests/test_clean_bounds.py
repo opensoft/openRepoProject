@@ -254,6 +254,14 @@ class BoundsTests(clean_support.CleanCase):
                               document["notes"], codes(document), document["limits"]["worktree_rows"]),
                              ("report", "complete", None, {"count": 0, "exactness": "exact"}, [note], [], 256))
             self.assertEqual(len(document["worktrees"]), 200)
+            # pcl:36-38 (lane 3's W121 LOW-5): above 128 the gates still run for every inspected
+            # row, so `excluded` lists each row a gate excludes: the main worktree, and the 199
+            # registered rows, none of which has an upstream.
+            excluded = {entry["path"]: (entry["classification"], entry["reason"]) for entry in document["excluded"]}
+            self.assertEqual(len(document["excluded"]), 200)
+            self.assertEqual(excluded.pop(str(root)), ("protected-default", "main-worktree"))
+            self.assertEqual(sorted(excluded), sorted(str(self.base / f"r{number:03d}") for number in range(199)))
+            self.assertEqual(set(excluded.values()), {("unpublished", "unpublished")})
             human = self.run_cli("clean", root)
             self.assert_status(human, 0)
             self.assertEqual(human.stdout.splitlines()[2:5], [f"Freshness: {FRESHNESS}",
@@ -265,6 +273,17 @@ class BoundsTests(clean_support.CleanCase):
             self.assert_status(batch, 1)
             self.assertEqual((batch.document["completeness"], codes(batch.document), batch.document["omitted"]),
                              ("incomplete", ["inspect-cap"], {"count": 72, "exactness": "exact"}))
+            # pcl:39-43 (W121 LOW-5): `--apply --expect-plan` above 128 is refused for the cap, before
+            # the digest is compared and consumed: the report's own digest and a wrong one alike
+            # give `inspect-cap` alone, never `plan-digest-mismatch`, with exit 2.
+            for label, digest in (("the report's digest", document["plan_digest"]), ("a wrong digest", "0" * 64)):
+                applied = self.run_json("clean", root, "--all-safe", "--apply", "--yes", "--expect-plan", digest,
+                                        "--json")
+                with self.subTest(label):
+                    self.assert_status(applied, 2)
+                    self.assertEqual((applied.document["completeness"], codes(applied.document),
+                                      applied.document["operations"]), ("incomplete", ["inspect-cap"],
+                                                                        {"estimated": 0, "performed": 0}))
         self.register_worktrees(57, "s")
         with self.subTest(rows=257):
             result = self.run_json("clean", root, "--json")
@@ -382,11 +401,16 @@ class BoundsTests(clean_support.CleanCase):
             # row past the cap is never read (lane 3's W86 NM-1; R-320, ruled
             # by Brett Heap, "R-320: yes", lead R-321). It also names git
             # worktree remove and git gc (R-324, ruled by Brett Heap,
-            # "R-324: yes", lead R-343).
+            # "R-324: yes", lead R-343), and ends in Q3 (b)'s dry-run warning
+            # (Brett Heap's Q3 (b), "yes, recommended for Q1-Q9", lead R-380).
             self.assertEqual(message, "REFUSED: The plan is incomplete (inspect-cap): 129 rows exceed the row cap "
                                       "of 128; remove worktrees explicitly, or prune stale entries by hand; if a "
                                       "worktree's path cannot be read, do not run git worktree prune, git "
-                                      "worktree remove or git gc until it can.\n")
+                                      "worktree remove or git gc until it can; git worktree prune also deletes "
+                                      "the entry, and so the HEAD reflog, of every other worktree whose path is "
+                                      "missing, one moved or on an unmounted drive included, so run git worktree "
+                                      "prune --dry-run first and remount or repair any it lists that still "
+                                      "exists.\n")
             self.assertEqual([(refusal["code"], refusal["message"]) for refusal in document["refusals"]],
                              [("inspect-cap", message.removeprefix("REFUSED: ").removesuffix("\n"))])
             human = self.run_cli("clean", root, "--all-safe")
@@ -524,12 +548,14 @@ class BoundsTests(clean_support.CleanCase):
                                                         NEXT_STEP=STEPS["contains-submodule"]), lines)
             at = lines.index(TEXT["deferral_line"].format(K=1, ROOT=shlex.quote(str(held_root))))
             # R-146 (W21 L-f): REASONS is contains-submodule alone, so the line
-            # reads as it did before REASONS was added, with lane 3's W59 G-4
-            # clause, since Git removes these 16 only with --force.
+            # reads as it did before REASONS was added, but for its closing
+            # clause, which defers to the group's own step, printed above
+            # (Brett Heap's Q5, "yes, recommended for Q1-Q9", lead R-380),
+            # where it had said "review those worktrees, then remove them
+            # yourself (--force for any that holds a submodule)".
             line = TEXT["non_drain_line"].format(REASONS="contains-submodule")
             self.assertEqual(line, "  these deferred rows will not drain while the 16 rows ahead of them are "
-                                   "contains-submodule; review those worktrees, then remove them yourself "
-                                   "(--force for any that holds a submodule)")
+                                   "contains-submodule; follow each group's next step for those worktrees")
             self.assertEqual(lines[at + 1:at + 3], [line, TEXT["excluded_row"].format(PATH=held[16],
                                                                                       BRANCH=held[16].name)])
             document = self.run_json("clean", held_root, "--all-safe", "--json").document
@@ -567,6 +593,15 @@ class BoundsTests(clean_support.CleanCase):
         self.assertEqual(lines[at + 1:at + 3], [
             TEXT["non_drain_line"].format(REASONS="hidden-local-state, operation-in-progress, worktree-only-commits"),
             TEXT["excluded_row"].format(PATH=trees[16], BRANCH=trees[16].name)])
+        # The line defers to each group's own step, which the preview prints
+        # with the group: "keep it on a branch or tag" and "finish or abort
+        # it" among them, where it had told the person to remove those rows
+        # (Brett Heap's Q5, lead R-380; wave 22's triage T5, sr-removal F6).
+        self.assertTrue(lines[at + 1].endswith("; follow each group's next step for those worktrees"), lines[at + 1])
+        for reason, count in (("hidden-local-state", 6), ("operation-in-progress", 5), ("worktree-only-commits", 5)):
+            self.assertIn(TEXT["excluded_group"].format(REASON=reason, K=count, NEXT_STEP=STEPS[reason]), lines)
+        self.assertIn("keep it on a branch or tag", STEPS["worktree-only-commits"])
+        self.assertIn("finish or abort it", STEPS["operation-in-progress"])
         document = self.run_json("clean", root, "--all-safe", "--json").document
         self.assertEqual((document["completeness"], document["selected"]), ("complete", []))
         self.assertEqual({entry["path"]: entry["reason"] for entry in document["excluded"]

@@ -613,8 +613,10 @@ TEXT_FIXTURES = {
     "ignored_suffix": ": {N} ignored; first: {SAMPLE}",
     "ignored_suffix_truncated": ": at least {N} ignored; first: {SAMPLE}",
     "deferral_line": "  deferred-target-cap ({K}): this run removes up to 16; run again: project clean {ROOT} --all-safe --apply",
-    # The submodule clause: lane 3's W59 G-4, for #19's round (g3).
-    "non_drain_line": "  these deferred rows will not drain while the 16 rows ahead of them are {REASONS}; review those worktrees, then remove them yourself (--force for any that holds a submodule)",
+    # The closing clause defers to each group's next step: Brett Heap's Q5, "yes, recommended for
+    # Q1-Q9" (lead R-380), copied exactly from #19's round (q) at 818311a, design.md D18; it had
+    # been lane 3's W59 G-4 submodule clause.
+    "non_drain_line": "  these deferred rows will not drain while the 16 rows ahead of them are {REASONS}; follow each group's next step for those worktrees",
     "residual_window_line": "Not protected: ignored files created, index flags set, operations started or worktree-only commits made after the last check, and any change after Git's own check.",
     "empty_line": "No eligible worktrees",
     # D18: the question, the wait, the result.
@@ -623,29 +625,37 @@ TEXT_FIXTURES = {
     "wait_line": "Waiting for git worktree remove {PATH} to finish; a started removal is never interrupted (at most 300 s).",
     "success_line": "Removed {N}; branches kept: {BRANCHES}.",
     "stop_block": "Stopped at {PATH} ({REASON}). Removed {K} of {N}. Not attempted: {NOT_ATTEMPTED}. Next: project clean {ROOT} --all-safe",
-    "partial_removal_note": "Probable partial removal: inspect, then git worktree remove --force {PATH} by hand.",
+    # D4's note under a report row's dirty advice, its check first, and the ceiling's first
+    # note, which keeps the text with no check: Brett Heap's Q4 (a) and (b), "yes, recommended
+    # for Q1-Q9" (lead R-380), copied exactly from #19's round (q) at 818311a, design.md D18.
+    "partial_removal_note": "Probable partial removal: check that git -C {PATH} status --short --ignored lists only deleted files, then git worktree remove --force {PATH} by hand.",
+    "partial_removal_note_ceiling": "Probable partial removal: inspect, then git worktree remove --force {PATH} by hand.",
     # The ceiling's note where the rescan does not show both the target's .git and its
-    # registry entry present (W52 F-1; Brett Heap's ruling "F-1: prune-then-delete", R-263).
-    "partial_removal_note_prune": "Probable partial removal: inspect, then git worktree prune and delete {PATH} by hand.",
-    # The prune note where any row of the plan has a path that could not be read (its planning
-    # lstat failed, present null): it advises no prune, and warns against it, since prune deletes
-    # the admin directory of a live worktree whose path Git cannot stat (EACCES). Copied exactly
-    # from the lead's message (R-365, ruled by Brett Heap on 2026-10-23, "Yes, warn (Recommended)").
-    "partial_removal_note_prune_unread": "Probable partial removal: inspect, then delete {PATH} by hand; a row's path could not be read, so do not run git worktree prune, git worktree remove or git gc until it can.",
+    # registry entry present (W52 F-1; Brett Heap's ruling "F-1: prune-then-delete", R-263), naming
+    # the target's own administrative directory, ADMIN, in place of git worktree prune, in every
+    # mode and beside any row: Brett Heap's Q3 (a), "yes, recommended for Q1-Q9" (lead R-380),
+    # copied exactly from wave 22's triage, section 3. It supersedes R-365's form beside an unread
+    # row, partial_removal_note_prune_unread, which is gone.
+    "partial_removal_note_prune": "Probable partial removal: inspect, then delete {PATH} and its administrative directory {ADMIN} by hand.",
     # The ceiling's note where the rescan's .git read failed or was cut, which advises no
     # prune (#19's round (i) at 1a4785e; W73 M-1, R-284), copied exactly from the lead's message.
     # Its warning also names git worktree remove and git gc (R-324, ruled by Brett Heap,
     # "R-324: yes", lead R-343).
     "partial_removal_note_unread": "Probable partial removal: inspect {PATH} by hand; its .git could not be read, so do not run git worktree prune, git worktree remove or git gc until it can.",
     # D18's note for a locked worktree (#19 at 4f1c0e0, design.md:1225-1228; W52 F-2, R-248),
-    # which replaces ratified text and so waits on Brett Heap's word.
-    "partial_removal_note_locked": "Probable partial removal: inspect, unlock it, then git worktree remove --force {PATH} by hand.",
+    # which replaces ratified text and so waits on Brett Heap's word; its check first by his Q4
+    # (a) and (b) (lead R-380), copied exactly from #19's round (q) at 818311a, design.md D18.
+    "partial_removal_note_locked": "Probable partial removal: check that git -C {PATH} status --short --ignored lists only deleted files, unlock it, then git worktree remove --force {PATH} by hand.",
     # D18: refusal messages and remedies.
     "target_excluded_gate": "Worktree is excluded: {REASON}; {NEXT_STEP}",
-    "remedy_inspection_incomplete": "repair or remove the inspection-error rows first: git worktree repair, git worktree prune, or remove the row by hand after review",
+    # Each plain text that names git worktree prune ends in Q3 (b)'s dry-run warning (Brett Heap's
+    # Q3 (b), "yes, recommended for Q1-Q9", lead R-380), copied exactly from wave 22's triage,
+    # section 3: these two remedies, the inspect-cap remedy, the stale recommendations below and
+    # NEXT_STEP_FIXTURES's registration-mismatch and inspection-error steps.
+    "remedy_inspection_incomplete": "repair or remove the inspection-error rows first: git worktree repair, git worktree prune, or remove the row by hand after review; git worktree prune also deletes the entry, and so the HEAD reflog, of every other worktree whose path is missing, one moved or on an unmounted drive included, so run git worktree prune --dry-run first and remount or repair any it lists that still exists",
     # The variant where any row the refusal counts is excluded as registration-mismatch, a
     # redirected linked worktree (#19's round (h) at b3228bb, design.md D18).
-    "remedy_inspection_incomplete_redirect": "repair or remove the inspection-error rows first: git worktree repair, git worktree prune, unset core.worktree and core.bare in the repository's config or in a worktree's config.worktree, or remove the row by hand after review",
+    "remedy_inspection_incomplete_redirect": "repair or remove the inspection-error rows first: git worktree repair, git worktree prune, unset core.worktree and core.bare in the repository's config or in a worktree's config.worktree, or remove the row by hand after review; git worktree prune also deletes the entry, and so the HEAD reflog, of every other worktree whose path is missing, one moved or on an unmounted drive included, so run git worktree prune --dry-run first and remount or repair any it lists that still exists",
     # The two remedies above where any row of the plan, a deadline-stopped row included, has a
     # path that could not be read (its planning lstat failed, present null), and the next step of
     # such an inspection-error row: no git worktree prune, which deletes that live worktree's
@@ -666,7 +676,7 @@ TEXT_FIXTURES = {
     # cap are never read (lane 3's W86 NM-1; R-320, ruled by Brett Heap, "R-320: yes", lead
     # R-321), copied exactly from the lead's brief. The warning also names git worktree remove and
     # git gc (R-324, ruled by Brett Heap, "R-324: yes", lead R-343).
-    "remedy_inspect_cap": "{N} rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale entries by hand; if a worktree's path cannot be read, do not run git worktree prune, git worktree remove or git gc until it can",
+    "remedy_inspect_cap": "{N} rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale entries by hand; if a worktree's path cannot be read, do not run git worktree prune, git worktree remove or git gc until it can; git worktree prune also deletes the entry, and so the HEAD reflog, of every other worktree whose path is missing, one moved or on an unmounted drive included, so run git worktree prune --dry-run first and remount or repair any it lists that still exists",
     "remedy_deadline_exceeded": "the run ran out of time; remove worktrees explicitly or re-run",
     # The contract, beyond D18.
     "progress_line": "  {STAGE} {PATH}",
@@ -710,7 +720,9 @@ TEXT_FIXTURES = {
     # worktree's merged-removable or merged-current row, and a locked stale row
     # (lane 3's W52 F-6 and F-10).
     "recommendation_main_worktree": "The main worktree is never removed by project clean.",
-    "recommendation_stale_locked": "Review, unlock it, then prune stale worktree metadata manually.",
+    # A stale row's recommendation, the baseline's text with Q3 (b)'s warning, and its locked form.
+    "recommendation_stale_worktree": "Review and prune stale worktree metadata manually; git worktree prune also deletes the entry, and so the HEAD reflog, of every other worktree whose path is missing, one moved or on an unmounted drive included, so run git worktree prune --dry-run first and remount or repair any it lists that still exists.",
+    "recommendation_stale_locked": "Review, unlock it, then prune stale worktree metadata manually; git worktree prune also deletes the entry, and so the HEAD reflog, of every other worktree whose path is missing, one moved or on an unmounted drive included, so run git worktree prune --dry-run first and remount or repair any it lists that still exists.",
     # The stale-worktree recommendation and its locked form above where any row of the plan has
     # a path that could not be read (its planning lstat failed, present null): each with a
     # warning against git worktree prune, which deletes that live worktree's admin directory
@@ -743,20 +755,25 @@ NEXT_STEP_FIXTURES = {
     # W52 F-7 (#19's round (g) as the lead corrected it after 4f1c0e0), F-8
     # (#19 at 4f1c0e0, design.md:1198-1199) and F-9 (lane 3's W59 G-5, for
     # #19's round (g3)); R-248.
-    "unstarted-branch": "no commit was made on this branch here since it was created; review, then git worktree remove yourself (--force if it holds a submodule)",
-    "reflog-unavailable": "the branch's reflog is missing, expired or undecidable; review, then git worktree remove yourself (--force if it holds a submodule)",
-    "contains-submodule": "review, then git worktree remove --force yourself",
+    # Gate 7's parentheticals and contains-submodule's step keep the submodule's commits first:
+    # Brett Heap's Q4 (c), "yes, recommended for Q1-Q9" (lead R-380); gate 7's steps name the
+    # checks of the gates that did not run: his Q5 (R-380). Both copied exactly from #19's round
+    # (q) at 818311a, design.md D18.
+    "unstarted-branch": "no commit was made on this branch here since it was created; its later gates did not run, so check git log -g HEAD, git ls-files -v and git status there, then git worktree remove yourself (--force if it holds a submodule, once its commits are kept)",
+    "reflog-unavailable": "the branch's reflog is missing, expired or undecidable; its later gates did not run, so check git log -g HEAD, git ls-files -v and git status there, then git worktree remove yourself (--force if it holds a submodule, once its commits are kept)",
+    "contains-submodule": "push or otherwise keep each submodule's commits first, since --force deletes its repository with this worktree's git directory, then git worktree remove --force yourself",
     "hidden-local-state": "review, then remove the worktree yourself",
     "operation-in-progress": "a git am, merge, notes merge, cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish or abort it (a squash merge that holds an autostash ends with git commit, --allow-empty where nothing is staged, or with git merge --quit, which keeps the edit in the stash list), or, where --abort fails for a marker with nothing in progress, its --quit, or, where Git leaves such a marker in place, delete it by hand from that worktree's git directory, then run again",
     "worktree-only-commits": "a commit is, or may be, held only by this worktree's HEAD reflog or refs/worktree; keep it on a branch or tag, or review, then git worktree remove yourself",
     # W52 F-3 (#19 at 4f1c0e0, design.md:1210-1213; R-248).
-    "registration-mismatch": "review, then git worktree repair or git worktree prune, unset core.worktree and core.bare in the repository's config, or in that worktree's config.worktree, or remove the row by hand",
-    "inspection-error": "review, then git worktree repair or git worktree prune, or remove the row by hand",
+    # Each with Q3 (b)'s dry-run warning (lead R-380), as TEXT_FIXTURES's remedies are.
+    "registration-mismatch": "review, then git worktree repair or git worktree prune, unset core.worktree and core.bare in the repository's config, or in that worktree's config.worktree, or remove the row by hand; git worktree prune also deletes the entry, and so the HEAD reflog, of every other worktree whose path is missing, one moved or on an unmounted drive included, so run git worktree prune --dry-run first and remount or repair any it lists that still exists",
+    "inspection-error": "review, then git worktree repair or git worktree prune, or remove the row by hand; git worktree prune also deletes the entry, and so the HEAD reflog, of every other worktree whose path is missing, one moved or on an unmounted drive included, so run git worktree prune --dry-run first and remount or repair any it lists that still exists",
     "locked-worktree": "unlock it yourself if it should go",
     # The contract's next steps for the three reasons D18 gives none
     # (contracts/project-clean.md :160-168; lead rulings R-57 H1 and R-62 (b)).
     "main-worktree": "never removed by project clean",
-    "unsupported-path-bytes": "rename the path to valid UTF-8",
+    "unsupported-path-bytes": "move it to a valid UTF-8 path with git worktree move, or mv it and then git worktree repair NEWPATH",
     "not-requested": "name it with --worktree to plan its removal",
 }
 

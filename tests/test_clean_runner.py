@@ -32,14 +32,14 @@ TESTS = Path(__file__).resolve().parent
 # The combined status probe of a worktree (design D6), after its -C PATH.
 STATUS = ["status", "--porcelain=v1", "-z", "--untracked-files=normal", "--ignored=matching"]
 
-# The seven protocol pins and the four status pins, as the contract writes them
+# The seven protocol pins and the five status pins, as the contract writes them
 # (contracts/project-clean.md, "Git children").
 PINS = ["-c", "protocol.allow=never", "-c", "protocol.file.allow=never",
         "-c", "protocol.ssh.allow=never", "-c", "protocol.git.allow=never",
         "-c", "protocol.http.allow=never", "-c", "protocol.https.allow=never",
         "-c", "protocol.ext.allow=never"]
 STATUS_PINS = ["-c", "core.untrackedCache=false", "-c", "core.fsmonitor=false",
-               "-c", "core.trustctime=true", "-c", "core.checkStat=default"]
+               "-c", "core.trustctime=true", "-c", "core.checkStat=default", "-c", "core.ignoreCase=false"]
 
 # The prelude of every child interpreter: project loaded by the launcher's own
 # prepare(), its TIMING replaced by the table passed first as --timing=JSON

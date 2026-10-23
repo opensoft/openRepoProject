@@ -316,6 +316,23 @@ class CleanParserTests(unittest.TestCase):
         self.assert_parses(project.HiddenStateParser, b"",
                            {"gitlink": False, "hidden": False, "entries": 0})
 
+    def test_clean_hidden_state_parser_names_the_directories_that_hold_an_entry(self):
+        # Brett Heap's Q2 (2), lead R-380: `directories` holds every directory
+        # above an entry read before the bound, the top level aside, so that
+        # gate 9 can lstat `<dir>/.git` in each; a gitlink ends the listing.
+        stream = b"".join(HIDDEN_ENTRY % (b"H", name) for name in (
+            b"top.txt", b"a/b/c.txt", b"a/d.txt", b"x/y/z/w.txt", b"a\nb/\xff/f"))
+        for size in CHUNK_SIZES:
+            with self.subTest(chunk=size or "whole"):
+                parser = project.HiddenStateParser()
+                for at in range(0, len(stream), size or len(stream)):
+                    parser.feed(stream[at:at + (size or len(stream))])
+                self.assertEqual(parser.finish(), {"gitlink": False, "hidden": False, "entries": 5})
+                self.assertEqual(parser.directories, {b"a", b"a/b", b"x", b"x/y", b"x/y/z", b"a\nb", b"a\nb/\xff"})
+        parser = project.HiddenStateParser()
+        parser.feed(HIDDEN_ENTRY % (b"H", b"d/one") + HIDDEN[HIDDEN.index(b"H 160000"):] + HIDDEN_ENTRY % (b"H", b"e/two"))
+        self.assertEqual((parser.finish()["gitlink"], parser.directories), (True, {b"d"}))
+
     def test_clean_unbounded_parsers_never_reach_a_bound(self):
         many = b"".join(b"refs/heads/b%05d\n" % i for i in range(5000))
         self.assert_parses(project.MergedSetParser, many,
