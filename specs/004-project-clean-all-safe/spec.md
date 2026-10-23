@@ -1794,13 +1794,22 @@ written".
   error any line other than Git's advice lines (`hint:` alone or `hint: TEXT`),
   a blank line included, or more than the 4 KiB kept, is `probe-failed`, since
   Git exits 0 when it cannot read a directory and leaves what it could not read
-  out of its records, and a repository holding `refs/heads/HEAD`, for which Git
-  warns `refname 'HEAD' is ambiguous.` in every status probe, has every row
-  `inspection-error` (Brett Heap's Q8, ruled on 2026-10-23T13:30:27Z, "yes,
-  recommended for Q1-Q9"; lead R-380; lane 2's wave 22 triage T9, lane 3's W115
-  MEDIUM-1; #19's round (q) at `818311a`, `project-command`; writer's
-  `70345ee`). Until then 004's contract alone declared the rule (lead R-116),
-  and it skipped a blank line. The acceptance scenario of User Story 9 that
+  out of its records, and, under Git's default `core.warnAmbiguousRefs`, a
+  repository holding `refs/heads/HEAD`, for which Git warns `refname 'HEAD' is
+  ambiguous.` in every status probe, has every row `inspection-error` (Brett
+  Heap's Q8, ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead
+  R-380; lane 2's wave 22 triage T9, lane 3's W115 MEDIUM-1; #19's round (q) at
+  `818311a`, `project-command`; writer's `70345ee`). #19's round (r) at
+  `4512441` words that consequence with the qualifier (`project-command`; lane
+  3's W131 LOW-3; lead R-391). With `core.warnAmbiguousRefs` false, in the
+  repository's configuration or the user's, which no pin overrides, the same
+  pinned probe exits 0 with empty standard error, on Git 2.43.0 and 2.36.6, so
+  that no row is `inspection-error` on that account, a run of
+  `add-project-clean-branch-retirement` can retire `refs/heads/HEAD`, and that
+  change's `Retired HEAD` restore line is then the restore that works; 004 adds
+  no pin for it and changes no behaviour (#19's design D1 at `4512441`). Until
+  then 004's contract alone declared the rule (lead R-116), and it skipped a
+  blank line. The acceptance scenario of User Story 9 that
   reads that the first fake Git "completes with no `probe-timeout` and its
   standard error kept capped" reads, as #19's scenario now does, that the row
   is also `inspection-error` with `probe-failed`. The requirement's text stands
@@ -1883,7 +1892,11 @@ written".
   stays the known residual above. The requirement's text stands as written.
   Note, 2026-10-23: Q3 (b)'s dry-run warning (FR-028's note) is not given to
   `status`'s text, which names pruning but not the command; it is left to the
-  same follow-on change (lead R-380). R-365's T9 note above stands.
+  same follow-on change. That is the lane's reading of Q3 (b), whose list names
+  `clean`'s texts only, under lead R-380, and not Brett Heap's word: whether
+  that plain text takes the warning is the lane's question M1, put to him on
+  2026-10-23T15:11:48Z and still open, with the recommendation that it does not
+  (M1 (a)). R-365's T9 note above stands.
 - **FR-065**: The README's "Clean up Git worktrees" section MUST open with
   the five behaviour changes users will notice: plain `project clean`
   exiting 1 on an incomplete report; `clean` refusing below Git 2.36;

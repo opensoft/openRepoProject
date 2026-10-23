@@ -1034,8 +1034,9 @@ evidence not established is `inspection-error` (lead rulings R-61 and R-64
 (a); built by lane G's follow-up). Since lane E's status-probe rule (below),
 a repository holding `refs/heads/HEAD` makes every row `inspection-error`,
 not only that branch's, because Git warns `refname 'HEAD' is ambiguous.` in
-every worktree's status probe; that fails closed and narrows R-61 (b)'s effect
-(lead ruling R-116).
+every worktree's status probe, under Git's default `core.warnAmbiguousRefs`;
+that fails closed and narrows R-61 (b)'s effect (lead ruling R-116; the
+qualifier is #19's round (r), below).
 
 Row 7, the merged set, is read the same way (T19; lane 3's W121 MEDIUM-2; lead
 R-374 and R-385, writer's `e702a65`). Where row 6 listed the refs, a merge
@@ -1061,14 +1062,22 @@ empty text after the last line end is none: the rule skipped a blank line until
 Brett Heap's Q8 (ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9";
 lead R-380; lane 2's wave 22 triage T9, lane 3's W115 MEDIUM-1; writer's
 `70345ee`), which states it in #19's `project-command` delta at round (q),
-`818311a`, with its consequence that a repository holding `refs/heads/HEAD`,
-for which Git warns `refname 'HEAD' is ambiguous.` in every status probe, has
-every row `inspection-error`, and which words the scenario "A git that floods
-standard error" so that the probe completes with no `probe-timeout`, the
-standard error kept is capped, and the row is `inspection-error` with
-`probe-failed`. Git exits 0 when it cannot read a directory and leaves what it
-could not read out of its records, so a row whose untracked directory is
-unreadable no longer reads clean.
+`818311a`, with its consequence that, under Git's default
+`core.warnAmbiguousRefs`, a repository holding `refs/heads/HEAD`, for which Git
+warns `refname 'HEAD' is ambiguous.` in every status probe, has every row
+`inspection-error` (the qualifier is round (r)'s, at `4512441`; lane 3's W131
+LOW-3; lead R-391), and which words the scenario "A git that floods standard
+error" so that the probe completes with no `probe-timeout`, the standard error
+kept is capped, and the row is `inspection-error` with `probe-failed`. Git exits
+0 when it cannot read a directory and leaves what it could not read out of its
+records, so a row whose untracked directory is unreadable no longer reads clean.
+With `core.warnAmbiguousRefs` false, in the repository's configuration or the
+user's, which no pin overrides, the same pinned probe exits 0 with empty
+standard error, on Git 2.43.0 and 2.36.6, so that no row is `inspection-error`
+on that account, a run of `add-project-clean-branch-retirement` can retire
+`refs/heads/HEAD`, and that change's `Retired HEAD` restore line is then the
+restore that works; 004 adds no pin for it and changes no behaviour (#19's
+design D1 at `4512441`).
 
 A linked row whose path encloses another repository path is
 `registration-mismatch` (Brett Heap's Q2 (1), ruled on 2026-10-23T13:30:27Z,
@@ -1251,7 +1260,9 @@ FR-064 keeps the baseline's functions unchanged (lane 3's W65 LOW-3, read
 again in W72; lead ruling R-269). Q3 (b)'s dry-run warning does not reach it
 either: `status`'s text names pruning, not the command, and the warning was
 ruled for `clean`'s texts that name `git worktree prune`, so it stays with the
-same follow-on change (R-380).
+same follow-on change, on the lane's reading of Q3 (b) under lead R-380 and not
+on his word: whether that plain text takes the warning is the lane's question
+M1, put to Brett Heap on 2026-10-23T15:11:48Z and still open.
 
 An accepted departure from FR-064, ruled by Brett Heap on 2026-10-23, "Yes,
 add T9 (Recommended)" (T9; lead R-365; writer's `7a20789`, merged as

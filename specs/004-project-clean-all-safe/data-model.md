@@ -30,8 +30,9 @@ so a remount that renumbers them fails closed.
 
 Row 4, the registry listing, runs in the directory the argument resolves to,
 where row 3 ran, in every layout, "while the main worktree is not yet
-known", as the `project-command` delta says (its `spec.md:124-133`). Rows 6
-and 7 run in the main worktree where it is known; where `root` is null, in
+known", as the `project-command` delta says (its `spec.md:124-133` at `0050f3e`,
+the ratified copy; the paragraph is at `:192-201` at `4512441`). Rows 6 and 7
+run in the main worktree where it is known; where `root` is null, in
 the common directory for a bare repository only, and otherwise where row 3
 ran (lead ruling R-75 (j)). Row 4c, `extensions.worktreeConfig` read from
 the common directory's own `config` file, runs there too, once per common
@@ -206,15 +207,24 @@ establish its upstream: its `upstream`, `remote_present`, `ahead` and
 the row is `inspection-error` with `probe-failed`, `git for-each-ref failed:
 unparseable output` (lead rulings R-61 and R-64 (a); built by lane G's
 follow-up). Since a status probe whose standard error holds anything but
-Git's advice lines establishes nothing (contract, "Git children"), and Git
-warns `refname 'HEAD' is ambiguous.` in every worktree of such a repository,
-every row there is `inspection-error` too, failing closed (lead ruling R-116,
-which narrows R-61 (b)'s effect), a rule that counts a blank line as such a
+Git's advice lines establishes nothing (contract, "Git children"), and, under
+Git's default `core.warnAmbiguousRefs`, Git warns `refname 'HEAD' is ambiguous.`
+in every worktree of such a repository, every row there is `inspection-error`
+too, failing closed (lead ruling R-116, which narrows R-61 (b)'s effect), a rule
+that counts a blank line as such a
 line and the empty text after the last line end as none, and that #19's
 `project-command` delta states at round (q), `818311a`, with this consequence
 (Brett Heap's Q8, ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9";
-lead R-380; lane 2's wave 22 triage T9; writer's `70345ee`). Where row 6 gives
-no listing, because it or a probe before it failed, each present row on a
+lead R-380; lane 2's wave 22 triage T9; writer's `70345ee`), and at round (r),
+`4512441`, with the qualifier (lane 3's W131 LOW-3; lead R-391). With
+`core.warnAmbiguousRefs` false, in the repository's configuration or the user's,
+which no pin overrides, the same pinned probe exits 0 with empty standard error,
+on Git 2.43.0 and 2.36.6, so that no row is `inspection-error` on that account,
+a run of `add-project-clean-branch-retirement` can retire `refs/heads/HEAD`, and
+that change's `Retired HEAD` restore line is then the restore that works; 004
+adds no pin for it and changes no behaviour (#19's design D1 at `4512441`).
+Where row 6 gives no listing, because it or a probe before it failed, each
+present row on a
 branch carries that probe's row errors and is `inspection-error`, its upstream
 fields null, where every row once printed as `unpublished` (the plan review's
 F3; lead ruling R-101 (c)). Row 7 is read the same way (T19; lane 3's W121
@@ -705,7 +715,13 @@ that delta gives "for a new gitlink, `modules` entry or `.git` entry"
 nested repository remains. The `lstat`s are filesystem calls only, no Git
 child, so the bounds of six, seven, nine and ten children below stand; one
 that fails or runs past its budget is `state-changed`, and one that the work
-deadline cuts is `deadline-exceeded`, by the rule below.
+deadline cuts is `deadline-exceeded`, by the rule below. The loop is one `_fs()`
+call (`project:5557` at `c0841aa`), under `min(5 s, the work remaining)`;
+measured warm (Python 3.12.3, Git 2.43.0) at 1,000, 10,000 and 50,000 tracked
+directories, planning stays eligible at `41759a4` as at `e702a65`, adding about
+0.25 s at 50,000 (medians of 11 runs, 2.216 s and 2.461 s); cold-cache cost and
+deep nesting are unmeasured, and both fail closed, `inspection-error` at
+planning and `state-changed` at revalidation (lead R-398 and R-406).
 
 At most six Git children (steps 1, 3, 4, 6, 7 and 8), as T084 built them and
 LQ-13 added step 8's probe (lead ruling R-75 (i)), and seven where row 4c read

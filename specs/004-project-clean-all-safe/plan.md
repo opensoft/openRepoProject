@@ -436,7 +436,8 @@ The feature PR body lists these for his word:
   checkout and its `dirty` and `ignored_files` read there (false and 0 where
   they were null; lane 3's F5 M-2, accepted as a fill of the `project-clean`
   delta's `spec.md:478`), while the `project-command` delta keeps every value
-  "except where a requirement states a change" (its `spec.md:196-197`). Lane 3
+  "except where a requirement states a change" (its `spec.md:196-197` at
+  `0050f3e`, the ratified copy; `:311-312` at `4512441`). Lane 3
   reads the `project-clean` delta's "the common directory SHALL never be
   probed as a worktree row" (its `spec.md:478`) as covering it, a fill,
   which the lead recommends; the lead reads that sentence as part of
