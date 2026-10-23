@@ -108,11 +108,12 @@ upstreams; the target's identity, its `modules` check and its
 `extensions.worktreeConfig` as true, its effective work tree, by the probe that
 "Repository inspection requires Git 2.36 and shares one evidence model" states;
 and, inside the target worktree, the combined status probe, which SHALL print
-no record, then the hidden-state probe, then the `worktree-only-commits` check
-that "Clean previews and applies a batch of eligible worktree removals in one
-repository" states, `logs/HEAD` read again and the non-zero objects that the
-plan's branch reflog named taken as they were, whose probe SHALL print
-nothing. It SHALL compare
+no record, then the hidden-state probe, with the `lstat` of `<dir>/.git` for
+every directory that its listing shows holding an index entry, then the
+`worktree-only-commits` check that "Clean previews and applies a batch of
+eligible worktree removals in one repository" states, `logs/HEAD` read again
+and the non-zero objects that the plan's branch reflog named taken as they
+were, whose probe SHALL print nothing. It SHALL compare
 the recorded repository identity (`root`, `common_dir`, `dev`, `ino`), the
 target's worktree identity (`path`, `dev`, `ino`, `admin_id`), two-way
 registration and, where it
@@ -127,9 +128,9 @@ exit 2, with the reason `identity-changed` for a repository or worktree identity
 or registration difference, an effective work tree that the probe decides is
 not the target's path, or a missing registry entry, `branch-changed` for a
 different branch name or head, `state-changed` for any other signature, lock,
-manifest or merge-target difference, `contains-submodule` for a new gitlink or
-`modules` entry, `hidden-local-state` for a newly flagged index entry,
-`operation-in-progress` for a marker that the re-read listing finds, and
+manifest or merge-target difference, `contains-submodule` for a new gitlink,
+`modules` entry or `.git` entry, `hidden-local-state` for a newly flagged index
+entry, `operation-in-progress` for a marker that the re-read listing finds, and
 `worktree-only-commits` for a commit that only the target's HEAD reflog or
 `refs/worktree/` holds, or for a `logs/HEAD` read to its 64 KiB bound or holding
 a line that cannot be parsed. A value that was null in the plan and is null at
@@ -277,6 +278,18 @@ the six per-protocol pins) are no part of that defense.
 - **THEN** P is `refused` with `operation-in-progress`, no child is spawned, Q
   is `not-attempted`, nothing is removed, and the exit status is 2, where
   before this change P was removed with exit 0
+
+#### Scenario: A nested repository made after the plan
+
+- **WHEN** a confirmed plan selects P and Q, in that order, and after the plan
+  and before P's revalidation `git init` runs in a tracked directory of P and a
+  commit is made there, so that the directory holds an entry named `.git` that
+  neither the status probe nor Git's own check reports, P's tree, index and
+  branch staying as the plan recorded them
+- **THEN** P is `refused` with `contains-submodule`, no child is spawned, Q is
+  `not-attempted`, nothing is removed, and the exit status is 2, so that the
+  nested repository and its commit remain, where before this change P was
+  removed with exit 0, the nested repository with it
 
 #### Scenario: A check that fails at revalidation
 

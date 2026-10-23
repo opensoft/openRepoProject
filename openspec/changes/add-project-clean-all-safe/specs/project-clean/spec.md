@@ -185,6 +185,32 @@ configured upstream's remote-tracking ref no longer exists and whose
 `merged_into_target` is true SHALL carry the recommendation of its class, as
 every `merged-removable` or `merged-current` row does.
 
+A `stale-worktree` row SHALL carry the recommendation "Review and prune stale
+worktree metadata manually; git worktree prune also deletes the entry, and so
+the HEAD reflog, of every other worktree whose path is missing, one moved or on
+an unmounted drive included, so run git worktree prune --dry-run first and
+remount or repair any it lists that still exists.", or, for a locked row,
+"Review, unlock it, then prune stale worktree metadata manually; git worktree
+prune also deletes the entry, and so the HEAD reflog, of every other worktree
+whose path is missing, one moved or on an unmounted drive included, so run git
+worktree prune --dry-run first and remount or repair any it lists that still
+exists.", in place of the baseline's "Review and prune stale worktree metadata
+manually.", since `git worktree prune` acts on the whole repository and deletes
+the entry, and so the HEAD reflog, of every other worktree whose path is
+missing. Where any row of the same plan has a path that could not be read, a row
+whose planning `lstat` failed other than for the path's absence, or was cut at
+its budget, a row whose `lstat` the deadline stopped included, so that its
+`present` is null, the row SHALL instead carry "Review and prune stale worktree
+metadata manually; a row's path could not be read, so do not run git worktree
+prune, git worktree remove or git gc until it can.", or, for a locked row,
+"Review, unlock it, then prune stale worktree metadata manually; a row's path
+could not be read, so do not run git worktree prune, git worktree remove or git
+gc until it can.", since `git worktree prune`, run for a stale entry's sake,
+also deletes the administrative directory of a worktree whose path Git cannot
+stat. A locked row's form SHALL print only as the report row's recommendation,
+in the human report and in `--json`, since the preview excludes a locked stale
+row as `locked-worktree`.
+
 A linked worktree's `dirty` row whose status records are all deletions of
 tracked files in the working tree, while its `.git` file and its registry entry
 are present, SHALL carry the row note `partially-removed`: the human report
@@ -238,6 +264,18 @@ change the row's classification, the ladder or any gate.
   unlock it, then `git worktree remove --force <path>` by hand"
 - **AND** a worktree with one deleted tracked file and one untracked file
   carries no such note
+
+#### Scenario: A stale entry's recommendation
+
+- **WHEN** a linked worktree's registered path is missing, every other row's
+  path can be read, and plain `project clean` runs
+- **THEN** that row is classified `stale-worktree` with the recommendation
+  "Review and prune stale worktree metadata manually; git worktree prune also
+  deletes the entry, and so the HEAD reflog, of every other worktree whose path
+  is missing, one moved or on an unmounted drive included, so run git worktree
+  prune --dry-run first and remount or repair any it lists that still exists.",
+  in the human report and in `--json`, where before this change it was "Review
+  and prune stale worktree metadata manually."
 
 ### Requirement: Clean can explicitly push safe feature branches
 
@@ -544,8 +582,8 @@ target there, and then retrying.
   remain, and "inspect, then delete `<path>` and its administrative directory
   `<common_dir>/worktrees/<admin_id>` by hand" once the `.git` file is gone,
   its path and registry entry remaining, or once the registry entry is gone,
-  its path remaining, in either mode, and in `mode: "single"` beside another
-  row whose path could not be read as well
+  its path remaining, in either mode, single mode beside another row whose
+  path could not be read included
 - **AND** where the rescan cannot read the target's `.git` file, as when a
   directory above it denies search, the recovery text is instead "inspect
   `<path>` by hand; its `.git` could not be read, so do not run `git worktree

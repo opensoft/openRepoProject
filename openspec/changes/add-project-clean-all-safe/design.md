@@ -79,7 +79,10 @@ and round (q), Brett Heap's answer of 2026-10-23 to the nine questions of lane
 openRepoProject-2's wave 22 triage, "yes, recommended for Q1-Q9" (the lead's
 R-380), with T9's clause in the `project-command` delta (the lead's R-378) and
 lane openRepoProject-3's W126 read of round (p) (the lead's R-382), Context, D1,
-D4, D7, D9, D11, D18, Risks, the Migration Plan and Open Questions.
+D4, D7, D9, D11, D18, Risks, the Migration Plan and Open Questions; and round
+(r), lane openRepoProject-3's W133 read of round (q) and its W131 LOW-3, under
+the lead's R-391, with W133's MEDIUM-1 and MEDIUM-3 before Brett Heap, Context,
+D1, D7, D18 and Open Questions.
 Brett Heap's ruling of 2026-10-09 on open question 1, that a local ancestry
 proof outranks `remote-gone` for worktree rows, is in `proposal.md` Decisions
 and edited Context, D6, D7, D20, Risks, the Migration Plan and Open Questions
@@ -175,9 +178,17 @@ Git's `hint:` advice lines, or more than those 4 KiB, is a failed one,
 (the lead's R-380), on lane openRepoProject-3's W115 MEDIUM-1, which found the
 rule in feature 004 under the lead's R-116 alone: Git exits 0 when it cannot
 read a directory and leaves what it could not read out of its records, so that
-such a worktree would otherwise read clean (W121), and a repository holding
-`refs/heads/HEAD`, whose every status probe warns that the refname is
-ambiguous, therefore has every row `inspection-error`.
+such a worktree would otherwise read clean (W121), and, under Git's default
+`core.warnAmbiguousRefs`, a repository holding `refs/heads/HEAD`, whose every
+status probe warns that the refname is ambiguous, therefore has every row
+`inspection-error`. With `core.warnAmbiguousRefs` false, in the repository's
+configuration or the user's, which no pin overrides, the same pinned probe
+exits 0 with empty standard error, on Git 2.43.0 and 2.36.6 (lane
+openRepoProject-3's W131 LOW-3; the lead's R-391): no row is then
+`inspection-error` on that account, a run of
+`add-project-clean-branch-retirement` can retire `refs/heads/HEAD`, and that
+change's `Retired HEAD` restore line is then the restore that works. This
+change adds no pin for it and changes no behaviour (round (r)).
 
 A short tick and a wakeup. The selector timeout is the least of 100 ms, the
 child's remaining budget, the work deadline's remaining time and, for a removal
@@ -598,8 +609,18 @@ deadline cuts leaves the target `not-attempted` with `deadline-exceeded`, as for
 every revalidation child (the lead's R-171, R-287 and R-291; at planning such a
 probe makes the row's registration disagree instead, as above, by the lead's
 R-187 erratum); then, inside the target worktree, the combined
-status probe, which must print nothing, the hidden-state probe, and D21's
-`logs/HEAD` re-read and reachability probe, which must print nothing. Every
+status probe, which must print nothing, the hidden-state probe, with Q2 (2)'s
+`lstat` of `<dir>/.git` for every directory that its listing shows holding an
+index entry, an entry found being a new `.git` entry, `contains-submodule`, and
+D21's `logs/HEAD` re-read and reachability probe, which must print nothing.
+Those `lstat`s are filesystem calls only, counted in the filesystem budget, so
+revalidation's bounds of six, seven, nine or ten Git children stand (round (r);
+lane openRepoProject-3's W133 MEDIUM-2; the lead's R-391): the ratified "It
+MUST refuse when the state no longer matches the reviewed plan" reaches a
+`.git` entry made in a tracked directory after planning, which neither the
+status probe nor Git's own check sees, and feature 004 builds them in
+`revalidation_difference()`'s step 7, through `hidden_state_probe()` and
+`nested_git_check()` (`703b58c`). Every
 filesystem read of these steps follows the rule of a Git child (the lead's
 R-208): one that fails, or runs past its own budget while the deadline is not
 the limit, is `state-changed` whatever its step, so that a failed read of the
@@ -1426,7 +1447,8 @@ hand; git worktree prune also deletes the entry, and so the HEAD reflog, of
 every other worktree whose path is missing, one moved or on an unmounted drive
 included, so run git worktree prune --dry-run first and remount or repair any
 it lists that still exists" (LQ-11, R-125), naming both files from which Git
-applies the redirect (W52 F-3, R-248), and, where any row of the plan has a path
+applies the redirect (W52 F-3, R-248), the step of a Q2 (1) row being before
+Brett Heap (Open Questions, M3), and, where any row of the plan has a path
 that could not be read, as below, "review, then git worktree repair, unset
 core.worktree and core.bare in the repository's config, or in that worktree's
 config.worktree, or remove the row by hand; a row's path could not be read, so
@@ -1475,7 +1497,15 @@ git worktree prune also deletes the entry, and so the HEAD reflog, of every
 other worktree whose path is missing, one moved or on an unmounted drive
 included, so run git worktree prune --dry-run first and remount or repair any
 it lists that still exists.", the baseline's text and W52 F-10's with the
-warning that Brett Heap's Q3 (b) of 2026-10-23 appends (the lead's R-380). A
+warning that Brett Heap's Q3 (b) of 2026-10-23 appends (the lead's R-380). The
+delta `Clean classifies preservation and cleanup actions` states all four, in
+place of the baseline's, since the evidence model's parity rule needs a
+requirement to state a change of value, as for T9 below (round (r); lane
+openRepoProject-3's W133 MEDIUM-4; the lead's R-391), each copied by script
+from feature 004's `TEXT` at `703b58c`, its keys
+`recommendation_stale_worktree`, `recommendation_stale_locked`,
+`recommendation_stale_worktree_unread` and
+`recommendation_stale_locked_unread`. A
 locked stale row is excluded in the preview as
 `locked-worktree`, whose gate comes ahead of its class, with the next step
 "unlock it yourself if it should go", so the locked form is never a preview
@@ -1645,7 +1675,8 @@ it manually; a row's path could not be read, so do not run git worktree prune,
 git worktree remove or git gc until it can.", since `git worktree prune`, run
 for a stale entry's sake, deletes the administrative directory of a worktree
 whose path Git cannot stat too, as T6's reasons give; with no such row it prints
-unchanged. The `project-command` delta states it in its evidence model, for
+unchanged (whether it then takes Q3 (b)'s warning is before Brett Heap, Open
+Questions, M1). The `project-command` delta states it in its evidence model, for
 `project status`, `project doctor` and `project update`, which share that
 inspection, since the model's parity rule, "Values SHALL equal those of the
 inspection this model replaces, except where a requirement states a change.",
@@ -2345,7 +2376,8 @@ last, F-1's (b) beside an unread row, which he ruled on 2026-10-23, in his
 answer "Yes, warn (Recommended)" (the lead's R-365), and which stays below as
 the record of the question, his Q3 (a) of the same day having since superseded
 the text he ruled there (the lead's R-380); for the others, the deltas implement
-the reading stated, and a different ruling edits the deltas before the archive.
+the reading stated, and a different ruling edits the deltas before the archive,
+except M3, whose recommended step is in no delta and waits on his word.
 
 - Squash-merged branches never put their tip into the target's ancestry
   (BA:195-199). Recommendation: a local patch-equivalence proof (`git cherry` or
@@ -2359,6 +2391,56 @@ the reading stated, and a different ruling edits the deltas before the archive.
   follow-up change after the archive, as `fix-parent-obstacle-wording` followed
   `prefer-triad-in-project-new`, which costs a second archive and leaves the
   archived spec wrong in between.
+- M1, lane openRepoProject-3's W133 MEDIUM-1 (the lead's R-391): does the
+  plain stale advice of status, doctor and update take Q3 (b)'s dry-run
+  warning? Where no row's path is unread, `project status`, `doctor` and
+  `update` print the baseline's stale-worktree recommendation: "Review the
+  stale worktree metadata before pruning it manually." #19 now states that text
+  (pc:308-309) and pins it in T9's scenario (pc:394). His Q3 (b) added the
+  dry-run warning to the plain form of each of clean's texts that names `git
+  worktree prune`. This status text names no command, so Q3 (b) did not reach
+  it. Lane 3 calls this a gap that needs his word, not a departure.
+  - (a) Recommended: no. Keep the baseline text. It names no command, and it
+    already says to review the stale metadata first. The warning matters most
+    in clean, where the prune advice sits beside one target row and reads as
+    being about that row alone. Keeping it adds no second departure from the
+    parity rule FR-064 across three commands, and no change to the status
+    rules that lane 4's 005 reads. #19 records the reason in design.
+  - (b) Yes. All three commands print "Review the stale worktree metadata
+    before pruning it manually; git worktree prune also deletes the entry, and
+    so the HEAD reflog, of every other worktree whose path is missing, one
+    moved or on an unmounted drive included, so run git worktree prune
+    --dry-run first and remount or repair any it lists that still exists."
+    That is a second departure from FR-064. It changes 004's code and tests,
+    #19's pc:308-309 and :394 and D18, lane 4's pin and lane 5's #29 block.
+
+  Until he answers, the `project-command` delta and D18 keep the baseline text,
+  the reading of (a).
+- M3, lane openRepoProject-3's W133 MEDIUM-3 (the lead's R-391): a next step
+  for a worktree whose path is, or holds, the main worktree, the common
+  directory or another worktree. Under his Q2 (1), a linked worktree whose
+  registered path is, or holds, the main worktree, the common directory or
+  another worktree is excluded as `registration-mismatch`. It then prints that
+  class's next step, which ends "... or remove the row by hand". Followed
+  literally for such a row, that step deletes the main worktree and the
+  repository, or the other worktree. Plain Git confirmed that loss in the
+  triage (T2).
+  - (a) Recommended: such a row gets its own next step: "its path is or holds
+    the main worktree, the common directory or another worktree, so do not
+    delete it by hand or with git worktree remove; review its registration with
+    git worktree list --porcelain". That is 197 characters, inside lane 4's
+    200-character rule. The wording covers a row that shares its path with
+    another row (R-67 (c)), which carries the same hazard. Such a row takes the
+    same step. It is a new next-step text in 004 (code and tests) and in #19's
+    D18.
+  - (b) No next step is printed for such a row, and D18 says why. This is
+    simpler, but the row gives no guidance.
+  - (c) Keep the class's step. Not recommended, because it is unsafe as
+    worded.
+
+  Until he answers, D18 gives such a row the class's step, as round (q) left
+  it, and no text changes; neither (a) nor (b) is in the deltas, D18 or
+  feature 004.
 - LQ-20, the fit where `extensions.worktreeConfig` is true (D14, Risks).
   RESOLVED on 2026-10-22: Brett Heap chose step (i), in his words to lane
   openRepoProject-2, "LQ-20: go with (i), measure first" (the lead's R-236). The

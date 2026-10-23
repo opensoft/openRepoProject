@@ -211,7 +211,11 @@ Scope).
   same where any row's path could not be read, and the `inspect-cap` remedy
   always, its rows past the cap never being read (design D18; lane
   openRepoProject-3's W86 NM-1, the lead's R-320, which Brett Heap ruled on
-  2026-10-22, "R-320: yes"). Every one of those warnings, with the ceiling's
+  2026-10-22, "R-320: yes"); the delta `Clean classifies preservation and
+  cleanup actions` states those recommendations in each form, since the
+  evidence model's parity rule needs a requirement to state a change of value
+  (round (r); lane openRepoProject-3's W133 MEDIUM-4, the lead's R-391). Every
+  one of those warnings, with the ceiling's
   third text, also names `git worktree remove` and `git gc` beside `git worktree
   prune` (design D18; lane openRepoProject-3's W91 MEDIUM-2 and W95, and W80
   L-6; Brett Heap's "R-324: yes" of 2026-10-22, the lead's R-343). Beside such a
@@ -273,8 +277,10 @@ Scope).
   `extensions.worktreeConfig` the plan read as true (LQ-11), three more, and
   three more in the final rescan, where the path of the repository's root or of
   its common directory holds a line feed (lane openRepoProject-5's RI-3), a
-  manifest re-read, a `modules` check and the `operation-in-progress` listing
-  (LQ-14), never the full report (`BA:677-719`), against recorded
+  manifest re-read, a `modules` check, the `operation-in-progress` listing
+  (LQ-14) and, with the hidden-state probe, the `lstat`s of Brett Heap's Q2
+  (2), filesystem calls only (the lead's R-391), never the full report
+  (`BA:677-719`), against recorded
   repository, worktree and merge-target identity objects (`BA:203-235`).
   Concurrent writers are outside the contract and no lock is claimed; the
   guarantee is `BA:261-268`, its outcomes are the changes-after-confirmation
@@ -370,9 +376,10 @@ Scope).
   started, and a running removal child is waited for, per V1 ("A started removal
   is never interrupted"); stderr is drained and capped, and a status probe that
   exits 0 having written to it any line but Git's `hint:` advice, or more than
-  the 4 KiB kept, is a failed probe, so that a repository holding
-  `refs/heads/HEAD` has every row `inspection-error` (Brett Heap's Q8 of
-  2026-10-23). A Git child gets `min(5
+  the 4 KiB kept, is a failed probe, so that, under Git's default
+  `core.warnAmbiguousRefs`, a repository holding `refs/heads/HEAD` has every
+  row `inspection-error` (Brett Heap's Q8 of 2026-10-23; the qualifier is the
+  lead's R-391). A Git child gets `min(5
   s, work_remaining)` under `clean`'s deadline, the push and delete-branch
   children excepted, and 15 s in `status`, `doctor` and `update`, which have
   none (Decisions). The ladder keeps its names, and its
@@ -505,7 +512,11 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     deleted tracked files carries the partial-removal note beside its advice,
     its recovery text, locked or not, first naming the check that `git -C
     <path> status --short --ignored` lists only deleted files (Brett Heap's Q4
-    (a) and (b) of 2026-10-23).
+    (a) and (b) of 2026-10-23); and a `stale-worktree` row's recommendation is
+    stated, plain or locked, with Q3 (b)'s warning, or, beside a row whose
+    path could not be read, with R-320's (T6 and T7), in place of the
+    baseline's, with the added scenario "A stale entry's recommendation"
+    (round (r); lane openRepoProject-3's W133 MEDIUM-4, the lead's R-391).
     Names are unchanged, and the order changes only by that ancestry test
     (OQ-28). The scenario (`:32-37`) stays; the added scenario "A merged
     worktree whose upstream was deleted" has `--all-safe` select it and
@@ -662,7 +673,10 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     Removal revalidates by the targeted check against the recorded identity
     objects, and the effective work tree where the plan read it (LQ-11),
     refusing with `identity-changed`, `branch-changed`,
-    `state-changed`, `contains-submodule`, `hidden-local-state`, or, for an
+    `state-changed`, `contains-submodule` (a `.git` entry that Q2 (2)'s
+    `lstat`s find after planning included, with the added scenario "A nested
+    repository made after the plan"; the lead's R-391),
+    `hidden-local-state`, or, for an
     operation in progress or a commit held only by the worktree that the
     re-read finds, with the added scenarios "An operation started after the
     plan" and "A worktree-only commit made after the plan",
@@ -1435,7 +1449,7 @@ which add text that replaces no sentence:
   only the report's row recommendation carries, in the human report and in
   `--json`, since the preview excludes a locked stale row as `locked-worktree`,
   "unlock it yourself if it should go", the form that lane openRepoProject-3's
-  W52 F-10 gave feature 004 and this change did not state, is "Review, unlock
+  W52 F-10 gave feature 004 and round (r) first states here, is "Review, unlock
   it, then prune stale worktree metadata manually; a row's path could not be
   read, so do not run git worktree prune, git worktree remove or git gc until it
   can."; with no such row both print unchanged. The `inspect-cap` remedy, whose
@@ -1446,9 +1460,15 @@ which add text that replaces no sentence:
   states the three texts beside the sentences they qualify, and the delta states
   the cap remedy as an AND clause of its scenario "Row cap and planning
   failures", so that the scenario counts stay 71, 22 and 24 (the delta `Clean
-  bounds its Git work and reports omitted work`; What Changes; design D18); no
-  delta lists the stale recommendation, the baseline report's text, so none
-  states the first two. Brett Heap ruled all three on 2026-10-22, in his words
+  bounds its Git work and reports omitted work`; What Changes; design D18). The
+  first two, the stale recommendation being the baseline report's text, are
+  stated in the delta `Clean classifies preservation and cleanup actions`, with
+  the two plain forms, since the parity rule of the evidence model, "Values
+  SHALL equal those of the inspection this model replaces, except where a
+  requirement states a change.", needs a requirement to state a change of
+  value, as round (q) read it for T9 (round (r); lane openRepoProject-3's W133
+  MEDIUM-4; the lead's R-391), where this entry had said that no delta needed
+  to state them. Brett Heap ruled all three on 2026-10-22, in his words
   "R-320: yes" (the lead's R-321). The warning that closes each of the three
   names `git worktree prune`, `git worktree remove` and `git gc`, as his "R-324:
   yes" (the lead's R-343) extended it, in the next entry. The two stale
@@ -1567,7 +1587,13 @@ which add text that replaces no sentence:
     walk skips every entry named `.git`, so a repository nested in a tracked
     directory, or the main worktree inside one, is invisible to the probe and
     to Git's own check, and the triage's removal deleted the nested repository,
-    and once the whole repository.
+    and once the whole repository. Revalidation takes the same `lstat`s with
+    the hidden-state probe, which reads that listing again, and a `.git` entry
+    they find is `contains-submodule` there too (round (r), amending `0050f3e`
+    rs:76 and rs:88-89; lane openRepoProject-3's W133 MEDIUM-2; the lead's
+    R-391), since the ratified "It MUST refuse when the state no longer
+    matches the reviewed plan" (`0050f3e` rs:63-64) reaches a `.git` entry
+    made after planning.
   - **Q3** (T3; amends F-1's (b), which replaced `0050f3e` pcl:253-256 and
     pcl:922-926, and the texts of the T1 to T5 and T6 to T8 entries above,
     which replaced `0050f3e` design:757-760 and design:775-779): (a) F-1's (b)
@@ -1622,8 +1648,11 @@ which add text that replaces no sentence:
     that exits 0 having written to standard error any line other than Git's
     advice lines (`hint:` alone or `hint: TEXT`), or more than the 4 KiB kept,
     SHALL be treated as one that fails", so that a repository holding
-    `refs/heads/HEAD` has every row `inspection-error`, and the flood
-    scenario's row is `inspection-error` with `probe-failed`.
+    `refs/heads/HEAD` has every row `inspection-error`, under Git's default
+    `core.warnAmbiguousRefs`, as round (r) qualifies it (lane
+    openRepoProject-3's W131 LOW-3; the lead's R-391, no change of
+    behaviour), and the flood scenario's row is `inspection-error` with
+    `probe-failed`.
   - **Q9** (T11 to T13): (a) commits held only by per-worktree refs outside
     `refs/worktree/`, and non-commit targets under it, are a Risks entry
     beside the `logs/refs/worktree/` one (replaces no sentence); (b) a
@@ -2375,7 +2404,9 @@ until he ruled both on 2026-10-22 (round (h)). The scenario "Branch deletion
 refuses a branch it may not delete" quotes the new refusal, and the scenario
 counts stay. W52's F-6 and F-10 are baseline report texts that this change
 neither states nor quotes, D14 keeping the baseline report's layout, and are
-feature 004's; its F-4 is feature 004's `delete-branch` argv, and its F-11 and
+feature 004's; round (r) states F-10's, with the stale recommendation, in the
+delta `Clean classifies preservation and cleanup actions` (the lead's R-391);
+its F-4 is feature 004's `delete-branch` argv, and its F-11 and
 F-12 are lane openRepoProject-5's. Its F-1, the ceiling's recovery text, amends
 ratified text and waited on Brett Heap, and is unchanged here; he ruled it on
 2026-10-22 (round (h)). This commit also re-wrapped the paragraphs its edits
@@ -2810,7 +2841,10 @@ the only edit of a delta, which changes no requirement's text; and What Changes
 names them. No delta lists the stale recommendation, the baseline report's text,
 so none states it; W52's F-10, which round (g) left to feature 004, is named by
 D18 only for its locked form, which takes the second of the two recommendations
-where a path could not be read. One question stays open and is recorded in
+where a path could not be read. Round (r) states both, with their plain forms,
+in the delta `Clean classifies preservation and cleanup actions`, since the
+evidence model's parity rule needs a requirement to state a change of value
+(the lead's R-391). One question stays open and is recorded in
 design Open Questions, in the lead's words, before Brett Heap and not ruled:
 F-1's (b), "inspect, then git worktree prune and delete PATH by hand", can print
 in single mode for a ceiling-cut P beside a row whose path could not be read,
@@ -3096,6 +3130,74 @@ resume, with no other change of words (What Changes; Rules This Change Keeps;
 Capabilities; Decisions, amendments; this list; design Context, D1, D4, D7, D9,
 D11, D18, Risks, the Migration Plan and Open Questions; `tasks.md` 1.2 and 1.4;
 the three deltas).
+
+Round (r), lane openRepoProject-3's W133 confirm read of round (q) at `818311a`
+(HIGH 0, MEDIUM 4, LOW 1), with its W131 LOW-3, under the lead's R-391 (validate
+9 of 9, the scenario counts 73, 25 and 26). W133's MEDIUM-2: revalidation runs
+the hidden-state probe "with the `lstat` of `<dir>/.git` for every directory
+that its listing shows holding an index entry", and `contains-submodule` is its
+reason "for a new gitlink, `modules` entry or `.git` entry", since the ratified
+"It MUST refuse when the state no longer matches the reviewed plan" reaches a
+`.git` entry made in a tracked directory after planning, which neither the
+status probe nor Git's own check sees; those `lstat`s are filesystem calls only,
+counted in the filesystem budget, so the bounds of six, seven, nine or ten Git
+children stand, and one that fails or is cut follows the one rule that decides
+every filesystem call of revalidation; the added scenario "A nested repository
+made after the plan" refuses such a target as `contains-submodule`; and feature
+004 at `703b58c` builds them in `revalidation_difference()`'s step 7, through
+`hidden_state_probe()` and `nested_git_check()` (the delta `Cleanup revalidates
+destructive actions`; What Changes, revalidation; Capabilities, review-safety
+`:49`; the Q2 entry of the amendments list's first group; design D7). W133's
+MEDIUM-4: by round (q)'s reading of the evidence model's parity rule, which
+needs a requirement to state any change of value, the delta `Clean classifies
+preservation and cleanup actions` states, beside "the recommendation of its
+class", a `stale-worktree` row's recommendation in its four forms, the plain
+form with Q3 (b)'s warning, its locked form, and T6 and T7 beside a row whose
+path could not be read, in place of the baseline's "Review and prune stale
+worktree metadata manually.", each copied by script from feature 004's `project`
+at `703b58c`, its `TEXT` keys `recommendation_stale_worktree`,
+`recommendation_stale_locked`, `recommendation_stale_worktree_unread` and
+`recommendation_stale_locked_unread`, and the baseline's from its
+`RECOMMENDATIONS["stale-worktree"]`, with the added scenario "A stale entry's
+recommendation" for the plain form; the T6 to T8 entry's "no delta lists the
+stale recommendation, the baseline report's text, so none states the first two"
+now says that the delta states them, where it had said that no delta needed to,
+and its "and this change did not state" reads "and round (r) first states here",
+while round (g)'s "neither states nor quotes" of F-10 and round (m)'s "so none
+states it" each gain a clause naming this round (What Changes; Capabilities
+`:25`; the T6 to T8 entry; the entries of rounds (g) and (m); design D18).
+W133's LOW-1: the first AND of the scenario "A removal past the hard ceiling"
+ends "in either mode, single mode beside another row whose path could not be
+read included", in the form of "a row whose `lstat` the deadline stopped
+included", where "and in `mode: "single"` beside another row whose path could
+not be read as well" could be read as the target's own path unread too; the
+meaning does not change. W131's LOW-3: Q8's consequence holds under Git's
+default `core.warnAmbiguousRefs` only, since with it false, in the repository's
+configuration or the user's, the pinned probe exits 0 with empty standard error
+(W131, on Git 2.43.0 and 2.36.6; this round's writer saw the same on 2.43.0), so
+the evidence model's sentence reads "so, under Git's default
+`core.warnAmbiguousRefs`, a repository holding `refs/heads/HEAD`, ...", What
+Changes and the Q8 entry carry the qualifier, and design D1 says that with the
+setting false no row is `inspection-error` on that account, a run of
+`add-project-clean-branch-retirement` can retire `refs/heads/HEAD`, and that
+change's `Retired HEAD` restore line is then the restore that works; no pin is
+added and no behaviour changes (the lead's R-391). The THEN of the scenario "A
+git that floods standard error" is not qualified: its fake `git` writes more
+than 64 KiB to standard error, which makes the row `inspection-error` whatever
+`core.warnAmbiguousRefs` is. W133's MEDIUM-1, the plain stale advice of status,
+doctor and update beside Q3 (b), and its MEDIUM-3, a next step for a row that Q2
+(1) excludes, are before Brett Heap, and design Open Questions records them as
+M1 and M3, in the words of the lead's questions, each with the lane's lean, D18
+pointing to each; no text that either would decide changes. Brett Heap's Q8
+sentence is the one text of the triage's section 3 that changes, by the
+qualifier; the other texts of that section, T9's texts, F-1's (a), R-284's third
+text and F-2's text are unchanged, byte for byte, and clean's four stale texts,
+already in design D18, now stand in the delta too. `tasks.md` 1.2 names this
+round, and 1.4 gives the new scenario counts. This round's commit also
+re-wrapped the lines after each of its edits, up to where the old line breaks
+resume, with no other change of words (What Changes; Capabilities; Decisions,
+amendments; this list; design Context, D1, D7, D18 and Open Questions;
+`tasks.md` 1.2 and 1.4; the three deltas).
 
 ### Council Verdicts
 

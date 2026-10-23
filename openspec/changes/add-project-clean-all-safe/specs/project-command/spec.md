@@ -266,9 +266,9 @@ the row `inspection-error`. A probe that exits 0 having written to standard
 error any line other than Git's advice lines (`hint:` alone or `hint: TEXT`),
 or more than the 4 KiB kept, SHALL be treated as one that fails, since Git
 exits 0 when it cannot read a directory and leaves what it could not read out
-of its records; so a repository holding `refs/heads/HEAD`, for which Git warns
-`refname 'HEAD' is ambiguous.` in every status probe, has every row
-`inspection-error`.
+of its records; so, under Git's default `core.warnAmbiguousRefs`, a repository
+holding `refs/heads/HEAD`, for which Git warns `refname 'HEAD' is ambiguous.`
+in every status probe, has every row `inspection-error`.
 
 Termination: each Git child's standard output SHALL be read as bytes as it
 streams, and its standard error SHALL be drained while standard output is read,
