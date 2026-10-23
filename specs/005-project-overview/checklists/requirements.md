@@ -1105,26 +1105,27 @@ Lane: openRepoProject-4
   21:33:31Z, 21:51:17Z and 21:54:01Z), is recorded as C-72: change 2 takes O1
   (A), O2 (A), O4 (a) with its sub-items (c) and (d) and D5's clause 2 case,
   and O6 (A) and O7, A1's items 2, 6, 8 and 10, and O3, O5, O8, O9 and O10 stay
-  open for his direct word; since A1's ordering rule governs, the spec records
-  his word and follows A1 as ratified until A1's re-alignment lands, so no
-  requirement moves. Each held note now says which option was chosen or that
-  its item stays open and cites C-72: C-22, EC-020, FR-034 (item 6); EC-032,
-  FR-020 (item 7); FR-006 and User Story 8 (item 8); FR-007 (item 9); FR-009,
-  FR-028, FR-035 and the Dependencies record of round (m) (item 10); FR-035
-  (item 2); the A1 bullet's open point (O9) and LQ-15's extension (O10); and
-  CHK010, CHK017 and CHK023 of `suggestions-gates.md`, CHK016 and CHK025 of
-  `discovery-identity.md`, CHK003 of `observability.md` and CHK005 of `ux.md`.
-  #19's round (n) at `2250830` (lane openRepoProject-2's R-345), with Brett
-  Heap's "R-324: yes" (21:23:55Z; R-343), is recorded: every no-prune warning,
-  the ceiling's third text and T1 to T8, names `git worktree prune`, `git
-  worktree remove` and `git gc`, and FR-009's and FR-028's held strings take
-  those words; the 256 rows and W99 L-5's two (pcl :164 and :1099-1103 at
-  `20084cd`) were re-checked by line alignment: 10 change in the closing phrase
-  alone, 122 move down 2, 11 stay, pcm and the review-safety spec unchanged.
-  Lane openRepoProject-3's W99 read of 3ae is taken: M-1 and L-1 (the plan word
-  in the A1 bullet, the Assumptions, the Feature 004 bullet, the creation note,
-  C-21, the re-pin sentences, and the Results of CHK001 of `deployment.md`,
-  CHK013 of `integration.md` and CHK019 here), L-2 (FR-028 says part 1 is A1's
+  open for his direct word; since A1's re-alignment, which follows #19's
+  ratification, has not landed, the spec records his word and follows A1 as
+  ratified until A1's re-alignment lands, so no requirement moves. Each held
+  note now says which option was chosen or that its item stays open and cites
+  C-72: C-22, EC-020, FR-034 (item 6); EC-032, FR-020 (item 7); FR-006 and User
+  Story 8 (item 8); FR-007 (item 9); FR-009, FR-028, FR-035 and the
+  Dependencies record of round (m) (item 10); FR-035 (item 2); the A1 bullet's
+  open point (O9) and LQ-15's extension (O10); and CHK010, CHK017 and CHK023 of
+  `suggestions-gates.md`, CHK016 and CHK025 of `discovery-identity.md`, CHK003
+  of `observability.md` and CHK005 of `ux.md`. #19's round (n) at `2250830`
+  (lane openRepoProject-2's R-345), with Brett Heap's "R-324: yes" (21:23:55Z;
+  R-343), is recorded: every no-prune warning, the ceiling's third text and T1
+  to T8, names `git worktree prune`, `git worktree remove` and `git gc`, and
+  FR-009's and FR-028's held strings take those words; the 256 rows and W99
+  L-5's two (pcl :164 and :1099-1103 at `20084cd`) were re-checked by line
+  alignment: 10 change in the closing phrase alone, 122 move down 2, 11 stay,
+  pcm and the review-safety spec unchanged. Lane openRepoProject-3's W99 read
+  of 3ae is taken: M-1 and L-1 (the plan word in the A1 bullet, the
+  Assumptions, the Feature 004 bullet, the creation note, C-21, the re-pin
+  sentences, and the Results of CHK001 of `deployment.md`, CHK013 of
+  `integration.md` and CHK019 here), L-2 (FR-028 says part 1 is A1's
   own rule), L-3 (feature 004 at `211e43d` reads the extension read so), L-4
   (FR-028 gives #19's key of T1 to T8), L-5 (the two rows), O-1 (typing times,
   with the RULED stamps beside them) and O-3 ("as ratified", O8 open). Lane
@@ -1138,6 +1139,33 @@ Lane: openRepoProject-4
   of 64). No pin moves, A1 stays cited at `e4a30fc`, and `clarify-questions.md`
   is unchanged. Re-validation: 16 of 16 items pass, with the checks of
   iteration 2 re-run by script on the edited spec.
+- 2026-10-23, a thirty-fifth pass, by the lead's commit 3ag decisions: lane
+  openRepoProject-3's W105 read of 3af is taken. MED-A: C-72 now says that A1's
+  ordering rule (its `proposal.md:1278-1284`) is the four LQ items' and reaches
+  O10 and O5 only, O1, O2, O4, O6 and O7 resting on his word for change 2 and
+  reaching A1 in the re-alignment commit after #19's ratification, and the
+  thirty-fourth pass no longer says the rule governs. LOW-A (C-72 names lane
+  openRepoProject-4's session), LOW-B (the rounds (h) and (m) records point at
+  round (n)'s phrase), LOW-C (`project:2735-2747`), LOW-D (FR-005 says that
+  POD:46 and A1's :51 compress DI:142, and C-35 points at it), LOW-E (the
+  records of rounds (g) to (i) mark each chosen hold), LOW-F (item 10's parts 1
+  and 2), LOW-H (C-72's "Where applied" names User Story 8 and FR-008) and
+  OBS-1 (C-72 says D5's clause 2 rests on O6's text in R20 at `7af798a` until
+  he answers) are applied; LOW-G is the commit message's. A1's held item 11,
+  the plan's O11 at `664461f`, the `core.worktree` read's exit 1 in the gitfile
+  layout, is recorded as open in C-72 and held at FR-007 (the failure table's
+  exceptions), FR-008 (the gitfile root), User Story 8 s1 (the separate git
+  directory) and the A1 bullet. #24 at its draft PR #27's head `dafe476`, after
+  round B22: the eight ranges byte-identical to their text at `04be7f6` by
+  `cmp` (proposal :776-779, :800-803, :901-913 and :931-932; design :1134-1137,
+  :1213-1216 and :1810-1816; task 3.2 at :197-212), the `project-overview`
+  block the same blob, `a40458cb`. #19's round (o) at `88d0d36` and feature
+  004's `d6bac50` are recorded as later heads; no pin moves. No checklist
+  category changes, and the totals below were recounted by script. Traceability
+  is checked against A1's ratified deltas at `e4a30fc` (64 of 64). A1 stays
+  cited at `e4a30fc`, and `clarify-questions.md` is unchanged. Re-validation:
+  16 of 16 items pass, with the checks of iteration 2 re-run by script on the
+  edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -1262,4 +1290,4 @@ to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
 passes of that day, and after the thirteenth to thirty-fourth passes on
-2026-10-22.
+2026-10-22 and the thirty-fifth on 2026-10-23.
