@@ -30,8 +30,9 @@ so a remount that renumbers them fails closed.
 
 Row 4, the registry listing, runs in the directory the argument resolves to,
 where row 3 ran, in every layout, "while the main worktree is not yet
-known", as the `project-command` delta says (its `spec.md:124-133`). Rows 6
-and 7 run in the main worktree where it is known; where `root` is null, in
+known", as the `project-command` delta says (its `spec.md:124-133` at `0050f3e`,
+the ratified copy; the paragraph is at `:192-201` at `4512441`). Rows 6 and 7
+run in the main worktree where it is known; where `root` is null, in
 the common directory for a bare repository only, and otherwise where row 3
 ran (lead ruling R-75 (j)). Row 4c, `extensions.worktreeConfig` read from
 the common directory's own `config` file, runs there too, once per common
@@ -192,6 +193,26 @@ not caught, since `match_target()`'s non-strict realpath does not raise on
 both spellings name one clean, merged worktree (lane 3, LOW-3); closing it
 would conflict with the `project-clean` delta's `spec.md:258-262`.
 
+Two more rules of registration are `clean`'s plan alone, not part of the
+evidence model that `status`, `doctor` and `update` share (lane 3's W139
+MEDIUM-1; lead R-409): Brett Heap's Q2 (1), that a linked row whose path is, or
+is an ancestor of, the common directory, the main worktree or another row's
+path is `registration-mismatch` (`enclosing_rows()`), and his Q9 (b), that a
+linked row whose registered path is a symbolic link is (`_read_row()`'s read of
+the `lstat` it makes already). They are his rulings on `clean`'s review safety,
+which #19 states in the `project-clean-review-safety` delta (`spec.md:13-17` at
+`54e869b`); the `project-command` delta states neither, so its parity rule
+(`spec.md:311-312`, "Values SHALL equal those of the inspection this model
+replaces, except where a requirement states a change.") keeps the three
+commands at the baseline's values (#19's `design.md:591-598` at `54e869b`).
+`worktree_rows(repo, run, records=None, for_clean=False)` and `_read_row()`
+take `for_clean`, which `match_target()`, `build_plan()` and `registry_twin()`
+set and `repo_state()` does not, so `status`, `doctor` and `update` read such a
+row as the baseline does, probed and with its own `dirty`, as `f3724fc` did,
+where `41759a4` made both `inspection-error` and `doctor` exit 1. R-67 (c)'s
+shared-path and twin rows are not gated: they stay `registration-mismatch` in
+every command.
+
 ### Branch evidence (D6, D7)
 
 `{branch, head, upstream, upstream_oid, ahead, behind}` from row 6, recorded
@@ -206,15 +227,24 @@ establish its upstream: its `upstream`, `remote_present`, `ahead` and
 the row is `inspection-error` with `probe-failed`, `git for-each-ref failed:
 unparseable output` (lead rulings R-61 and R-64 (a); built by lane G's
 follow-up). Since a status probe whose standard error holds anything but
-Git's advice lines establishes nothing (contract, "Git children"), and Git
-warns `refname 'HEAD' is ambiguous.` in every worktree of such a repository,
-every row there is `inspection-error` too, failing closed (lead ruling R-116,
-which narrows R-61 (b)'s effect), a rule that counts a blank line as such a
+Git's advice lines establishes nothing (contract, "Git children"), and, under
+Git's default `core.warnAmbiguousRefs`, Git warns `refname 'HEAD' is ambiguous.`
+in every worktree of such a repository, every row there is `inspection-error`
+too, failing closed (lead ruling R-116, which narrows R-61 (b)'s effect), a rule
+that counts a blank line as such a
 line and the empty text after the last line end as none, and that #19's
 `project-command` delta states at round (q), `818311a`, with this consequence
 (Brett Heap's Q8, ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9";
-lead R-380; lane 2's wave 22 triage T9; writer's `70345ee`). Where row 6 gives
-no listing, because it or a probe before it failed, each present row on a
+lead R-380; lane 2's wave 22 triage T9; writer's `70345ee`), and at round (r),
+`4512441`, with the qualifier (lane 3's W131 LOW-3; lead R-391). With
+`core.warnAmbiguousRefs` false, in the repository's configuration or the user's,
+which no pin overrides, the same pinned probe exits 0 with empty standard error,
+on Git 2.43.0 and 2.36.6, so that no row is `inspection-error` on that account,
+a run of `add-project-clean-branch-retirement` can retire `refs/heads/HEAD`, and
+that change's `Retired HEAD` restore line is then the restore that works; 004
+adds no pin for it and changes no behaviour (#19's design D1 at `4512441`).
+Where row 6 gives no listing, because it or a probe before it failed, each
+present row on a
 branch carries that probe's row errors and is `inspection-error`, its upstream
 fields null, where every row once printed as `unpublished` (the plan review's
 F3; lead ruling R-101 (c)). Row 7 is read the same way (T19; lane 3's W121
@@ -267,6 +297,26 @@ prune --dry-run first and remount or repair any it lists that still exists`
 change: no field, code, class or reason does, though a stale row's
 `recommendation` in the report and in `--json`, and in `status --json` and
 `doctor --json`, carries the new text.
+
+Brett Heap's M3 (a) (ruled on 2026-10-23T21:10:31Z, "yes, recommended for M1
+and M3"; lead R-413; lane 3's W133 MEDIUM-3; #19's round (t) at `54e869b`,
+design D18 at `design.md:1477-1492`; writer's `d640539`) gives a
+`registration-mismatch` row whose path is, or holds, the main worktree, the
+common directory or another worktree (Q2 (1)), or which shares its path with
+another row (R-57 L3, R-67 (c)), `TEXT`'s
+`next_step_registration_mismatch_holds` in place of the class's step, since the
+class's "or remove the row by hand" would delete what the row's path holds:
+`its path is or holds the main worktree, the common directory or another
+worktree, so do not delete it by hand or with git worktree remove; review its
+registration with git worktree list --porcelain` (197 characters, copied from
+`project` by script). It names no `git worktree prune`, so it takes no Q3 (b)
+warning, has no unread form and is the same in every mode. `WorktreeRow.holds`,
+a flag that `worktree_rows()` sets and no output serializes, marks such a row,
+and the preview prints those rows in a group of their own under
+`registration-mismatch`, first, ahead of the class's group
+(`excluded_groups()`; the contract's paragraph after the
+`registration-mismatch` next step). Only a text and the preview's grouping
+change: no field, code, class or reason does.
 
 ### Classification (D6; FR-007)
 
@@ -375,7 +425,7 @@ as `3bc1d68`):
 | --- | --- | --- |
 | 1 | `main-worktree` | the row is the main worktree |
 | 2 | `unsupported-path-bytes` | the path is not valid UTF-8 |
-| 3 | `registration-mismatch` | the two-way registration was read and disagrees (`registered is False`), its `commondir` and, where row 4c is not false, its effective work tree included (LQ-11); a row whose registration was never read, a `present: false` one among them, passes and is excluded at gate 5 by its class (lead ruling R-53 P-16); or the row's path is, or holds, the common directory, the main worktree or another row's path (`enclosing_rows()`; Brett Heap's Q2 (1), ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; writer's `5eeaedd`), the row then unprobed and `inspection-error`, as a shared path is; or the row's registered path is a symbolic link (`_read_row()`, from its `lstat`; Brett Heap's Q9 (b), ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; lane 2's wave 22 triage T12, sr-removal F7; writer's `338edb0`), which reads its registration as disagreeing, the row again unprobed and `inspection-error` |
+| 3 | `registration-mismatch` | the two-way registration was read and disagrees (`registered is False`), its `commondir` and, where row 4c is not false, its effective work tree included (LQ-11); a row whose registration was never read, a `present: false` one among them, passes and is excluded at gate 5 by its class (lead ruling R-53 P-16); or, in `clean`'s plan alone (`for_clean`; lead R-409), the row's path is, or holds, the common directory, the main worktree or another row's path (`enclosing_rows()`; Brett Heap's Q2 (1), ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; writer's `5eeaedd`), the row then unprobed and `inspection-error`, as a shared path is; or, in `clean`'s plan alone, the row's registered path is a symbolic link (`_read_row()`, from its `lstat`; Brett Heap's Q9 (b), ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; lane 2's wave 22 triage T12, sr-removal F7; writer's `338edb0`), which reads its registration as disagreeing, the row again unprobed and `inspection-error`; a row whose path is, holds or shares another row's is in a group of its own, first, with `next_step_registration_mismatch_holds` (Brett Heap's M3 (a), lead R-413; "Branch evidence" above) |
 | 4 | `locked-worktree` | `locked` is true |
 | 5 | the classification | the class is not `merged-removable` |
 | 6 | `not-requested` | single mode, an eligible row other than P |
@@ -693,19 +743,27 @@ target:
 
 Step 7 runs Q2 (2)'s nested `.git` check again, as #19's round (r) (at
 `4512441`; lane 3's W133 MEDIUM-2; the lead's R-391 and R-395) words
-it in the `project-clean-review-safety` delta: the hidden-state probe, "with the
-`lstat` of `<dir>/.git` for every directory that its listing shows holding an
-index entry" (`spec.md:110-112`). `hidden_state_probe()` runs gate 10's listing
+it in the `project-clean-review-safety` delta, as it stands at `54e869b` after
+round (s): the hidden-state probe, "with the `lstat` of `<dir>/.git` for every
+directory that its listing shows holding an index entry directly or below it,
+other than the worktree's own top level" (`spec.md:112-114`).
+`hidden_state_probe()` runs gate 10's listing
 again, the step's one Git child, and then `nested_git_check()` makes one
 `fs_call()` of those `lstat`s, counted in the filesystem budget, so that a
 `.git` entry made after the plan, which neither step 6's status probe nor Git's
 own check reports, refuses the target as `contains-submodule`, the reason
 that delta gives "for a new gitlink, `modules` entry or `.git` entry"
-(`:131-132`; its scenario "A nested repository made after the plan"), and the
+(`:133-134`; its scenario "A nested repository made after the plan"), and the
 nested repository remains. The `lstat`s are filesystem calls only, no Git
 child, so the bounds of six, seven, nine and ten children below stand; one
 that fails or runs past its budget is `state-changed`, and one that the work
-deadline cuts is `deadline-exceeded`, by the rule below.
+deadline cuts is `deadline-exceeded`, by the rule below. The loop is one `_fs()`
+call (`project:5557` at `c0841aa`), under `min(5 s, the work remaining)`;
+measured warm (Python 3.12.3, Git 2.43.0) at 1,000, 10,000 and 50,000 tracked
+directories, planning stays eligible at `41759a4` as at `e702a65`, adding about
+0.25 s at 50,000 (medians of 11 runs, 2.216 s and 2.461 s); cold-cache cost and
+deep nesting are unmeasured, and both fail closed, `inspection-error` at
+planning and `state-changed` at revalidation (lead R-398 and R-406).
 
 At most six Git children (steps 1, 3, 4, 6, 7 and 8), as T084 built them and
 LQ-13 added step 8's probe (lead ruling R-75 (i)), and seven where row 4c read

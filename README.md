@@ -289,13 +289,20 @@ group of their own, printed first under that reason, with the next step
 `inspect the row by hand; its path could not be read, so do not run git
 worktree prune, git worktree remove or git gc until it can`; the plan's other
 `inspection-error` and `registration-mismatch` groups then name no `git
-worktree prune` either (see "Gates and next steps"). When a complete plan
-selects nothing it prints `No eligible worktrees` and exits 0. The plain
-report adds `Report: complete` or `Report: incomplete (CODES)` and `--all-safe
-would select N`. A plain report inspects up to 256 worktrees and `--all-safe`
-up to 128; a report of more than 128 says `--all-safe would be incomplete
-(inspect-cap)` in place of the count and withholds the selection; such a
-report, up to 256 worktrees, is still complete and exits 0.
+worktree prune` either (see "Gates and next steps"). A `registration-mismatch`
+worktree whose path is, or holds, the main worktree, the common directory or
+another worktree, or that shares its path with another entry, forms a group of
+its own too, printed first under that reason, with the next step `its path is
+or holds the main worktree, the common directory or another worktree, so do not
+delete it by hand or with git worktree remove; review its registration with git
+worktree list --porcelain`, since the usual next step ends `or remove the row
+by hand`, which for such a worktree deletes what its path holds. When a
+complete plan selects nothing it prints `No eligible worktrees` and exits 0.
+The plain report adds `Report: complete` or `Report: incomplete (CODES)` and
+`--all-safe would select N`. A plain report inspects up to 256 worktrees and
+`--all-safe` up to 128; a report of more than 128 says `--all-safe would be
+incomplete (inspect-cap)` in place of the count and withholds the selection;
+such a report, up to 256 worktrees, is still complete and exits 0.
 
 `--apply` runs the plan. `clean` plans again, prints the plan, and asks
 `Remove N worktrees, keeping N branches? [yes/N]` (singular for one). Only
@@ -404,6 +411,7 @@ carries its next step:
 | `main-worktree` | never removed by project clean |
 | `unsupported-path-bytes` | move it to a valid UTF-8 path with git worktree move, or mv it and then git worktree repair NEWPATH |
 | `registration-mismatch` | review, then git worktree repair or git worktree prune, unset core.worktree and core.bare in the repository's config, or in that worktree's config.worktree, or remove the row by hand; git worktree prune also deletes the entry, and so the HEAD reflog, of every other worktree whose path is missing, one moved or on an unmounted drive included, so run git worktree prune --dry-run first and remount or repair any it lists that still exists |
+| `registration-mismatch`, a worktree whose path is or holds the main worktree, the common directory or another worktree, or that shares its path with another entry | its path is or holds the main worktree, the common directory or another worktree, so do not delete it by hand or with git worktree remove; review its registration with git worktree list --porcelain |
 | `locked-worktree` | unlock it yourself if it should go |
 | `inspection-error` | review, then git worktree repair or git worktree prune, or remove the row by hand; git worktree prune also deletes the entry, and so the HEAD reflog, of every other worktree whose path is missing, one moved or on an unmounted drive included, so run git worktree prune --dry-run first and remount or repair any it lists that still exists |
 | `dirty` | commit or preserve the changes |
@@ -460,7 +468,9 @@ worktree sits in one of its tracked directories, and one whose registered path
 is a symbolic link, which a worktree moved by hand and replaced by a link
 leaves, since Git then empties the link's target and still deletes the
 registration; such a worktree is `inspection-error`, the plan is incomplete and
-nothing is removed. The next four are its classification, one gate, and only a
+nothing is removed. Only `clean` applies those last two rules: `project status`,
+`project doctor` and `project update` report such a worktree as before, probed,
+with its own `dirty`. The next four are its classification, one gate, and only a
 `merged-removable` row passes it. `not-requested` applies to `--worktree P`
 only. `unstarted-branch` and `reflog-unavailable` come from the branch's
 reflog, read from the filesystem. A read that is not finished leaves the

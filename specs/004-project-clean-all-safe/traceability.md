@@ -19,7 +19,12 @@ R-196), and, since doc round 26, round (q)'s five scenarios (PR #19 at
 `d8724e2`: 122 rows, and, since doc round 26, Part D, round (r)'s two scenarios
 (PR #19 at `4512441`; lead R-396), "A nested repository made after the plan" and
 "A stale entry's recommendation", whose builds are on 004 at `5eeaedd` and
-`da5502d`: 124 rows. The Delta column is the capability, the directory under
+`da5502d`: 124 rows, the first of them with a test of its own title since doc
+round 27, `c0841aa`'s, and, since doc round 28, round (s)'s "The main worktree's
+recommendation" (PR #19 at `dab8a64`; lead R-408) and round (t)'s "A worktree
+whose path holds the main worktree" (PR #19 at `54e869b`; lead R-413), whose
+builds are on 004 at `02aa71d` and `d640539`: 126 rows, each a named gap. The
+Delta column is the capability, the directory under
 `specs/`; the Requirement column is the `### Requirement:` title the scenario
 sits under; the Scenario column is the `#### Scenario:` title exactly. The
 Story column names the user stories (`spec.md`, US1 to US9) whose test tasks in
@@ -150,20 +155,23 @@ column names the test methods that cover the scenario.
 | project-clean (PR #19 draft) | Clean can explicitly retire verified worktrees | Two worktree paths that differ only in case | US2 | `test_clean_two_worktree_paths_that_differ_only_in_case` |
 | project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | A case-variant untracked file | US9 | `test_status_a_case_variant_untracked_file` |
 | project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | A stale entry beside a worktree whose path cannot be read | US9 | none named after it at `703b58c` (a gap; below) |
-| project-clean-review-safety (PR #19 draft) | Cleanup revalidates destructive actions | A nested repository made after the plan | US4 | none named after it at `703b58c` (a gap; below) |
+| project-clean-review-safety (PR #19 draft) | Cleanup revalidates destructive actions | A nested repository made after the plan | US4 | `test_clean_a_nested_repository_made_after_the_plan` |
 | project-clean (PR #19 draft) | Clean classifies preservation and cleanup actions | A stale entry's recommendation | US2 | none named after it at `703b58c` (a gap; below) |
+| project-clean (PR #19 draft) | Clean classifies preservation and cleanup actions | The main worktree's recommendation | US2 | none named after it at `d640539` (a gap; below) |
+| project-clean (PR #19 draft) | Clean reports local worktree state | A worktree whose path holds the main worktree | US2 | none named after it at `d640539` (a gap; below) |
 
 T126's writer fills the Tests cells from the merged tests (lead ruling R-32b).
 
-The last twenty-four rows are PR #19's draft scenarios, from branch
+The last twenty-six rows are PR #19's draft scenarios, from branch
 `change/amend-clean-all-safe-push-pins`, not yet on `main`; each Delta cell
 carries the mark "(PR #19 draft)". T002 and T126 name their titles, and read
 the others from `main`'s deltas.
 
 A test goes in a row only when its name begins with its scenario's title, as
-rule 1 and T126 require (lead ruling R-98 (a) 2). Six of PR #19's scenarios
-have no test so named at `703b58c`, though tests cover them; each is a gap, not
-a missing check (lead ruling R-166):
+rule 1 and T126 require (lead ruling R-98 (a) 2). Seven of PR #19's scenarios
+have no test so named at `d640539`, though tests cover them; each is a gap, not
+a missing check (lead ruling R-166); an eighth, row 123, was one until doc
+round 27, and its note follows the list:
 
 - "Branch deletion refuses a branch it may not delete" (round (a)): by
   `test_clean_a_branch_deletion_of_the_default_branch_is_refused`,
@@ -205,22 +213,6 @@ a missing check (lead ruling R-166):
   `test_status_a_stale_worktree_beside_an_unread_row_warns_against_prune`
   (T115), named after neither the scenario's title nor "A deleted upstream in
   status and doctor".
-- "A nested repository made after the plan" (round (r), PR #19 at `4512441`,
-  its `project-clean-review-safety` delta, "Cleanup revalidates destructive
-  actions"; lane 3's W133 MEDIUM-2; lead R-391 and R-395): by
-  `test_clean_revalidate_refuses_a_repository_nested_after_the_plan` (T045;
-  writer's `5eeaedd`), in process: a repository `git init`-ed after the plan in
-  a tracked directory of the first target, where Git's own status prints
-  nothing, makes `revalidate()` refuse that target `contains-submodule`, the
-  other passes, and the nested repository remains; and, for step 7's `lstat` of
-  `<dir>/.git` that fails or is cut,
-  `test_clean_revalidate_a_nested_git_lstat_that_fails_or_is_cut` (T045;
-  writer's `703b58c`): `state-changed`, `state-changed` and
-  `deadline-exceeded`. Neither name begins with the title. No test runs the
-  scenario through `--apply`, so its exit status 2 and the later target's
-  `not-attempted` with `batch-stopped` are pinned for a `contains-submodule`
-  refusal only by `test_clean_submodules_after_confirmation` (T083), whose
-  difference is a `modules` directory, not a nested `.git`.
 - "A stale entry's recommendation" (round (r), PR #19 at `4512441`, its
   `project-clean` delta, "Clean classifies preservation and cleanup actions";
   lane 3's W133 MEDIUM-4; lead R-391; Brett Heap's Q3 (b), ruled on
@@ -234,6 +226,70 @@ a missing check (lead ruling R-166):
   itself, RECOMMENDATIONS's with the dry-run warning, is pinned by
   `test_clean_row_evidence_never_recommends_a_step_git_refuses` (T028). None is
   named after the title.
+- "The main worktree's recommendation" (round (s), PR #19 at `dab8a64`, its
+  `project-clean` delta, "Clean classifies preservation and cleanup actions";
+  lane 3's W141 MEDIUM-1; lead R-408; writer E's `02aa71d`): by
+  `test_clean_report_advice_for_the_main_worktree_and_a_locked_stale_row`
+  (T028), where the main worktree on a merged, clean, published branch reads
+  `merged-removable` from outside it and `merged-current` from inside it, each
+  with `recommendation_main_worktree` in the plain report, and
+  `merged-removable` with it in the `worktrees` row of `--json`, and the
+  explicit removal that the baseline text invited is refused `main-worktree`,
+  exit 2; the baseline's two texts, which the scenario quotes as what the row
+  said before, stay `RECOMMENDATIONS`'s for every other row, pinned by
+  `test_clean_ladder_is_a_pure_function` (T028). Neither is named after the
+  title.
+- "A worktree whose path holds the main worktree" (round (t), PR #19 at
+  `54e869b`, its `project-clean` delta, "Clean reports local worktree state";
+  Brett Heap's M3 (a), ruled on 2026-10-23T21:10:31Z, "yes, recommended for M1
+  and M3"; lead R-413; lane 3's W133 MEDIUM-3; writer's `d640539`): by
+  `test_clean_the_main_worktree_inside_a_linked_worktree` (T061), whose linked
+  worktree W, which holds the main worktree, now has its group of
+  `next_step_registration_mismatch_holds` checked in batch and in single mode,
+  and by
+  `test_clean_a_row_whose_path_is_or_holds_another_worktree_takes_its_own_next_step`
+  (T061): five rows that hold or share another's path form that group, printed
+  first, and a symbolic-link row (Q9 (b)) keeps the class's group after it, in
+  the `--all-safe` preview, in the human text of `--all-safe --apply --json`
+  and in single mode, and beside a row whose path cannot be read the class's
+  group takes its unread form and M3's step stays. No single test puts W beside
+  a linked worktree redirected by `core.worktree` in one fixture, as the
+  scenario does; each half is pinned apart, the redirected row's refusal by
+  `test_clean_a_redirected_worktree_s_incomplete_plan_names_the_unset` (T061).
+  None is named after the title.
+
+Row 123, "A nested repository made after the plan" (round (r), PR #19 at
+`4512441`, its `project-clean-review-safety` delta, "Cleanup revalidates
+destructive actions"; lane 3's W133 MEDIUM-2; lead R-391 and R-395), was the
+sixth gap until R-397's test (lead R-405; a fresh writer's `c0841aa` on
+`impl/004-q-build`): `test_clean_a_nested_repository_made_after_the_plan`
+(T083) is named after the title and runs the scenario through `--apply`: a
+repository is `git init`-ed, at the question, in a tracked directory of the
+first target, where Git's own status prints nothing, so that the first target
+is refused `contains-submodule`, the run exits 2, the later target is
+`not-attempted` with `batch-stopped`, no removal child runs and the nested
+repository and every tree remain. Its fail-before, against `project`
+at `e702a65`, removed both targets, the nested repository included. That
+closes the gap that R-397 recorded, that no test ran the scenario through
+`--apply` and that its exit status 2 and the later target's `batch-stopped`
+were pinned for a `contains-submodule` refusal only by
+`test_clean_submodules_after_confirmation` (T083), whose difference is a
+`modules` directory, not a nested `.git`. Two in-process tests also pin step
+7's nested `.git` check, neither named after the title:
+`test_clean_revalidate_refuses_a_repository_nested_after_the_plan` (T045;
+writer's `5eeaedd`), where `revalidate()` refuses the target
+`contains-submodule` and the nested repository remains, and, for step 7's
+`lstat` of `<dir>/.git` that fails or is cut,
+`test_clean_revalidate_a_nested_git_lstat_that_fails_or_is_cut` (T045;
+writer's `703b58c`): `state-changed`, `state-changed` and `deadline-exceeded`.
+One residual is left, and it is measured as far as it goes: the nested `.git`
+`lstat` loop is one `_fs()` call (`project:5557` at `c0841aa`) under `min(5 s,
+the work remaining)`; measured warm (Python 3.12.3, Git 2.43.0) at 1,000,
+10,000 and 50,000 tracked directories, planning stays eligible at `41759a4` as
+at `e702a65`, adding about 0.25 s at 50,000 (medians of 11 runs, 2.216 s and
+2.461 s); cold-cache cost and deep nesting are unmeasured, and both fail
+closed, `inspection-error` at planning and `state-changed` at revalidation
+(lead R-398 and R-406).
 
 "Push refuses a branch it may not push" names lane A's addendum 5 test
 (`f0e4945`, on 004 at `598929b`), which pins the baseline's `No unique linked
@@ -547,7 +603,7 @@ clause that no scenario names. Q2 (2):
 their new forms, the new `partial_removal_note_ceiling`, and the new
 `unstarted-branch`, `reflog-unavailable` and `contains-submodule` next steps.
 No scenario is added and no test name changes; T127's verify exempts two more
-old spans of main's `design.md` D18 (T127). The head sentence reads `703b58c`.
+old spans of main's `design.md` D18 (T127). The head sentence read `703b58c`.
 
 Doc round 26, Part D (lane 3's W133 MEDIUM-2 and MEDIUM-4; the lead's R-391,
 R-395 and R-396; PR #19's round (r) at `4512441`). Its two new scenarios,
@@ -561,4 +617,55 @@ paragraphs above and in their tasks (T045, T028 and T061), so that no test is
 added and no test name changes. Revalidation's step 7 re-runs the hidden-state
 probe's listing and, over its directories, the nested `.git` lstats of Q2 (2),
 which the contract, the data model, the README and FR-046 and FR-047 now say
-(`project` unchanged since `703b58c`). The head sentence reads `703b58c`.
+(`project` unchanged since `703b58c`). The head sentence read `703b58c`.
+
+Doc round 27 (lane 3's W140 on the docs at `41759a4`; the lead's R-405, R-406
+and R-407). R-397's test, `test_clean_a_nested_repository_made_after_the_plan`
+(T083; `tests/test_clean_revalidation.py`, on `impl/004-q-build` at
+`c0841aa`), is named after row 123's title, so that row 123 names it and
+leaves the named gaps, which go from six to five (rows 104, 111, 116, 122 and
+124); T126's verify lists five, and its fail-before, against `project` at
+`e702a65`, removed both targets, the nested repository included. R-406's
+measured residual of Q2 (2)'s nested `lstat` loop is in row 123's note above.
+No other test name changes, and `project` is unchanged since `703b58c`. The
+other items of the round are not rows: T127's static check now passes on the
+tree that 004 has once #19 lands, its 32 failing spans classed in T127;
+Brett Heap's Q8 is stated with round (r)'s "under Git's default
+`core.warnAmbiguousRefs`" in FR-057's note, the contract and the data model;
+the three `project-command` cites that were the ratified copy's lines say so;
+and FR-064's note on `status` and Q3 (b) says that M1 is open. The head
+sentence read `c0841aa`.
+
+Doc round 28 (lane 3's W139, W140 and W146; Brett Heap's M1 (a) and M3 (a),
+ruled on 2026-10-23T21:10:31Z, "yes, recommended for M1 and M3"; the lead's
+R-409, R-413, R-415 and R-416; the code round `c0841aa..d640539` on
+`impl/004-q-build`, merged into this branch). Its tests, each named in its
+task:
+`test_status_an_enclosing_worktree_and_a_symbolic_link_path_keep_the_baseline_s_values`
+(T115; `tests/test_status_doctor_update.py`; `455773a`), which pins `status`,
+`doctor` and `update` at the baseline's entries for an enclosing row and a
+symbolic-link row while `clean --all-safe` still excludes both, since Q2 (1)
+and Q9 (b) are `clean`'s alone (W139 MEDIUM-1; R-409); the changed
+`test_status_a_stale_worktree_beside_an_unread_row_warns_against_prune` (T115;
+`c456cac`), which reads `update --json` too (W139 LOW-2);
+`test_clean_cleanup_inspects_main_from_a_feature_worktree_from_a_directory_nested_in_it`
+(T071; `tests/test_clean_single.py`; `bc10262`; W140 LOW-2);
+`test_clean_a_row_whose_path_is_or_holds_another_worktree_takes_its_own_next_step`
+(T061; `tests/test_clean_gates.py`; `d640539`) and the changed
+`test_clean_the_main_worktree_inside_a_linked_worktree` (T061), which pin M3
+(a)'s next step; and `tests/clean_support.py`'s new fixture
+`next_step_registration_mismatch_holds` (T011; `d640539`) and the changed
+comment on `partial_removal_note_locked` (T011; `5884a79`; W140 LOW-4), which
+changes no text. No other test name changes. The two new scenarios of #19's
+rounds (s) and (t) are rows 125 and 126 (126 rows; T002 and T126 count them),
+each a named gap, since no test's name begins with its title: the gap notes
+above name the tests that cover them, so that the named gaps go from five to
+seven. The other items of the round are not rows: FR-055's notes, the contract
+and the data model say that Q2 (1) and Q9 (b) are `clean`'s alone; M3 (a)'s
+next step is in FR-028's note, the contract, the data model and the README;
+Brett Heap's M1 (a) is recorded in FR-064's note and the contract; the cites of
+#19's `project-clean-review-safety` lines are `spec.md:112-114` and `:133-134`
+at `54e869b`; the contract's note on F-6 and F-10 says that #19 states both;
+and T127's static check passes on this branch's own tree and on the tree that
+004 has once #19 lands, with #19 at `54e869b`, its 3 missing spans classed in
+T127. The head sentence reads `d640539`.
