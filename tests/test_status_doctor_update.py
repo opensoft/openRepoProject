@@ -833,7 +833,9 @@ class StatusDoctorUpdateTests(clean_support.CleanCase):
         # row's recommendation also warns against prune, git worktree remove
         # and git gc; where none has, it is the baseline text, byte for byte.
         # The unread row's own path denies search through its parent, as
-        # clean's W73 layout does. status and doctor read one state.
+        # clean's W73 layout does. status, doctor and update (its report,
+        # with no --apply; pc:391-395 names all three, lane 3's W139 LOW-2,
+        # lead R-409) read one state.
         root = self.repo()
         stale = self.base / "stale-tree"
         self.git(root, "worktree", "add", "-b", "001-stale", stale)
@@ -847,9 +849,11 @@ class StatusDoctorUpdateTests(clean_support.CleanCase):
         self.assertEqual(STALE_UNREAD, STALE[:-1] + "; a row's path could not be read, so do not run git worktree "
                                                     "prune, git worktree remove or git gc until it can.")
 
+        env, tools = self.report_env()
+
         def rows(name):
-            """status or doctor's worktree entries, by path, with their exit status."""
-            result = self.run_json(name, root, "--json")
+            """status, doctor or update's worktree entries, by path, with their exit status."""
+            result = self.run_json(name, root, "--json", env=env)
             repository = result.document["repository"]
             return result.returncode, {entry["path"]: entry for entry in repository["worktrees"]}
 
@@ -857,7 +861,7 @@ class StatusDoctorUpdateTests(clean_support.CleanCase):
                                     ("a row unread", lambda: parent.chmod(0o000), STALE_UNREAD),
                                     ("the row readable again", lambda: parent.chmod(mode), STALE)):
             change()
-            for name in ("status", "doctor"):
+            for name in ("status", "doctor", "update"):
                 with self.subTest(state, command=name):
                     code, found = rows(name)
                     entry = found[str(stale)]
@@ -873,6 +877,8 @@ class StatusDoctorUpdateTests(clean_support.CleanCase):
                         self.assertEqual((found[str(unread)]["present"], found[str(unread)]["dirty"]), (True, False))
                         self.assertNotIn("recommendation", found[str(unread)])
                     self.assertNotIn("recommendation", found[str(root)])
+        for record in tools:
+            self.assertFalse(record.exists(), f"{record.name}: no owner tool ran")
 
     def test_status_an_enclosing_worktree_and_a_symbolic_link_path_keep_the_baseline_s_values(self):
         # Lane 3's W139 MEDIUM-1, lead R-409. Brett Heap's Q2 (1) (a linked
