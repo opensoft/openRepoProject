@@ -1973,6 +1973,73 @@ class EvidenceTests(clean_support.CleanCase):
                 with self.subTest(label):
                     self.assertIs(project.status_warned(value), expected)
 
+    def test_clean_evidence_the_status_warning_rule_counts_every_line(self):
+        # Brett Heap's Q8, "yes, recommended for Q1-Q9" (lead R-380; lane 2's
+        # wave 22 triage T9; #19's round (q) at 818311a, project-command): a
+        # probe that exits 0 having written any line other than Git's advice
+        # lines, `hint:` alone or `hint: TEXT`, or more than the 4 KiB kept,
+        # fails. A blank line is such a line, which the rule had skipped; the
+        # text after the last line end is no line.
+        def outcome(stderr, counted=None):
+            return project.DriverOutcome(["git"], "complete", stderr=stderr,
+                                         stderr_bytes=len(stderr) if counted is None else counted)
+
+        ambiguous = b"warning: refname 'HEAD' is ambiguous.\n"
+        for label, value, expected in (
+                ("nothing", outcome(b""), False),
+                ("advice lines", outcome(b"hint: a\nhint:\nhint: b\n"), False),
+                ("advice with no last line end", outcome(b"hint: a\nhint: b"), False),
+                ("the 4 KiB kept, all advice", outcome(b"hint: " + b"a" * 4089 + b"\n"), False),
+                ("a blank line alone", outcome(b"\n"), True),
+                ("a blank line between advice lines", outcome(b"hint: a\n\nhint: b\n"), True),
+                ("a blank line last", outcome(b"hint: a\n\n"), True),
+                ("a line of spaces", outcome(b"   \n"), True),
+                ("hint with no space", outcome(b"hint:a\n"), True),
+                ("Git's ambiguous refname warning, twice", outcome(ambiguous * 2), True),
+                ("one byte past the 4 KiB kept", outcome(b"hint: a\n", counted=4097), True)):
+            with self.subTest(label):
+                self.assertEqual(len(value.stderr) <= 4096, True)
+                self.assertIs(project.status_warned(value), expected)
+
+    def test_clean_evidence_refs_heads_head_makes_every_row_inspection_error(self):
+        # Brett Heap's Q8 (lead R-380), the rule's consequence: in a
+        # repository holding refs/heads/HEAD, Git warns "refname 'HEAD' is
+        # ambiguous." in every status probe and exits 0, so every row,
+        # the main worktree's and a merged, pushed one's, is inspection-error
+        # with the status probe's probe-failed; the plan is incomplete and
+        # nothing is removed, by --all-safe or by name.
+        root = self.repo()
+        self.bare_remote()
+        merged = self.merged_worktree("001-merged")
+        self.git(root, "update-ref", "refs/heads/HEAD", self.git(root, "rev-parse", "HEAD").strip())
+        for tree in (root, merged):
+            probe = subprocess.run([clean_support.REAL_GIT, "-C", str(tree), "status", "--porcelain"],
+                                   env=dict(self.env, GIT_OPTIONAL_LOCKS="0"), capture_output=True,
+                                   timeout=clean_support.TIMEOUT)
+            self.assertEqual(probe.returncode, 0, probe.stderr)
+            self.assertIn(b"warning: refname 'HEAD' is ambiguous.\n", probe.stderr)
+        warned = {"code": "probe-failed", "message": git_message(
+            "status", "row_error_probe_failed", DETAIL=TEXT["row_error_probe_failed_unparseable"])}
+        def state():
+            return (self.git(root, "worktree", "list", "--porcelain"),
+                    self.git(root, "for-each-ref", "--format=%(refname) %(objectname)"),
+                    sorted(path.name for path in merged.iterdir()))
+
+        before = state()
+        result, _ = self.report(root, "--all-safe")
+        rows = by_name(result.document)
+        self.assertEqual({name: (row["errors"], row["dirty"], row["classification"]) for name, row in rows.items()},
+                         {"repo": ([warned], None, "inspection-error"),
+                          merged.name: ([warned], None, "inspection-error")})
+        self.assertEqual((result.document["completeness"], result.document["selected"],
+                          [refusal["code"] for refusal in result.document["refusals"]]),
+                         ("incomplete", [], ["inspection-incomplete"]))
+        applied = self.run_cli("clean", root, "--all-safe", "--apply", "--yes")
+        self.assert_status(applied, 2)
+        named = self.run_cli("clean", root, "--apply", "--action", "remove", "--worktree", merged, "--yes")
+        self.assert_status(named, 2)
+        self.assertEqual(state(), before, "nothing is removed")
+
     # T030: the evidence model's scenarios (rule 1: test_status_, plan review M14).
 
     def test_status_a_git_that_floods_standard_error(self):

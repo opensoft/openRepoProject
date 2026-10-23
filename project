@@ -3122,7 +3122,12 @@ def status_warned(outcome):
     not established (lane 3's US2 M-1; lead ruling R-101 (e)), a pure
     function of the outcome: any byte past the 4 KiB head the runner keeps,
     or any line of that head other than Git's advice lines, `hint:` alone or
-    `hint: TEXT`.
+    `hint: TEXT`, a blank line included; the empty text after the last line
+    end is no line. That is the rule Brett Heap's Q8 states ("yes,
+    recommended for Q1-Q9", lead R-380; #19's round (q) at 818311a,
+    project-command), with its consequence: Git warns `refname 'HEAD' is
+    ambiguous.` in every status probe of a repository holding
+    `refs/heads/HEAD`, so every row of it is inspection-error.
 
     The rule comes from Git's output (Git 2.43.0): on a clean run the probe
     prints nothing to standard error; for a directory it cannot open it
@@ -3135,8 +3140,10 @@ def status_warned(outcome):
     closed."""
     if outcome.stderr_bytes > len(outcome.stderr):
         return True
-    return any(line and line != b"hint:" and not line.startswith(b"hint: ")
-               for line in outcome.stderr.split(b"\n"))
+    lines = outcome.stderr.split(b"\n")
+    if lines[-1] == b"":
+        lines.pop()  # the text after the last line end, or no output at all
+    return any(line != b"hint:" and not line.startswith(b"hint: ") for line in lines)
 
 
 def status_probe(path, run):
