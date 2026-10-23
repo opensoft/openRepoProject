@@ -2245,12 +2245,16 @@ path"; "Non-UTF-8 common directory".
   for-each-ref failed: unparseable output`, no line of Git's standard error
   reaching it (FR-022; Clarifications, C-62). Feature 004's fix of lane
   openRepoProject-3's finding F1 M-1 makes a status probe whose standard error
-  holds any line other than a hint, or more than 4 KiB, `probe-failed` with
-  DETAIL `unparseable output` (lane openRepoProject-2's ruling R-116, which
-  accepts the consequence below as failing closed; its `status_warned`,
-  `project:3012` at `d6bac50`), a DETAIL that feature 004's contract and A1's
-  table already give, so FR-022's texts do not change; #19's round (q) states
-  the same rule in [E], on Brett Heap's Q8 of 2026-10-23 (its
+  passes the 4 KiB head that the runner keeps, or holds in that head any line
+  other than Git's advice lines, `hint:` alone or `hint: TEXT`, a blank line
+  included, the empty text after the last line end being no line,
+  `probe-failed` with DETAIL `unparseable output` (lane openRepoProject-2's
+  ruling R-116, which accepts the consequence below as failing closed; its
+  `status_warned`, `project:3120` at `41759a4`, as built on Brett Heap's Q8), a
+  DETAIL that feature 004's contract and A1's table already give, so FR-022's
+  texts do not change; #19's round (q) states the same rule in [E], on Brett
+  Heap's Q8 of 2026-10-23, "any line other than Git's advice lines (`hint:`
+  alone or `hint: TEXT`), or more than the 4 KiB kept" (its
   `specs/project-command/spec.md:265-271` and design D1, `design.md:174-191`,
   at `4512441`), and the overview's status probe takes it, as FR-026's parity
   needs, the two rules agreeing. Its consequence here is wider than this row:
@@ -5248,9 +5252,11 @@ and [P] are change 1's requirements as the header names them.
   `inspection-incomplete` and `inspect-cap` remedies and four next steps, are
   `project clean`'s, texts that the overview never shows, its own remedies
   being A1's (C-59; FR-035), and it changes nine of the definitions of
-  `project` that the plan's R3 reuses, `STATUS_PINS` and `TEXT` among them, the
-  plan keeping its `project:N` cites at `d6bac50` until tasks are written.
-  #19's round (p) at `e0b1671`, on
+  `project` that the plan's R3 reuses, `STATUS_PINS`, `TEXT` and
+  `status_warned` among them, the last counting a blank line inside the kept
+  head as a warning line, which at `d6bac50` (`project:3012`) it did not (Q8;
+  EC-033), the plan keeping its `project:N` cites at `d6bac50` until tasks are
+  written. #19's round (p) at `e0b1671`, on
   Brett Heap's answers of 2026-10-23 to the lead's R-365 (11:49:16Z, "Yes, warn
   (Recommended)" on F-1's (b) beside an unread row and "Yes, add T9
   (Recommended)" on `project status`'s stale recommendation; with the lead's
