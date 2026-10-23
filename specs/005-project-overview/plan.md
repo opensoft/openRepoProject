@@ -6,7 +6,7 @@ Lane: openRepoProject-4
 **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `specs/005-project-overview/spec.md`
-at `7b37557` (its commit 3ag; its 72 clarifications, Brett Heap's answers
+at `54dc025` (its commit 3ah; its 72 clarifications, Brett Heap's answers
 of 2026-10-21 folded in and his word on the held items in C-72), with its
 17 checklists and `clarify-questions.md`.
 
@@ -85,20 +85,22 @@ Implementation slices, in dependency order; each leaves the suite green:
    [quickstart.md](quickstart.md), and the full-length timing.
 
 Each held item sits in its own row, decider, term or composer branch
-(research.md R20). The five that Brett Heap's word chose for change 2
-(C-72) are built in their chosen form once A1's re-alignment lands at PR
-#34, in one commit after PR #19's ratification, he reviewing the final
-text before #34 merges; until then the ratified text stands. D5's clause
-2, chosen with O4 (a) only through O6's text at `7af798a`, reverses
-ratified D5's "remedy kept whole" for one case and is before him for his
-direct word; until he answers, it rests on that text. A1's own ordering
-rule, the four LQ items', reaches only O5 and O10; the other items rest
-on his word for change 2. The six open ones are built as ratified, but
-O11's part 1, built now as the plan's reading of a conflict in ratified A1
-(R9). An answer, or a change in his review of the final text, lands as a
-change to that place and its tests alone, with one exception: O11's part
-1 (B) would also fail, and so re-word, the scenario "A separate git
-directory" of change 2 and of this spec (R20).
+(research.md R20). The five that Brett Heap's word chose for change 2 (C-72)
+are built in their chosen form once A1's re-alignment lands at PR #34, in one
+commit after PR #19's ratification, he reviewing the final text before #34
+merges; until then the ratified text stands. D5's clause 2, chosen with O4 (a)
+only through O6's text at `7af798a`, reverses ratified D5's "remedy kept whole"
+for one case and is before him for his direct word; until he answers, it rests
+on that text. A1's own ordering rule, the four LQ items', reaches only O5 and
+O10; O1, O2, O4, O6 and O7 rest on his word for change 2; the open O3 and O8,
+O11's part 2 and, should he take (C), O9 wait on his word for change 2 too, and
+O11's part 1 is a text re-alignment on a lane finding for his review (C-72 at
+`54dc025`). The six open ones are built as ratified, but O11's part 1, built
+now as the plan's reading of a conflict in ratified A1 (R9). An answer, or a
+change in his review of the final text, lands as a change to that place and its
+tests alone, with one exception: O11's part 1 (B) would also fail, and so
+re-word, the scenario "A separate git directory" of change 2 and of this spec
+(R20).
 
 ### Gates on the three 004-touching changes
 
@@ -157,18 +159,17 @@ feature 005 merges, and slice 1's pull request quotes the checks of (a) to
   4. The implementation re-pins at #19's ratified head.
 - POD, PRSD, CMD, CLN, DI, BA and the labels [E], [L], [G], [R] and [P]:
   as [spec.md](spec.md) defines them.
-- The lane's A1 re-alignment draft, held for Brett Heap's review and not
-  a source of behaviour: its items 1 to 7 and 9 as read at sha256
-  `00205d73ba3831d23cf87ff67bf22b79099b2767bad8cc9091ff9064c8a802ea`
-  (2,295 lines), its note on row 4c's exit 1 as read at sha256
-  `10890e2c0b9342c68832df71e0cc2742d3092be08beb81a12684e3c70c33398c`
-  (2,353 lines; research.md R9), and its items 8 to 11 as read at sha256
-  `c5840a66bf1f3ccbfd45898f13decb05b0be52a1ab82cc6c6155be769ab22f5b`
-  (2,888 lines; research.md R12, R20), its warnings in PR #19's round (n)
-  words; revision 3 read them at `811b9cef` (2,584 lines).
+- The lane's A1 re-alignment draft, held for Brett Heap's review and the
+  source of options only, not of behaviour: every item, 1 to 11, with its
+  note on row 4c's exit 1 under item 9, as read at sha256
+  `558b0c298f5c5ce6bc7a9d91cc0279e6b32b7af877140f34423ebac2cc262579`
+  (2,928 lines; research.md R9, R12, R20), its warnings in PR #19's round
+  (n) words. Earlier revisions read it at `00205d73`, `10890e2c`,
+  `8ce4e9fb`, `811b9cef` and `c5840a66` (research.md R20).
 - Lane openRepoProject-3's W96 read of this plan at `a80f10b`, with its
-  delta reads at `aeb0bb2`, `6fb619c` and `664461f`: revisions 2 to 4 take
-  each of its findings (research.md, "Revision 2" to "Revision 4").
+  delta reads at `aeb0bb2`, `6fb619c`, `664461f` and `06b16e1`: revisions 2
+  to 5 take each of its findings (research.md, "Revision 2" to "Revision
+  5").
 
 ## Technical Context
 
@@ -382,9 +383,10 @@ Open for his direct word, each with the lane's recommendation:
   keep).
 - O11: the `core.worktree` read's exit 1, added after his word: part 1,
   A1's failure table excepting the unset key, built now as the plan's
-  reading; part 2, the gate code `target-not-repository-root` with the bare
-  row's remedy for any other failure, built as (B), no gate code, until his
-  word ((A) for both).
+  reading; part 2, the gate code `target-not-repository-root` with a remedy
+  row of its own, "core.worktree could not be read; repair the repository's
+  config, then run again", for any other failure, built as (B), no gate
+  code, until his word ((A) for both).
 - The base: `main` after PR #33 (recommended, C-56), or stacked on feature
   004's branch (his word needed; R2).
 - His word on the tasks, then on the implementation.

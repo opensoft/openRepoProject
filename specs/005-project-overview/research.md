@@ -27,7 +27,7 @@ only he can still decide:
   answer (decision 2);
 - Revision 2: where each finding of lane openRepoProject-3's W96 read is
   taken;
-- Revision 3 and Revision 4: where each input of those revisions is taken.
+- Revisions 3 to 5: where each input of those revisions is taken.
 
 Each entry gives a Decision, its Rationale and the Alternatives considered.
 Citations, as [plan.md](plan.md) "Citations" defines them: `project:N` is
@@ -67,10 +67,11 @@ from `0a82a62` and `20084cd`, and revision 4 from `211e43d` and `2250830`
     ("R-320: yes" for T6 to T8) and their warnings in the words of his
     "R-324: yes" (the lead's R-343);
   - A1 at `e4a30fc`;
-  - #24's change at `fe5b245` (PR #27 at `dafe476`, its round B22, moved
-    from `04be7f6` in revision 3; its eight pinned ranges byte-identical by
-    the lead's `cmp`, and its `project-overview` block blob `a40458cb` at
-    `fe5b245`, `04be7f6` and `dafe476` alike) and #25's at `05a424a` (PR
+  - #24's change at `fe5b245` (PR #27 at `288fc34`, its round B23, moved
+    from `04be7f6` in revision 3 and from `dafe476` in revision 5; its
+    eight pinned ranges and its specs byte-identical by the lead's `cmp`,
+    and its `project-overview` block blob `a40458cb` at `fe5b245`,
+    `04be7f6`, `dafe476` and `288fc34` alike) and #25's at `05a424a` (PR
     #29 at `a529310`), both read only to confirm that neither gates this
     feature (C-71).
 - **Re-pin of revision 1, feature 004** (its lines cited at `d6bac50`):
@@ -712,8 +713,8 @@ no Git and a later ruling edits one function:
   a gated finding is built by one pure function, `compose_message(own, remedy,
   warning=None)`: own text, `; `, remedy, within 200 characters, the own text
   shortened with `...` when both do not fit (A1 design D5), a cut counted in
-  characters. The two clauses that Brett Heap's word chose for change 2 (C-72)
-  are branches of that one function, reached only when `warning` is given,
+  characters. Two clauses, the second before him for his direct word, are
+  branches of that one function (C-72), reached only when `warning` is given,
   which happens once A1's re-alignment lands: clause 1, keep the warning whole
   and shorten the recommendation before it (item 10 part 1, R20's O6 (A)), and
   clause 2, where the warning and the remedy cannot both be kept, leave the
@@ -940,34 +941,35 @@ answers, it rests on that text. Five stay OPEN for his direct word, O3,
 O5, O8, O9 and O10, each with the lane's recommendation (O3 and O8 to O10
 as put to him in lane 4's pane, O5 as the lane's NOTED correction records
 it), and a sixth, O11, is a plan item added in revision 3 at `664461f`,
-after his word, which he has not answered (R9).
+after his word, which he has not answered (R9; C-72 at `54dc025`,
+spec.md:971-974 and :979-982).
 
-These are choices for change 2. A1's ordering rule (A1
-`proposal.md`:1278-1284) is the four LQ items' rule: it reaches O10 (LQ-15's
-extension) and O5 (item 9, owed under it). O1, O2, O4, O6 and O7 (items 2,
-6, 8 and 10) rest on his word for change 2 and on #19's rounds, and reach
-A1 in the same re-alignment commit, which follows #19's ratification, he
-reviewing the final text before PR #34 merges; the open O3, O8 and O11
-(items 7, 10 and 11) rest on his word for change 2 too. So the
-implementation builds a chosen option once A1's re-alignment lands at PR
-#34, and until then the ratified text stands. Each item stays isolated to
-one table row, one decider, one count term or one branch of the composer,
-so that an answer, or a change in his review of the final text, lands
-without touching the rest; the one exception is O11's part 1 (B), which
-would also re-word a scenario (O11).
+These are choices for change 2. A1's ordering rule (A1 `proposal.md`:1278-1284)
+is the four LQ items' rule: it reaches O10 (LQ-15's extension) and O5 (item 9,
+owed under it). O1, O2, O4, O6 and O7 (items 2, 6, 8 and 10) rest on his word
+for change 2 and on #19's rounds, and reach A1 in the same re-alignment commit,
+which follows #19's ratification, he reviewing the final text before PR #34
+merges; the open O3 and O8 (items 7 and 10), O11's part 2 (item 11) and, should
+he take (C), O9 wait on his word for change 2 too, and O11's part 1 is a text
+re-alignment on a lane finding for his review (C-72 at `54dc025`,
+spec.md:974-982). So the implementation builds a chosen option once A1's
+re-alignment lands at PR #34, and until then the ratified text stands. Each
+item stays isolated to one table row, one decider, one count term or one branch
+of the composer, so that an answer, or a change in his review of the final
+text, lands without touching the rest; the one exception is O11's part 1 (B),
+which would also re-word a scenario (O11).
 
-PR #19 is read at `88d0d36`, its round (o) (R-349), whose specs equal its
-round (n)'s, `2250830`; the implementation re-pins at #19's ratified head
-(R1). Every warning below is in round (n)'s words (`#19
-design.md:1349-1369` at `88d0d36`; R-343, his "R-324: yes"), which feature
-004's `TEXT` rows carry since `d6bac50` (`:887-892`). The lane's A1
-re-alignment draft is the source of each option, not of behaviour: items 1
-to 7 as read at sha256 `00205d73ba38...` (2,295 lines); items 8 to 11, with
-round (n)'s words, as read at `c5840a66bf1f...` (2,888 lines), where
-revision 3 read items 8 and 10 and the row 4b section at `811b9cef0889...`
-(2,584 lines) and revision 2 items 8 and 10 at `8ce4e9fb60e8...` (2,422
-lines). Items 1, 3, 4 and 5 there change text only and have no design
-impact.
+PR #19 is read at `88d0d36`, its round (o) (R-349), whose specs equal its round
+(n)'s, `2250830`; the implementation re-pins at #19's ratified head (R1). Every
+warning below is in round (n)'s words (`#19 design.md:1349-1369` at `88d0d36`;
+R-343, his "R-324: yes"), which feature 004's `TEXT` rows carry since `d6bac50`
+(`:887-892`). The lane's A1 re-alignment draft is the source of each option,
+not of behaviour: every item, 1 to 11, as read at sha256 `558b0c298f5c...`
+(2,928 lines), where revision 4 read items 8 to 11 at `c5840a66bf1f...` (2,888
+lines), revision 3 items 8 and 10 and the row 4b section at `811b9cef0889...`
+(2,584 lines), revision 2 items 8 and 10 at `8ce4e9fb60e8...` (2,422 lines) and
+revision 1 items 1 to 10 at `00205d73ba38...` (2,295 lines). Items 1, 3, 4 and
+5 there change text only and have no design impact.
 
 ### Chosen (C-72), built once A1's re-alignment lands
 
@@ -992,7 +994,7 @@ impact.
   plus `/.git` is the common directory (the draft's sub-item (c)) and a
   main-worktree probe that exits nonzero (sub-item (d)) count as a redirect
   too: they apply under the option and are no further options (the draft at
-  `c5840a66`, :1304-1306, as at `8ce4e9fb`; lane openRepoProject-3's W96,
+  `558b0c29`, :1309-1311, as at `8ce4e9fb`; lane openRepoProject-3's W96,
   R2-LOW-2). Design: one detector, comparing the main worktree's toplevel with
   the first registry record's canonical path; one remedy row, "core.worktree or
   core.bare redirects the main worktree; unset both in the repository's config,
@@ -1117,10 +1119,15 @@ impact.
   is built as (B) until his word: `probe-failed`, the root null, no suggestion
   and no gate code. Under part 2 (A), the lean, every finding that would
   suggest a clean command gets `suggested_command: null` with `suggestion_gate:
-  target-not-repository-root`, as A1 design D3 does for a bare repository, with
-  requirement 7's bare row and its remedy, "run project clean from the main
-  worktree root" (the drafter's choice, at `c5840a66` :2684-2693, which lane
-  openRepoProject-3 is judging); a cut read decides as a failed one under both.
+  target-not-repository-root`, as A1 design D3 does for a bare repository, and
+  a row of its own in requirement 7's table, for a gitfile checkout whose
+  `core.worktree` read failed, with the remedy "core.worktree could not be
+  read; repair the repository's config, then run again" (79 characters), in
+  place of the bare row's "run project clean from the main worktree root",
+  which names a run that `project clean` refuses there, as item 8's
+  sub-item (d) found of it (lane openRepoProject-3's W86 N10-2; the draft
+  at `558b0c29`, :2702-2715, the row at :2739); a cut read decides as a
+  failed one under both.
 
 ### Lengths
 
@@ -1166,6 +1173,23 @@ round (n), "so do not run git worktree prune until it can".
   `unstarted-branch`, 200 with the own text cut to 59 of 67 ("This clean,
   merged, non-current worktree may be removed exp..."); beside
   `reflog-unavailable`, 200, uncut.
+- O11 part 2 (A)'s remedy, "core.worktree could not be read; repair the
+  repository's config, then run again": 79 characters. Beside the 17 ladder
+  recommendations of feature 004's `RECOMMENDATIONS` and
+  `SECOND_RECOMMENDATIONS` (`:2342-2362`, 50 to 87 characters; the
+  `protected-default` one gives no overview finding), 131 to 168, each whole.
+  Beside T6, uncut: 241. Under D5's rule alone (200): "Review and prune stale
+  worktree metadata manually; a row's path could not be read, so do not run git
+  worktree prune,...; core.worktree could not be read; repair the repository's
+  config, then run again". Under clause 1 (200), the recommendation keeping 5
+  characters: "Revie...; a row's path could not be read, so do not run git
+  worktree prune, git worktree remove or git gc until it can.; core.worktree
+  could not be read; repair the repository's config, then run again". T7 beside
+  it under clause 1 gives the same message. Clause 1 keeps some of the
+  recommendation beside any remedy of at most 83 characters; every remedy that
+  can reach a `stale-worktree` finding is within that (the longest, this one,
+  79; the report-cap one 77 from 10,000 rows) but item 8's redirect remedy
+  (152), which clause 2 takes.
 
 - **Recorded, no design impact**: F-1's (b) beside an unread row, still
   not ruled in PR #19 (`#19 design.md:2216-2221` at `88d0d36`), reaches no
@@ -1285,11 +1309,13 @@ Made from `7b37557` (spec commit 3ag), on the lead's message for revision
 
 - **R3-MED-1, D5's clause 2** (lane openRepoProject-3's W96 at `664461f`):
   R20's opening and O4 now say that clause 2 is chosen only through O6's
-  recommended text at `7af798a` (research.md:789-792 there), that it
-  reverses ratified D5's "remedy kept whole" for that one case, and that it
-  is before Brett Heap for his direct word (W105's OBS-1), resting on that
-  text until he answers, as C-72 at `7b37557` words it; plan.md's Summary
-  and its list, and the contract's composer, say the same.
+  recommended text at `7af798a` (research.md:789-792 there), that it reverses
+  ratified D5's "remedy kept whole" for that one case, and that it is before
+  Brett Heap for his direct word (W105's OBS-1), resting on that text until he
+  answers, as C-72 at `7b37557` words it; R12 (its clause 2 sentence),
+  plan.md's Summary and its list, the contract's composer and traceability.md's
+  FR-031 to FR-035 line say the same (the last two sites added to this record
+  in revision 5, W96's R4-LOW-2).
 - **R3-LOW-1**: R9 cites spec 005's own conflict at `7b37557`, its "two
   exceptions" (spec.md:4060, :4961) against FR-008's gitfile sentences
   (:2424-2431, :2433-2439) and User Story 8's scenario 1 (:1569-1578), and
@@ -1320,3 +1346,40 @@ Made from `7b37557` (spec commit 3ag), on the lead's message for revision
   bare row and its remedy, the drafter's choice); item 9 OPEN (O5); and
   item 8's clause 2 marked as taken through O6's text, his direct
   confirmation asked.
+
+## Revision 5: W96's read of revision 4, O11 (A)'s own remedy row, #27
+
+Made from `54dc025` (spec commit 3ah), on the lead's message for revision
+5 and its addition. Each input, and where it is taken:
+
+- **R4-LOW-1, the ordering sentence** (lane openRepoProject-3's W96 at
+  `06b16e1`, W105's LOW-1): R20 and plan.md's Summary take C-72 at
+  `54dc025` word for word: "the open O3 and O8 (items 7 and 10), O11's
+  part 2 (item 11) and, should he take (C), O9 wait on his word for change
+  2 too, and O11's part 1 is a text re-alignment on a lane finding for his
+  review"; R20 cites C-72's O11 split at `54dc025` (spec.md:971-974 and
+  :979-982).
+- **R4-LOW-2**: the draft is cited at `558b0c29` (2,928 lines) for every
+  item, as the source of options only, in plan.md's Citations and R20,
+  which also name its earlier reads; and the Revision 4 bullet for R3-MED-1
+  now names R12 and traceability.md.
+- **W96's OBS**: the contract's composer and R12 now open with "Two
+  clauses, the second before him for his direct word".
+- **O11 part 2 (A)'s own remedy row** (lane openRepoProject-3's W86 N10-2;
+  the draft at `558b0c29`, :2702-2715, the row at :2739, placed at
+  :2732-2733): `target-not-repository-root` for a gitfile checkout whose
+  `core.worktree` read failed, with "core.worktree could not be read;
+  repair the repository's config, then run again" (79 characters), in
+  place of the bare row's remedy, which names a run that `project clean`
+  refuses there. It replaces that remedy where the plan quoted or named it
+  (the contract's `core-worktree` child, R20's O11, the data model's gate
+  note and plan.md's list), and it is an OPEN entry of its own under
+  `remedy.target-not-repository-root` in the contract; the plan builds (B)
+  until his word. R20's "Lengths" adds its rows, measured by the same
+  script with the 17 ladder recommendations: 131 to 168 beside them, whole;
+  241 beside T6, cut, "Revie..." under clause 1; no remedy that reaches a
+  `stale-worktree` finding passes 83 characters but the redirect, which
+  clause 2 takes.
+- **PR #27 at `288fc34`**, its round B23, from `dafe476` (R1): its eight
+  ranges and specs byte-identical by the lead's `cmp`, its block blob
+  `a40458cb` unchanged.

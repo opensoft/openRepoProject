@@ -313,12 +313,13 @@ every worktree of the repository (FR-031, FR-034):
 
 A root left null by `unsupported-layout`, by `main-worktree-missing` or by a
 failed `core.worktree` read carries no gate code; for the last, the gate code
-`target-not-repository-root`, with the bare row's remedy, is O11's part 2,
-open. A gate is recorded only on a finding whose own suggestion it changed: a
-`dirty` finding in an `inspection-incomplete` repository keeps its read-only
-suggestion and a null `suggestion_gate` (A1 design D5). The items O1, O2 and O4
-that Brett Heap's word chose (C-72; research.md R20) each change one row of
-these tables once A1's re-alignment lands.
+`target-not-repository-root`, with a remedy row of its own, "core.worktree
+could not be read; repair the repository's config, then run again", is O11's
+part 2, open. A gate is recorded only on a finding whose own suggestion it
+changed: a `dirty` finding in an `inspection-incomplete` repository keeps its
+read-only suggestion and a null `suggestion_gate` (A1 design D5). The items O1,
+O2 and O4 that Brett Heap's word chose (C-72; research.md R20) each change one
+row of these tables once A1's re-alignment lands.
 
 ### Suggestion (FR-031)
 

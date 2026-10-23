@@ -216,9 +216,10 @@ the four status pins (kind `status`). No other argument vector is started.
   failure records the row error and leaves the root null, with no
   suggestion and no gate code.
   - OPEN (O11, part 2): the findings that would suggest a clean command
-    carry `suggestion_gate: target-not-repository-root`, with the bare
-    repository's remedy, "run project clean from the main worktree root"
-    (`remedy.target-not-repository-root`).
+    carry `suggested_command: null` and `suggestion_gate:
+    target-not-repository-root`, with the remedy of its own row,
+    "core.worktree could not be read; repair the repository's config, then
+    run again" (`remedy.target-not-repository-root`, below).
 - `extension`: `config --file COMMON_DIR/config --type=bool --get
   extensions.worktreeConfig`, per repository.
 - `refs`: `for-each-ref --format=REF_FORMAT refs/heads refs/remotes`, read
@@ -273,13 +274,13 @@ edits only its own entries.
 
 ### Composer (A1 design D5; research.md R12)
 
-`compose_message(own, remedy, warning=None)` returns the message of a
-finding whose suggestion a gate withheld or limited: own text, `; `,
-remedy, at most 200 characters; when both do not fit, the own text is cut
-and ends `...`, the remedy whole. Every other finding's message is its own
-text alone. Two chosen clauses apply only with `warning` given (a
-`stale-worktree` message that carries O6's warning, 109 characters with
-its period), which happens once A1's re-alignment lands:
+`compose_message(own, remedy, warning=None)` returns the message of a finding
+whose suggestion a gate withheld or limited: own text, `; `, remedy, at most
+200 characters; when both do not fit, the own text is cut and ends `...`, the
+remedy whole. Every other finding's message is its own text alone. Two clauses,
+the second before him for his direct word, apply only with `warning` given (a
+`stale-worktree` message that carries O6's warning, 109 characters with its
+period), which happens once A1's re-alignment lands:
 
 - clause 1, CHOSEN (O6 (A)): the warning is kept whole and the
   recommendation before it is cut instead; D5's "remedy kept whole"
@@ -430,6 +431,11 @@ from `limits` when the message is built.
     or core.bare redirects the main worktree; unset both in the
     repository's config, or in the main worktree's config.worktree, then
     run again"
+  - OPEN (O11, part 2 (A)), for a gitfile checkout whose `core.worktree`
+    read failed other than as unset: "core.worktree could not be read;
+    repair the repository's config, then run again" (79 characters), a row
+    of its own after the bare row and O4 (a)'s; the plan builds (B), no
+    gate code and so no remedy, until his word
 - `remedy.unsupported-path-bytes`: "rename the path to valid UTF-8"
 - `remedy.inspection-incomplete`: "repair the inspection-error rows, or
   re-run for the rows left unprobed, first"
