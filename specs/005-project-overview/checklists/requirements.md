@@ -1184,8 +1184,10 @@ Lane: openRepoProject-4
   merges `e8dda2a` and `2057c31`) and LOW-9 (the round (n) record's closing
   sentence reaches round (l)) are applied. The round (n) record names the
   plan's pins at `06b16e1`, #19 at `88d0d36` and feature 004 at `d6bac50`; this
-  spec keeps #19 at `2250830` and its feature 004 pins, and no pin moves. No
-  checklist category changes, and the totals below were recounted by script.
+  spec keeps #19 at `2250830` and its feature 004 pins, and no pin moves (#19's
+  rounds (p) at `e0b1671` and (q) at `818311a` are recorded since as later
+  heads, by the forty-first pass, the spec keeping its reading at `2250830`).
+  No checklist category changes, and the totals below were recounted by script.
   Traceability is checked against A1's ratified deltas at `e4a30fc` (64 of 64).
   A1 stays cited at `e4a30fc`, and `clarify-questions.md` is unchanged.
   Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run by
@@ -1297,13 +1299,14 @@ Lane: openRepoProject-4
   :1199-1202, :1278-1281 and :1938-1944; task 3.2 at :198-213), the
   `project-overview` block the same blob, `a40458cb`. #19's round (p) at
   `e0b1671` is not recorded, the map of this spec's cites at that head not
-  being complete when this pass was made; #19 stays at `2250830`, #29 at
-  `a529310` and feature 004 at `d8724e2`, and no pin moves. No checklist
-  category changes, and the totals below were recounted by script.
-  Traceability is checked against A1's ratified deltas at `e4a30fc` (64 of 64).
-  A1 stays cited at `e4a30fc`, and `clarify-questions.md` is unchanged.
-  Re-validation: 16 of 16 items pass, with the checks of iteration 2 re-run by
-  script on the edited spec.
+  being complete when this pass was made (it is recorded since, with round (q)
+  at `818311a`, by the forty-first pass, the spec keeping its reading at
+  `2250830`); #19 stays at `2250830`, #29 at `a529310` and feature 004 at
+  `d8724e2`, and no pin moves. No checklist category changes, and the totals
+  below were recounted by script. Traceability is checked against A1's ratified
+  deltas at `e4a30fc` (64 of 64). A1 stays cited at `e4a30fc`, and
+  `clarify-questions.md` is unchanged. Re-validation: 16 of 16 items pass, with
+  the checks of iteration 2 re-run by script on the edited spec.
 - 2026-10-23, a forty-first pass, by the lead's commit 3am decisions. O17 to
   O20, which #19's round (q) at `818311a` raised and lane openRepoProject-4 put
   to Brett Heap on 2026-10-23, are recorded in C-72 as open, each with its
@@ -1331,8 +1334,34 @@ Lane: openRepoProject-4
   EC-022, the #25 bullet and the LQ-15 bullet record it, its pin `05a424a`
   kept. The results of security.md's CHK002 and CHK019 and idempotency.md's
   CHK008, each file's Evaluation recording the re-read, and this file's eighth
-  pass name the fifth status pin, O20, open, no category changing. Feature 004
-  stays at `d8724e2`, and no pin moves. No checklist category changes, and the
+  pass name the fifth status pin, O20, open, no category changing. #19's rounds
+  (p) at `e0b1671` (Brett Heap's answers of 11:49:16Z to the lead's R-365, with
+  R-377) and (q) at `818311a` (his "yes, recommended for Q1-Q9" of 13:30:27Z,
+  R-380, with T9 in `project-command`, R-378, and lane openRepoProject-3's
+  W126, R-382) are recorded as later heads in the round (n) record, by lane
+  openRepoProject-4's map of this spec's cites at `818311a`, the record saying
+  that this spec keeps its reading of #19 at `2250830`. The cites that stand at
+  `818311a` are cited there beside their `2250830` lines (FR-028's pcl:166 and
+  the labels' proposal :2833-2838; the A1 bullet's row 4b at design :539-543),
+  and the record gives the round (n) and round (o) records' cites there. The
+  statements that round (q) makes stale are held or corrected: FR-028 and
+  FR-026 (Q3 (b)'s warning, O18), FR-016 and the LQ-10 bullet (the fifth pin,
+  O20, the bullet's trigger now past, Q1 and Q2 being his word in #19, and its
+  parity sentence holding once the fifth pin is taken), FR-032 and SC-004 (the
+  wider `registration-mismatch`, O19, Q2's nested `.git` being
+  `contains-submodule`'s, a gate the batch alone applies), FR-035 and C-72's O1
+  clause (Q5's next steps, O17, US4 s5 and s6 quoting A1 until he rules),
+  EC-033 (#19's pcm:265-271 and design D1's :171-180 state the same rule, which
+  feature 004 holds as `status_warned`, `project:3012` at `d6bac50`, no longer
+  pending), and the record itself (Q3 (a) withdraws the partial-removal note's
+  unread-row form and Q4 rewords it, texts the overview never shows; #27 kept
+  at `d95eea2` until lane openRepoProject-5's B25 line map arrives, #29's block
+  of [E] on `c462d87` until change 1's archive; this spec's T9 is R-365's).
+  C-72's "Where applied" names FR-016, FR-032 and SC-004, and this file's
+  thirty-sixth and fortieth passes point to the record. #19's round (r) at
+  `4512441` is not recorded, the map of this spec's cites at that head not
+  being complete when this pass reached it (18:08:12Z); #27 stays at `d95eea2`
+  and feature 004 at `d8724e2`. No checklist category changes, and the
   totals below were recounted by script. Traceability is checked against A1's
   ratified deltas at `e4a30fc` (64 of 64). A1 stays cited at `e4a30fc`, and
   `clarify-questions.md` is unchanged. Re-validation: 16 of 16 items pass, with
