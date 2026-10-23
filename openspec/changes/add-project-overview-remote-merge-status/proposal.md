@@ -2649,7 +2649,7 @@ the spec's precedence (:445-449) sets above `cancelled`, and a lookup that
 passes the test and that the deadline then stops leaves its rows as the
 paragraph's later sentence says; the paragraph keeps its 16 lines. RC2's
 optional D11 case for this order is not added. These three keep their
-paragraphs' line counts, so lines 1 to 1236 keep their numbers.
+paragraphs' line counts, so every line before D11's bullet keeps its number.
 
 The design edits after D7. D11's bullet on the counting `git` wrapper
 (:1228-1236, now :1228-1242) says that the wrapper records each child's argv and
@@ -2694,9 +2694,10 @@ model, which #37 does not touch. The Scope, C-1 bullet (:682-687, now :683-688)
 adds "(since ratified, DI:1806-1808 and OV:514 at `15504f1`)" after its cites
 DI:1483-1485 and OV:357-358 (W118's LOW-1, as W124 widened it). The C-7 bullet
 (:711-723, now :712-723) re-wraps word for word to give L-17's line back. So
-`a529310`'s lines 679 to 722 are one line lower, a shift that C-81 accepted and
-that no pin falls in, and from line 724 to line 2583 every line keeps its
-number, this section following line 2583.
+`a529310`'s lines 661 to 712 are one line lower, the rest of L-17's paragraph
+and then, from line 679, the shift that C-81 accepted, which no pin falls in;
+the C-7 bullet ends at :723 as before, and from line 724 to line 2583 every line
+keeps its number, this section following line 2583.
 
 Lane openRepoProject-1's #37 at `d92cdc5` cites this file at :73-76, :82-91,
 :121-126, :545-550, :578-579, :658-662 and :738-741, and this change's spec at
@@ -2826,7 +2827,7 @@ for placeholders found none.
 | W118's LOW-2 (`design.md:655-657`: A1 refuses for `HOME` and `XDG_CONFIG_HOME` and, by the same test, `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM`, not "the same two variables") | LOW | C-81: applied with change, "the same four variables" at :657 in `7e58f4f`, one word in one line; W118's wording, "for `HOME` and `XDG_CONFIG_HOME`, and by the same test for those two", takes the 25-line paragraph (:646-670) to 26 lines and would move D7 | `design.md` D5 (:657) |
 | W118's LOW-1, as W124 corrected and widened it (the packet cites hold at `da33d92`, but main's packet moved 25 cited ranges and changed 11; the Scope, C-1 bullet's DI:1483-1485 and OV:357-358 now read ratified decisions, DI:1806-1808 and OV:514 at `15504f1`) | LOW | C-75: applied, "(since ratified, DI:1806-1808 and OV:514 at `15504f1`)" after the two cites, the bullet keeping its 6 lines; every packet cite stays pinned at `da33d92`, where it holds | Decisions, "Scope, C-1" (:683-688) |
 | Lane openRepoProject-3's W117 and W124 on the drafts composed by an archive dry run (`compose-archive-findings.md`): its LOW-1, that tasks 2.3 and 2.4 lack "a check that alone proves nothing, since a re-base that keeps every scenario but drops sentences validates and archives" | LOW | C-79: deferred to the round after #34 merges, tasks 2.3 and 2.4 being `tasks.md:22-23`, inside the pins (lines 20-24 keep their bytes). The archive dry run's other results (the order PR #19, overview, #27 archiving with exit 0; this change refused on its `project-command` block, as declared) ask nothing of this change | none |
-| W119's F6 on lane openRepoProject-1's #37 at `d92cdc5` (`fidelity-37-d92cdc5-findings.md`: #37 takes this change's re-base rule, :578-579 and :658-662, "by analogy"; this change keeps "`relationships`, always `[]`", spec :242; name #37 in the rule) | note | C-75 and C-81: applied at L-17's entry (:658-663), with the one-line shift of `a529310`'s :679-722 that the C-7 bullet's re-wrap ends; deferred at :578-579, inside "Dependencies and Sequencing". #37's cites of this file and its spec all hold, :658-662 now running to :663; the spec's :242 is unchanged | Decisions, L-17 (:660-661); "The two blocks, C-7" re-wrapped (:712-723) |
+| W119's F6 on lane openRepoProject-1's #37 at `d92cdc5` (`fidelity-37-d92cdc5-findings.md`: #37 takes this change's re-base rule, :578-579 and :658-662, "by analogy"; this change keeps "`relationships`, always `[]`", spec :242; name #37 in the rule) | note | C-75 and C-81: applied at L-17's entry (:658-663), with the one-line shift of `a529310`'s :661-712 that the C-7 bullet's re-wrap ends; deferred at :578-579, inside "Dependencies and Sequencing". #37's cites of this file and its spec all hold, :658-662 now running to :663; the spec's :242 is unchanged | Decisions, L-17 (:660-661); "The two blocks, C-7" re-wrapped (:712-723) |
 | Reader RC's L1, confirmed by RC2 (D11's new control scopes the exit to one repository but not the hold, while two scenarios need the hold in one repository only) | LOW | C-75: applied to the design in `7e58f4f`: each control of the wrapper, change 2's hold among them, acts for a chosen argv in a chosen repository, the `-C` directory the wrapper records (APO design.md:627-628); design only, no spec edit | `design.md` D11 (:1228-1242) |
 | RC2-1 (a lookup of `gh` that falls due after the deadline, in a run with a relative `GH_CONFIG_DIR`, could give `gh-unavailable` or `cancelled`; the order is unstated) | LOW | C-81: applied to D5 in `7e58f4f`: the test of the three configuration variables is made first even when the lookup falls due past the deadline (D1), so a refused value gives `gh-unavailable`, which spec :445-449 sets above `cancelled`; the paragraph keeps its 16 lines (:765-780). RC2's optional D11 case is not added | `design.md` D5 (:765-780) |
 | RC2-2 (D3's identity rule refuses repository names that GitHub allows, such as `.github`, as `malformed-remote`, and the README's step cannot help those rows) | LOW | C-75: applied to D3's step 3 in `7e58f4f` (10 lines kept) and to Impact's README bullet (one line, given back by re-wrapping the tests bullet word for word, C-81); the spec's :389-392 is not reworded. Reproduced with `project:759-769` at `961c405`: no identity for `acme/.github` in its https, scp-like and ssh forms | `design.md` D3 (:425-434); Impact, `README.md` bullet (:391-392), the `tests/test_project.py` bullet re-wrapped (:397-406) |
