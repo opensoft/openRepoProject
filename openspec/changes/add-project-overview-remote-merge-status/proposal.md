@@ -2616,13 +2616,13 @@ sentence), and on C-82. No `@codex review` was requested on `a529310` (round
 C22's posting, comment 6345161763, made none), so no Codex finding is applied
 here.
 
-The round edits `design.md` (`7e58f4f`, committed first: six places) and, in its
-last commit, this file (Status, the citation key, Impact's README bullet, L-17's
-entry in the Decisions, the Scope, C-1 bullet, two bullets re-wrapped word for
-word, and this section) and `tasks.md` (1.1, 1.3, 1.5 and 3.3, in place, 45
-lines still). It edits no spec: `specs/project-overview/spec.md` is still sha256
-`d42139fb5e6c26952e30aa953173cfcc5efb01f01f82e1f496e34bad6d77d306` with its 36
-scenarios and `specs/project-command/spec.md` still
+The round edits `design.md` (`7e58f4f`, committed first: six places) and, in the
+commits after it, this file (Status, the citation key, Impact's README bullet,
+L-17's entry in the Decisions, the Scope, C-1 bullet, two bullets re-wrapped
+word for word, and this section) and `tasks.md` (1.1, 1.3, 1.5 and 3.3, in
+place, 45 lines still). It edits no spec: `specs/project-overview/spec.md` is
+still sha256 `d42139fb5e6c26952e30aa953173cfcc5efb01f01f82e1f496e34bad6d77d306`
+with its 36 scenarios and `specs/project-command/spec.md` still
 `208c06c36656194d2560614c44251cf404786cce90c54c9d8f6a0d6a5f2b601d` with its 10,
 so that the count stays 46, and `git diff a529310` on both is empty.
 
@@ -2679,25 +2679,25 @@ and "C-50 to C-82" and adds W118 and RC2 to its list of sources, "W53's cites"
 becoming "W53" to hold the count; its clause "C-58, C-66, C-67 also in the spec,
 C-63, C-65 in Decisions" is as it was, the paragraph having no room to add
 C-75's edits of Impact and the Decisions, which this section and its rows name.
-The citation key (:45) reads "C-15 to C-82 (2026-10-20 to 2026-10-23, C-16 to
+The citation key (:44-45) reads "C-15 to C-82 (2026-10-20 to 2026-10-23, C-16 to
 C-22 being the council's verdicts)". Impact's README bullet (:377-395, now
 :377-396) adds after the `malformed-remote` step's "no user but `git` and no
 port" the words "(a repository name that begins with `.`, such as `.github`, is
 refused too)" (RC2-2), and the tests bullet after it (:396-406, now :397-406)
 re-wraps, its words unchanged, to give the line back, so that line 407 onward
 keeps its number; the spec's :389-392 is not reworded. In the Decisions
-paragraph on the addendum of 2026-10-19 (:645-678, now :645-679), L-17's entry
-says that whichever change archives second re-bases its block on the other's
-archived block "(as lane openRepoProject-1's #37 does by analogy for overview
-blocks it shares)" (W119's F6, C-81), the entry being about change 1's evidence
-model, which #37 does not touch. The Scope, C-1 bullet (:682-687, now :683-688)
-adds "(since ratified, DI:1806-1808 and OV:514 at `15504f1`)" after its cites
-DI:1483-1485 and OV:357-358 (W118's LOW-1, as W124 widened it). The C-7 bullet
-(:711-723, now :712-723) re-wraps word for word to give L-17's line back. So
-`a529310`'s lines 661 to 712 are one line lower, the rest of L-17's paragraph
-and then, from line 679, the shift that C-81 accepted, which no pin falls in;
-the C-7 bullet ends at :723 as before, and from line 724 to line 2583 every line
-keeps its number, this section following line 2583.
+paragraph that lists the rulings from the addendum of 2026-10-18 on (:645-678,
+now :645-679), L-17's entry says that whichever change archives second re-bases
+its block on the other's archived block "(as lane openRepoProject-1's #37 does
+by analogy for overview blocks it shares)" (W119's F6, C-81), the entry being
+about change 1's evidence model, which #37 does not touch. The Scope, C-1 bullet
+(:682-687, now :683-688) adds "(since ratified, DI:1806-1808 and OV:514 at
+`15504f1`)" after its cites DI:1483-1485 and OV:357-358 (W118's LOW-1, as W124
+widened it). The C-7 bullet (:711-723, now :712-723) re-wraps word for word to
+give L-17's line back. So `a529310`'s lines 661 to 712 are one line lower, the
+rest of L-17's paragraph and then, from line 679, the shift that C-81 accepted,
+which no pin falls in; the C-7 bullet ends at :723 as before, and from line 724
+to line 2583 every line keeps its number, this section following line 2583.
 
 Lane openRepoProject-1's #37 at `d92cdc5` cites this file at :73-76, :82-91,
 :121-126, :545-550, :578-579, :658-662 and :738-741, and this change's spec at
@@ -2791,8 +2791,8 @@ set's "its `head` is known and its `merged_into_target` is `false`, a null one
 not being false"; and :602, an AND of "One request per exact head", lists rows
 with a null `merged_into_target` that have no `remote` key; the three spec lines
 lie in lane openRepoProject-4's pins, and none needed an edit. A bare
-repository's main row is thus never queried and never has a `remote` key. Task
-1.3's round C23 clause adds a tenth line with the name, a record.
+repository's main row is thus never queried and never has a `remote` key. This
+section and task 1.3's round C23 clause add lines that name it, records only.
 
 The writer checked these on 2026-10-23, in a scratch directory outside this
 tree, reading the findings files where the lead's record names them and
