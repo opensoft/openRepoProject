@@ -10,7 +10,7 @@ duplicate them, and nothing here is an implementation step.
 
 - [x] 1.1 Proposal written: `proposal.md` adopts the packet's cache-disposal
   contract (`BA:1314-1337`) under the lane's rulings L-1 to L-17 and B-1 to
-  B-109, names three departures from B-6 as first written, which B-11 accepted,
+  B-117, names three departures from B-6 as first written, which B-11 accepted,
   and one from B's list of modified requirements (CD-1 to CD-4) with the rest
   of its own decisions (CD-5 to CD-18), and puts six Open Questions before
   Brett Heap; verified by its Capabilities section accounting for every
@@ -55,7 +55,7 @@ duplicate them, and nothing here is an implementation step.
   and committed as `9f30fb9`, and B-30's scope, lane 4's own words, committed
   as `4d5855a` (2.2); `design.md` holds D1 to D14 and `clarifications.md` the
   NOTED S-4; verified by `grep -c '^#### Scenario'` on each delta, by a script
-  run after the council round and again after each round from B3 to B23 that
+  run after the council round and again after each round from B3 to B24 that
   compares every scenario of each of the nine MODIFIED blocks with its source
   text, the eight blocks written on PR #19's text against it at each block's
   base since round B22, `2250830` for the retire, reconcilable-result and
@@ -80,7 +80,7 @@ duplicate them, and nothing here is an implementation step.
   branch after 1.4, after the alignment fix round, after the council round
   (the last with the B-22 `project-overview` edit not yet committed), again
   after lane 4's agreement and that edit's commit, after round B3, after round
-  B4, and after each round from B5 to B23. The INFO lines, that the archive
+  B4, and after each round from B5 to B24. The INFO lines, that the archive
   would refuse a delta whose MODIFIED requirement change 1 or change 2 adds
   until that change is archived, are the expected state for blocks written on
   sister changes.
@@ -102,11 +102,12 @@ duplicate them, and nothing here is an implementation step.
   in one repository"), one at `6bf9f77` ("Clean classifies preservation and
   cleanup actions") and two at `f0bf538` ("Cleanup preserves all local work not
   proven disposable" and "Cleanup states a narrow guarantee and its residual
-  window"), whose text `88d0d36` keeps, re-checked against the archived text
-  and rewritten where it differs; if PR #19 closes unmerged, those eight blocks
-  are re-based on change 1's text at main (B-52, RD's M2); a re-base that
-  changes this change's added text returns the block to Brett Heap before the
-  Speckit handoff (reader RF's M1; B-54); verified by
+  window"), whose text `88d0d36` keeps, the retire block to be re-based on PR
+  #19's round (p) in round B25 once that round lands (B-114, B-117), re-checked
+  against the archived text and rewritten where it differs; if PR #19 closes
+  unmerged, those eight blocks are re-based on change 1's text at main (B-52,
+  RD's M2); a re-base that changes this change's added text returns the block
+  to Brett Heap before the Speckit handoff (reader RF's M1; B-54); verified by
   `openspec/specs/project-clean/spec.md` and
   `openspec/specs/project-clean-review-safety/spec.md` holding every
   requirement this change modifies, by a `diff -u` of each archived requirement
@@ -222,9 +223,11 @@ Implementation is tracked exclusively in one Speckit feature, to be created by
 `main` synced to `origin/main`. The feature covers the sample test, the cache
 enumeration, the plan's and the record's `cache_disposal`, the cache stage and
 the revalidation of a cache target in `project` (`design.md` D1 to D13), the
-README paragraph, and the tests of `design.md` D14, among them, once feature
-005 has landed, the exclusion of the cache case from any feature 005 test
-asserting that the overview and `project clean` classify identically (B-14).
+README paragraph and the README sentences that this change makes untrue
+(proposal, Impact; RE2-2), and the tests of `design.md` D14, among them, once
+feature 005 has landed, the exclusion of the cache case from any feature 005
+test asserting that the overview and `project clean` classify identically
+(B-14).
 
 - Feature identifier: to be created by /speckit.specify after 1.6 (006 or the
   next free number)
