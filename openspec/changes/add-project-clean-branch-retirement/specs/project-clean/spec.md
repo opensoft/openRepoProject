@@ -1147,8 +1147,10 @@ order:
   git -C ROOT reflog show refs/heads/BRANCH before retrying: RETRY`, whether
   the branch's upstream remote-tracking ref is present or absent, which names
   no other branch, since Git judges the retry against that worktree's `HEAD`
-  when that ref is absent, and a checkout of a branch that tracks an ignored
-  file's path overwrites that file; and
+  when that ref is absent, and a checkout of a branch, with exit 0 and
+  without a word, overwrites an ignored file at a path that the branch tracks,
+  deletes an ignored file where the branch needs a directory and deletes every
+  ignored file below a path that the branch tracks as a file; and
   otherwise `; next: BRANCH is checked out at PATH2; HOLD`, HOLD being `save
   its own work, uncommitted, ignored or flagged assume-unchanged or
   skip-worktree, by keeping that worktree and switching it off BRANCH with git
