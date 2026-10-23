@@ -185,6 +185,15 @@ configured upstream's remote-tracking ref no longer exists and whose
 `merged_into_target` is true SHALL carry the recommendation of its class, as
 every `merged-removable` or `merged-current` row does.
 
+The main worktree's row, where the ladder gives it `merged-removable` or
+`merged-current`, one whose upstream was deleted included, SHALL carry the
+recommendation "The main worktree is never removed by project clean." in place
+of its class's, the baseline's "This clean, merged, non-current worktree may be
+removed explicitly." or "The branch is merged, but this is the current checkout;
+switch away before removal.", since no removal of the main worktree can succeed:
+the `main-worktree` gate excludes it from every removal, and `git worktree
+remove` refuses it with exit status 128.
+
 A `stale-worktree` row SHALL carry the recommendation "Review and prune stale
 worktree metadata manually; git worktree prune also deletes the entry, and so
 the HEAD reflog, of every other worktree whose path is missing, one moved or on
@@ -276,6 +285,19 @@ change the row's classification, the ladder or any gate.
   prune --dry-run first and remount or repair any it lists that still exists.",
   in the human report and in `--json`, where before this change it was "Review
   and prune stale worktree metadata manually."
+
+#### Scenario: The main worktree's recommendation
+
+- **WHEN** the main worktree is on a branch other than the merge target, clean,
+  in step with its upstream and merged into the merge target, and plain `project
+  clean` runs from outside the repository
+- **THEN** the main worktree's row is classified `merged-removable` with the
+  recommendation "The main worktree is never removed by project clean.", in the
+  human report and in `--json`, where before this change it was "This clean,
+  merged, non-current worktree may be removed explicitly."
+- **AND** run from inside the main worktree, the row is `merged-current` with
+  the same recommendation, where before this change it was "The branch is
+  merged, but this is the current checkout; switch away before removal."
 
 ### Requirement: Clean can explicitly push safe feature branches
 
@@ -809,9 +831,11 @@ being the limit, SHALL leave the row unprobed and the plan incomplete with
 read. A row SHALL be excluded as `contains-submodule`
 when its index holds any gitlink, its worktree administrative directory holds a
 `modules` entry, or an `lstat` of `<dir>/.git`, for any directory `<dir>` of
-the worktree that holds an index entry, finds an entry; those `lstat`s SHALL be
-counted in the filesystem budget, and one that fails other than with `ENOENT`
-or `ENOTDIR` SHALL make the row `inspection-error`. A row SHALL be excluded as
+the worktree that holds an index entry directly or below it, other than the
+worktree's own top level, finds an entry; those `lstat`s SHALL be counted in the
+filesystem budget, all of a row's in one filesystem call under one budget, and
+one that fails other than with `ENOENT` or `ENOTDIR`, or a call that runs past
+that budget, SHALL make the row `inspection-error`. A row SHALL be excluded as
 `hidden-local-state` when its index flags any entry assume-unchanged or
 skip-worktree, sparse checkouts included; the index SHALL be read inside the
 row's own worktree, and both gates SHALL be checked only for rows that pass

@@ -146,8 +146,8 @@ Scope).
   baseline classification when not `merged-removable`, `not-requested`,
   `unstarted-branch`, `deferred-target-cap` (Bounded work),
   `contains-submodule` (any gitlink, admin `modules` entry, or entry named
-  `.git` in a directory of the worktree that holds an index entry, his Q2
-  (2)),
+  `.git` in a directory of the worktree that holds an index entry directly or
+  below it, other than the worktree's own top level, his Q2 (2)),
   `hidden-local-state` (any entry flagged assume-unchanged or skip-worktree),
   `operation-in-progress` (a merge, autostash, notes merge, cherry-pick,
   revert, `am`, rebase or bisect marker in the worktree's administrative
@@ -235,7 +235,12 @@ Scope).
   ceiling's recovery text for a target whose `.git` file or registry entry is
   gone, names no prune at all, in every mode (the seam below; his Q3 (a), which
   supersedes the form for a plan with an unread row that he gave the same day,
-  "Yes, warn (Recommended)", the lead's R-365). `push` and
+  "Yes, warn (Recommended)", the lead's R-365). The main worktree's row, where
+  the ladder gives it `merged-removable` or `merged-current`, carries "The main
+  worktree is never removed by project clean." in place of its class's
+  recommendation, as the delta `Clean classifies preservation and cleanup
+  actions` states (design D18; round (s); lane openRepoProject-3's W141
+  MEDIUM-1, the lead's R-408). `push` and
   `delete-branch` change in argument resolution (`BA:424-425`) and two refusals
   (MODIFIED `:39`, `:49`); with either, `--apply --json` stays refused with
   `invalid-arguments`, exit 2.
@@ -512,11 +517,16 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     deleted tracked files carries the partial-removal note beside its advice,
     its recovery text, locked or not, first naming the check that `git -C
     <path> status --short --ignored` lists only deleted files (Brett Heap's Q4
-    (a) and (b) of 2026-10-23); and a `stale-worktree` row's recommendation is
-    stated, plain or locked, with Q3 (b)'s warning, or, beside a row whose
-    path could not be read, with R-320's (T6 and T7), in place of the
-    baseline's, with the added scenario "A stale entry's recommendation"
-    (round (r); lane openRepoProject-3's W133 MEDIUM-4, the lead's R-391).
+    (a) and (b) of 2026-10-23); a `stale-worktree` row's recommendation is
+    stated, plain or locked, with Q3 (b)'s warning, or, beside a row whose path
+    could not be read, with R-320's (T6 and T7), in place of the baseline's,
+    with the added scenario "A stale entry's recommendation" (round (r); lane
+    openRepoProject-3's W133 MEDIUM-4, the lead's R-391); and the main
+    worktree's row, where the ladder gives it `merged-removable` or
+    `merged-current`, carries "The main worktree is never removed by project
+    clean." in place of its class's, with the added scenario "The main
+    worktree's recommendation" (round (s); lane openRepoProject-3's W141
+    MEDIUM-1, the lead's R-408).
     Names are unchanged, and the order changes only by that ancestry test
     (OQ-28). The scenario (`:32-37`) stays; the added scenario "A merged
     worktree whose upstream was deleted" has `--all-safe` select it and
@@ -627,11 +637,14 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     `operation-in-progress` and `worktree-only-commits`, with the added
     scenarios "An operation in progress", "A squash merge that holds an
     autostash" (R-126) and "A commit held only by the worktree". By his Q2
-    (2) of 2026-10-23, `contains-submodule` also excludes a row where an
-    `lstat` of `<dir>/.git` finds an entry, for any directory of the worktree
-    that holds an index entry, those `lstat`s in the filesystem budget and one
-    that fails other than with `ENOENT` or `ENOTDIR` making the row
-    `inspection-error`.
+    (2) of 2026-10-23, `contains-submodule` also excludes a row where an `lstat`
+    of `<dir>/.git` finds an entry, for any directory of the worktree that holds
+    an index entry directly or below it, other than the worktree's own top
+    level, those `lstat`s in the filesystem budget, all of a row's in one
+    filesystem call, and one that fails other than with `ENOENT` or `ENOTDIR`,
+    or a call past its budget, making the row `inspection-error` (round (s),
+    lane openRepoProject-3's W141 LOW-3 and W139 LOW-1; the lead's R-408 and
+    R-409).
   - ADDED:
     `### Requirement: Clean bounds its Git work and reports omitted work`.
     The deadline, budgets, caps, `omitted`, `probes`, `operations`, `limits`
@@ -658,8 +671,9 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
   - MODIFIED (`:21`):
     `### Requirement: Cleanup preserves all local work not proven disposable`.
     Adds the main worktree, locked, `contains-submodule` (a `.git` entry in a
-    directory of the worktree that holds an index entry included, Brett Heap's
-    Q2 (2)), `hidden-local-state` (sparse checkouts included),
+    directory of the worktree that holds an index entry directly or below it,
+    other than the worktree's own top level, included, Brett Heap's Q2 (2)),
+    `hidden-local-state` (sparse checkouts included),
     `registration-mismatch` (an effective work tree that is not the registered
     path included, LQ-11, and a path that is the common directory, the main
     worktree or another row's path, or an ancestor of one, or a registered path
@@ -1592,8 +1606,20 @@ which add text that replaces no sentence:
     they find is `contains-submodule` there too (round (r), amending `0050f3e`
     rs:76 and rs:88-89; lane openRepoProject-3's W133 MEDIUM-2; the lead's
     R-391), since the ratified "It MUST refuse when the state no longer
-    matches the reviewed plan" (`0050f3e` rs:63-64) reaches a `.git` entry
-    made after planning.
+    matches the reviewed plan" (`0050f3e` rs:63-64) reaches a `.git` entry made
+    after planning. Round (s) words the set as feature 004 reads it, every
+    directory that holds an index entry directly or below it, other than the
+    worktree's own top level, which a literal reading would include and which
+    holds the worktree's own `.git`, in the deltas `Cleanup preserves all local
+    work not proven disposable` and `Cleanup revalidates destructive actions`
+    and in the gate's sentence of `Clean previews and applies a batch of
+    eligible worktree removals in one repository`, which also says that all of
+    a row's `lstat`s are one filesystem call under one budget, a call past it
+    making the row `inspection-error` (lane openRepoProject-3's W141 LOW-3 and
+    W139 LOW-1; the lead's R-408 and R-409); his words otherwise stand, and no
+    behaviour changes. Both halves go beyond the packet, whose gate, reason
+    list and table row name only a gitlink and an admin `modules` entry
+    (`BA:128-129`, `BA:276`, `BA:296`; lane openRepoProject-3's W141 OBS-6).
   - **Q3** (T3; amends F-1's (b), which replaced `0050f3e` pcl:253-256 and
     pcl:922-926, and the texts of the T1 to T5 and T6 to T8 entries above,
     which replaced `0050f3e` design:757-760 and design:775-779): (a) F-1's (b)
@@ -1728,6 +1754,25 @@ amendment (lane openRepoProject-3's W70 M-1, the lead's R-285):
   feature 004's `identity_probe()` does; every submodule checkout's probe is
   therefore repeated, three more children, and a plain checkout whose one value
   holds a line feed is no longer read as a submodule checkout (design D6).
+- **The main worktree's recommendation** (lane openRepoProject-3's W52 F-6, the
+  lead's R-248, which feature 004 builds as its `TEXT` key
+  `recommendation_main_worktree`; stated in the delta by round (s), on lane
+  openRepoProject-3's W141 MEDIUM-1, the lead's R-408; amends, for the main
+  worktree's row, `0050f3e` pcl:128-131, "A row whose configured upstream's
+  remote-tracking ref no longer exists and whose `merged_into_target` is true
+  SHALL carry the recommendation of its class, as every `merged-removable` or
+  `merged-current` row does.", and pcl:161-163, "with the recommendation that
+  every `merged-removable` row carries", whose words stay): the main worktree's
+  row, where the ladder gives it `merged-removable` or `merged-current`, one
+  whose upstream was deleted included, carries "The main worktree is never
+  removed by project clean." in place of the baseline's "This clean, merged,
+  non-current worktree may be removed explicitly." or "The branch is merged, but
+  this is the current checkout; switch away before removal.", since no removal
+  of the main worktree can succeed, the `main-worktree` gate excluding it and
+  `git worktree remove` refusing it with exit 128; the evidence model's parity
+  rule needs a requirement to state the change (the delta `Clean classifies
+  preservation and cleanup actions` and its scenario "The main worktree's
+  recommendation"; Capabilities `:25`; design D18).
 
 Packet decisions adopted, not open: OQ-5, the caps and bounds of `BA:966`,
 subject to OQ-4, less the target cap's refusal; OQ-9, the budgets of
@@ -2405,8 +2450,9 @@ refuses a branch it may not delete" quotes the new refusal, and the scenario
 counts stay. W52's F-6 and F-10 are baseline report texts that this change
 neither states nor quotes, D14 keeping the baseline report's layout, and are
 feature 004's; round (r) states F-10's, with the stale recommendation, in the
-delta `Clean classifies preservation and cleanup actions` (the lead's R-391);
-its F-4 is feature 004's `delete-branch` argv, and its F-11 and
+delta `Clean classifies preservation and cleanup actions` (the lead's R-391),
+and round (s) F-6's, the main worktree's recommendation, there too (the lead's
+R-408); its F-4 is feature 004's `delete-branch` argv, and its F-11 and
 F-12 are lane openRepoProject-5's. Its F-1, the ceiling's recovery text, amends
 ratified text and waited on Brett Heap, and is unchanged here; he ruled it on
 2026-10-22 (round (h)). This commit also re-wrapped the paragraphs its edits
@@ -3198,6 +3244,81 @@ re-wrapped the lines after each of its edits, up to where the old line breaks
 resume, with no other change of words (What Changes; Capabilities; Decisions,
 amendments; this list; design Context, D1, D7, D18 and Open Questions;
 `tasks.md` 1.2 and 1.4; the three deltas).
+
+Round (s), lane openRepoProject-3's W141 confirm read of round (r) at `4512441`
+(HIGH 0, MEDIUM 1, LOW 3, OBS 6), under the lead's R-408, with the two items
+that the lead's R-396 owed to this round, and lane openRepoProject-3's W139
+LOW-1 and MEDIUM-1 on feature 004's code at `41759a4`, under the lead's R-409
+(validate 9 of 9, its output as at `4512441`, every INFO main's own; the
+scenario counts 74, 25 and 26). W141's MEDIUM-1: by round (r)'s reading of the
+evidence model's parity rule, the delta `Clean classifies preservation and
+cleanup actions` states that the main worktree's row, where the ladder gives it
+`merged-removable` or `merged-current`, carries "The main worktree is never
+removed by project clean."
+in place of its class's, the baseline's "This clean, merged, non-current
+worktree may be removed explicitly." or "The branch is merged, but this is the
+current checkout; switch away before removal.", copied by script from feature
+004's `project` at `c0841aa`, its `TEXT` key `recommendation_main_worktree`,
+and from the baseline's `project:607` and `:610` at `15504f1`, with the added
+scenario "The main worktree's recommendation"; for that row it narrows `0050f3e`
+pcl:128-131 and pcl:161-163, whose words stay, so it joins the amendments of
+ratified text that wait on Brett Heap's ratification, and round (g)'s "neither
+states nor quotes" of F-6 gains a clause naming this round (What Changes;
+Capabilities `:25`; Decisions, amendments, "The main worktree's
+recommendation"; round (g)'s entry; design D18 and Open Questions). W141's
+LOW-3: the directories whose `<dir>/.git` the `contains-submodule` gate
+`lstat`s are those that hold an index entry "directly or below it, other than
+the worktree's own top level", as feature 004's `HiddenStateParser` reads them
+(`project:2300-2334` at `c0841aa`), where a literal reading of "holds an index
+entry" takes in the top level, which holds the worktree's own `.git`; the
+meaning does not change (the deltas `Cleanup preserves all local work not proven
+disposable` and `Cleanup revalidates destructive actions`, and the gate's
+sentence of `Clean previews and applies a batch of eligible worktree removals in
+one repository`; What Changes, eligibility; Capabilities, that batch
+requirement and review-safety `:21`; the Q2 entry; design D7 and Open
+Questions; round (r)'s entry keeps its quote of the old words). W139's LOW-1:
+all of a row's `lstat`s run in one filesystem call under one budget, `min(5 s,
+work remaining)`, as feature 004's `nested_git_check()` makes them
+(`project:5557` at `c0841aa`), and a call past that budget fails closed, the
+row `inspection-error` at planning and, at revalidation, the target
+`state-changed`, or `not-attempted` with `deadline-exceeded` where the deadline
+was the limit, by the one rule; the lead's R-406 measured about 0.25 s at 50,000
+tracked directories on a warm cache (the gate's sentence; Capabilities, the
+batch requirement; the Q2 entry; design D7). W139's MEDIUM-1: design D7 says
+that Q2 (1)'s and Q9 (b)'s widenings of `registration-mismatch` are `clean`'s
+classifications, as the review-safety delta states them, and that `project
+status`, `project doctor` and `project update` report such a row's evidence as
+the baseline does, under the parity rule, since the `project-command` delta
+states neither; feature 004 classifies such rows only in `clean`'s plan (the
+lead's R-409), and no delta changes. R-396's two items: D7's revalidation
+phrase reads "(an entry found there is a new `.git` entry, which refuses the
+target as `contains-submodule`)", where "an entry found being a new `.git`
+entry, `contains-submodule`," read as two more steps, with no change of meaning
+(W141's LOW-1); and M1's (a) and (b) in design Open Questions name the parity
+rule by its content, "baseline values stay, except where a requirement states a
+change", where they called it "FR-064", which is feature 004's requirement, so
+that no line number can go stale; no site of this change cited it by line
+(W141's LOW-2). W141's OBS-2: M3's lead-in says that the class's step includes
+"... or remove the row by hand", followed by Q3 (b)'s dry-run warning, where it
+said that the step ends there. Its OBS-4: round (r) also added ", except M3" to
+the Open Questions preamble, which its entry declared by section only and the
+lead's R-396 kept. Its OBS-6: the Q2 entry says that both halves of Q2 (2) go
+beyond the packet's `BA:128-129`, `BA:276` and `BA:296`, which name only a
+gitlink and an admin `modules` entry. Its OBS-1 and OBS-3 need no wording fix,
+the Q8 qualifier being declared at every site and the entries M1 and M3 naming
+W133's MEDIUM-1 and MEDIUM-3, and its OBS-5 concerns round (r)'s commit
+message, which is not this change's text. M1 and M3 stay before Brett Heap; no
+answer came during this round. Brett Heap's Q2 (2) texts in the triage's
+section 3, the gate's sentence and the preservation requirement's clause, are
+the texts that change, by LOW-3's words and, in the gate's sentence, LOW-1's;
+the other texts of that section, T9's texts, F-1's (a), R-284's third text,
+F-2's text and round (r)'s four stale texts are unchanged, byte for byte.
+`tasks.md` 1.2 names this round, and 1.4 gives the new scenario counts. This
+round's commit also re-wrapped the lines after each of its edits, up to where
+the old line breaks resume, with no other change of words (What Changes;
+Capabilities; Decisions, amendments; this list; design Context, D7, D18 and
+Open Questions; `tasks.md` 1.2 and 1.4; the `project-clean` and
+`project-clean-review-safety` deltas).
 
 ### Council Verdicts
 

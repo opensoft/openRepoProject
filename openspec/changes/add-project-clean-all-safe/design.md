@@ -82,7 +82,9 @@ lane openRepoProject-3's W126 read of round (p) (the lead's R-382), Context, D1,
 D4, D7, D9, D11, D18, Risks, the Migration Plan and Open Questions; and round
 (r), lane openRepoProject-3's W133 read of round (q) and its W131 LOW-3, under
 the lead's R-391, with W133's MEDIUM-1 and MEDIUM-3 before Brett Heap, Context,
-D1, D7, D18 and Open Questions.
+D1, D7, D18 and Open Questions; and round (s), lane openRepoProject-3's W141
+read of round (r) and its W139 LOW-1 and MEDIUM-1, under the lead's R-396, R-408
+and R-409, Context, D7, D18 and Open Questions.
 Brett Heap's ruling of 2026-10-09 on open question 1, that a local ancestry
 proof outranks `remote-gone` for worktree rows, is in `proposal.md` Decisions
 and edited Context, D6, D7, D20, Risks, the Migration Plan and Open Questions
@@ -583,15 +585,30 @@ removal of that worktree deleted the whole repository, its branches and stash
 with it, in wave 22's triage (its T2, SC3); and Git empties the target of a
 registered path that is a symbolic link, fails to remove the link, and still
 deletes the administrative directory, no unique data being lost there, since
-the row was clean (its T12). By his Q2 (2), the `contains-submodule` gate also
-`lstat`s `<dir>/.git` for every directory of the worktree that holds an index
-entry, from the hidden-state probe's listing, and an entry there excludes the
-row, since a repository nested in a tracked directory is as invisible to the
-probe and to Git's own check, and the triage's removal deleted it with its
-commit (T2). Those `lstat`s are filesystem calls in the filesystem budget, not
-Git children, so D14's counts stand; their cost on a large tree is unmeasured,
-and the cap test may need to run again for them, as LQ-20's step (i) did for
-the children of LQ-11 and LQ-13.
+the row was clean (its T12). Both widenings are `clean`'s classifications, as
+the review-safety delta states them: `project status`, `project doctor` and
+`project update` report such a row's evidence as the baseline does, under the
+evidence model's parity rule (baseline values stay, except where a requirement
+states a change), since the `project-command` delta states neither (round (s);
+lane openRepoProject-3's W139 MEDIUM-1, which found feature 004 at `41759a4`
+applying both in those three commands too; the lead's R-409, under which
+feature 004 classifies such rows only in `clean`'s plan). By his Q2 (2), the
+`contains-submodule` gate also `lstat`s `<dir>/.git` for every directory of the
+worktree that holds an index entry directly or below it, other than the
+worktree's own top level, from the hidden-state probe's listing, and an entry
+there excludes the row, since a repository nested in a tracked directory is as
+invisible to the probe and to Git's own check, and the triage's removal deleted
+it with its commit (T2). Those `lstat`s are filesystem calls in the filesystem
+budget, not Git children, so D14's counts stand. All of a row's `lstat`s run in
+one filesystem call under one budget, `min(5 s, work remaining)`, as feature 004
+builds them in `nested_git_check()` (round (s); lane openRepoProject-3's W139
+LOW-1; the lead's R-409), so that a call past that budget fails closed: the row
+is `inspection-error` at planning, and at revalidation the target is refused as
+`state-changed`, or left `not-attempted` with `deadline-exceeded` where the
+deadline was the limit. On a warm cache they add about 0.25 s to a run at 50,000
+tracked directories (the lead's R-406); on a cold cache or a deeply nested tree
+their cost is unmeasured, and the cap test may need to run again for them, as
+LQ-20's step (i) did for the children of LQ-11 and LQ-13.
 
 Revalidation is BA:677-707's targeted check, in its order, stopping at the first
 difference: the identity probe; the manifest re-read (a file read, 1 MiB cap);
@@ -611,14 +628,16 @@ probe makes the row's registration disagree instead, as above, by the lead's
 R-187 erratum); then, inside the target worktree, the combined
 status probe, which must print nothing, the hidden-state probe, with Q2 (2)'s
 `lstat` of `<dir>/.git` for every directory that its listing shows holding an
-index entry, an entry found being a new `.git` entry, `contains-submodule`, and
-D21's `logs/HEAD` re-read and reachability probe, which must print nothing.
-Those `lstat`s are filesystem calls only, counted in the filesystem budget, so
-revalidation's bounds of six, seven, nine or ten Git children stand (round (r);
-lane openRepoProject-3's W133 MEDIUM-2; the lead's R-391): the ratified "It
-MUST refuse when the state no longer matches the reviewed plan" reaches a
-`.git` entry made in a tracked directory after planning, which neither the
-status probe nor Git's own check sees, and feature 004 builds them in
+index entry directly or below it, other than the worktree's own top level (an
+entry found there is a new `.git` entry, which refuses the target as
+`contains-submodule`), and D21's `logs/HEAD` re-read and reachability probe,
+which must print nothing. Those `lstat`s are filesystem calls only, one call for
+the target as at planning, counted in the filesystem budget, so revalidation's
+bounds of six, seven, nine or ten Git children stand (round (r); lane
+openRepoProject-3's W133 MEDIUM-2; the lead's R-391): the ratified "It MUST
+refuse when the state no longer matches the reviewed plan" reaches a `.git`
+entry made in a tracked directory after planning, which neither the status probe
+nor Git's own check sees, and feature 004 builds them in
 `revalidation_difference()`'s step 7, through `hidden_state_probe()` and
 `nested_git_check()` (`703b58c`). Every
 filesystem read of these steps follows the rule of a Git child (the lead's
@@ -1511,7 +1530,24 @@ locked stale row is excluded in the preview as
 "unlock it yourself if it should go", so the locked form is never a preview
 group's next step: it prints only as the report row's recommendation, in the
 human report and in `--json`, as feature 004 at `0a82a62` builds it (lane
-openRepoProject-3's W95 LOW-3).
+openRepoProject-3's W95 LOW-3). The main worktree's row, where the ladder gives
+it `merged-removable` or `merged-current`, carries "The main worktree is never
+removed by project clean." in place of its class's, the baseline's "This clean,
+merged, non-current worktree may be removed explicitly." or "The branch is
+merged, but this is the current checkout; switch away before removal.", since no
+removal of the main worktree can succeed: the `main-worktree` gate excludes it,
+and `git worktree remove` of it exits 128 (lane openRepoProject-3's W52 F-6,
+R-248). The delta `Clean classifies preservation and cleanup actions` states it,
+by the same parity reading, with the scenario "The main worktree's
+recommendation" (round (s); lane openRepoProject-3's W141 MEDIUM-1; the lead's
+R-408), copied by script from feature 004's `TEXT` at `c0841aa`, its key
+`recommendation_main_worktree`, and the baseline's two from its `project:607`
+and `:610` at `15504f1`, which feature 004's `RECOMMENDATIONS` keeps unchanged.
+`project status`, `project doctor` and `project update` give a present row no
+recommendation, in the baseline and in feature 004, so the change is `clean`'s
+alone. For that row it narrows the ratified sentence that a merged row whose
+upstream was deleted carries its class's recommendation, and so waits on Brett
+Heap's ratification of this amendment (Open Questions).
 
 The question: `Remove N worktrees, keeping N branches? [yes/N]`, in the singular
 for one. The wait line, at most once: `Waiting for git worktree remove PATH to
@@ -2403,28 +2439,34 @@ except M3, whose recommended step is in no delta and waits on his word.
   - (a) Recommended: no. Keep the baseline text. It names no command, and it
     already says to review the stale metadata first. The warning matters most
     in clean, where the prune advice sits beside one target row and reads as
-    being about that row alone. Keeping it adds no second departure from the
-    parity rule FR-064 across three commands, and no change to the status
+    being about that row alone. Keeping it adds no second departure, across
+    three commands, from the evidence model's parity rule (baseline values stay,
+    except where a requirement states a change), and no change to the status
     rules that lane 4's 005 reads. #19 records the reason in design.
   - (b) Yes. All three commands print "Review the stale worktree metadata
     before pruning it manually; git worktree prune also deletes the entry, and
     so the HEAD reflog, of every other worktree whose path is missing, one
     moved or on an unmounted drive included, so run git worktree prune
     --dry-run first and remount or repair any it lists that still exists."
-    That is a second departure from FR-064. It changes 004's code and tests,
-    #19's pc:308-309 and :394 and D18, lane 4's pin and lane 5's #29 block.
+    That is a second departure from the parity rule. It changes 004's code and
+    tests, #19's pc:308-309 and :394 and D18, lane 4's pin and lane 5's #29
+    block.
 
   Until he answers, the `project-command` delta and D18 keep the baseline text,
-  the reading of (a).
+  the reading of (a). Feature 004's spec records T9's change to that text as a
+  departure from its FR-064, a requirement of feature 004's that keeps the
+  baseline's functions unchanged, and leaves Q3 (b)'s warning out of it, as (a)
+  does; this entry named FR-064 in place of the parity rule until round (s)
+  (lane openRepoProject-3's W141 LOW-2; the lead's R-396 and R-399).
 - M3, lane openRepoProject-3's W133 MEDIUM-3 (the lead's R-391): a next step
   for a worktree whose path is, or holds, the main worktree, the common
   directory or another worktree. Under his Q2 (1), a linked worktree whose
   registered path is, or holds, the main worktree, the common directory or
   another worktree is excluded as `registration-mismatch`. It then prints that
-  class's next step, which ends "... or remove the row by hand". Followed
-  literally for such a row, that step deletes the main worktree and the
-  repository, or the other worktree. Plain Git confirmed that loss in the
-  triage (T2).
+  class's next step, which includes "... or remove the row by hand", followed by
+  Q3 (b)'s dry-run warning. Followed literally for such a row, that step deletes
+  the main worktree and the repository, or the other worktree. Plain Git
+  confirmed that loss in the triage (T2).
   - (a) Recommended: such a row gets its own next step: "its path is or holds
     the main worktree, the common directory or another worktree, so do not
     delete it by hand or with git worktree remove; review its registration with
@@ -2571,8 +2613,9 @@ Q1-Q9" (the lead's R-380), takes each as its recommendation: Q1 pins
 D11); Q2 widens `registration-mismatch` to a path that is, or is an ancestor of,
 the common directory, the main worktree or another row's path, and Q9 (b) to a
 registered path that is a symbolic link, and Q2 widens `contains-submodule` to a
-`.git` entry in a directory that holds an index entry (D7); Q3 (a) has F-1's (b)
-name the target's own administrative directory in every mode, which supersedes
+`.git` entry in a directory that holds an index entry directly or below it,
+other than the worktree's own top level (D7); Q3 (a) has F-1's (b) name the
+target's own administrative directory in every mode, which supersedes
 the form of R-365 above (D9, D18), and Q3 (b) appends to the plain form of each
 text that names `git worktree prune` a warning that it also deletes the entries
 of other worktrees whose paths are missing, with its dry run (D18); Q4 puts a
@@ -2581,11 +2624,12 @@ before `--force` (D4, D18); Q5 has gate 7's next steps name the checks of the
 gates that did not run, and the non-drain line defer to each group's next step
 (D18, the Migration Plan); Q6, Q7 and Q9 (a) accept three residuals (Risks); Q8
 makes a status probe that exits 0 with a warning a failed one (D1); and Q9 (c)
-scopes `confirmation-required` to the removal apply. Four more amendments of
+scopes `confirmation-required` to the removal apply. Five more amendments of
 ratified sentences rest on lane rulings and findings rather than his word, and
 wait on his ratification of this amendment: the line-feed exception to the
 bounds (D7, D14), the cap's re-run and the count split (`proposal.md`
-Decisions), and the identity probe's line count, which repeats the probe on any
-count but two (D6; lane openRepoProject-3's W80 M-3). The next steps of F-7 and
-F-8, a fifth until round (q), now rest on his Q4 (c) and Q5, which replace them
-(D18, the Migration Plan).
+Decisions), the identity probe's line count, which repeats the probe on any
+count but two (D6; lane openRepoProject-3's W80 M-3), and, since round (s), the
+main worktree's recommendation, for that row (D18). The next steps of F-7 and
+F-8, another such amendment until round (q), now rest on his Q4 (c) and Q5,
+which replace them (D18, the Migration Plan).

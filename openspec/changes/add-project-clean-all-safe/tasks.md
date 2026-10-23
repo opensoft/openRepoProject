@@ -121,7 +121,11 @@ duplicate them, and nothing here is an implementation step.
   read of round (q) and its W131 LOW-3, under the lead's R-391, with W133's
   MEDIUM-1 and MEDIUM-3 recorded as open before Brett Heap (the commit titled
   'Amend change 1: round (r), W133's MEDIUM-2, MEDIUM-4 and LOW-1, W131's
-  LOW-3 (R-391)'); verified by the
+  LOW-3 (R-391)'); and round (s), lane 3's W141 read of round (r) and its W139
+  LOW-1 and MEDIUM-1, under the lead's R-396, R-408 and R-409, with M1 and M3
+  still open before Brett Heap (the commit titled 'Amend change 1: round (s),
+  W141's MEDIUM-1, LOW-1 to LOW-3 and OBS, W139's LOW-1 and MEDIUM-1 (R-408,
+  R-409)'); verified by the
   table "Questions Resolved by the Alignment Review" in `proposal.md` and the
   later-rulings list under it, which name the section each ruling edited.
 - [x] 1.3 Council resolved: every concern is VALID, none dismissed, the verdicts
@@ -129,9 +133,9 @@ duplicate them, and nothing here is an implementation step.
   recorded as N1 to N5 in `clarifications.md` (`1d4ed5b`); verified by
   `design.md`, whose D1 to D5 answer N1 to N5 one for one.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md` modifies
-  five requirements and adds six (73 scenarios, one added under each of Brett
+  five requirements and adds six (74 scenarios, one added under each of Brett
   Heap's rulings LQ-15, LQ-13 and LQ-14 and his Q1, one under the lead's R-126,
-  two under R-147 and one under R-391),
+  two under R-147, one under R-391 and one under R-408),
   `specs/project-clean-review-safety/spec.md` modifies two and adds one (25
   scenarios, one added under R-22, one under each
   of LQ-13 and LQ-14, one under R-146, one under R-190, two under his Q2 and one
