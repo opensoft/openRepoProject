@@ -6,7 +6,7 @@ Lane: openRepoProject-4
 **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `specs/005-project-overview/spec.md`
-at `617dcd9` (its commit 3aq; its 72 clarifications, Brett Heap's answers
+at `3680f34` (its commit 3ar; its 72 clarifications, Brett Heap's answers
 of 2026-10-21 folded in and his words on the held items in C-72), with its
 17 checklists and `clarify-questions.md`.
 
@@ -97,7 +97,7 @@ O16 (a) are built now, ahead of A1's text, as the spec builds them; and the
 rest of the chosen items, D5's clause 2 among them, now chosen by name, are
 built in their chosen form once A1's re-alignment lands at PR #34, in one
 commit after PR #19's ratification, he reviewing the final text before #34
-merges; until then the ratified text stands. C-72 at `617dcd9`
+merges; until then the ratified text stands. C-72 at `3680f34`
 (spec.md:1003-1010) gives the order: "A1's ordering rule (its
 `proposal.md:1278-1284`) is the four LQ items' and reaches O10 (LQ-15's
 extension) and O5 (item 9, owed under it); the other chosen items that change
@@ -106,11 +106,14 @@ on #19's rounds; and items 2 and 6 to 11 reach A1 in the same re-alignment
 commit, which follows #19's ratification, he reviewing the final text before
 #34 merges, while O9 (A) and O10 (A) keep A1's text as ratified and O11's part
 1 is a text re-alignment on a lane finding." O13 (A) reaches A1 in that commit
-too (C-72). A change in his review of the final text lands as a change to that
-place and its tests alone, with one exception: a change to O11's part 1 would
-also re-word the scenario "A separate git directory" of change 2 and of this
-spec (research.md R20, O11). traceability.md lists each item's behaviour test
-and the assertions that flip.
+too, as do A1's records for O12 (A), O14 (A) and O15 (A), with its design Risks
+entry for O14 (A) and D5's sentence for O15 (A), and an entry for O16 (a)'s
+null `branch`, `head` and `merged_into_target`, that entry being the lane
+openRepoProject-4 lead's choice, not his word (C-72). A change in his review of
+the final text lands as a change to that place and its tests alone, with one
+exception: a change to O11's part 1 would also re-word the scenario "A separate
+git directory" of change 2 and of this spec (research.md R20, O11).
+traceability.md lists each item's behaviour test and the assertions that flip.
 
 ### Gates on the three 004-touching changes
 
@@ -191,11 +194,11 @@ feature 005 merges, and slice 1's pull request quotes the checks of (a) to
   `8ce4e9fb`, `811b9cef` and `c5840a66` (research.md R20).
 - Lane openRepoProject-3's reads of this plan: W96's at `a80f10b`, with its
   delta reads at `aeb0bb2`, `6fb619c`, `664461f`, `06b16e1` and `464c361`,
-  W112's delta reads at `d500312` and `39f4ab6`, and W132's at `d0a7c07`;
-  revisions 2 onward take each of their findings (research.md, "Revision 2"
-  onward). Lane openRepoProject-4's own nine-reader review of revision 7 at
-  `39f4ab6`, with its triage: revision 8 takes its choices' marks and pins,
-  and revision 9 its FIX-PLAN items.
+  W112's delta reads at `d500312` and `39f4ab6`, W132's at `d0a7c07` and W137's
+  at `e342275`; revisions 2 onward take each of their HIGH, MEDIUM and LOW
+  findings (research.md, "Revision 2" onward). Lane openRepoProject-4's own
+  nine-reader review of revision 7 at `39f4ab6`, with its triage: revision 8
+  takes its choices' marks and pins, and revision 9 its FIX-PLAN items.
 
 ## Technical Context
 
@@ -416,11 +419,14 @@ suggestions lead to `project clean`.
   root null where feature 004 refuses the run (O11); strict realpaths, an
   abandoned child the deadline cut, the deadline text and
   `tracking_freshness`. Each is the overview's own decider, tested alone.
-- **Threads**: at most R + 2,561 tasks a run, R the roots given, which
-  nothing caps (2,593 at 32 roots), and R + 2,689 once O4 (a) lands, each
-  its own daemon thread, the stuck ones never joined (R7); a filesystem
-  call stuck in the kernel can hold process exit (EC-001), which the README
-  states.
+- **Threads**: at most R + 2,561 tasks a run, R the roots given, which nothing
+  caps (2,593 at 32 roots), and R + 2,689 once O4 (a) lands, each its own
+  daemon thread, the stuck ones never joined (R7). The count replaces A1 design
+  D8's "at most 32 roots ... and a handful more", A1's text staying as
+  ratified, since the roots are canonicalised before the cap (C-67) and D8's
+  list lacks the identity step, D3's reads and the re-verification (R7); a
+  filesystem call stuck in the kernel can hold process exit (EC-001), which the
+  README states.
 - **Hostile repositories**: R19's threat model; filter drivers a
   repository's own configuration defines stay a residual (EC-022).
 - The agent-context step of the plan workflow is not run: this repository's

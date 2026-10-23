@@ -158,7 +158,7 @@ feed (PN-6), every key always present, in these orders:
   `merged_into_target`, `dirty`, `ignored_files`,
   `ignored_files_truncated`, `ignored_samples`, `classification` (a bare
   repository's main row has `branch`, `head` and `merged_into_target` null,
-  O16 (a), built now; C-68);
+  O16 (a), built now, ahead of A1's text; C-68);
 - `ignored_samples` entry: `path` (relative to its worktree),
   `path_valid_utf8`;
 - finding: `code`, `category`, `severity`, `checkout`, `evidence_source`,
@@ -350,11 +350,11 @@ remedy whole. The own text is never shorter than `...`: it keeps max(n - 3,
 leaves fewer than 3 characters (an escaped repository parent of 177
 characters or more in `re-run with --root <repository parent>`), the
 message is `...; ` and the remedy, longer than 200 characters in that case
-only (O15 (A), chosen, built now). Every other finding's message is its own
-text alone. Two clauses,
-both chosen, the second by name, apply only with `warning` given (a
-`stale-worktree` message that carries O6's warning, 109 characters with its
-period), which happens once A1's re-alignment lands:
+only (O15 (A), chosen, built now, ahead of A1's text). Every other finding's
+message is its own text alone. Two clauses, both chosen, the second by name,
+apply only with `warning` given (a `stale-worktree` message that carries O6's
+warning, 109 characters with its period), which happens once A1's
+re-alignment lands:
 
 - clause 1, CHOSEN (O6 (A)): the warning is kept whole and the
   recommendation before it is cut instead; D5's "remedy kept whole"
@@ -409,7 +409,11 @@ config`, `git for-each-ref`, `git status`), a filesystem call (`lstat`,
 
 ### Findings from the ladder (FR-028; [L], `project:2342-2362`)
 
-The class's recommendation, verbatim:
+The class's recommendation, verbatim (the plain stale text, without an unread
+row, being O18's question, open: until his word the plan builds A1's
+50-character text and, once A1's re-alignment lands, O8 (A)'s 63-character
+locked form, though feature 004's `TEXT` at `41759a4` carries the 305- and
+318-character forms, research.md R12):
 
 - `finding.stale-worktree`: "Review and prune stale worktree metadata
   manually."

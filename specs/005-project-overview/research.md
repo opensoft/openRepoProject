@@ -51,7 +51,7 @@ run against a repository: the plan step ran no `project` and no owner tool
 
 - **Finding**: C-56 (Q2 A) and A1's task 1.7 set the plan after feature 004
   merges into `main`, on Brett Heap's word given after that merge; spec 005 at
-  `617dcd9` (its commit 3aq) records in C-56 and its Status that his word
+  `3680f34` (its commit 3ar) records in C-56 and its Status that his word
   below moved that order for the plan step, and in C-72 his words on the
   plan's held items (R20). Feature 004 has not merged: PR #33 is a draft,
   its branch now at `41759a4`, the plan's cites at `d6bac50` (below). Brett
@@ -607,7 +607,7 @@ run against a repository: the plan step ran no `project` and no owner tool
   write to the task pipe without a change to feature 004's signal code.
   The behaviour D1 asks for, any signal or finished task waking the loop
   at once, holds; no requirement changes. The packet names no pipe; spec
-  005 at `617dcd9` records the choice in its Dependencies, where feature
+  005 at `3680f34` records the choice in its Dependencies, where feature
   004's runner is described: "D1's one self-pipe being realized as two
   read ends on one selector, `signal_scope`'s wakeup pipe and the loop's
   task pipe, with behaviour unchanged (the plan's research.md R4 at
@@ -651,11 +651,11 @@ run against a repository: the plan step ran no `project` and no owner tool
   takes only its `lstat` task: no registration read, no twin decision, no
   probe and no `row_evidence`, its status fields and `classification` null,
   no class finding and no row gate; a bare entry's `branch`, `head` and
-  `merged_into_target` are null too (O16 (a), chosen, built now; C-68,
-  FR-008). Feature 004 builds no such row (`:3525-3530`), and through its
-  deciders a bare row would be `detached` (`:3307-3308`) with a registration
-  that disagrees (`:2998-2999`). When the working directory's realpath failed
-  or was cut, a row that `classify` gives `merged-removable` or
+  `merged_into_target` are null too (O16 (a), chosen, built now, ahead of A1's
+  text; C-68, FR-008). Feature 004 builds no such row (`:3525-3530`), and
+  through its deciders a bare row would be `detached` (`:3307-3308`) with a
+  registration that disagrees (`:2998-2999`). When the working directory's
+  realpath failed or was cut, a row that `classify` gives `merged-removable` or
   `merged-current` is `inspection-error` instead, with the class's finding
   and no row error, the one `realpath` scan error recording the cause
   (FR-026; A1:444-451): the ratified rule, which R20's O9 (A) keeps and its
@@ -671,22 +671,24 @@ run against a repository: the plan step ran no `project` and no owner tool
   its identity kept (C-24; A1:405-408). A candidate that merges later can
   still report a superproject working tree: the root then becomes null as
   D3's item 1 says, and a `core.worktree` read already made is one of R14's
-  uncut divergences. A collector may hold several filesystem requests at
-  once, at most 16 of them running per run, an internal constant of the
-  loop and no limit, so not in `limits`, a cut task freeing its place; a
-  queued task's wait starts when it starts, so that a repository of 512
-  rows never opens 512 files at once against a low descriptor limit. A
-  `Thread.start()` failure becomes that task's error inside the boundary
-  (`internal-error`, class `RuntimeError`). The boundary is one
-  `try`/`except Exception` around each
-  resume: an exception becomes that candidate's row error by the collector
-  table (`internal-error`, message `internal error (CLASS)`), the generator
-  is closed, evidence already held stays and every other field stays null.
-  `Interrupted`, `Terminated` and `KeyboardInterrupt` are `BaseException`s
-  and pass. A merge is the identity step's result: a candidate whose common
-  directory's `(dev, ino)` is already a repository joins it and its
-  generator ends.
-- **The manifest's place**: FR-021 at `617dcd9` places "the manifest read
+  uncut divergences. A collector may hold several filesystem requests at once,
+  at most 16 of them running per run (`OVERVIEW["fs_tasks"]`, the data model's
+  Constants), an internal constant of the loop and no limit, so not in
+  `limits`, a cut task freeing its place; a queued task's wait starts when it
+  starts, so that a repository of 512 rows never opens 512 files at once
+  against a low descriptor limit, and a hung mount holding more than 16 rows
+  takes waves of 5 s, the later tasks past about 192 hung ones (60 s / 5 s x
+  16) recording `deadline-exceeded`, not `probe-timeout` (scenario 24's few
+  tasks fit in one wave). A `Thread.start()` failure becomes that task's error
+  inside the boundary (`internal-error`, class `RuntimeError`). The boundary is
+  one `try`/`except Exception` around each resume: an exception becomes that
+  candidate's row error by the collector table (`internal-error`, message
+  `internal error (CLASS)`), the generator is closed, evidence already held
+  stays and every other field stays null. `Interrupted`, `Terminated` and
+  `KeyboardInterrupt` are `BaseException`s and pass. A merge is the identity
+  step's result: a candidate whose common directory's `(dev, ino)` is already a
+  repository joins it and its generator ends.
+- **The manifest's place**: FR-021 at `3680f34` places "the manifest read
   at `repository.root` once that is named (after the identity probe where
   the candidate is the main worktree, else after the registry listing and
   design D3's steps), always before the ref listing (design D9), or at the
@@ -788,7 +790,7 @@ run against a repository: the plan step ran no `project` and no owner tool
     reads with the realpath of `core.worktree`, take the same shape;
   - one per re-verification that FR-007 makes immediately before a status
     probe, enclosing the same reads again (lane openRepoProject-2's R-101
-    (j); R17), the task FR-013 at `617dcd9` names in those words;
+    (j); R17), the task FR-013 at `3680f34` names in those words;
   - one per linked row whose work-tree probe ran: the strict realpath of
     the toplevel it printed, compared with the row's;
   - one per reflog read (at most 64 KiB, `reflog_path`, `:5073`);
@@ -807,12 +809,19 @@ run against a repository: the plan step ran no `project` and no owner tool
   512 rows): R + 1 + 512 + 2,048 = R + 2,561 threads at the very most, in
   practice the few whose call is stuck in the kernel. Nothing caps R: the
   32-root cap of FR-017 applies after every root given is canonicalised
-  (FR-001; C-67), so the bound is a formula in R, 2,593 at 32 roots given.
-  Without the re-verification, which D8's list predates, the same sum is
-  R + 2,049 (2,081 at 32 roots). Once A1's re-alignment lands, O4 (a)'s
-  detector adds at most 1 per repository (at most 128), R + 2,689. The
-  plan adds no further cap: a cap on abandoned threads would need a new
-  limit and a new code, outside schema 1's closed sets (FR-022, FR-047).
+  (FR-001; C-67), so the bound is a formula in R, 2,593 at 32 roots given. This
+  count replaces, as the plan's bound, A1 design D8's "at most 32 roots, 128
+  manifests, 512 rows, 512 toplevel realpaths, 512 reflog reads and a handful
+  more" (A1 `design.md:506-508`), 1,696 at 32 roots, keeping its form, bounded
+  by the tasks started and not by time, while A1's text stays as ratified: the
+  roots are R, not 32, since they are canonicalised before the cap (C-67), and
+  D8's list leaves out the identity step's task, D3's reads and the
+  missing-main `lstat`, and the re-verification. Without the re-verification,
+  which D8's list predates, the same sum is R + 2,049 (2,081 at 32 roots). Once
+  A1's re-alignment lands, O4 (a)'s detector adds at most 1 per repository (at
+  most 128), R + 2,689. The plan adds no further cap: a cap on abandoned
+  threads would need a new limit and a new code, outside schema 1's closed sets
+  (FR-022, FR-047).
 - **Rationale**: A1's design D2 and D8; one thread per task keeps a stuck
   call from holding another task's thread.
 - **Alternatives considered**: `concurrent.futures` (its shutdown joins a
@@ -858,11 +867,13 @@ no Git and a later ruling edits one function:
   calls; any other outcome is true with the row error change 2's table
   gives (`probe-failed`, its DETAIL `unparseable output` for other output;
   `probe-timeout`; `deadline-exceeded`). It reads the common `config` alone,
-  without includes, as Git's own format check reads it (`#19
-  design.md:524-526` at `4512441`; the review's R8 saw an included value
-  unread by `--file`, on Git 2.43.0). A1's proposal says so of an exit
-  1 with a warning: it "stays a failure that counts as true" (A1
-  `proposal.md`:1370-1375). Feature 004 reads the key the same way since
+  without includes, as Git's own format check reads it, which also honours the
+  key at format version 0, so that the read neither tests the format version
+  nor follows an include (`#19 design.md:524-526` at `4512441`; the review's R8
+  saw an included value unread by `--file`, its c6f, and the key honoured at
+  `core.repositoryformatversion = 0`, its c6e, on Git 2.43.0). A1's proposal
+  says so of an exit 1 with a warning: it "stays a failure that counts as true"
+  (A1 `proposal.md`:1370-1375). Feature 004 reads the key the same way since
   `211e43d`: lane openRepoProject-2's R-332 has `worktree_config`
   (`:3054-3075`) follow PR #19's D7, "an unset value is false and any
   other failure counts as true" (`#19 design.md:526-527`), through
@@ -885,14 +896,14 @@ no Git and a later ruling edits one function:
   core.worktree` exits 1 (A1 `clarifications.md`:79-83). But A1's failure table
   (A1:369) excepts only the extension read's exit 1 and the effective-work-tree
   read, so, read literally, the unset key's exit 1 is `probe-failed`, and the
-  scenario's own test fails. Spec 005 at `617dcd9` records the same conflict
+  scenario's own test fails. Spec 005 at `3680f34` records the same conflict
   and his answer: the collector table's row with its two exceptions and, as a
   third that departs from DI:535 the same way, the unset key's exit 1, which
-  O11's part 1 adds (spec.md:4387-4390 and :5402-5405), beside FR-008's
-  gitfile root sentence (:2604-2611) and its sentence reading the unset key as
-  no value (:2613-2623), User Story 8's scenario 1 (:1715-1725) and FR-007's
+  O11's part 1 adds (spec.md:4391-4394 and :5408-5411), beside FR-008's
+  gitfile root sentence (:2608-2615) and its sentence reading the unset key as
+  no value (:2617-2627), User Story 8's scenario 1 (:1715-1725) and FR-007's
   note on A1's item 11, both of whose parts his word of 2026-10-23 chose
-  (:2527-2539; C-72). The scenario's first case names no exit status, where its
+  (:2531-2543; C-72). The scenario's first case names no exit status, where its
   second case, only a linked worktree a candidate, gives exit 1; the plan reads
   the first case, by that contrast, as no error. The plan reads that conflict
   in ratified text as O11's part 1, built now, which departs from the
@@ -1006,7 +1017,7 @@ no Git and a later ruling edits one function:
     the packet's rule, "`ENOENT` and `ENOTDIR` mean 'no marker'" (DI:142),
     so that a file named like its directory (the holder marker's `D/<name
     of D>`) is no error. Change 2's "an error other than 'no such entry'"
-    (POD:46, A1:51) is narrower than DI:142, and FR-005 at `617dcd9` takes
+    (POD:46, A1:51) is narrower than DI:142, and FR-005 at `3680f34` takes
     DI:142's: "any error other than "no such entry" or "not a directory"
     (`ENOENT`, `ENOTDIR`; DI:142)" (lane openRepoProject-3's W96, LOW-7).
 - **Rationale**: PN-9's two choices keep what was read (the run is already
@@ -1041,7 +1052,12 @@ no Git and a later ruling edits one function:
   overrides (`:3334-3337`), which are feature 004's report texts; at its later
   head `41759a4` there are three (`:3487-3492` there), the third giving a
   stale, unlocked row Q3 (b)'s 305-character text, which O18 holds open (R1).
-  PN-1's sentences are fixed in the contract, each fixed text under 200
+  The overview's plain stale text is O18's question, open: until his word the
+  plan builds A1's 50-character text and, once A1's re-alignment lands, O8
+  (A)'s 63-character locked form, though feature 004's `TEXT` at `41759a4`
+  carries the 305- and 318-character forms, its
+  `RECOMMENDATIONS["stale-worktree"]` (`:2426` there) staying the 50-character
+  text. PN-1's sentences are fixed in the contract, each fixed text under 200
   characters (`merge-target-conflict` interpolates two escaped branch names
   and, like every finding no gate gates, is its own text alone, uncut, since A1
   design D5 states the 200 limit for gated messages only), from texts feature
@@ -1056,20 +1072,19 @@ no Git and a later ruling edits one function:
   characters, which only `re-run with --root <repository parent>` reaches,
   at an escaped parent of 177 characters or more, the message is `...; `
   and the remedy whole, longer than 200 characters in that case only (R20's
-  O15 (A), chosen, built now; C-72). Two clauses, both chosen, the second
-  by name (C-72), are
-  branches of that one function, reached only when `warning` is given,
-  which happens once A1's re-alignment lands: clause 1, keep the warning whole
-  and shorten the recommendation before it (item 10 part 1, R20's O6 (A)), and
-  clause 2, where the warning and the remedy cannot both be kept, leave the
-  recommendation out and shorten the remedy, a reversal of ratified D5's
-  "remedy kept whole" that only item 8's redirect remedy reaches (R20's O4 (a),
-  with O6 (A)), taken first through O6's text at `7af798a` and chosen by name
-  on 2026-10-23. The warning is in the words of PR #19's round (n) (R-324),
-  109 characters with its period. Until A1's re-alignment lands, `warning` is
-  never given and D5's rule alone applies. The function is tested by length
-  tables alone, R20's table among them, under both the ratified rule and the
-  chosen clauses.
+  O15 (A), chosen, built now, ahead of A1's text; C-72). Two clauses, both
+  chosen, the second by name (C-72), are branches of that one function, reached
+  only when `warning` is given, which happens once A1's re-alignment lands:
+  clause 1, keep the warning whole and shorten the recommendation before it
+  (item 10 part 1, R20's O6 (A)), and clause 2, where the warning and the
+  remedy cannot both be kept, leave the recommendation out and shorten the
+  remedy, a reversal of ratified D5's "remedy kept whole" that only item 8's
+  redirect remedy reaches (R20's O4 (a), with O6 (A)), taken first through O6's
+  text at `7af798a` and chosen by name on 2026-10-23. The warning is in the
+  words of PR #19's round (n) (R-324), 109 characters with its period. Until
+  A1's re-alignment lands, `warning` is never given and D5's rule alone
+  applies. The function is tested by length tables alone, R20's table among
+  them, under both the ratified rule and the chosen clauses.
 - **Rationale**: a chosen text then lands as a one-row change, and the cut
   rule, which items 2, 8 and 10 all touch, sits in one testable place.
 
@@ -1267,18 +1282,21 @@ no Git and a later ruling edits one function:
     never run.
   - **Seams** (A1 design D13): each `FsTask` function reads its leaf calls
     (`stat`, `lstat`, `realpath`, `scandir`, `read`) from one module-level
-    table, `OVERVIEW_FS`, when it is called, not when the module is
-    imported, since a constant bound at import keeps its old value under
-    `tests/launch_project.py`; tests replace entries with
-    `mock.patch.dict` for one run, never `os.*` globally, and a slow entry
-    waits on an `Event` that `tearDown` sets. It serves the device-and-inode
-    dedupe (one device and inode for two realpaths; scenario 1), the two
-    listing orders (`scandir` sorted, then reversed; scenario 13), a root's
-    cut canonicalisation and cut listing (scenario 23), the hung `lstat`
-    (17), the hung checkout (24), the cut manifest and reflog reads, a
-    refused permission under root and the working directory's failing
-    realpath (FR-026). The report is built by one function,
-    `render_report()`, named in slice 6, which tests patch (scenario 49).
+    table, `OVERVIEW_FS`, when it is called, not when the module is imported,
+    since a constant bound at import keeps its old value under
+    `tests/launch_project.py`; tests replace entries with `mock.patch.dict` for
+    one run, never `os.*` globally, and a slow entry waits on an `Event` that
+    `tearDown` sets. It serves the device-and-inode dedupe (one device and
+    inode for two realpaths; scenario 1), the two listing orders (`scandir`
+    sorted, then reversed; scenario 13), a root's cut canonicalisation and cut
+    listing (scenario 23), the hung `lstat` (17), the hung checkout (24), the
+    cut manifest and reflog reads, a refused permission under root and the
+    working directory's failing realpath (FR-026), and the running-task cap: a
+    unit test gives a 512-row repository's row tasks `lstat` entries that wait
+    on an `Event`, and asserts that no more than `OVERVIEW["fs_tasks"]` (16) of
+    them run at once, a finished or cut task freeing its place (R5). The report
+    is built by one function, `render_report()`, named in slice 6, which tests
+    patch (scenario 49).
   - **The scanning notice** (scenario 61; FR-046):
     `overview_support.run_with_stderr_tty()` runs `project` with standard
     error on a pseudo-terminal slave (`os.openpty()`, `stderr=slave`),
@@ -1473,7 +1491,7 @@ and "yes, recommended for O12-O16" at 2026-10-23T13:30:30Z, in lane
 openRepoProject-3's pane, on the five items that the review of the plan at
 `39f4ab6` raised. Spec 005 records all three as C-72, with O17 to O20, which
 #19's round (q) raised, and O21, which feature 004's `41759a4` raised, all
-open for his word, and this entry quotes C-72 at `617dcd9` (spec 3aq;
+open for his word, and this entry quotes C-72 at `3680f34` (spec 3ar;
 spec.md:956-1118) whole, as it stands:
 
 > - **C-72** Q: Which options of the plan's held items does change 2 take: O1 to
@@ -1760,8 +1778,10 @@ revision 1 items 1 to 10 at `00205d73ba38...` (2,295 lines). Items 1, 3, 4 and
   (8 from 1,000 rows, 7 from 10,000). Beside the bare repository's
   ratified remedy (45 characters) it would be 207; under clause 1 the
   recommendation keeps 39. The beside-the-redirect case is O4's clause 2.
-  Until then: A1's one stale text, "Review and prune stale worktree
-  metadata manually."
+  Until then: A1's one stale text, "Review and prune stale worktree metadata
+  manually." Without an unread row, the stale text is O18's question, open:
+  until his word the plan builds that 50-character text, though feature 004's
+  `TEXT` at `41759a4` gives the 305-character form with Q3 (b)'s warning (R12).
 - **O7. Item 10 part 2, the `main-worktree-missing` remedy**. CHOSEN, with
   O6: under the same test, "restore or prune the main worktree by hand; a
   row's path could not be read, so do not run git worktree prune, git
@@ -1797,8 +1817,11 @@ re-alignment lands.
   locked stale row as `locked-worktree` (`#19 design.md:1476-1514`), and
   the overview's finding is that row's text. Under (A), with O6's warning,
   it is 173 characters, and beside the report-cap remedy clause 1 keeps 9
-  of its 62-character recommendation. Design: one message-table row keyed
-  on `locked`.
+  of its 62-character recommendation. Design: one message-table row keyed on
+  `locked`. Without an unread row, whether the locked form takes Q3 (b)'s
+  warning is O18's question, open: until his word the plan builds the
+  63-character form, though feature 004's `TEXT` at `41759a4` carries the
+  318-character one (R1; R12).
 - **O9. M1, parity when the working directory's realpath fails** (FR-026;
   C-61). "When the working directory's realpath cannot be read, the
   overview marks only merged rows `inspection-error`, but `project clean`
@@ -1885,12 +1908,12 @@ lane recommended it; revision 9 gives their designs.
 - **O15. A remedy whose escaped repository parent is 177 characters or more**
   (FR-035). CHOSEN (A): the remedy is kept whole and the finding's own text
   cut to `...`, the message passing 200 characters in that case only. Built
-  now. Design: the composer's floor, max(n - 3, 0) characters of the own
-  text (R12); its rows are in "Lengths" below and R18.
+  now, ahead of A1's text. Design: the composer's floor, max(n - 3, 0)
+  characters of the own text (R12); its rows are in "Lengths" below and R18.
 - **O16. A bare repository's main row** (C-40, C-68, FR-008). CHOSEN (a):
-  `branch`, `head` and `merged_into_target` are null for that row. Built now.
-  Design: the row takes only its `lstat` (R5); the data model's worktree
-  row and the contract's JSON say so.
+  `branch`, `head` and `merged_into_target` are null for that row. Built now,
+  ahead of A1's text. Design: the row takes only its `lstat` (R5); the data
+  model's worktree row and the contract's JSON say so.
 
 ### Lengths
 
@@ -2395,9 +2418,10 @@ the stale cites:
   of the first record's directory (the data model's Repository); **R4-7**,
   A1's words for R14's gitfile term and the submodule row adding none;
   **R8-3**, R18's three identity fixtures; **R8-5**, R9's extension read
-  without includes (its format-version clause not taken: the review's R8
-  shows only the includes); **S5-16**'s plan sites, the departure from
-  DI:535 in R9, the data model's exceptions and the contract (twice).
+  without includes (its format-version clause left out here on the reading that
+  the review's R8 shows only the includes, which its c6e refutes; revision 10's
+  part 3 takes the clause); **S5-16**'s plan sites, the departure from DI:535
+  in R9, the data model's exceptions and the contract (twice).
 - **TB's LOW items**: **R1-2**, `probe_error` for two outcomes only (R3);
   **R1-5**, `refs` as list and map (the data model); **R1-10 with R6-11**,
   gate (d)'s three hunks at `COLUMNS=80` (R3 (d), quickstart.md, the
@@ -2450,7 +2474,7 @@ the stale cites:
   later spec commit"; the Revision 8 record keeps its `:1492-1499`, the
   range as revision 8 wrote it.
 
-## Revision 10: C-72 at 8c408e6 and 617dcd9, O17 to O21 open, the re-pins
+## Revision 10: C-72 at 8c408e6 and 617dcd9, O17 to O21 open, re-pins, W137
 
 Made from `8c408e6` (spec commit 3an), on the lead's decisions for revision 10,
 in three parts; this is part 1. The plan's other spec cites stay at `7f4ab94`
@@ -2552,3 +2576,58 @@ part 2, and where it is taken:
   words unchanged.
 - **Still to come**: part 3 takes lane openRepoProject-3's W137 items and the
   lead's two remaining revision 10 items, which wait for the lead's word.
+
+Part 3, made from `3680f34` (spec commit 3ar, which cites feature 004's
+`status_warned` at `41759a4` in EC-033), on the lead's message after part 2,
+lane openRepoProject-3's W137 read of revision 9 at `e342275` and the two items
+that part 1 left. Each input of part 3, and where it is taken:
+
+- **W137's LOW-1**, the thread bound: R7's bound and plan.md's Threads bullet
+  say that R + 2,561 replaces A1 design D8's "at most 32 roots ... and a
+  handful more" (A1 `design.md:506-508`), 1,696 at 32 roots, A1's text staying
+  as ratified, and why: the roots are canonicalised before the cap (C-67), and
+  D8's list lacks the identity step, D3's reads and the re-verification.
+- **LOW-2**, the 16 running filesystem tasks: the data model's Constants gain
+  `OVERVIEW["fs_tasks"]`, 16 per run, an internal constant and not a limit; R5
+  names it, and R18's Seams bullet tests that a 512-row repository never runs
+  more than 16 at once.
+- **LOW-3**, the extension read: R9 says that Git's own format check also
+  honours the key at format version 0 (the review's R8, its c6e), so that the
+  read neither tests the format version nor follows an include; the Revision 9
+  record's R8-5 bullet says that its reason for leaving the clause out was a
+  misreading, and that this part takes it.
+- **OBS-1**: plan.md's Citations name W137's read at `e342275` and say that
+  revisions 2 onward take each HIGH, MEDIUM and LOW finding of lane
+  openRepoProject-3's reads, W96's one HIGH among them, where W137 proposed
+  "each MEDIUM and LOW finding".
+- **OBS-2**: R5 adds that a hung mount holding more than 16 rows takes waves of
+  5 s, the later tasks past about 192 hung ones recording `deadline-exceeded`,
+  and that scenario 24's few tasks fit in one wave.
+- **OBS-3**, the plain stale text: R12, R20's O6 and O8 and the contract's "the
+  class's recommendation, verbatim" say that it is O18's question, open: until
+  his word the plan builds A1's 50-character text and, once A1's re-alignment
+  lands, O8 (A)'s 63-character locked form, though feature 004's `TEXT` at
+  `41759a4` carries the 305- and 318-character forms, its
+  `RECOMMENDATIONS["stale-worktree"]` staying the 50-character text.
+- **"Ahead of A1's text"**, the first item part 1 left: every other "built now"
+  site of O15 (A) and O16 (a) says it, in R5, R12, R20's O15 and O16 entries,
+  the contract's JSON keys and composer, the data model's `branch` and
+  traceability.md's FR-008 line and held-items list.
+- **The ordering note**, the second: plan.md's sentence after the ordering
+  quote names, beside O13 (A), A1's records for O12 (A), O14 (A) and O15 (A),
+  the design Risks entry for O14 (A), D5's sentence for O15 (A) and the entry
+  for O16 (a)'s null fields, as C-72 does. C-72 names no A1 record for O21,
+  open, whose (A) needs no amendment, so the note names none.
+- **The spec cites** move from `617dcd9` to `3680f34`: plan.md's Input and
+  ordering cite, R1's Finding, R20's opening, R4's Dependencies quote, R5's
+  FR-021, R7's FR-013 and R10's FR-005, each quoted string found once at both
+  heads, and R9's six ranges, mapped by content, byte-identical at their new
+  lines (:4391-4394, :5408-5411, :2608-2615, :2617-2627, :1715-1725,
+  :2531-2543). C-72 is unchanged at `3680f34` (spec.md:956-1118, sha256
+  `126d943ed582...`): R20's quote equals it by `cmp`, and plan.md's ordering
+  quote is its 99 words at spec.md:1003-1010, `d0fbdb9e738ecbab`.
+- **Bookkeeping**: this record's heading names W137; the paragraphs that an
+  edit left with a short or long line are rewrapped, their other words
+  unchanged.
+
+Revision 10 is complete with this part.

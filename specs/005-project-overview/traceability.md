@@ -113,9 +113,10 @@ changes"); lane 2 or lane openRepoProject-3 reads the diff before feature
   part 1 built now as the plan's reading of a conflict in ratified A1, a
   text re-alignment on a lane finding; part 2 with A1's re-alignment).
 - FR-008, FR-009: collect, findings; R5, R9; contract "Other findings",
-  "Git children"; data model "Worktree row" (O16 (a), chosen, built now);
-  research.md O4 (a), O7, O13 and O14 (chosen), O11 (chosen: part 1 built
-  now as the plan's reading, part 2 with A1's re-alignment).
+  "Git children"; data model "Worktree row" (O16 (a), chosen, built now,
+  ahead of A1's text); research.md O4 (a), O7, O13 and O14 (chosen), O11
+  (chosen: part 1 built now as the plan's reading, part 2 with A1's
+  re-alignment).
 - FR-010: collect; data model "Repository".
 - FR-011, FR-012: loop; R4, R9; data model "Child outcome to row error".
 - FR-013: loop; R7 (PN-10).
@@ -360,12 +361,12 @@ what flips.
 - O14 (A), built now: a test named after the limit (a linked worktree of a
   submodule's module directory as the only candidate) asserts the built
   behaviour, so that a later detection would flip it (R9).
-- O15 (A), built now: the composer's rows at an escaped parent of 176, 177,
-  255 and 4,096 characters and one of 30 escaped control characters (units;
-  R18); nothing flips.
-- O16 (a), built now: scenario 12's test, "A bare repository with a linked
-  worktree", asserts the bare row's `branch`, `head` and
-  `merged_into_target` null; nothing flips.
+- O15 (A), built now, ahead of A1's text: the composer's rows at an escaped
+  parent of 176, 177, 255 and 4,096 characters and one of 30 escaped control
+  characters (units; R18); nothing flips.
+- O16 (a), built now, ahead of A1's text: scenario 12's test, "A bare
+  repository with a linked worktree", asserts the bare row's `branch`, `head`
+  and `merged_into_target` null; nothing flips.
 
 ## Success criteria
 

@@ -213,8 +213,9 @@ the working directory's realpath, and O16 (a)'s bare row.
   - Source: the registry record; `"detached"` for a detached head; written
     through `json_path` or `human_path`, from the record's bytes or
     `row_evidence`'s surrogateescape str alike (research.md R15)
-  - Null when: a bare entry (O16 (a), chosen, built now: C-68 and FR-008,
-    departing from C-40's packet rule that `branch` is never null)
+  - Null when: a bare entry (O16 (a), chosen, built now, ahead of A1's
+    text: C-68 and FR-008, departing from C-40's packet rule that `branch`
+    is never null)
 - `head`
   - Source: the registry record
   - Null when: a bare entry (O16 (a))
@@ -499,6 +500,11 @@ ends the run with exit 2 (FR-039).
 - concurrency
   - Value: 4
   - Where: `OVERVIEW["probe_concurrency"]` (new)
+- running filesystem tasks
+  - Value: 16 per run, a queued task waiting its turn and a finished or cut
+    task freeing its place; an internal constant of the loop, not a limit,
+    so not in `limits` (research.md R5; its test in R18)
+  - Where: `OVERVIEW["fs_tasks"]` (new)
 - roots, root entries, candidates, worktree rows
   - Value: 32, 4,096, 128, 512
   - Where: `OVERVIEW_LIMITS` (new)
