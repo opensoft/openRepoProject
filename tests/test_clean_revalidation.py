@@ -104,16 +104,17 @@ class RevalidationTests(clean_support.CleanCase):
     # Fixtures: one repository per case, its worktrees merged, clean and
     # published, each with a commit of its own (merged_worktree()).
 
-    def batch(self, case, count=2, holder=None, trees_dir=None):
+    def batch(self, case, count=2, holder=None, trees_dir=None, setup=None):
         """A repository at BASE/CASE/repo (or BASE/CASE/HOLDER/repo) with an
         origin at BASE/CASE/remote.git and count eligible worktrees at
         BASE/CASE/trees/NAME (or TREES_DIR/NAME) on branches NAME, in canonical
-        order (raw path bytes). Returns (root, trees)."""
+        order (raw path bytes); setup(tree), when given, runs in each before its
+        commit (merged_worktree(setup=...)). Returns (root, trees)."""
         top = self.base / case
         root = self._init_repo((top / holder if holder else top) / "repo", "main")
         self.bare_remote(root, name=f"{case}/remote.git")
         place = top / "trees" if trees_dir is None else trees_dir
-        trees = [self.merged_worktree(name, path=place / name, root=root) for name in NAMES[:count]]
+        trees = [self.merged_worktree(name, path=place / name, root=root, setup=setup) for name in NAMES[:count]]
         return root, trees
 
     def head(self, path, ref="HEAD"):
@@ -782,6 +783,22 @@ class RevalidationTests(clean_support.CleanCase):
         result = self.apply(root, lambda: (common / "worktrees" / "001-p" / "modules").mkdir(), env=env, log=log)
         self.assert_stopped_at_first(result, trees, "contains-submodule")
         self.assertEqual([record for record in clean_support.child_log(log) if is_removal(record)], [])
+        self.assertTrue(all(tree.is_dir() for tree in trees))
+
+    def test_clean_a_nested_repository_made_after_the_plan(self):
+        # Brett Heap's Q2 (2) (lead R-380), R-397: #19's "A nested repository made after the plan", through --apply.
+        def tracked(tree):
+            (tree / "tools").mkdir(exist_ok=True)
+            (tree / "tools" / "run.sh").write_text("tracked\n")
+
+        root, trees = self.batch("nested", setup=tracked)
+        nested = trees[0] / "tools"
+        env, log = self.counting()
+        result = self.apply(root, lambda: self.git(nested, "init", "-q"), env=env, log=log)
+        self.assert_stopped_at_first(result, trees, "contains-submodule")
+        self.assertEqual([record for record in clean_support.child_log(log) if is_removal(record)], [])
+        self.assertTrue((nested / ".git").is_dir(), "the nested repository is kept")
+        self.assertTrue((nested / "run.sh").is_file())
         self.assertTrue(all(tree.is_dir() for tree in trees))
 
     # LQ-14 and LQ-13 at revalidation (design D21 and D22; lead rulings R-124,
