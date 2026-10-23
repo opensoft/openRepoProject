@@ -332,12 +332,13 @@ AGENTS.md                    Git 2.36, the clean tests and a section on
                              `test` job unchanged
 openspec/changes/add-project-clean-all-safe/
                              the ratified change; read, not changed by the
-                             implementation, except its tasks.md: four
-                             hunks from the specify and plan commits (PR
-                             #11's governance links, the Speckit Handoff's
-                             feature lines) and T133's Tasks line; a merge
-                             resolves their conflict with PR #19 when main
-                             gains it (analyze M8)
+                             implementation: this branch carries main's
+                             copy of its tasks.md, PR #19's round (p) the
+                             four hunks from the specify and plan commits
+                             (PR #11's governance links, the Speckit
+                             Handoff's feature lines) and T133's Tasks
+                             line (lead ruling R-377; tasks.md, Path
+                             Conventions)
 ```
 
 **Structure Decision**: one executable; its new tests in modules of their own,

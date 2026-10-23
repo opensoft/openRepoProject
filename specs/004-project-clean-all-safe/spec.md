@@ -1189,6 +1189,17 @@ written".
   git gc until it can" (R-324, ruled by Brett Heap, "R-324: yes", lead R-343;
   #19's round (n) at `2250830`; writer's `e8dda2a`). The requirement's text
   stands as written.
+  Note, 2026-10-23: two more texts carry the warning (R-365, ruled by Brett
+  Heap on 2026-10-23, "Yes, warn (Recommended)" for lane 3's W52 F-1 (b) and
+  "Yes, add T9 (Recommended)" for T9; lead R-365; writer's `7a20789`, merged
+  as `d8724e2`). The result's ceiling note `Probable partial removal: inspect,
+  then git worktree prune and delete PATH by hand.` is, where any row of the
+  plan has a path that could not be read at planning, `Probable partial
+  removal: inspect, then delete PATH by hand; a row's path could not be read,
+  so do not run git worktree prune, git worktree remove or git gc until it
+  can.` (`partial_removal_note_prune_unread`), its two other forms unchanged;
+  and `status`'s stale recommendation ends with the same warning beside an
+  unread row (FR-064's note below). The requirement's text stands as written.
 - **FR-029**: Each `project clean` invocation MUST set one monotonic deadline
   60 s after it starts and hold back a 10 s reconciliation reserve, so that
   work stops 50 s after start, both moving later by the time spent blocked at
@@ -1660,6 +1671,19 @@ written".
   a known residual, left to a follow-on change because this requirement keeps
   the baseline's functions unchanged (lane 3's W65 LOW-3; lead ruling R-269;
   contracts/project-clean.md, "`status`, `doctor` and `update`").
+  Note, 2026-10-23: that text no longer stays as it was where any row of the
+  listing has a path that could not be read (`path_unread()`: `present` null).
+  `repo_state()` then ends each stale entry's recommendation, a locked one
+  included, `Review the stale worktree metadata before pruning it manually; a
+  row's path could not be read, so do not run git worktree prune, git worktree
+  remove or git gc until it can.` (T9; lead R-365, ruled by Brett Heap on
+  2026-10-23, "Yes, add T9 (Recommended)"; writer's `7a20789`, merged as
+  `d8724e2`), as `clean`'s own stale recommendation does beside an unread row
+  (R-320). It is a departure from the requirement above, declared in
+  contracts/project-clean.md (the paragraphs under "`status`, `doctor` and
+  `update`") and ruled by Brett Heap; with every path readable the text is the
+  baseline's, byte for byte, and its omission of unlocking for a locked entry
+  stays the known residual above. The requirement's text stands as written.
 - **FR-065**: The README's "Clean up Git worktrees" section MUST open with
   the five behaviour changes users will notice: plain `project clean`
   exiting 1 on an incomplete report; `clean` refusing below Git 2.36;

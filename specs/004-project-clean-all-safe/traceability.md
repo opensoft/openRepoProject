@@ -151,7 +151,7 @@ the others from `main`'s deltas.
 
 A test goes in a row only when its name begins with its scenario's title, as
 rule 1 and T126 require (lead ruling R-98 (a) 2). Three of PR #19's scenarios
-have no test so named at `28db786`, though tests cover them; each is a gap,
+have no test so named at `d8724e2`, though tests cover them; each is a gap,
 not a missing check (lead ruling R-166):
 
 - "Branch deletion refuses a branch it may not delete" (round (a)): by
@@ -353,6 +353,20 @@ warning with `git worktree remove` and `git gc` named:
 `test_clean_an_unread_row_beside_a_redirected_row` and
 `test_clean_a_stale_row_beside_an_unread_row_warns_against_prune`; and
 `tests/clean_support.py`'s nine fixtures (T011).
+R-365 (ruled by Brett Heap on 2026-10-23, "Yes, warn (Recommended)" for lane
+3's W52 F-1 (b) and "Yes, add T9 (Recommended)" for T9; lead R-365; writer's
+`7a20789`, merged as `d8724e2`) adds three tests:
+`test_clean_the_prune_note_beside_an_unread_row_warns_against_prune` (T091),
+`test_clean_the_ceiling_s_prune_note_beside_an_unread_sibling_warns_against_prune`
+(T089) and, in `tests/test_status_doctor_update.py`,
+`test_status_a_stale_worktree_beside_an_unread_row_warns_against_prune`
+(T115); changes two, which pass `partial_removal_text()` its new second
+argument as `False`:
+`test_clean_the_ceiling_s_partial_removal_note_follows_the_git_file_and_the_entry`
+(T091) and
+`test_clean_rescan_reads_the_git_file_where_the_entry_and_the_path_remain`
+(T085); and gives `tests/clean_support.py` one more fixture,
+`partial_removal_note_prune_unread` (T011).
 The work-tree probe's output read as one path (lane 3's W70 M-2, R-287):
 `test_clean_effective_work_tree_reads_its_output_as_one_path`,
 `test_clean_a_work_tree_probe_whose_output_is_empty_or_ends_in_no_line_feed` and
@@ -371,3 +385,10 @@ Doc round 24 (the lead's R-360; lane 3's W102 and W108): T030's spy clause is
 row 4b's subtest alone, T128's bound is for an idle `py-bench` and records the
 measured times, and `hand-runs.md` records that the hand runs are owed again
 at the landing head. No test name changes.
+
+Doc round 25 (the lead's R-365 and R-377): R-365's three tests are listed
+above. Feature 004 no longer edits change 1's `tasks.md` (R-377): Path
+Conventions and T133 say that PR #19's round (p) carries its hunks, T131 no
+longer lists the file among those this branch may change, and T133's verify
+reads it as `main`'s copy. `hand-runs.md` names R-365 among the changes since
+its walk. The head sentence reads `d8724e2`.

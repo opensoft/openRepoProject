@@ -538,29 +538,39 @@ registry entry and the `.git` file both present, the note is `Probable partial
 removal: inspect, then git worktree remove --force PATH by hand.` Where the
 `.git` file is gone, as a kill part way through a removal usually leaves it,
 or the entry is gone or could not be read, it is `Probable partial removal:
-inspect, then git worktree prune and delete PATH by hand.` Where the rescan
-tried to read the `.git` file and could not, the `lstat` failing for a reason
-other than its absence, as it does for a directory the process may not search,
-or running out of time, or where its own `lstat` of the worktree's path failed
-the same way, as it does when a directory above the worktree denies search, so
-that it read no `.git` at all, whatever it showed of the entry, it is
-`Probable partial removal: inspect PATH by hand; its .git could not be read,
-so do not run git worktree prune, git worktree remove or git gc until it
-can.`, because `git worktree prune` deletes the registration of a live
-worktree whose `.git` Git cannot stat. The rescan reads the `.git` file with
-one `lstat`, never a Git child, and only where it shows the entry and the path
-both present (a path it could not look at is a `.git` it could not read); the
-JSON result is the same in every case. The `--force` note is also the one
-under the `dirty` advice of a worktree whose tracked files are all deleted,
-which is how an interrupted removal looks and why the note says "probable".
-For a locked worktree, which `git worktree remove --force` refuses, the row's
-note in the report and the preview reads `Probable partial removal: inspect,
-unlock it, then git worktree remove --force PATH by hand.` The forced removal,
-or the deletion after a prune, is the person's own step, after looking, never
-`clean`'s. A target with the note `orphaned-directory` has lost its registry
-entry but its directory is still there. When Git had already deleted the
-worktree's `.git` file, the row is `registration-mismatch`: use `git worktree
-repair` or `git worktree prune`, or remove the row by hand.
+inspect, then git worktree prune and delete PATH by hand.`, except that where
+any row of the plan has a path that could not be read (its planning `lstat`
+failed for a reason other than the path's absence, or ran out of time),
+whichever worktree the note is about, it is `Probable partial removal:
+inspect, then delete PATH by hand; a row's path could not be read, so do not
+run git worktree prune, git worktree remove or git gc until it can.`, because
+`git worktree prune` acts on the whole repository and deletes the registration
+of a live worktree whose path Git cannot stat. The `--force` note and the note
+for an unreadable `.git`, next, are the same beside an unread row, since `git
+worktree remove --force PATH` acts on PATH alone and the second names no prune
+already. Where the rescan tried to read the `.git` file and could not, the
+`lstat` failing for a reason other than its absence, as it does for a
+directory the process may not search, or running out of time, or where its own
+`lstat` of the worktree's path failed the same way, as it does when a
+directory above the worktree denies search, so that it read no `.git` at all,
+whatever it showed of the entry, it is `Probable partial removal: inspect PATH
+by hand; its .git could not be read, so do not run git worktree prune, git
+worktree remove or git gc until it can.`, because `git worktree prune` deletes
+the registration of a live worktree whose `.git` Git cannot stat. The rescan
+reads the `.git` file with one `lstat`, never a Git child, and only where it
+shows the entry and the path both present (a path it could not look at is a
+`.git` it could not read); the JSON result is the same in every case. The
+`--force` note is also the one under the `dirty` advice of a worktree whose
+tracked files are all deleted, which is how an interrupted removal looks and
+why the note says "probable". For a locked worktree, which `git worktree
+remove --force` refuses, the row's note in the report and the preview reads
+`Probable partial removal: inspect, unlock it, then git worktree remove
+--force PATH by hand.` The forced removal, or the deletion after a prune, is
+the person's own step, after looking, never `clean`'s. A target with the note
+`orphaned-directory` has lost its registry entry but its directory is still
+there. When Git had already deleted the worktree's `.git` file, the row is
+`registration-mismatch`: use `git worktree repair` or `git worktree prune`, or
+remove the row by hand.
 
 ### Close sessions first
 

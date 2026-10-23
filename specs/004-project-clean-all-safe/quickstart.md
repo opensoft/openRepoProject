@@ -264,7 +264,8 @@ git diff -U0 main...HEAD -- project tests README.md AGENTS.md .github |
 # tests/test_status_doctor_update.py, tests/clean_support.py,
 # tests/launch_project.py, and tests/test_project.py (one method and one loader
 # line, T046 and T009); README.md; AGENTS.md; .github/workflows/tests.yml;
-# specs/004-project-clean-all-safe/ and the change's tasks.md.
+# specs/004-project-clean-all-safe/. The change's tasks.md is not listed: it is
+# main's copy (R-377).
 git diff --stat main...HEAD
 # 1.6.0 or later; the openspec first on some PATHs is 1.2.0.
 /usr/bin/openspec validate --all --strict

@@ -50,9 +50,7 @@ duplicate them, and nothing here is an implementation step.
   the V5 deferral and the squash-merge open question of `design.md` before him;
   verified by that quote. No implementation starts before it. Done: his word to
   lane openRepoProject-2 on 2026-10-09, verbatim: "ratify, merge #11 and run the
-  runbook", recorded on PR #11 in its landing comment at
-  https://github.com/opensoft/openRepoProject/pull/11#issuecomment-6087170840,
-  PR #11 having landed by squash as 0050f3e.
+  runbook".
 
 ## 2. Before the Speckit handoff
 
@@ -96,9 +94,7 @@ duplicate them, and nothing here is an implementation step.
   deferral's motivating repository, 20 rows pass every gate before
   `deferred-target-cap` and all are `contains-submodule` after it, so it yields
   no removable row each run and its deferred count never drains (design Risks,
-  R-24). Results posted on PR #11 at
-  https://github.com/opensoft/openRepoProject/pull/11#issuecomment-6086983930;
-  the caps stand as measured.
+  R-24). Results posted on PR #11; the caps stand as measured.
 - [x] 2.2 The Git 2.36 floor verified by the approach of `design.md` D17: each
   behaviour in its table checked on a pinned Git 2.36 build in a scratch
   directory, or by a CI job, against Git 2.43's output; verified by the results
@@ -108,8 +104,7 @@ duplicate them, and nothing here is an implementation step.
   captures; rows 1 to 6 identical; row 7's extra variable,
   `GIT_INTERNAL_SUPER_PREFIX`, scrubbed under R-21, the floor kept at 2.36
   rather than raised to 2.40 (a departure listed in `proposal.md`, open to
-  Brett Heap at ratification); results posted on PR #11 on 2026-10-09 at
-  https://github.com/opensoft/openRepoProject/pull/11#issuecomment-6082230232.
+  Brett Heap at ratification); results posted on PR #11 on 2026-10-09.
 - [ ] 2.3 Dependent change noted: `add-project-overview` (issue #10, PR #12)
   depends on this change and reconciles its deltas against this change's final
   requirement headers after this change lands, then is ratified after it;
@@ -125,13 +120,11 @@ Implementation is tracked exclusively in one Speckit feature, to be created by
 #8, and `003-parent-obstacle-wording` is lane openRepoProject-1's feature, PR
 #17, so this change's feature is the next free number, 004.
 
-- Feature identifier: 004-project-clean-all-safe
+- Feature identifier: 004-project-clean-all-safe (to be created by
+  /speckit.specify after ratification)
 - Branch: 004-project-clean-all-safe
-- Tasks: specs/004-project-clean-all-safe/tasks.md (created by
+- Tasks: specs/004-project-clean-all-safe/tasks.md (reserved; created by
   /speckit.tasks)
-- Created: specs/004-project-clean-all-safe/spec.md created 2026-10-09 by
-  /speckit.specify after ratification, PR #11 squash 0050f3e, branch
-  004-project-clean-all-safe
 
 `/opsx:apply` is not run until this section names exactly one feature and that
 feature exists.

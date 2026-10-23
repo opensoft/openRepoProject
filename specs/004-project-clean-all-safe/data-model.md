@@ -226,9 +226,17 @@ once every row is gated, and makes the `inspect-cap` remedy
 past the cap are never read. R-324 (ruled by Brett Heap, "R-324: yes", lead
 R-343; #19's round (n) at `2250830`; writer's `e8dda2a`) makes each of these
 warnings, and `partial_removal_note_unread`'s, also name `git worktree remove`
-and `git gc`. Only texts change: no field, code, class or reason does, though
-a stale row's `recommendation` in the report and in `--json` carries the new
-text.
+and `git gc`. R-365 (ruled by Brett Heap on 2026-10-23, "Yes, warn
+(Recommended)" for lane 3's W52 F-1 (b) and "Yes, add T9 (Recommended)" for
+T9; lead R-365; writer's `7a20789`, merged as `d8724e2`) carries the same
+warning into two texts outside the plan: the result's ceiling note, which is
+`partial_removal_note_prune_unread` in place of `partial_removal_note_prune`
+wherever the set is not empty ("Target result and reconciliation record"
+below), and `status`'s stale recommendation, which `repo_state()` ends with
+the warning wherever any row of its listing is unread ("Classification"
+below). Only texts change: no field, code, class or reason does, though a
+stale row's `recommendation` in the report and in `--json`, and in `status
+--json` and `doctor --json`, carries the new text.
 
 ### Classification (D6; FR-007)
 
@@ -281,11 +289,18 @@ it, then prune stale worktree metadata manually; a row's path could not be
 read, so do not run git worktree prune, git worktree remove or git gc until it
 can.` (`recommendation_stale_locked_unread`), from what planning recorded and
 nothing read again (R-320; lane 3's W86 NM-1; ruled by Brett Heap, "R-320:
-yes", lead R-321). `status` is not among them: its `repo_state()` keeps the
-baseline's `Review the stale worktree metadata before pruning it manually.`
-for every stale entry, a locked one included, a known residual left to a
-follow-on change (lane 3's W65 LOW-3; lead ruling R-269;
-contracts/project-clean.md, "`status`, `doctor` and `update`").
+yes", lead R-321). `status` reads no plan, and `stale_recommendations()` does
+not set its text: its `repo_state()` keeps the baseline's `Review the stale
+worktree metadata before pruning it manually.` for every stale entry, a locked
+one included, so that it still omits unlocking for a locked entry, a known
+residual left to a follow-on change (lane 3's W65 LOW-3; lead ruling R-269;
+contracts/project-clean.md, "`status`, `doctor` and `update`"), except that
+where any row of the listing it reads has a path that could not be read
+(`path_unread(row)`: `present` null) each stale entry's recommendation is
+`Review the stale worktree metadata before pruning it manually; a row's path
+could not be read, so do not run git worktree prune, git worktree remove or
+git gc until it can.` (T9; ruled by Brett Heap on 2026-10-23, "Yes, add T9
+(Recommended)"; lead R-365; writer's `7a20789`, merged as `d8724e2`).
 
 ### Gate (FR-020 to FR-023; D10, D12, D13)
 
@@ -563,12 +578,25 @@ for the rest, since Git refuses `git worktree remove --force` once the `.git`
 file is gone ("validation failed", as a kill part way through a removal
 usually leaves it) or the entry is gone ("is not a working tree"), and accepts
 `git worktree prune`, which leaves the path a plain directory for deletion by
-hand; a value not established never shows both present. A report row's note is
-the baseline's and keeps its text, its `.git` file and entry being present
-(lane 3's W52 F-1; Brett Heap's ruling "F-1: prune-then-delete" of 2026-10-22,
-lead ruling R-263, which amends ratified text, the `project-clean` delta's
-`spec.md:253-256` and `:922-926` at `0050f3e`; #19 at `b3228bb`; writer G's
-`3eb2e9c`, merged as `7164d7f`).
+hand; a value not established never shows both present. Where `plan_unread` is
+true, the rest take `Probable partial removal: inspect, then delete PATH by
+hand; a row's path could not be read, so do not run git worktree prune, git
+worktree remove or git gc until it can.` (`partial_removal_note_prune_unread`)
+instead: `partial_removal_text(target, plan_unread)` takes whether any row of
+the plan has a path that could not be read at planning
+(`bool(unread_paths(plan))`, which `print_result()` passes; `present` null, a
+deadline-stopped row included), since `git worktree prune` acts on the whole
+repository and deletes the admin directory of a live worktree whose path Git
+cannot stat, whichever worktree the note is about; `partial_removal_note` and
+`partial_removal_note_unread` do not change, since `git worktree remove
+--force PATH` acts on PATH alone and the second already advises no prune (lead
+R-365, ruled by Brett Heap on 2026-10-23, "Yes, warn (Recommended)"; writer's
+`7a20789`, merged as `d8724e2`). A report row's note is the baseline's and
+keeps its text, its `.git` file and entry being present (lane 3's W52 F-1;
+Brett Heap's ruling "F-1: prune-then-delete" of 2026-10-22, lead ruling R-263,
+which amends ratified text, the `project-clean` delta's `spec.md:253-256` and
+`:922-926` at `0050f3e`; #19 at `b3228bb`; writer G's `3eb2e9c`, merged as
+`7164d7f`).
 
 ### Revalidation step and `probes_performed` (D7; FR-046, FR-047)
 
@@ -709,7 +737,10 @@ path as not configured, doctor's credential presence checks read no file
 under it, the default projects directories and the workBenches root and
 marker are not taken from it, and a `~` target refuses with
 `relative-config-path` (`home_directory()`, `expand_user()`; lead rulings
-R-202 and R-205; lane H's `22f95d1`).
+R-202 and R-205; lane H's `22f95d1`). A stale entry's `recommendation` there
+is the baseline's text, except that where any row of the listing has a null
+`present` it ends with the warning against `git worktree prune`
+("Classification" above; T9, lead R-365).
 
 ### Child handle (D2; lead ruling R-30, research.md R14)
 
