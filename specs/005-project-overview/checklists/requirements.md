@@ -1425,6 +1425,27 @@ Lane: openRepoProject-4
   ratified deltas at `e4a30fc` (64 of 64). A1 stays cited at `e4a30fc`, and
   `clarify-questions.md` is unchanged. Re-validation: 16 of 16 items pass, with
   the checks of iteration 2 re-run by script on the edited spec.
+- 2026-10-23, a forty-fourth pass, by the lead's word, from `bb97468` (spec
+  commit 3ao), on lane openRepoProject-3's W142 read of 3am and 3an. LOW-1:
+  C-72's O18 gains the two sentences that lane openRepoProject-4 added to the
+  question at 18:27Z, before his word: under (A), where a gate's remedy also
+  follows the stale message, that remedy is kept whole too, as D5 keeps every
+  remedy, the longest case being beside the redirect remedy, at 459 and 472
+  characters, the warning not cut; under (B), since #19's round (r) has
+  `project clean`'s ladder requirement state the warned texts itself
+  (pcl:188-212 at `4512441`), which A1 reaches by reference, A1 names the short
+  text explicitly. OBS: FR-028's cite of pcl:166 at `4512441` adds that
+  :188-213 there now state the four forms; and C-72 says that the entry for O16
+  (a)'s null `branch`, `head` and `merged_into_target` that reaches A1 is the
+  lane openRepoProject-4 lead's choice on lane openRepoProject-3's W130 LOW-1,
+  not his word, which chose O16 (a) itself. C-72 is now spec.md:956-1106, 151
+  lines, sha256 `296a50e2...`; O17 to O20 stay open. #19 stays at `4512441`
+  beside the reading at `2250830`, #27 at `d95eea2` and feature 004's pins as
+  they stand, and no pin moves. No checklist category changes, and the totals
+  below were recounted by script. Traceability is checked against A1's ratified
+  deltas at `e4a30fc` (64 of 64). A1 stays cited at `e4a30fc`, and
+  `clarify-questions.md` is unchanged. Re-validation: 16 of 16 items pass, with
+  the checks of iteration 2 re-run by script on the edited spec.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -1549,4 +1570,4 @@ to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
 passes of that day, and after the thirteenth to thirty-fourth passes on
-2026-10-22 and the thirty-fifth to forty-third on 2026-10-23.
+2026-10-22 and the thirty-fifth to forty-fourth on 2026-10-23.

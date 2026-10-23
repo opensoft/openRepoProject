@@ -1045,9 +1045,11 @@ that lane agreed on 2026-10-21 to carry it in.
   and O15 (A), with its design Risks entry for O14 (A) and D5's sentence for
   O15 (A), and an entry for the null `branch`, `head` and `merged_into_target`
   of O16 (a), since A1 adopts the packet's JSON types, reach A1 in the
-  re-alignment commit, as O3 and O5 do. This spec builds O12 (A) and O14 (A)
-  now, as A1 is ratified, as for O9 (A), and O15 (A) and O16 (a) now, ahead of
-  A1's text, declared at FR-035, C-40, C-68 and FR-008; otherwise it records
+  re-alignment commit, as O3 and O5 do, that entry being the lane
+  openRepoProject-4 lead's choice on lane openRepoProject-3's W130 LOW-1 and
+  not his word, which chose O16 (a) itself. This spec builds O12 (A) and O14
+  (A) now, as A1 is ratified, as for O9 (A), and O15 (A) and O16 (a) now, ahead
+  of A1's text, declared at FR-035, C-40, C-68 and FR-008; otherwise it records
   his words and follows A1 as ratified until A1's re-alignment lands, O13 (A)
   included. Four more items, O17 to O20, which #19's round (q) at `818311a`
   raised from Brett Heap's "yes, recommended for Q1-Q9" for change 1 (lane
@@ -1070,8 +1072,15 @@ that lane agreed on 2026-10-21 to carry it in.
   318 characters, where the overview's stale message is [L]'s 50-character text
   or, under O8 (A), the 63-character locked form; (A) take the warning, the
   stale message equal to clean's text and kept whole past 200 characters in
-  that case, or (B) keep the 50- and 63-character texts, the difference from
-  clean recorded as lasting; recommended, (A), the forms for a row whose path
+  that case, and where a gate's remedy also follows the stale message, that
+  remedy kept whole too, as D5 keeps every remedy, the longest case being
+  beside the redirect remedy, at 459 and 472 characters, the warning not cut,
+  or (B) keep the 50- and 63-character texts, the difference from clean
+  recorded as lasting, A1 then naming the short text explicitly, since #19's
+  round (r) has `project clean`'s ladder requirement state the warned texts
+  itself (its `specs/project-clean/spec.md:188-212` at `4512441`), which A1
+  reaches by reference, these two clauses being added to the question at
+  18:27Z, before his word; recommended, (A), the forms for a row whose path
   could not be read (O6 (A)) unchanged either way, and built until he rules, A1
   as ratified (FR-028). O19, `registration-mismatch`, which #19 widens to a
   worktree whose path is the common directory, the main worktree or another
@@ -2965,12 +2974,13 @@ and [P] are change 1's requirements as the header names them.
   (POD:451-463). A `stale-worktree` finding's message is [L]'s one text, as A1
   gives it (its `specs/project-overview/spec.md:516-517`): PR #19's round (n)
   at `2250830` keeps [L] a function of the row's evidence alone (its
-  `specs/project-clean/spec.md:166`, the same line at its round (r), `4512441`)
-  and has `project clean` add "; a row's path could not be read, so do not run
-  git worktree prune, git worktree remove or git gc until it can" before that
-  text's final period while any row of its plan has `present: null`, an
-  override of the plan applied after the row's text is chosen (T6; its
-  `design.md:1347-1362`), so that the ladder's recommendation text stays the
+  `specs/project-clean/spec.md:166`, the same line at its round (r), `4512441`,
+  where :188-213 now state the four forms) and has `project clean` add "; a
+  row's path could not be read, so do not run git worktree prune, git worktree
+  remove or git gc until it can" before that text's final period while any row
+  of its plan has `present: null`, an override of the plan applied after the
+  row's text is chosen (T6; its `design.md:1347-1362`), so that the ladder's
+  recommendation text stays the
   plain one. The labels of the texts that carry that warning are #19's own (its
   `proposal.md:2581-2586`, :2867-2872 at `4512441`): T1, the next step of an
   `inspection-error` row whose path could not be read; T2 and T3, the plan's
