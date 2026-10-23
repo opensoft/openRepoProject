@@ -41,16 +41,44 @@ configured upstream's remote-tracking ref no longer exists and whose
 `merged_into_target` is true SHALL carry the recommendation of its class, as
 every `merged-removable` or `merged-current` row does.
 
+A `stale-worktree` row SHALL carry the recommendation "Review and prune stale
+worktree metadata manually; git worktree prune also deletes the entry, and so
+the HEAD reflog, of every other worktree whose path is missing, one moved or on
+an unmounted drive included, so run git worktree prune --dry-run first and
+remount or repair any it lists that still exists.", or, for a locked row,
+"Review, unlock it, then prune stale worktree metadata manually; git worktree
+prune also deletes the entry, and so the HEAD reflog, of every other worktree
+whose path is missing, one moved or on an unmounted drive included, so run git
+worktree prune --dry-run first and remount or repair any it lists that still
+exists.", in place of the baseline's "Review and prune stale worktree metadata
+manually.", since `git worktree prune` acts on the whole repository and deletes
+the entry, and so the HEAD reflog, of every other worktree whose path is
+missing. Where any row of the same plan has a path that could not be read, a row
+whose planning `lstat` failed other than for the path's absence, or was cut at
+its budget, a row whose `lstat` the deadline stopped included, so that its
+`present` is null, the row SHALL instead carry "Review and prune stale worktree
+metadata manually; a row's path could not be read, so do not run git worktree
+prune, git worktree remove or git gc until it can.", or, for a locked row,
+"Review, unlock it, then prune stale worktree metadata manually; a row's path
+could not be read, so do not run git worktree prune, git worktree remove or git
+gc until it can.", since `git worktree prune`, run for a stale entry's sake,
+also deletes the administrative directory of a worktree whose path Git cannot
+stat. A locked row's form SHALL print only as the report row's recommendation,
+in the human report and in `--json`, since the preview excludes a locked stale
+row as `locked-worktree`.
+
 A linked worktree's `dirty` row whose status records are all deletions of
 tracked files in the working tree, while its `.git` file and its registry entry
 are present, SHALL carry the row note `partially-removed`: the human report
-SHALL show a probable partial removal with the recovery text "inspect, then `git
+SHALL show a probable partial removal with the recovery text "check that `git
+-C <path> status --short --ignored` lists only deleted files, then `git
 worktree remove --force <path>` by hand" beside the `dirty` advice, never
 instead of it. For a locked worktree, which `git worktree remove --force`
-refuses, the recovery text SHALL instead be "inspect, unlock it, then `git
-worktree remove --force <path>` by hand". A status stream stopped at its record
-bound SHALL be judged on the records read. The note SHALL be advisory and SHALL
-NOT change the row's classification, the ladder or any gate.
+refuses, the recovery text SHALL instead be "check that `git -C <path> status
+--short --ignored` lists only deleted files, unlock it, then `git worktree
+remove --force <path>` by hand". A status stream stopped at its record bound
+SHALL be judged on the records read. The note SHALL be advisory and SHALL NOT
+change the row's classification, the ladder or any gate.
 
 #### Scenario: Dirty or unmerged work is preserved
 
@@ -87,10 +115,23 @@ NOT change the row's classification, the ladder or any gate.
 - **THEN** it is classified `dirty` with the dirty advice, the human report
   shows the probable partial-removal note and the recovery text beside that
   advice, and the JSON row carries `notes: ["partially-removed"]`
-- **AND** when that worktree is also locked, the recovery text shown is
-  "inspect, unlock it, then `git worktree remove --force <path>` by hand"
+- **AND** when that worktree is also locked, the recovery text shown is "check
+  that `git -C <path> status --short --ignored` lists only deleted files,
+  unlock it, then `git worktree remove --force <path>` by hand"
 - **AND** a worktree with one deleted tracked file and one untracked file
   carries no such note
+
+#### Scenario: A stale entry's recommendation
+
+- **WHEN** a linked worktree's registered path is missing, every other row's
+  path can be read, and plain `project clean` runs
+- **THEN** that row is classified `stale-worktree` with the recommendation
+  "Review and prune stale worktree metadata manually; git worktree prune also
+  deletes the entry, and so the HEAD reflog, of every other worktree whose path
+  is missing, one moved or on an unmounted drive included, so run git worktree
+  prune --dry-run first and remount or repair any it lists that still exists.",
+  in the human report and in `--json`, where before this change it was "Review
+  and prune stale worktree metadata manually."
 
 #### Scenario: Cache-only ignored files pass the ignored-local-files rung
 
@@ -117,11 +158,14 @@ removal" states; spawn, only while at least the
 5 s removal floor of the work deadline remains, the non-force command `git -c
 status.showUntrackedFiles=normal -c core.untrackedCache=false -c
 core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default -c
-protocol.allow=never -c protocol.file.allow=never -c
+core.ignoreCase=false -c protocol.allow=never -c protocol.file.allow=never -c
 protocol.ssh.allow=never -c protocol.git.allow=never -c
 protocol.http.allow=never -c protocol.https.allow=never -c
 protocol.ext.allow=never -C <command directory> worktree remove <path>` in its
-own process group; wait for it; and reconcile by rescan as
+own process group; the `core.ignoreCase` pin also makes Git resolve `<path>` to
+the entry of exactly that spelling, where under `core.ignoreCase=true` it can
+resolve it to another worktree whose path differs only in case; wait for it;
+and reconcile by rescan as
 "Clean records a reconcilable result for every removal target" states. Removal
 SHALL stop after the first target whose result is not a plain `removed`, with no
 continuation, rollback or automatic retry.
@@ -133,10 +177,11 @@ group. The rescan SHALL then decide the target: `removed` when its registry
 entry and path are gone, and otherwise `unknown` with the note
 `partially-removed` and the recovery text "inspect, then `git worktree remove
 --force <path>` by hand" where the rescan finds both its `.git` file and its
-registry entry present, and "inspect, then `git worktree prune` and delete
-`<path>` by hand" otherwise, as where either is gone, Git refusing `git worktree
-remove --force` while the path remains; the reason SHALL be `removal-ceiling` in
-both cases. Where the rescan cannot read that `.git` file, the read failing
+registry entry present, and "inspect, then delete `<path>` and its
+administrative directory `<common_dir>/worktrees/<admin_id>` by hand"
+otherwise, as where either is gone, Git refusing `git worktree remove --force`
+while the path remains; the reason SHALL be `removal-ceiling` in both cases.
+Where the rescan cannot read that `.git` file, the read failing
 other than for the file's absence or cut at its budget, the recovery text SHALL
 instead be "inspect `<path>` by hand; its `.git` could not be read, so do not
 run `git worktree prune`, `git worktree remove` or `git gc` until it can", since
@@ -153,9 +198,9 @@ from the row cap.
 It SHALL remove a local branch only as a separate, explicit action after the
 worktree is gone and the branch is verified merged.
 It MUST never use a force removal, reset, or deletion of unmerged work.
-Branch deletion SHALL refuse, before its plan is shown, with exit status 2,
-no code, a message after `REFUSED: ` on standard error and no `git branch
--d`: the default branch; a branch that a present linked worktree holds; a
+The `delete-branch` action SHALL refuse, before its plan is shown, with exit
+status 2, no code, a message after `REFUSED: ` on standard error and no `git
+branch -d`: the default branch; a branch that a present linked worktree holds; a
 branch that the main worktree holds; and a branch that the plan's evidence
 does not show merged into the merge target, by its ref listing and its merged
 set, so that a branch merged only into the current branch is refused, where
@@ -263,6 +308,13 @@ target there, and then retrying.
 - **THEN** Git refuses the removal with exit status 128, the target is `failed`
   with `git-refused`, the file survives, and the exit status is 128
 
+#### Scenario: Two worktree paths that differ only in case
+
+- **WHEN**, under `core.ignoreCase=true`, an eligible `WT-X` sits beside an
+  excluded `wt-x` whose HEAD reflog alone holds a commit
+- **THEN** `--all-safe --apply --yes` removes `WT-X`, and `wt-x` and its
+  commit remain
+
 #### Scenario: A named removal beside another row's inspection error
 
 - **WHEN** `--apply --action remove --worktree P --yes` names an eligible P
@@ -312,9 +364,11 @@ target there, and then retrying.
   `not-attempted`, and the exit status is 1
 - **AND** the recovery text is "inspect, then `git worktree remove --force
   <path>` by hand" while the target's `.git` file and registry entry both
-  remain, and "inspect, then `git worktree prune` and delete `<path>` by hand"
-  once the `.git` file is gone, its path and registry entry remaining, or once
-  the registry entry is gone, its path remaining
+  remain, and "inspect, then delete `<path>` and its administrative directory
+  `<common_dir>/worktrees/<admin_id>` by hand" once the `.git` file is gone,
+  its path and registry entry remaining, or once the registry entry is gone,
+  its path remaining, in either mode, single mode beside another row whose
+  path could not be read included
 - **AND** where the rescan cannot read the target's `.git` file, as when a
   directory above it denies search, the recovery text is instead "inspect
   `<path>` by hand; its `.git` could not be read, so do not run `git worktree
@@ -377,15 +431,15 @@ that row `reflog-unavailable`, at the gate's place in this order; any other
 error on the read SHALL make that row `inspection-error`, as any failed row
 probe does; a read not finished within the filesystem budget, the deadline not
 being the limit, SHALL leave the row unprobed and the plan incomplete with
-`inspection-incomplete`, except a read of the cache walk that times out, which
-leaves its row `cache-unverified` and the plan complete, as "Clean disposes of
-listed caches before a worktree removal" states; and a read that the deadline
-cuts SHALL record
+`inspection-incomplete`; and a read that the deadline cuts SHALL record
 `deadline-exceeded` and leave the row unprobed and the plan incomplete with
 `deadline-exceeded`, not `inspection-incomplete`, as for every other filesystem
 read. A row SHALL be excluded as `contains-submodule`
-when its index holds any gitlink or its worktree administrative directory holds
-a `modules` entry, and as
+when its index holds any gitlink, its worktree administrative directory holds a
+`modules` entry, or an `lstat` of `<dir>/.git`, for any directory `<dir>` of
+the worktree that holds an index entry, finds an entry; those `lstat`s SHALL be
+counted in the filesystem budget, and one that fails other than with `ENOENT`
+or `ENOTDIR` SHALL make the row `inspection-error`. A row SHALL be excluded as
 `hidden-local-state` when its index flags any entry assume-unchanged or
 skip-worktree, sparse checkouts included; the index SHALL be read inside the
 row's own worktree, and both gates SHALL be checked only for rows that pass
@@ -434,7 +488,10 @@ the limit, SHALL record `probe-timeout` and make the row `inspection-error`, and
 so SHALL a read not finished within the filesystem budget; and a read or child
 that the deadline cuts SHALL record `deadline-exceeded`. Each of those four
 SHALL leave the plan incomplete, with `inspection-incomplete` or
-`deadline-exceeded`, as for every other read and child.
+`deadline-exceeded`, as for every other read and child, except the cache
+enumeration's child and the calls of its walk, which leave their row
+`cache-unverified` and the plan complete, as "Clean disposes of listed caches
+before a worktree removal" states, unless the deadline cuts them.
 
 `selected` and `excluded` SHALL be in canonical order, by raw path bytes, and
 that order SHALL be the execution order. Once a plan is built, these checks
@@ -797,8 +854,12 @@ plan's `probes.estimated` SHALL count those extra children.
 - **AND** where the cause is the row cap, that refusal names the remedy "{N}
   rows exceed the row cap of {M}; remove worktrees explicitly, or prune stale
   entries by hand; if a worktree's path cannot be read, do not run git worktree
-  prune, git worktree remove or git gc until it can", whether or not any
-  inspected row's path was read, since the rows past the cap are never read
+  prune, git worktree remove or git gc until it can; git worktree prune also
+  deletes the entry, and so the HEAD reflog, of every other worktree whose path
+  is missing, one moved or on an unmounted drive included, so run git worktree
+  prune --dry-run first and remount or repair any it lists that still exists",
+  whether or not any inspected row's path was read, since the rows past the
+  cap are never read
 
 #### Scenario: Twenty rows pass every gate before deferred-target-cap
 
@@ -911,9 +972,10 @@ the ceiling, or its exit could not be observed, and the rescan shows its
 registry entry or its path remaining; a `partially-removed` target SHALL show
 the recovery text "inspect, then `git worktree remove --force <path>` by hand"
 where the rescan finds both its `.git` file and its registry entry present, and
-"inspect, then `git worktree prune` and delete `<path>` by hand" otherwise, as
-where either is gone, Git refusing `git worktree remove --force` while the path
-remains. The rescan SHALL read the `.git` file by one `lstat`, a filesystem call
+"inspect, then delete `<path>` and its administrative directory
+`<common_dir>/worktrees/<admin_id>` by hand" otherwise, as where either is
+gone, Git refusing `git worktree remove --force` while the path remains.
+The rescan SHALL read the `.git` file by one `lstat`, a filesystem call
 that starts no Git child. Where that `lstat` fails other than for the file's
 absence, or is cut at its budget, the recovery text SHALL instead be "inspect
 `<path>` by hand; its `.git` could not be read, so do not run `git worktree
@@ -1066,32 +1128,37 @@ holds. For the candidates in canonical order, at most 16 per invocation
 (`limits.cache_rows`), `project clean` SHALL run one cache enumeration each,
 after the row's identity is verified: one Git child in the row's own worktree,
 `status --porcelain=v2 -z --untracked-files=normal --ignored=matching`,
-carrying the four status pins that every status probe carries, `-c
+carrying the five status pins that every status probe carries, `-c
 core.untrackedCache=false -c core.fsmonitor=false -c core.trustctime=true -c
-core.checkStat=default`, its own pin `-c status.showStash=false`, so that a
-repository's stash never puts a `# stash` header before its records, the
-protocol pins, the scrubbed environment and
-`GIT_OPTIONAL_LOCKS=0` that every read-only Git child carries, under the
-per-child budget and counted in `probes`; then a walk that opens the worktree
-root by the row's recorded path with `O_DIRECTORY` and `O_NOFOLLOW` and
-requires the opened directory's device and inode to equal those of the row's
-recorded worktree identity, a refused open or another identity being a failed
-call of the walk, takes the records in canonical order, opens each directory it
-records once, from the worktree root down, relative to its parent's descriptor
-and without following a symbolic link, enumerates each listed or nested cache
-directory by a descriptor-relative streaming enumeration that yields one entry
-at a time, and `lstat`s each entry it takes, each directory open, bounded
-enumeration and `lstat` one filesystem call under the per-call budget, and
-stops at the row's 513th recorded cache object, closing the enumeration in hand
-as soon as that cap decides. No enumeration SHALL hold a whole directory's
-listing, so that a row's walk holds at most 513 entries whatever a directory
-holds. The walk SHALL also check, for each directory that a cache stage would
-change (each listed cache directory, each nested `__pycache__` directory and
-the parent of each listed path), that the running user may remove entries from
-it: one descriptor-relative access check with effective ids, following no
-symbolic link, a filesystem call under the per-call budget. The child SHALL
-stop at its 513th record, so that 512 records (`limits.cache_entries`) is its
-bound.
+core.checkStat=default -c core.ignoreCase=false`, its own pin
+`-c status.showStash=false`, so that a repository's stash never puts a
+`# stash` header before its records, the protocol pins, the scrubbed
+environment and `GIT_OPTIONAL_LOCKS=0` that every read-only Git child carries,
+under the per-child budget and counted in `probes`, a child that exits 0 having
+written to standard error any line other than Git's advice lines (`hint:` alone
+or `hint: TEXT`), or more than the 4 KiB kept, being treated as one that fails,
+as "Repository inspection requires Git 2.36 and shares one evidence model"
+treats the combined status probe, since Git exits 0 when it cannot read a
+directory and leaves what it could not read out of its records; then a walk
+that opens the worktree root by the row's recorded path with `O_DIRECTORY` and
+`O_NOFOLLOW` and requires the opened directory's device and inode to equal
+those of the row's recorded worktree identity, a refused open or another
+identity being a failed call of the walk, takes the records in canonical order,
+opens each directory it records once, from the worktree root down, relative to
+its parent's descriptor and without following a symbolic link, enumerates each
+listed or nested cache directory by a descriptor-relative streaming enumeration
+that yields one entry at a time, and `lstat`s each entry it takes, each
+directory open, bounded enumeration and `lstat` one filesystem call under the
+per-call budget, and stops at the row's 513th recorded cache object, closing
+the enumeration in hand as soon as that cap decides. No enumeration SHALL hold
+a whole directory's listing, so that a row's walk holds at most 513 entries
+whatever a directory holds. The walk SHALL also check, for each directory that
+a cache stage would change (each listed cache directory, each nested
+`__pycache__` directory and the parent of each listed path), that the running
+user may remove entries from it: one descriptor-relative access check with
+effective ids, following no symbolic link, a filesystem call under the per-call
+budget. The child SHALL stop at its 513th record, so that 512 records
+(`limits.cache_entries`) is its bound.
 
 A row SHALL stay at the `ignored-local-files` rung, with `cache_disposal.reason`
 naming why, when its ignored paths are not all proven listed caches within the
@@ -1362,6 +1429,13 @@ and its residual window" states.
   PATH: removed 2 cache paths; Git's removal of the worktree failed and may
   have deleted part of it and its registration; inspect PATH by hand.`, never
   that the worktree was not removed
+- **AND** on a copy where, after the plan, a test hook makes a directory `d`
+  that holds only the untracked file `d/notes.txt` unreadable, the run not
+  root's, so that the revalidation's status child prints exactly the planned
+  records and exits 0 while it warns on standard error that it could not open
+  `d/`, the target is `refused` with `state-changed`, no cache entry is
+  deleted, no removal child is spawned, `d/notes.txt` remains, and the exit
+  status is 2
 
 #### Scenario: Caches beside a blocking ignored file
 
@@ -1475,8 +1549,8 @@ and its residual window" states.
   under a counting `git` wrapper on PATH
 - **THEN** the wrapper records one `status --porcelain=v2 -z
   --untracked-files=normal --ignored=matching` child naming that worktree as its
-  directory and carrying `-c core.untrackedCache=false -c
-  core.fsmonitor=false -c core.trustctime=true -c core.checkStat=default`,
+  directory and carrying `-c core.untrackedCache=false -c core.fsmonitor=false
+  -c core.trustctime=true -c core.checkStat=default -c core.ignoreCase=false`,
   `-c status.showStash=false` and the seven protocol pins, the enumeration
   succeeds, its output holding no `# stash` header, and
   `probes.performed` counts that child
@@ -1499,8 +1573,10 @@ and its residual window" states.
 - **AND** the same holds when the child prints no ignored record, or, a fake
   `git` printing it, an ignored record whose path begins `../`, for which the
   walk opens nothing, or when a test hook makes a filesystem call of the walk
-  fail or outlive its budget, or makes a directory's no-follow open fail as
-  for a symbolic link
+  fail or outlive its budget, or makes a directory's no-follow open fail as for
+  a symbolic link, or when the fake `git` exits 0 having printed the child's
+  ignored records and the line `warning: could not open directory 'u/sub/':
+  Permission denied` on standard error
 - **AND** when the work deadline passes while that cache enumeration child
   runs, the plan is incomplete with `deadline-exceeded`, the preview exits 1,
   and `--apply` refuses with exit 2 before any mutation

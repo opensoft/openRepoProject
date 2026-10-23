@@ -7,11 +7,14 @@ disposes of listed caches before a worktree removal" proves disposable, dirty
 work, detached state, an unknown default branch, and remote divergence as
 preservation or review states. It SHALL also treat as preservation states the
 main worktree; a locked worktree; a
-worktree whose index holds a gitlink or whose administrative directory holds a
-`modules` entry (`contains-submodule`); a worktree whose index flags any entry
-assume-unchanged or skip-worktree, sparse checkouts included
+worktree whose index holds a gitlink, whose administrative directory holds a
+`modules` entry, or a directory of which, holding an index entry, also holds an
+entry named `.git` (`contains-submodule`); a worktree whose index flags any
+entry assume-unchanged or skip-worktree, sparse checkouts included
 (`hidden-local-state`); a worktree whose registration disagrees in either
-direction, or whose effective work tree is not its registered path
+direction, whose effective work tree is not its registered path, or whose path
+is the common directory, the main worktree or another row's path, or an
+ancestor of one, or whose registered path is a symbolic link
 (`registration-mismatch`); a path that is not valid UTF-8
 (`unsupported-path-bytes`); a branch whose reflog shows no movement since its
 anchor, its last entry whose old object is all zeros, as any entry that creates
@@ -70,6 +73,25 @@ ignored path not proven a listed cache SHALL in every row.
 - **THEN** removal is refused with `target-excluded`, reason `main-worktree` or
   `locked-worktree`, and exit 2, and nothing is removed
 
+#### Scenario: A repository nested in a tracked directory
+
+- **WHEN** an otherwise eligible linked worktree has a tracked directory in
+  which `git init` was run and a commit made, so that the directory holds an
+  entry named `.git` that neither the status probe nor Git's own check reports
+- **THEN** `--all-safe` excludes the worktree as `contains-submodule`, and
+  `--all-safe --apply --yes` removes neither the worktree nor that nested
+  repository, whose commit stays reachable there
+
+#### Scenario: The main worktree inside a linked worktree
+
+- **WHEN** the main worktree of a repository with several local branches and a
+  stash entry sits inside a tracked directory of an otherwise eligible linked
+  worktree W, whose registration agrees in both directions
+- **THEN** W reads `registration-mismatch`, and neither `--all-safe --apply
+  --yes` nor `--apply --action remove --worktree W --yes` removes anything, so
+  that the main worktree, the common directory, every local branch and the
+  stash entry remain
+
 #### Scenario: Caches alone are not a preservation state
 
 - **WHEN** a non-current, merged, clean, published linked worktree's only
@@ -108,11 +130,12 @@ no record, or, for a target whose plan lists caches, the child of the cache
 enumeration that "Clean disposes of listed caches before a worktree removal"
 defines, which SHALL print exactly the ignored records that the plan listed and
 no other record,
-then the hidden-state probe, then the `worktree-only-commits` check
-that "Clean previews and applies a batch of eligible worktree removals in one
-repository" states, `logs/HEAD` read again and the non-zero objects that the
-plan's branch reflog named taken as they were, whose probe SHALL print
-nothing. It SHALL compare
+then the hidden-state probe, with the `lstat` of `<dir>/.git` for
+every directory that its listing shows holding an index entry, then the
+`worktree-only-commits` check that "Clean previews and applies a batch of
+eligible worktree removals in one repository" states, `logs/HEAD` read again
+and the non-zero objects that the plan's branch reflog named taken as they
+were, whose probe SHALL print nothing. It SHALL compare
 the recorded repository identity (`root`, `common_dir`, `dev`, `ino`), the
 target's worktree identity (`path`, `dev`, `ino`, `admin_id`), two-way
 registration and, where it
@@ -130,9 +153,9 @@ different branch name or head, `state-changed` for any other signature, lock,
 manifest, merge-target or listed-cache difference and for a cache stage that
 ends `refused` or `partial` as "Cache disposal never follows a symlink or leaves
 its worktree" states, whose exit status is the one "Clean disposes of listed
-caches before a worktree removal" gives, `contains-submodule` for a new gitlink
-or `modules` entry, `hidden-local-state` for a newly flagged index entry,
-`operation-in-progress` for a marker that the re-read listing finds, and
+caches before a worktree removal" gives, `contains-submodule` for a new gitlink,
+`modules` entry or `.git` entry, `hidden-local-state` for a newly flagged index
+entry, `operation-in-progress` for a marker that the re-read listing finds, and
 `worktree-only-commits` for a commit that only the target's HEAD reflog or
 `refs/worktree/` holds, or for a `logs/HEAD` read to its 64 KiB bound or holding
 a line that cannot be parsed. A value that was null in the plan and is null at
@@ -168,10 +191,10 @@ re-inspection, and SHALL refuse with `inspection-incomplete`, `inspect-cap` or
 `deadline-exceeded` and exit 2 when it is incomplete. Git's own non-force check
 SHALL be the last defense only on the pinned configuration that the removal
 command carries: `status.showUntrackedFiles=normal`,
-`core.untrackedCache=false`, `core.fsmonitor=false`, `core.trustctime=true` and
-`core.checkStat=default`; the protocol pins that every Git child, except the
-push child, carries (`-c protocol.allow=never` and the six per-protocol pins)
-are no part of that defense.
+`core.untrackedCache=false`, `core.fsmonitor=false`, `core.trustctime=true`,
+`core.checkStat=default` and `core.ignoreCase=false`; the protocol pins that
+every Git child, except the push child, carries (`-c protocol.allow=never` and
+the six per-protocol pins) are no part of that defense.
 
 #### Scenario: Worktree changes while confirmation is pending
 
@@ -280,6 +303,18 @@ are no part of that defense.
 - **THEN** P is `refused` with `operation-in-progress`, no child is spawned, Q
   is `not-attempted`, nothing is removed, and the exit status is 2, where
   before this change P was removed with exit 0
+
+#### Scenario: A nested repository made after the plan
+
+- **WHEN** a confirmed plan selects P and Q, in that order, and after the plan
+  and before P's revalidation `git init` runs in a tracked directory of P and a
+  commit is made there, so that the directory holds an entry named `.git` that
+  neither the status probe nor Git's own check reports, P's tree, index and
+  branch staying as the plan recorded them
+- **THEN** P is `refused` with `contains-submodule`, no child is spawned, Q is
+  `not-attempted`, nothing is removed, and the exit status is 2, so that the
+  nested repository and its commit remain, where before this change P was
+  removed with exit 0, the nested repository with it
 
 #### Scenario: A check that fails at revalidation
 
