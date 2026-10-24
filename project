@@ -88,7 +88,7 @@ def workbenches(explicit=None, required=True):
         if marker.is_file():
             candidates.append(Path(marker.read_text().strip()).expanduser())
         names = ("openBenches", "workBenches")
-        discovery = [p / name for p in projects_dirs() for name in names]
+        discovery = [p / name for name in names for p in projects_dirs()]
         current = Path.cwd()
         discovery += [current, *(p / name for p in (current, *current.parents) for name in names)]
         candidates += list(dict.fromkeys(discovery))

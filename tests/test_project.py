@@ -1950,6 +1950,13 @@ class WorkbenchesDiscoveryTests(unittest.TestCase):
                 cwd = self.base / f"cwd-{projects_name}-both"
                 self.assertEqual(self.resolve(cwd, home=home), new)
 
+    def test_new_checkout_wins_across_projects_conventions(self):
+        home = self.base / "split-roots-home"
+        self.checkout(home / "projects/workBenches")
+        new = self.checkout(home / "Projects/openBenches")
+        cwd = self.base / "split-roots-cwd"
+        self.assertEqual(self.resolve(cwd, home=home), new)
+
     def test_flag_environment_and_marker_precedence(self):
         home = self.base / "precedence-home"
         self.checkout(home / "projects/openBenches")
