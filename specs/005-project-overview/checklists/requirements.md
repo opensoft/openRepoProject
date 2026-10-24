@@ -1544,6 +1544,44 @@ Lane: openRepoProject-4
   O18 (A) and O21 reasons); and fold-map.md's sections. O19's outcome and
   O21's case stay held. No checklist category changes, and the totals are
   unchanged.
+- 2026-10-24, a forty-ninth pass, commit 3au, by the lead's 3at decisions,
+  section 2, items 5 and 6, from `220ad83` (3at). Feature 004's head `904aefc`
+  (lane openRepoProject-2's R-424), whose `project` is that of `d640539` (its
+  R-416), settles what 3as held. C-72 states O19's outcome there: `project
+  clean` gives a linked row whose path is the common directory, the main
+  worktree or another row's path, or an ancestor of one, and one whose
+  registered path is a symbolic link, `inspection-error`, unprobed, its `dirty`
+  null, excluded at `registration-mismatch`, the main worktree's row at a
+  shared path taking `main-worktree`; the overview's class follows it (FR-026),
+  FR-034 withholding `--all-safe` and SC-004 taking no new exclusion. Whether
+  the overview status-probes such a row, and which finding it shows, the rules
+  leave open where FR-007 does not name the row (a row that shares a realpath
+  it names, EC-031): C-72 records that as O23, open for Brett Heap's word, (A)
+  recommended, FR-007 as ratified built until he rules, and FR-007 and FR-032
+  hold to it. C-72's O21 (A) now carries both halves of his (A), the null class
+  and the lasting difference beside O12's (W151 OBS (1)); at `904aefc` the
+  merged-set block stands (`project:3717-3724` and :3760-3761), so that a
+  present row on a branch is `inspection-error` there, a detached row keeps its
+  ladder class and a row whose path is missing is `stale-worktree`
+  (:2488-2489), each null in A1, a row set to `inspection-error` directly
+  apart. FR-026 and the Dependencies' parity record say so, and SC-003 counts
+  three lasting differences, O21's with its condition (W151 OBS (2)); the
+  outcome now stands beside "builds O19 (A) now" (W151 OBS (3)). No text of the
+  spec says that the overview's rows equal `project status`'s in these cases
+  (by search). The round (n) record records `904aefc`, its "wait for" now
+  "waited for". #27 is re-checked at `7f3453c` (B26), with B25 at `37c0c23` on
+  the way, all eight ranges byte-identical by `cmp` against `d95eea2` and
+  `37c0c23`, its `project-overview` block the same blob (the header, the #24
+  bullet, the round (r) record); W151 OBS (4) was taken at 3at. The header and
+  the Assumptions name `904aefc`. C-72 was spec.md:961-1174 at 3au, 214 lines,
+  sha256 `240c39e6...`. #19 stays at `4512441`. Owed by the next spec commit,
+  3av: the re-pin of every #19 cite to `54e869b` by the map, with the map's
+  section 5 statements; W151 OBS (5) and W147's open OBS (the "C-72 is now"
+  passes, EC-028, unsupported-path-bytes, C-72's O18 (A) and O21 reasons); and
+  fold-map.md's sections. No checklist category changes, and the totals below
+  were recounted by script. Traceability is checked against A1's ratified
+  deltas at `e4a30fc` (64 of 64). A1 stays cited at `e4a30fc`, and
+  `clarify-questions.md` is unchanged.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -1668,4 +1706,5 @@ to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
 passes of that day, and after the thirteenth to thirty-fourth passes on
-2026-10-22 and the thirty-fifth to forty-seventh on 2026-10-23.
+2026-10-22, the thirty-fifth to forty-seventh on 2026-10-23 and the
+forty-ninth on 2026-10-24.

@@ -76,11 +76,12 @@ lines of feature 004's `project` being those of EC-031, EC-033 and the
 Dependencies, at `96a08d4`, those that EC-031 and the Dependencies cite for the
 re-check below, at `2cf34d3`, those of the parity cases at `d6bac50` (C-72,
 FR-026, the Dependencies), those of C-72, EC-033, FR-016, FR-026 and the
-Dependencies at `41759a4`, FR-007's at `3bc1d68`, and those of the dated
-records, each at the commit it names, `d8724e2` being named as a head with no
-line of it cited; the plan and, after feature 004's merge, the implementation
-re-pin every citation against the `main` of its day (proposal, "Dependencies
-and Sequencing").
+Dependencies at `41759a4`, those of C-72, FR-026 and the Dependencies at
+`904aefc`, whose `project` is that of `d640539`, FR-007's at `3bc1d68`, and
+those of the dated records, each at the commit it names, `d8724e2` being named
+as a head with no line of it cited; the plan and, after feature 004's merge,
+the implementation re-pin every citation against the `main` of its day
+(proposal, "Dependencies and Sequencing").
 
 **Re-checked on 2026-10-21**: Every pin above stays. Feature 004's branch head
 was then `2cf34d3`, which changes the documents after `96a08d4` by doc rounds 7
@@ -145,9 +146,9 @@ byte-identical at new lines once more, by `cmp`, its task 3.2 and its
 are byte-identical at new lines again but for one line of its Archive order
 sentence, which on lane openRepoProject-4's YES now names the blocks "written
 on PR #19's text" (its B-77), and at `97bf4ee`, `9473b2c`, `dc39ec3`,
-`383da59`, `04be7f6`, `dafe476`, `288fc34` and `d95eea2`, after its rounds B17
-to B24, they are byte-identical at new lines to their text at `57bfc15`
-(Dependencies).
+`383da59`, `04be7f6`, `dafe476`, `288fc34`, `d95eea2`, `37c0c23` and
+`7f3453c`, after its rounds B17 to B26, they are byte-identical at new lines
+to their text at `57bfc15` (Dependencies).
 
 **Created before feature 004 merges**: The change creates this feature only
 after feature 004 merges (proposal, Status and "Dependencies and
@@ -1093,18 +1094,39 @@ that lane agreed on 2026-10-21 to carry it in.
   (its `specs/project-overview/spec.md:434-437`) while `project clean` at
   `41759a4` makes each present row on a branch `inspection-error` (its
   `project:3685-3692` and :3727-3728 there; not at `d8724e2`), A1 also asking
-  the two classes to be equal: A1's null class stands (FR-026, SC-003). This
+  the two classes to be equal: A1's null class stands, the parity tests naming
+  the case as a lasting difference, beside O12's (FR-026, SC-003). This
   spec builds O19 (A) and O20 (A) now, ahead of A1's text, declared at FR-016,
   FR-032 and SC-004, and O21 (A) now, as A1 is ratified; O17 (A) and O18 (A)
   land with A1's re-alignment, which carries O17 to O20's texts and O21's
   record (the lane's A1 re-alignment draft, its items 17 to 21), and until then
   this spec follows A1 as ratified, the two next steps at 102 and 97 characters
-  and one stale text for every stale row. Two points wait for feature 004's
-  next head, which confines O19's two cases to `project clean`'s plan and may
-  change its merged-set block (lane openRepoProject-2's report to lane 4 of
-  2026-10-23): O19's outcome for such a row is stated at that head, and O21's
-  case is checked against it. With these, every held item of this feature, O1
-  to O21 and D5's clause 2, is chosen. One more item, O22, which #19's round
+  and one stale text for every stale row. At feature 004's head `904aefc`,
+  whose `project` is that of `d640539` and which confines O19's two cases to
+  `project clean`'s plan (lane openRepoProject-2's reports to lane 4 of
+  2026-10-23, its R-416 and R-424), `project clean` gives a linked row whose
+  path is the common directory, the main worktree or another row's path, or an
+  ancestor of one, and a linked row whose registered path is a symbolic link,
+  `inspection-error`, unprobed, its `dirty` null, excluding it at the
+  `registration-mismatch` gate, and the main worktree's row, where a linked
+  row shares its path, `inspection-error` too, at the `main-worktree` gate,
+  while a row that such a row holds is read and classified as before; the
+  overview's class follows it, by FR-026's parity, a row that shares its
+  realpath with another, the main worktree's included, being FR-007's
+  disagreement already (EC-031), so that FR-034 withholds `--all-safe` for the
+  repository as `inspection-incomplete`, as `project clean` refuses its plan,
+  and SC-004 takes no new exclusion; whether the overview status-probes the
+  other rows, and which finding it shows for them, is O23, below. Where the
+  merged-set listing fails, its ref listing read, `project clean` there still
+  gives each present row on a branch, the main worktree's included,
+  `inspection-error` (its `project:3717-3724` and :3760-3761 there), while a
+  detached row keeps the class the ladder gives it, `detached` in lane
+  openRepoProject-2's fixture, and a row whose path is missing is
+  `stale-worktree` (:2488-2489); A1's null class, which O21 (A) keeps, leaves
+  each of them null, a row that FR-007 sets to `inspection-error` directly
+  apart, so that these rows are the lasting difference that the parity tests
+  name for O21's case. With these, every held item of this feature, O1 to O21
+  and D5's clause 2, is chosen. One more item, O22, which #19's round
   (s) at `dab8a64` raised (the lead's R-408, on lane openRepoProject-3's W141
   MEDIUM-1) and which lane openRepoProject-4 put to Brett Heap at
   2026-10-23T22:39:41Z, with the lane's recommendation, is open for his word,
@@ -1124,13 +1146,32 @@ that lane agreed on 2026-10-21 to carry it in.
   baseline message for the main row until A1's re-alignment carries the
   change, the difference from `project clean` recorded until then;
   recommended, (A), and built until he rules, A1 as ratified (FR-028), whether
-  #19's change stands waiting on his ratification of #19. Where applied: C-40;
-  C-68; FR-006;
-  FR-007; FR-008; FR-009; FR-016; FR-020; FR-026; FR-028; FR-032; FR-034;
-  FR-035; FR-043; EC-012; EC-020; EC-032; SC-003; SC-004; User Story 4; User
-  Story 8; Key Entities, Repository identity; Dependencies; the
-  discovery-identity checklist's CHK009; the security checklist's CHK002 and
-  CHK019; the idempotency checklist's CHK008.
+  #19's change stands waiting on his ratification of #19. One more item, O23,
+  which feature 004's `904aefc` raised and which this spec records for Brett
+  Heap's word at its commit 3au, with the lane's recommendation, is open for
+  his word in the same way. O23, how the overview reads a linked row whose
+  path is the common directory or an ancestor of it, of the main worktree or
+  of another row's path, or whose registered path is a symbolic link, cases
+  that FR-007's registration cases do not name, though they name a row that
+  shares its realpath with another (EC-031): read as written, such a row whose
+  registration agrees takes FR-007's last case, one status probe, its `dirty`
+  read, its class `inspection-error` by FR-026's parity, with that class's
+  finding, where `project clean` leaves the row unprobed, its `dirty` null,
+  and excludes it as `registration-mismatch`; (A) read such a row as FR-007's
+  disagreement case, no status probe, `inspection-error` set directly, a
+  `registration-mismatch` finding in place of the class's `inspection-error`
+  finding and no error, as for a row that shares its realpath, A1's
+  re-alignment carrying it with O19 (A), or (B) keep FR-007's last case for
+  it, one status probe, its `dirty` read, and the class's `inspection-error`
+  finding, the difference from `project clean` recorded; recommended, (A),
+  which keeps `dirty` as `project clean` reports it, needs no Git child for
+  such a row and names the gate that excludes it, and until he rules this spec
+  builds FR-007 as A1 ratifies it, as (B) reads it (FR-007, FR-032). Where
+  applied: C-40; C-68; FR-006; FR-007; FR-008; FR-009; FR-016; FR-020; FR-026;
+  FR-028; FR-032; FR-034; FR-035; FR-043; EC-012; EC-020; EC-032; SC-003;
+  SC-004; User Story 4; User Story 8; Key Entities, Repository identity;
+  Dependencies; the discovery-identity checklist's CHK009; the security
+  checklist's CHK002 and CHK019; the idempotency checklist's CHK008.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -2504,7 +2545,13 @@ and [P] are change 1's requirements as the header names them.
   status probes, a row not present or whose realpath was not read being
   compared by neither, and only a linked row whose registration held having an
   admin id to compare: lane openRepoProject-2's ruling R-67 (c), taken as a
-  fill of change 2's rule (EC-031). Immediately before each status probe the
+  fill of change 2's rule (EC-031). A linked row whose path is the common
+  directory or an ancestor of it, of the main worktree or of another row's
+  path, or whose registered path is a symbolic link, which `project clean`
+  excludes as `registration-mismatch` at feature 004's `904aefc` (O19 (A);
+  FR-032), is not one of the cases above; whether the overview reads it as a
+  disagreement is O23, open for Brett Heap's word, and until he rules this
+  requirement reads as written (C-72). Immediately before each status probe the
   row's own identity MUST be verified again, and a row that this
   re-verification does not confirm MUST be `inspection-error` set directly with
   no status probe (lane openRepoProject-2's ruling R-101 (j)), with the class's
@@ -2987,8 +3034,14 @@ and [P] are change 1's requirements as the header names them.
   leaves every class null there too (its :434-437), while `project clean` at
   feature 004's `41759a4` makes each present row on a branch `inspection-error`
   (its `project:3685-3692` and :3727-3728 there), which `d8724e2` did not;
-  Brett Heap's word of 2026-10-23 keeps A1's null class there too (O21 (A)),
-  the case being checked against feature 004's next head (C-72). The
+  Brett Heap's word of 2026-10-23 keeps A1's null class there too, the parity
+  tests naming the case as a lasting difference (O21 (A); C-72): at feature
+  004's `904aefc` that block stands (its `project:3717-3724` and :3760-3761
+  there), each present row on a branch, the main worktree's included, being
+  `inspection-error`, a detached row keeping the class the ladder gives it and
+  a row whose path is missing being `stale-worktree` (:2488-2489), where this
+  requirement leaves each of them null, a row set to `inspection-error`
+  directly apart (FR-007). The
   ladder's `stale-worktree` text, which #19's round (q) extends by Q3 (b), is
   A1's until A1's re-alignment lands, and then takes Q3 (b)'s warning whole, on
   his word (O18 (A); FR-028; C-72).
@@ -3135,11 +3188,21 @@ and [P] are change 1's requirements as the header names them.
   2026-10-23 (O19 (A); C-72), from its own evidence, the paths of the rows the
   listing gives and FR-007's no-follow `lstat`, with no new Git child, as
   `project clean`'s classification, built now, ahead of A1's text, so that
-  SC-004 takes no new exclusion; the outcome for such a row is stated at
-  feature 004's next head (C-72). Its `contains-submodule` also excludes a
-  worktree a tracked directory of which holds an entry named `.git` (its
-  `specs/project-clean/spec.md:809-815` at `4512441`), an index gate that the
-  batch alone applies, as above.
+  SC-004 takes no new exclusion. At feature 004's `904aefc`, which confines
+  both cases to `project clean`'s plan, `project clean` gives such a linked
+  row `inspection-error`, unprobed, its `dirty` null, excluded at this gate,
+  and the main worktree's row, where a linked row shares its path,
+  `inspection-error` at the `main-worktree` gate (C-72); the overview's class
+  follows it (FR-026), so that this gate decides no `merged-removable` row
+  here either and FR-034 withholds `--all-safe` for the repository as
+  `inspection-incomplete`. A row that shares its realpath with another is
+  FR-007's disagreement already (EC-031); whether the overview status-probes
+  the others, and which finding it shows for them, is O23, open for Brett
+  Heap's word, and until he rules this spec reads FR-007 as A1 ratifies it,
+  one status probe and the class's `inspection-error` finding (C-72). Its
+  `contains-submodule` also excludes a worktree a tracked directory of which
+  holds an entry named `.git` (its `specs/project-clean/spec.md:809-815` at
+  `4512441`), an index gate that the batch alone applies, as above.
 - **FR-033**: For every row that gate checks, the branch's reflog,
   `logs/refs/heads/<branch>` under `common_dir`, MUST be read by one bounded
   filesystem read of at most 64 KiB (65,536 bytes), never by a Git child,
@@ -3704,14 +3767,13 @@ and [P] are change 1's requirements as the header names them.
 - **SC-003**: For 100% of worktree rows that `project clean <root> --json`
   inspects from the same directory at the same refs, the overview's
   classification equals clean's, apart from a cache-only worktree once #24's
-  realization is on `main` (FR-026; Clarifications, C-71) and from the two
+  realization is on `main` (FR-026; Clarifications, C-71) and from the three
   lasting differences that the parity tests name, the rows of a run whose
-  working directory's realpath cannot be established (O9 (A)) and those of a
-  repository whose ref listing failed (O12 (A); FR-026; Clarifications, C-72),
-  and those of a repository whose merged-set listing failed, its ref listing
-  read, A1's null class staying there (O21 (A); FR-026; Clarifications, C-72),
-  and for 100% of repositories with a merge target its name equals the one
-  clean reports.
+  working directory's realpath cannot be established (O9 (A)), those of a
+  repository whose ref listing failed (O12 (A)) and those of a repository
+  whose merged-set listing failed while its ref listing was read, A1's null
+  class staying there (O21 (A); FR-026; Clarifications, C-72), and for 100% of
+  repositories with a merge target its name equals the one clean reports.
 - **SC-004**: 0 suggestions carry `--apply` or `--yes` or name a project by
   bare name; 0 rows with a null root, or a root or common directory that is not
   valid UTF-8, carry a clean suggestion; and in every fixture, each worktree
@@ -3818,11 +3880,12 @@ and [P] are change 1's requirements as the header names them.
   those that EC-031 and the Dependencies cite for the re-check of 2026-10-21,
   at `2cf34d3`, those of the parity cases at `d6bac50` (C-72, FR-026, the
   Dependencies), those of C-72, EC-033, FR-016, FR-026 and the Dependencies at
-  `41759a4`, FR-007's at `3bc1d68`, and those of the dated records, each at the
-  commit it names, `d8724e2` being named as a head with no line of it cited
-  (header); the plan and, after feature 004's merge, the implementation re-pin
-  every citation against the `main` of its day (proposal, "Dependencies and
-  Sequencing").
+  `41759a4`, those of C-72, FR-026 and the Dependencies at `904aefc`, whose
+  `project` is that of `d640539`, FR-007's at `3bc1d68`, and those of the dated
+  records, each at the commit it names, `d8724e2` being named as a head with no
+  line of it cited (header); the plan and, after feature 004's merge, the
+  implementation re-pin every citation against the `main` of its day (proposal,
+  "Dependencies and Sequencing").
 - Feature 004's names (classifications, gate and refusal codes, row error
   codes, `schema_version`, exit statuses, the shared constants) are taken from
   its spec, data model and contract at `d81b3d9`, apart from EC-031 and EC-033,
@@ -3991,7 +4054,15 @@ and [P] are change 1's requirements as the header names them.
   each present row on a branch `inspection-error` (its `project:3685-3692` and
   :3727-3728 there), which `d8724e2` did not, while the overview leaves every
   class null there too, as A1 does, Brett Heap's word of 2026-10-23 keeping
-  A1's null class (O21 (A); C-72; FR-026).
+  A1's null class, a lasting difference that the parity tests name (O21 (A);
+  C-72; FR-026). At its head `904aefc`, whose `project` is that of `d640539`,
+  where lane openRepoProject-2's R-409 confines Q2 (1) and Q9 (b) to `project
+  clean`'s plan, that block is unchanged (`project:3717-3724` and :3760-3761
+  there): each present row on a branch, the main worktree's included, is
+  `inspection-error`, while a detached row keeps the class the ladder gives it
+  and a row whose path is missing is `stale-worktree` (:2488-2489), each of
+  which the overview leaves null, a row that FR-007 sets to `inspection-error`
+  directly apart.
 - **Change 1's archive order**: change 2 archives after change 1. This
   feature realizes change 2's MODIFIED `project-review-safety` requirement,
   not change 1's `project-clean-review-safety` (proposal, Capabilities;
@@ -4199,7 +4270,24 @@ and [P] are change 1's requirements as the header names them.
     :937-949 and :967-968, its `design.md` ranges at :1199-1202, :1278-1281
     and D14's :1938-1944, and its task 3.2 at :198-213, each byte-identical to
     its text at `288fc34`; its `project-overview` block is the same blob,
-    `a40458cb`.
+    `a40458cb`. Re-checked again at `7f3453c`, its head after round B26
+    (`d3de27d` in its spec deltas, `db8380a` in its design, `7f3453c` in its
+    proposal and tasks; 2026-10-23T22:49:28Z), with round B25 at `37c0c23`
+    (`7f74be2`, `18854da` and `37c0c23`; 19:32:50Z) recorded on the way, B25
+    re-basing its classification, retire and revalidation blocks on PR #19's
+    round (r) at `4512441` and its batch, bounds, reconcilable-result and
+    preservation blocks on round (q) at `818311a` (its B-122 and B-126), and
+    B26 its classification, batch, preservation and revalidation blocks on
+    round (s) at `dab8a64`, whose text round (t)'s `54e869b` keeps (B-135 and
+    B-139), the other blocks keeping their bases, by lane openRepoProject-5's
+    two line maps and this spec's own `cmp` of each range against `d95eea2`
+    and `37c0c23`: its `proposal.md` ranges sit at :893-896, :924-927,
+    :1044-1056 and :1074-1075 (:857-860, :888-891, :999-1011 and :1029-1030 at
+    `37c0c23`), its `design.md` ranges at :1345-1348, :1424-1427 and D14's
+    :2125-2131 (:1288-1291, :1367-1370 and :2059-2065 at `37c0c23`), and its
+    task 3.2 at :222-237 (:213-228 at `37c0c23`), each byte-identical to its
+    text at `d95eea2`; its `project-overview` block is the same blob,
+    `a40458cb`, and no re-based block is one that this spec reads.
   - `add-project-overview-remote-merge-status` (issue #25, draft PR #29)
     MODIFIES "Overview bounds its work and reports what it omitted", "Overview
     prints a versioned JSON envelope" and "Overview is local and read-only"
@@ -5284,7 +5372,7 @@ and [P] are change 1's requirements as the header names them.
   and its `STATUS_PINS` (`project:1156` there) carries the fifth pin, `-c
   core.ignoreCase=false`, O20's. His word of 2026-10-23T21:10:35Z chooses all
   five (C-72): O17 and O18 land with A1's re-alignment, O20 is taken now with
-  this `STATUS_PINS` (FR-016), and O19's outcome and O21's case wait for
+  this `STATUS_PINS` (FR-016), and O19's outcome and O21's case waited for
   feature 004's next head, which confines O19's two cases to `project clean`'s
   plan (lane openRepoProject-2's report to lane 4 of 2026-10-23). The other
   `TEXT` and `NEXT_STEPS` rows that `41759a4` adds, removes or changes, its
@@ -5295,7 +5383,17 @@ and [P] are change 1's requirements as the header names them.
   `STATUS_PINS`, `TEXT` and `status_warned` among them, the last counting a
   blank line inside the kept head as a warning line, which at `d6bac50`
   (`project:3012`) it did not (Q8; EC-033), the plan keeping its `project:N`
-  cites at `d6bac50` until tasks are written. #19's round (p) at `e0b1671`, on
+  cites at `d6bac50` until tasks are written. That next head, `904aefc`
+  (2026-10-23T22:46:29Z; lane openRepoProject-2's report to lane 4 of
+  2026-10-23, its R-424), has `41759a4` and `d640539` as ancestors and merges
+  doc rounds 27 and 28 with the code of R-409 and M3 (a), its `project` being
+  that of `d640539` byte for byte, its suite giving 520 OK (1 skipped) and
+  validate 7 of 7 by that report: there `project clean` alone excludes O19's
+  two cases, `project status`, `doctor` and `update` reading such a row as
+  before Q2 (1) and Q9 (b), the merged-set block stands at `project:3717-3724`
+  and :3760-3761, `STATUS_PINS` at :1169 and `status_warned` at :3139, and
+  C-72 states O19's outcome and O21's case at it, O23 open beside them. #19's
+  round (p) at `e0b1671`, on
   Brett Heap's answers of 2026-10-23 to the lead's R-365 (11:49:16Z, "Yes, warn
   (Recommended)" on F-1's (b) beside an unread row and "Yes, add T9
   (Recommended)" on `project status`'s stale recommendation; with the lead's
@@ -5380,17 +5478,20 @@ and [P] are change 1's requirements as the header names them.
   texts it quotes stand byte-identical at `54e869b` (lane openRepoProject-4's
   map of rounds (s) and (t)); the next spec commit re-pins them by that map.
   Lane openRepoProject-5's round B25 re-based #27's blocks of change 1 on
-  `818311a` at `37c0c23` (2026-10-23T19:32:50Z), all eight of this spec's #27
-  pins byte-identical there (the lead's check at 19:39:36Z; lane
-  openRepoProject-3's W147), and its round B26, which follows #19's round (s),
-  has not landed, so this spec keeps #27 at `d95eea2`, and #29 keeps its block
-  of [E] on `c462d87` until change 1's archive, its task 2.4 re-basing it
-  then, as its round C23 record says; round (r)'s edits to [L], to `Clean can
-  explicitly retire verified worktrees` (LOW-1), to `Cleanup revalidates
-  destructive actions` and to [E] reach #27's classification, retire and
-  revalidation blocks and #29's block of [E], whose re-bases owe those edits
-  as well, and rounds (s) and (t)'s edits to [L] and the review-safety spec
-  reach them too. This
+  #19's rounds (q) and (r), at `818311a` and `4512441`, at `37c0c23`
+  (2026-10-23T19:32:50Z), and its round B26 its classification, batch,
+  preservation and revalidation blocks on round (s) at `dab8a64`, whose text
+  `54e869b` keeps, at `7f3453c` (22:49:28Z), all eight of this spec's #27 pins
+  byte-identical at both (the lead's checks at 19:39:36Z and 22:53Z; lane
+  openRepoProject-3's W147; the #24 bullet), each of #27's blocks of change 1
+  now carrying #19's text as it stands at `54e869b` (its B-135 and B-139;
+  lane openRepoProject-2's R-421), round (r)'s edits to [L], to `Clean can
+  explicitly retire verified worktrees` (LOW-1) and to `Cleanup revalidates
+  destructive actions` and round (s)'s among them, so that this spec's re-check
+  of #27 moves to `7f3453c`; #29 keeps its block of [E] on `c462d87` until
+  change 1's archive, its task 2.4 re-basing it then, as its round C23 record
+  says, and round (r)'s edits to [E] reach that block, whose re-base owes them
+  as well. This
   spec keeps its reading of #19 at `2250830`, citing beside it at `4512441` the
   lines that stand there (FR-028; the A1 bullet), and its feature 004 pins as
   they stand; later plan revisions, each recorded in the plan's research.md (R1
