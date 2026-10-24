@@ -87,13 +87,16 @@ def workbenches(explicit=None, required=True):
         marker = Path(sys.argv[0]).resolve().parent / ".workbenches-path"
         if marker.is_file():
             candidates.append(Path(marker.read_text().strip()).expanduser())
-        candidates += [p / "workBenches" for p in projects_dirs()]
-        candidates += [Path.cwd(), *(p / "workBenches" for p in Path.cwd().parents)]
+        names = ("openBenches", "workBenches")
+        discovery = [p / name for p in projects_dirs() for name in names]
+        current = Path.cwd()
+        discovery += [current, *(p / name for p in (current, *current.parents) for name in names)]
+        candidates += list(dict.fromkeys(discovery))
     for root in candidates:
         if (root / "config/bench-config.json").is_file():
             return root.resolve()
     if required or supplied:
-        raise Refused("Cannot find workBenches; set WORKBENCHES_ROOT or --workbenches PATH.")
+        raise Refused("Cannot find openBenches or workBenches; set WORKBENCHES_ROOT or --workbenches PATH.")
     return None
 
 
