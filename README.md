@@ -3,7 +3,7 @@
 The `project` command creates, inspects, diagnoses and maintains projects using
 [openRepoShape](https://github.com/opensoft/openRepoShape),
 [openRepoTools](https://github.com/opensoft/openRepoTools), and
-[workBenches](https://github.com/opensoft/workBenches).
+[openBenches](https://github.com/opensoft/openBenches).
 
 ## Install
 
