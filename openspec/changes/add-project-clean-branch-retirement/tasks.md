@@ -14,8 +14,9 @@ duplicate them.
   `design.md` D7 also stating its fit at PR #19's `6f2cb54`, `a664799`,
   `9267303` and `f0bf538` (rounds A9 to A12, rulings A-37 to A-42) and on its
   measured basis at `662be89`, unchanged at `88d0d36`, at `818311a`, at
-  `4512441` and at its current head `54e869b` (rounds A16 to A27, rulings A-47,
-  A-57, A-62, A-64, A-67, A-71, A-75, A-78, A-84, A-86, A-106, A-110 and A-119),
+  `4512441`, at `54e869b` and at `1476110` (rounds A16 to A27 and A29,
+  rulings A-47, A-57, A-62, A-64, A-67, A-71, A-75, A-78, A-84, A-86, A-106,
+  A-110, A-119 and A-134),
   the joint fit with the
   cache change also at that change's own 3.7 s
   (round A13, ruling A-44),
@@ -39,7 +40,9 @@ duplicate them.
   single-target command, a holder whose path is missing and one whose
   registration names another worktree's path given steps of their own, and
   the `Retired` line's `update-ref` form only defensive for `HEAD` under
-  either setting (round A28, rulings A-126 and A-128);
+  either setting (round A28, rulings A-126 and A-128), the ref listing
+  giving a branch named `HEAD` its own upstream only in the worktree on
+  `refs/heads/HEAD` (round A29, ruling A-132);
   verified by its Capabilities section accounting for every canonical
   requirement of `project-clean` and `project-clean-review-safety` and every
   requirement change 1 adds to them.
@@ -245,7 +248,16 @@ duplicate them.
   A-120 to A-125 recorded, by `bde4b3d` and `b564ae1` (the spec delta),
   `4f16558` and `ae5894d` (the design) and the commit that edits the
   proposal's body, records the round's table and updates this task; verified
-  by "Re-read and Codex Findings (round A28)" in `proposal.md`.
+  by "Re-read and Codex Findings (round A28)" in `proposal.md`. Round A29, on
+  `267ebfe`, applied the lane's rulings A-131 (lane openRepoProject-3's W160,
+  OBS-9, on main at `b42355e`; the reader RN's RN-3; A-129's calls (2) and
+  (4)), A-132 (that lane's W166 confirm read of round A28, 0 HIGH, 0 MEDIUM,
+  1 LOW and 4 OBS), A-133 (round A29's checkpoint) and A-134 (that lane's
+  W169 read of PR #19's round (u) at `1476110`), with A-129 and A-130
+  recorded, by `38b3932` (the spec delta), `b1c8732` (the design) and the
+  commit that edits the proposal's body, records the round's table and
+  updates this task; verified by "Re-read and Codex Findings (round A29)" in
+  `proposal.md`.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md`
   modifies five requirements and adds one (72 scenarios: 43 carried unchanged
   from change 1 and PR #19, 6, 14, 10, 5 and 8 by block, and 29 added, the
@@ -310,7 +322,8 @@ duplicate them.
   and one to "A clean holder the plan would remove", whose AND that prints
   the `branch-shared` line it also rewrites, and rewriting one AND of "A
   branch name in a printed command is quoted for the shell", under rulings
-  A-126 and A-128),
+  A-126 and A-128, and round A29 adding no scenario, editing the ADDED
+  requirement's `Retired` line's sentence, under rulings A-131 and A-132),
   `specs/project-clean-review-safety/spec.md` modifies one (4 scenarios: 3
   carried, 1 added, whose THEN round A24 edits and to which it adds an AND),
   and `specs/project-command/spec.md` modifies one on
@@ -327,9 +340,9 @@ duplicate them.
   each modified requirement's source text kept byte for byte; `design.md`
   holds D1 to D10 (`8341954`, `d0b33ce`, and the commit titled 'Settle which
   later targets carry branch-retention-stop'), revised by the alignment fix
-  round (1.2), the council round (1.3) and rounds A3 to A28; verified
+  round (1.2), the council round (1.3) and rounds A3 to A29; verified
   by `grep -c '^#### Scenario:'` on each spec file and by a scenario-carry
-  script run after the council round and again after rounds A3 to A28
+  script run after the council round and again after rounds A3 to A29
   over all seven MODIFIED blocks, every source scenario present byte for byte
   and in order.
 - [x] 1.5 Validation passes: `/usr/bin/openspec validate
@@ -338,7 +351,7 @@ duplicate them.
   `/usr/bin/openspec status --change add-project-clean-branch-retirement
   --json` shows every artifact done; verified by running the three on this
   branch after 1.4, after the alignment fix round, after the council round
-  and after rounds A3 to A28
+  and after rounds A3 to A29
   (build 1.13.1, which notes only as INFO that archive would refuse the
   MODIFIED blocks whose base still sits in change 1).
 - [ ] 1.6 Ratified by Brett Heap's word on the pull request, quoted with its
@@ -370,7 +383,10 @@ duplicate them.
   scenario "A relative configuration path", a changed "The plain report
   exits by completeness" (the reader RD's L1 of 2026-10-23; ruling A-100) and,
   since its round (t), the scenario "A worktree whose path holds the main
-  worktree" (Brett Heap's M3 (a), R-413; ruling A-119), is
+  worktree" (Brett Heap's M3 (a), R-413; ruling A-119) and, since its round
+  (u), the scenario "A refusal beside a worktree whose path holds the main
+  worktree" and M4 (a)'s qualifier in "An unreadable worktree is one row"
+  (Brett Heap's M4 (a), `lanes/log/openRepoProject-2.md:201`; round A29), is
   re-read against change 1's archived text, that amendment included, and
   re-copied from it with this change's one clause, so that no
   amendment of change 1 is reverted by this change's archive (lane
@@ -387,7 +403,11 @@ duplicate them.
   "Clean bounds its Git work and reports omitted work" and "Repository
   inspection requires Git 2.36 and shares one evidence model", are re-read
   against the text that landed and re-based if that text moved past
-  `c462d87`; when it closes unmerged, both are re-based on change 1's archived
+  `c462d87`, the re-base carrying in, among PR #19's later text, lane
+  openRepoProject-2's R-61 (b), which its round (u) states in the second
+  block at `1476110` (its `specs/project-command/spec.md:251-256`) and which
+  this change's copy does not hold (lane openRepoProject-3's W169; ruling
+  A-134); when it closes unmerged, both are re-based on change 1's archived
   text; a re-base that changes either block's text returns that block to
   Brett Heap for ratification before the handoff (lane openRepoProject-3's
   re-read, LOW-8); verified by a diff of each block's carried text against the
@@ -516,9 +536,12 @@ duplicate them.
 - [ ] 3.3 The change is archived with `/opsx:archive` only after 3.1 and 3.2,
   and after PR #19 is resolved: after its amendment of change 1 has landed,
   or, if it closed unmerged, after both blocks on its text were re-based on
-  change 1's archived text (2.2, 2.4; lane openRepoProject-3's re-read,
-  LOW-8); verified by `/usr/bin/openspec validate --all --strict` passing
-  after the archive.
+  change 1's archived text and the AND of "A clean holder the plan would
+  remove" that rests on its `worktree-only-commits` gate was restated on
+  change 1's gates, which returns that scenario to Brett Heap (2.2, 2.4;
+  lane openRepoProject-3's re-read, LOW-8, and its W166, OBS-3; rulings
+  A-132 and A-133); verified by `/usr/bin/openspec validate --all --strict`
+  passing after the archive.
 
 ## Speckit Handoff
 
