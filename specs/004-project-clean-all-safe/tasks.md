@@ -12,12 +12,14 @@ Migration Plan, clarifications.md N1 to N5, and the three spec deltas. It
 governs wherever a task is shorter, and where the design and a delta scenario
 differ, the scenario governs. The push child follows draft PR #19 (branch
 `change/amend-clean-all-safe-push-pins`), as plan.md's LQ-3 assumption and
-research.md R1 record. The plan review of `dd923ee` (`plan-review-004`: 2
-blockers, 21 majors, 13 minors and 1 unverified finding) and the lead's rulings
-R-29 to R-31, from the lead's harness spike (`harness-spike`), are folded in
-wherever they change what is built or tested: each task names the finding or
-ruling it follows, the plan artifacts take the same fixes in their own round,
-and where a finding and a ruling differ, the ruling governs.
+research.md R1 record, an assumption that Brett Heap ruled on 2026-10-31
+(research.md R1 gives his words). The plan review of `dd923ee`
+(`plan-review-004`: 2 blockers, 21 majors, 13 minors and 1 unverified finding)
+and the lead's rulings R-29 to R-31, from the lead's harness spike
+(`harness-spike`), are folded in wherever they change what is built or tested:
+each task names the finding or ruling it follows, the plan artifacts take the
+same fixes in their own round, and where a finding and a ruling differ, the
+ruling governs.
 
 **Tests**: Required. FR-066 and SC-012 require at least one automated test
 named after each of the 100 delta scenarios: 65 in `project-clean`, 18 in
@@ -278,10 +280,12 @@ regions and contracts every lane writes against.
   main worktree's recommendation" (PR #19 at `dab8a64`; lead R-408) and round
   (t)'s "A worktree whose path holds the main worktree" (PR #19 at `54e869b`;
   lead R-413), whose builds are on 004 at `02aa71d` and `d640539`: 126 rows.
-  The verify names PR #19's titles, so that it holds before and after PR #19
-  lands.
+  Doc round 30 adds round (u)'s "A refusal beside a worktree whose path holds
+  the main worktree" (PR #19 at `1476110`; Brett Heap's M4 (a), lead R-432),
+  whose test is not named after it: 127 rows. The verify names PR #19's titles,
+  so that it holds before and after PR #19 lands.
   — files: `specs/004-project-clean-all-safe/traceability.md`
-  — verify: `python3 -c "import glob,re,sys;V=chr(124);L=open('specs/004-project-clean-all-safe/traceability.md').read().splitlines();R=[[c.strip() for c in l.strip().strip(V).split(V)] for l in L if l.startswith(V)][2:];T=[l[15:].strip() for f in sorted(glob.glob('openspec/changes/add-project-clean-all-safe/specs/*/spec.md')) for l in open(f) if l.startswith('#### Scenario: ')];T+=[x for x in ['The push child reaches its remote','A relative configuration path','Push refuses a branch it may not push','Branch deletion refuses a branch it may not delete','An operation in progress','A squash merge that holds an autostash','An operation started after the plan','A check that fails at revalidation','Owner tools see the repository the check inspected','A linked worktree whose work tree is redirected','A commondir that names another repository','A relative configuration path in status, doctor and update','An edit that keeps its size and restores its mtime','Trace targets are never written','A commit held only by the worktree','A worktree-only commit made after the plan','A work-tree probe at revalidation','A repository nested in a tracked directory','The main worktree inside a linked worktree','Two worktree paths that differ only in case','A case-variant untracked file','A stale entry beside a worktree whose path cannot be read','A nested repository made after the plan','A stale entry'+chr(39)+'s recommendation','The main worktree'+chr(39)+'s recommendation','A worktree whose path holds the main worktree'] if x not in T];e=[x for x in (L[0]=='Lane: openRepoProject-2' or 'lane line',len(R)==126 or 'rows',all(len(r)==5 for r in R) or 'columns',len(T)==126 or 'delta titles',sorted(r[2] for r in R)==sorted(T) or 'titles') if not x is True];print(len(R),'rows',e);sys.exit(1 if e else 0)"`
+  — verify: `python3 -c "import glob,re,sys;V=chr(124);L=open('specs/004-project-clean-all-safe/traceability.md').read().splitlines();R=[[c.strip() for c in l.strip().strip(V).split(V)] for l in L if l.startswith(V)][2:];T=[l[15:].strip() for f in sorted(glob.glob('openspec/changes/add-project-clean-all-safe/specs/*/spec.md')) for l in open(f) if l.startswith('#### Scenario: ')];T+=[x for x in ['The push child reaches its remote','A relative configuration path','Push refuses a branch it may not push','Branch deletion refuses a branch it may not delete','An operation in progress','A squash merge that holds an autostash','An operation started after the plan','A check that fails at revalidation','Owner tools see the repository the check inspected','A linked worktree whose work tree is redirected','A commondir that names another repository','A relative configuration path in status, doctor and update','An edit that keeps its size and restores its mtime','Trace targets are never written','A commit held only by the worktree','A worktree-only commit made after the plan','A work-tree probe at revalidation','A repository nested in a tracked directory','The main worktree inside a linked worktree','Two worktree paths that differ only in case','A case-variant untracked file','A stale entry beside a worktree whose path cannot be read','A nested repository made after the plan','A stale entry'+chr(39)+'s recommendation','The main worktree'+chr(39)+'s recommendation','A worktree whose path holds the main worktree','A refusal beside a worktree whose path holds the main worktree'] if x not in T];e=[x for x in (L[0]=='Lane: openRepoProject-2' or 'lane line',len(R)==127 or 'rows',all(len(r)==5 for r in R) or 'columns',len(T)==127 or 'delta titles',sorted(r[2] for r in R)==sorted(T) or 'titles') if not x is True];print(len(R),'rows',e);sys.exit(1 if e else 0)"`
 - [x] T003 [P] [S] Add the `git-floor` job to `.github/workflows/tests.yml`
   (FR-067, research.md R11), starting from the lead's ci-spike `workflow.patch`
   (48 added lines, applied with `git apply -p1`; its NOTES.md records the
@@ -632,6 +636,14 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   literal that T127 finds for it. The comment on `partial_removal_note_locked`
   says that Brett Heap ruled F-2 on 2026-10-22, "F-2: yes" (lane 3's W140
   LOW-4; lead R-409; writer's `5884a79`); no text changes.
+  Brett Heap's M4 (a) (ruled on 2026-10-31T18:20:06Z, "(a) Add M3's exception
+  (Recommended)"; lead R-432; #19's round (u) at `1476110`; writer's `949c58a`)
+  adds `remedy_inspection_incomplete_redirect_holds` and
+  `remedy_inspection_incomplete_redirect_unread_holds` to `TEXT_FIXTURES`: the
+  699- and 534-character forms of the two redirect remedies with M3's exception
+  after "or remove the row by hand after review", copied exactly from the lead's
+  `wave26/m4-texts.json` by script. The same test pins each against `project`'s
+  `TEXT`, and the two are the literals that T127 finds for #19's D18 spans.
   — files: `tests/clean_support.py`
   — verify: `python3 -c "import sys;sys.path.insert(0,'tests');import clean_support as c;M=[n for n in sys.argv[1:] if not (hasattr(c,n) or hasattr(c.CleanCase,n))];[print('missing:',m) for m in M];sys.exit(1 if M or not sys.argv[1:] else 0)" install_counting_git child_log install_fake_git path_without_git && python3 -m unittest discover -s tests -p 'test_clean_harness.py' && python3 -c "import sys;sys.path.insert(0,'tests');import clean_support as c;M=[k for k in sys.argv[1:] if k not in c.FAKE_KINDS];[print('absent kind:',m) for m in M];sys.exit(1 if M or not sys.argv[1:] else 0)" status-slow-again-in ls-files-stuck-again-in`
 
@@ -1074,6 +1086,13 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   manifest whose `tracking_branch` is `detached`, a branch of that name and a
   detached worktree: the merge target is that branch, and the detached row is
   `detached`, not `protected-default`).
+  Lane 3's W161 (row 004-08; lead R-432, ruled (b); writer's `b7cf86e`) confines
+  R-57 L3 and R-67 (c) to clean's plan: the four in-process `worktree_rows()`
+  calls of `test_clean_evidence_checks_registration_both_ways`'s two subtests,
+  the shared registry path's and the twin spellings', pass `for_clean=True`,
+  their assertions unchanged, since the default is the reading of `status`,
+  `doctor` and `update`, as R-409's API has it; every clean CLI test passes
+  unchanged.
   — files: `tests/test_clean_evidence.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_evidence.py 'test_clean_evidence_probes_once_per_common_directory' 'test_clean_evidence_checks_registration_both_ways' 'test_clean_evidence_reads_presence' 'test_clean_evidence_reads_presence_without_search_permission' 'test_clean_evidence_row_fields' 'test_clean_evidence_a_branch_named_head_takes_no_upstream' 'test_clean_evidence_rows_for_chosen_records_in_the_given_order' 'test_clean_presence_from_lstat_decides_on_literal_results' 'test_clean_registration_verdict_decides_on_literal_realpaths' 'test_clean_main_worktree_decision_decides_on_literal_values' 'test_clean_row_evidence_assembles_a_row_from_literal_reads' 'test_clean_evidence_memo_by_device_and_inode_and_the_row_5_switch' 'test_clean_a_failed_row_7_makes_each_present_row_on_a_branch_inspection_error' 'test_clean_a_branch_named_detached_is_classified_by_its_upstream' 'test_clean_a_merge_target_named_detached_protects_no_detached_row'`
 - [x] T030 [P] [O] Add the evidence model's scenario tests to
@@ -1367,7 +1386,12 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   `build_plan()` and `registry_twin()` pass and `repo_state()` does not, so
   `status`, `doctor` and `update` report such a row as the baseline does
   (`f3724fc`'s values, where `41759a4` made both `inspection-error` and
-  `doctor` exit 1); R-67 (c)'s shared-path and twin rows stay in every command.
+  `doctor` exit 1); R-57 L3's shared-path and R-67 (c)'s twin rows stayed in
+  every command until 2026-10-31, when lane 3's W161 (row 004-08; lead R-432,
+  ruled (b); writer's `b7cf86e`) confined them to clean's plan as well:
+  `worktree_rows()` reads `shared_paths()` and `shared_identities()` only where
+  `for_clean` is true, so that `status`, `doctor` and `update` read such rows as
+  the baseline does, and `clean` keeps both `registration-mismatch`.
   Brett Heap's M3 (a) (lead R-413; writer's `d640539`) adds
   `WorktreeRow.holds`, set by `worktree_rows()` for a row in
   `enclosing_rows()`, `shared_identities()` or `shared_paths()`, never
@@ -2228,6 +2252,16 @@ L-8).
   `remedy_inspection_incomplete_redirect_unread` where the variant would
   print, neither naming `git worktree prune`; the variant's counting is as
   before.
+  Brett Heap's M4 (a) (ruled on 2026-10-31T18:20:06Z, "(a) Add M3's exception
+  (Recommended)"; lead R-432; writer's `949c58a`) gives each of the two redirect
+  remedies a `_holds` form, `remedy_inspection_incomplete_redirect_holds` and
+  `remedy_inspection_incomplete_redirect_unread_holds`: `incomplete_refusal()`
+  takes it where any row the refusal counts is excluded as
+  `registration-mismatch` and has `WorktreeRow.holds`, and every other refusal
+  prints the text it printed before.
+  `test_clean_the_preview_says_what_keeps_each_row_single_mode_shared_path`,
+  this task's companion, now expects the `_holds` form for the two rows that
+  share P's path.
   — files: `project`
   — verify: `python3 -c "import sys,re;t=open('project').read();A=sys.argv[1:];c=lambda r:t.split('# region '+r+'\n')[1].split('# endregion '+r+'\n')[0];M=[a for a in A if not ((a.split('%',1)[1] not in c(a.split('%',1)[0])) if '%' in a else (a.split('~',1)[1] in c(a.split('~',1)[0])) if '~' in a else re.search(r'^[a-z]*\s?'+re.escape(a.split(':',1)[1])+r'\b',c(a.split(':',1)[0]),re.M))];[print('region check failed:',m) for m in M];sys.exit(1 if M or not A else 0)" 'plan:path_unread' 'plan:unread_paths' 'plan:incomplete_refusal' && python3 -m unittest discover -s tests -p 'test_clean_batch.py'`
 - [x] T054 [P] [US1] [O] Add `ask_removal(plan, run)` and fill `confirm_removal()`
@@ -2659,8 +2693,27 @@ carrying the reason the gate order gives.
   rows print the class's step. Scenario, PR #19's round (t): "A worktree whose
   path holds the main worktree", whose tests are not named after it
   (traceability.md).
+  Brett Heap's M4 (a) (ruled on 2026-10-31T18:20:06Z, "(a) Add M3's exception
+  (Recommended)"; lead R-432; writer's `949c58a`) adds
+  `test_clean_the_refusal_beside_a_row_that_holds_another_takes_m3_s_exception`:
+  two repositories, one with w1 holding a second worktree (Q2 (1)), a registry
+  path listed twice (R-57 L3), a worktree redirected by `core.bare` and one
+  moved with a symbolic link left at its registered path (Q9 (b)), the other
+  with the last two alone. The `--all-safe` preview and apply of each, and in
+  the first a single removal naming each row, print the `_holds` form where a
+  counted row holds or shares another's path, and today's text where only the
+  redirect or the symbolic link is counted, each in human text and in `--json`,
+  and, beside a row whose path cannot be read (`not_root`), the unread forms;
+  nothing is removed. It also pins each `_holds` text to its plain text with the
+  clause replaced once (699 and 534 characters).
+  `test_clean_the_main_worktree_inside_a_linked_worktree` now asserts the exact
+  `_holds` form for W, in human text and `--json` and beside an unread row, and
+  `test_clean_every_protected_classifier_incomplete_copy`'s shared-path subtest
+  expects it too. Scenario, PR #19's round (u): "A refusal beside a worktree
+  whose path holds the main worktree", whose tests are not named after it
+  (traceability.md).
   — files: `tests/test_clean_gates.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_every_protected_classifier' 'test_clean_every_protected_classifier_incomplete_copy' 'test_clean_a_redirected_worktree_s_incomplete_plan_names_the_unset' 'test_clean_a_redirected_row_the_deadline_stopped_is_not_counted_for_the_variant' 'test_clean_a_named_removal_s_repository_wide_refusal_beside_a_redirected_target' 'test_clean_an_unread_row_s_next_step_and_remedy_name_no_prune' 'test_clean_an_unread_row_beside_a_readable_inspection_error_row' 'test_clean_an_unread_row_beside_a_redirected_row' 'test_clean_a_stale_row_beside_an_unread_row_warns_against_prune' 'test_clean_the_main_worktree_inside_a_linked_worktree' 'test_clean_enclosing_rows_decides_on_literal_values' 'test_clean_a_registered_path_that_is_a_symbolic_link' 'test_clean_a_row_whose_path_is_or_holds_another_worktree_takes_its_own_next_step'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_gates.py 'test_clean_every_protected_classifier' 'test_clean_every_protected_classifier_incomplete_copy' 'test_clean_a_redirected_worktree_s_incomplete_plan_names_the_unset' 'test_clean_a_redirected_row_the_deadline_stopped_is_not_counted_for_the_variant' 'test_clean_a_named_removal_s_repository_wide_refusal_beside_a_redirected_target' 'test_clean_an_unread_row_s_next_step_and_remedy_name_no_prune' 'test_clean_an_unread_row_beside_a_readable_inspection_error_row' 'test_clean_an_unread_row_beside_a_redirected_row' 'test_clean_a_stale_row_beside_an_unread_row_warns_against_prune' 'test_clean_the_main_worktree_inside_a_linked_worktree' 'test_clean_enclosing_rows_decides_on_literal_values' 'test_clean_a_registered_path_that_is_a_symbolic_link' 'test_clean_a_row_whose_path_is_or_holds_another_worktree_takes_its_own_next_step' 'test_clean_the_refusal_beside_a_row_that_holds_another_takes_m3_s_exception'`
 - [x] T062 [P] [US2] [O] Add to `tests/test_clean_gates.py`:
   `test_clean_hidden_local_state` (two otherwise eligible worktrees, one
   holding an edit to a file flagged assume-unchanged and one a file flagged
@@ -3023,6 +3076,10 @@ US2, US7 and US9.
   cut at its budget the refusal names the unset, the variant remedy, and cut by
   the deadline P's rows are `deadline_stopped()`, counted for no variant, and
   the remedy is the base one).
+  Brett Heap's M4 (a) (lead R-432; writer's `949c58a`) makes the variant here
+  its `_holds` form, `remedy_inspection_incomplete_redirect_holds`, since each
+  of P's two rows shares its path with the other; a row the deadline stopped is
+  not counted and makes neither.
   — files: `tests/test_clean_single.py`
   — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_clean_single.py 'test_clean_a_named_removal_beside_another_row_s_inspection_error' 'test_clean_a_named_removal_among_seventeen_eligible_rows' 'test_clean_a_named_removal_beyond_the_row_cap' 'test_clean_single_target_a_deadline_among_other_rows_leaves_p_decided' 'test_clean_single_target_p_s_reflog_read_cut_by_the_deadline' 'test_clean_single_target_p_s_admin_listing_cut_by_the_deadline' 'test_clean_single_target_p_s_status_probe_cut_by_the_deadline' 'test_clean_single_target_p_s_rows_the_deadline_stopped_are_not_counted_for_the_variant'`
 - [x] T071 [P] [US3] [S] Add `test_clean_remove_a_merged_clean_worktree` to
@@ -3307,7 +3364,8 @@ US2, US7 and US9.
 - [x] T077 [P] [US3] [O] `execute()` (`project:157-162`) gains only an optional
   `env` argument. The push child runs as `execute(git_argv("push", ["-C",
   ROOT, "push", ...]), env=git_env("push"))`, built through `git_argv()` so
-  that an LQ-3 ruling stays a one-row change to the kinds table: no pins,
+  that the LQ-3 ruling, option (a), which Brett Heap made on 2026-10-31,
+  stayed a one-row change to the kinds table: no pins,
   `project`'s own streams and process
   group, never signalled, unbounded, under `signal_scope()`, so that a signal
   reaching `project` is only recorded while the push, in the terminal's
@@ -5181,8 +5239,21 @@ test and T116's removal-child clause held back (lead ruling R-56 Q-5).
   excludes both rows as `registration-mismatch`, `inspection-error` with
   `dirty` null. It fails three subtests at `c0841aa`, one for each command, and
   passes against `f3724fc`'s `project` for those three.
+  Lane 3's W161 (row 004-08; lead R-432, ruled (b); writer's `b7cf86e`) adds
+  `test_status_a_path_listed_twice_and_a_twin_spelling_keep_the_baseline_s_values`,
+  beside it: `shared`, which a copied admin directory lists twice (R-57 L3, R-59
+  D5), and `spelled`, which a second one lists again through a symbolic-link
+  spelling (R-67 (c)), four rows beside the main worktree. `status --json`,
+  `doctor --json` and `update --json`, report only and under a recording
+  stand-in for every owner tool, give each the entry that `15504f1`'s `project`
+  gives it on the same layout, read from that `project` (probed, `dirty` false,
+  `ignored_files` 0, no classification); `doctor` exits 0 with no error check
+  and no owner tool runs. `clean --all-safe --json` on the same fixture still
+  excludes the four rows as `registration-mismatch`, `inspection-error` with
+  `dirty` null, exit 1, its refusal
+  `remedy_inspection_incomplete_redirect_holds` (M4 (a)).
   — files: `tests/test_status_doctor_update.py`
-  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_status_doctor_update.py 'test_status_a_failed_root_status_is_reported' 'test_doctor_not_established_is_an_error_none_is_not' 'test_status_a_deleted_upstream_in_status_and_doctor' 'test_update_a_leg_s_probe_times_out' 'test_status_json_paths_carry_their_flags' 'test_status_sigterm_during_inspection' 'test_status_a_submodule_checkout_is_reported' 'test_status_an_enclosing_worktree_and_a_symbolic_link_path_keep_the_baseline_s_values' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_status_doctor_update.py 'test_status_a_leg_manifest_that_does_not_load_reads_as_one_that_does_not_parse' 'test_status_a_stale_worktree_beside_an_unread_row_warns_against_prune'`
+  — verify: `python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_status_doctor_update.py 'test_status_a_failed_root_status_is_reported' 'test_doctor_not_established_is_an_error_none_is_not' 'test_status_a_deleted_upstream_in_status_and_doctor' 'test_update_a_leg_s_probe_times_out' 'test_status_json_paths_carry_their_flags' 'test_status_sigterm_during_inspection' 'test_status_a_submodule_checkout_is_reported' 'test_status_an_enclosing_worktree_and_a_symbolic_link_path_keep_the_baseline_s_values' 'test_status_a_path_listed_twice_and_a_twin_spelling_keep_the_baseline_s_values' && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=[i for i in f(L.discover('tests',pattern=sys.argv[1])) if not i.startswith('unittest.')];A=sys.argv[2:];M=[a for a in A if not any(a in ('*',i.split('.')[-1]) for i in I)];[print('not collected:',m) for m in M];[print(e) for e in L.errors];sys.exit(1 if M or L.errors or not A else 0)" test_status_doctor_update.py 'test_status_a_leg_manifest_that_does_not_load_reads_as_one_that_does_not_parse' 'test_status_a_stale_worktree_beside_an_unread_row_warns_against_prune'`
 - [x] T116 [US9] [O] Add to `tests/test_status_doctor_update.py`:
   `test_status_the_pinned_status_configuration` (rule 1, plan review M14;
   `core.untrackedCache` and `core.fsmonitor` true in the `GIT_CONFIG_GLOBAL`
@@ -5384,14 +5455,15 @@ verification.
 - [x] T126 [S] Complete `specs/004-project-clean-all-safe/traceability.md`: every
   one of the 101 rows names at least one test (114 rows since doc round 13, 117
   since doc round 14, 122 since doc round 26, 124 since its Part D, 126 since
-  doc round 28, and, since doc round 27, five of PR #19's rows naming a gap
-  instead (six until row 123's test), seven since doc round 28, which the
-  verify lists: "Branch deletion refuses a branch it may not delete", "An edit
-  that keeps its size and restores its mtime", "A work-tree probe at
-  revalidation", "A stale entry beside a worktree whose path cannot be read",
-  "A stale entry's recommendation", "The main worktree's recommendation" and "A
-  worktree whose path holds the main worktree", whose tests are not named after
-  them; lead ruling R-166; row 123, "A nested repository made after the plan",
+  doc round 28, 127 since doc round 30, and, since doc round 27, five of PR
+  #19's rows naming a gap instead (six until row 123's test), seven since doc
+  round 28, eight since doc round 30, which the verify lists: "Branch deletion
+  refuses a branch it may not delete", "An edit that keeps its size and restores
+  its mtime", "A work-tree probe at revalidation", "A stale entry beside a
+  worktree whose path cannot be read", "A stale entry's recommendation", "The
+  main worktree's recommendation", "A worktree whose path holds the main
+  worktree" and "A refusal beside a worktree whose path holds the main
+  worktree", whose tests are not named after them; lead ruling R-166; row 123, "A nested repository made after the plan",
   names `test_clean_a_nested_repository_made_after_the_plan` (T083; lead
   rulings R-397 and R-405);
   "Push refuses a branch it may not push" names lane A's addendum 5 test, on
@@ -5401,7 +5473,7 @@ verification.
   landed, the script reads the push-child scenario from `main`'s delta,
   otherwise from `origin/change/amend-clean-all-safe-push-pins`.
   — files: `specs/004-project-clean-all-safe/traceability.md`
-  — verify: `python3 -c "import glob,re,sys;V=chr(124);L=open('specs/004-project-clean-all-safe/traceability.md').read().splitlines();R=[[c.strip() for c in l.strip().strip(V).split(V)] for l in L if l.startswith(V)][2:];T=[l[15:].strip() for f in sorted(glob.glob('openspec/changes/add-project-clean-all-safe/specs/*/spec.md')) for l in open(f) if l.startswith('#### Scenario: ')];T+=[x for x in ['The push child reaches its remote','A relative configuration path','Push refuses a branch it may not push','Branch deletion refuses a branch it may not delete','An operation in progress','A squash merge that holds an autostash','An operation started after the plan','A check that fails at revalidation','Owner tools see the repository the check inspected','A linked worktree whose work tree is redirected','A commondir that names another repository','A relative configuration path in status, doctor and update','An edit that keeps its size and restores its mtime','Trace targets are never written','A commit held only by the worktree','A worktree-only commit made after the plan','A work-tree probe at revalidation','A repository nested in a tracked directory','The main worktree inside a linked worktree','Two worktree paths that differ only in case','A case-variant untracked file','A stale entry beside a worktree whose path cannot be read','A nested repository made after the plan','A stale entry'+chr(39)+'s recommendation','The main worktree'+chr(39)+'s recommendation','A worktree whose path holds the main worktree'] if x not in T];D=set(m for f in glob.glob('tests/test_*.py') for m in re.findall(r'^\s*def (test_\w+)\(',open(f).read(),re.M));P=('test_clean_','test_status_','test_doctor_','test_update_');k=lambda t:re.sub('[^a-z0-9]+','_',t.lower()).strip('_');G=['Branch deletion refuses a branch it may not delete','An edit that keeps its size and restores its mtime','A work-tree probe at revalidation','A stale entry beside a worktree whose path cannot be read','A stale entry'+chr(39)+'s recommendation','The main worktree'+chr(39)+'s recommendation','A worktree whose path holds the main worktree'];B=[(r[2],n) for r in R for n in (re.findall(r'test_\w+',r[4]) or ([] if r[2] in G else ['(none)'])) if n not in D or not any(n==p+k(r[2]) or n.startswith(p+k(r[2])+'_') for p in P)];[print('bad:',b) for b in B];print(len(R),'rows; named gaps:',[r[2] for r in R if r[2] in G and not re.findall(r'test_\w+',r[4])]);sys.exit(1 if B or not len(R)==126 or not sorted(r[2] for r in R)==sorted(T) else 0)"`
+  — verify: `python3 -c "import glob,re,sys;V=chr(124);L=open('specs/004-project-clean-all-safe/traceability.md').read().splitlines();R=[[c.strip() for c in l.strip().strip(V).split(V)] for l in L if l.startswith(V)][2:];T=[l[15:].strip() for f in sorted(glob.glob('openspec/changes/add-project-clean-all-safe/specs/*/spec.md')) for l in open(f) if l.startswith('#### Scenario: ')];T+=[x for x in ['The push child reaches its remote','A relative configuration path','Push refuses a branch it may not push','Branch deletion refuses a branch it may not delete','An operation in progress','A squash merge that holds an autostash','An operation started after the plan','A check that fails at revalidation','Owner tools see the repository the check inspected','A linked worktree whose work tree is redirected','A commondir that names another repository','A relative configuration path in status, doctor and update','An edit that keeps its size and restores its mtime','Trace targets are never written','A commit held only by the worktree','A worktree-only commit made after the plan','A work-tree probe at revalidation','A repository nested in a tracked directory','The main worktree inside a linked worktree','Two worktree paths that differ only in case','A case-variant untracked file','A stale entry beside a worktree whose path cannot be read','A nested repository made after the plan','A stale entry'+chr(39)+'s recommendation','The main worktree'+chr(39)+'s recommendation','A worktree whose path holds the main worktree','A refusal beside a worktree whose path holds the main worktree'] if x not in T];D=set(m for f in glob.glob('tests/test_*.py') for m in re.findall(r'^\s*def (test_\w+)\(',open(f).read(),re.M));P=('test_clean_','test_status_','test_doctor_','test_update_');k=lambda t:re.sub('[^a-z0-9]+','_',t.lower()).strip('_');G=['Branch deletion refuses a branch it may not delete','An edit that keeps its size and restores its mtime','A work-tree probe at revalidation','A stale entry beside a worktree whose path cannot be read','A stale entry'+chr(39)+'s recommendation','The main worktree'+chr(39)+'s recommendation','A worktree whose path holds the main worktree','A refusal beside a worktree whose path holds the main worktree'];B=[(r[2],n) for r in R for n in (re.findall(r'test_\w+',r[4]) or ([] if r[2] in G else ['(none)'])) if n not in D or not any(n==p+k(r[2]) or n.startswith(p+k(r[2])+'_') for p in P)];[print('bad:',b) for b in B];print(len(R),'rows; named gaps:',[r[2] for r in R if r[2] in G and not re.findall(r'test_\w+',r[4])]);sys.exit(1 if B or not len(R)==127 or not sorted(r[2] for r in R)==sorted(T) else 0)"`
 - [x] T127 [O] Check by script that every D18 and D14 literal of
   `tests/clean_support.py`, its placeholders substituted, equals a line or
   quoted string of design.md D18 or D14 character for character, and that every
@@ -5424,7 +5496,8 @@ verification.
   `design.md` is main's (doc round 16: 30 D14 and D18 spans), and, since doc
   round 27 below, the tree that 004 has once #19 lands, with #19's `design.md`
   at `4512441` (98 spans of the 129 it holds, after the exemptions below) and,
-  since doc round 28 below, at `54e869b` (102 of 139). Then
+  since doc round 28 below, at `54e869b` (102 of 139) and, since doc round 30
+  below, at `1476110` (105 of 143). Then
   normalize the test modules to rule 3's bare-name
   import (lead rulings R-38 and R-50), as this task's writer, the lanes being
   done:
@@ -5548,8 +5621,33 @@ verification.
   every other text, and the first clause of the verify pins the fixture equal
   to `project`'s key. Before `d640539` it would have been a fourth missing
   span, a printed text that `project` lacked, to report and not to exempt.
+  Doc round 30 (lane 3's W169 LOW-1; the lead's R-443; #19's round (u) at
+  `1476110` and the code round `aa342ad..b7cf86e` on `impl/004-q-build`, merged
+  into this branch): on the tree that `git merge-tree --write-tree` makes of
+  `0fb3d30`, 004 before the code round, and `1476110`, `git archive`d into an
+  empty directory, D14 and D18 hold 143 spans, 106 after the exemptions above,
+  and 3 had no literal in `tests/clean_support.py`, where the lead expected two.
+  Each is classed. (a) 1 is not a text 004 prints: Brett Heap's answer to M4,
+  "(a) Add M3's exception (Recommended)", which D18 quotes
+  (`design.md:1731-1732` at `1476110`); it is a word of his, and an entry of
+  tuple `X` as the five of doc round 27 are. (b) None is a placeholder. (c) 2
+  are texts that 004 prints, which `project` did not hold at `0fb3d30`: M4's two
+  remedies, `remedy_inspection_incomplete_redirect_holds` (699 characters) and
+  `remedy_inspection_incomplete_redirect_unread_holds` (534), which the code
+  round's `949c58a` builds as `TEXT` keys with fixtures in
+  `tests/clean_support.py`. They need no entry: the check finds them as it finds
+  every text, as it found M3 (a)'s step, and until that round each was a printed
+  text that `project` lacked, to report and not to exempt. On the tree that `git
+  merge-tree --write-tree` makes of this branch with the code round's `b7cf86e`
+  and `1476110`, the check had passed before the entry, at 106 spans, because
+  the code round's comment at `tests/clean_support.py:672` quotes Brett Heap's
+  answer on one line and the check looks for a span's fragments anywhere in the
+  file: a pass that rested on a comment and not on a literal. The entry takes
+  the span out, so that the check no longer depends on the comment. The verify
+  passes on both trees, 30 spans on this branch's own and 105 on the merged one,
+  and still fails on a changed D18 string (tried on a copy of the merged tree).
   — files: `tests/test_clean_scrub.py`, `tests/test_clean_escaping.py`, `tests/test_clean_parsers.py`, `tests/test_clean_timing.py`
-  — verify: `python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table' && python3 -c "import glob,re,sys;d=open('openspec/changes/add-project-clean-all-safe/design.md').read();x=lambda a,b:d.split('### '+a+'.')[1].split('### '+b+'.')[0];s=x('D14','D15')+x('D18','D19');B,Q,C=chr(96),chr(34),chr(39);S=[' '.join(v.split()) for v in re.findall(B+'([^'+B+']+)'+B,s)+re.findall(Q+'([^'+Q+']+)'+Q,s)];R={l[17:].strip() for f in glob.glob('openspec/changes/add-project-clean-all-safe/specs/*/spec.md') for l in open(f) if l.startswith('### Requirement: ')};X=('these deferred rows will not drain while the 16 rows ahead of them are contains-submodule; review those worktrees, then remove them yourself','no commit was made on this branch here since it was created; review, then git worktree remove yourself','the branch'+chr(39)+'s reflog is missing, expired or undecidable; review, then git worktree remove yourself','Not protected: ignored files created or index flags set after the last check, and any change after Git'+chr(39)+'s own check.','git bisect reset','git merge --abort','git notes merge --abort','git rev-parse --git-dir','git -C ROOT branch -d -- BRANCH','git config --unset','git config --file','git config --file X/.git/config --unset core.worktree','git init --bare','git init --bare X/.git','project status --json','project status','project doctor','project update','validation failed, cannot remove working tree: '+C+'PATH/.git'+C+' does not exist',C+'PATH'+C+' is not a working tree','fatal: cannot chdir to '+C+'<value>'+C,'is a main working tree','Yes, warn (Recommended)','R-284: yes','F-2: yes','R-307: yes; R-310: yes','Yes, add T9 (Recommended)','A '+B+'.git'+B+' read that fails or is cut gets a third note','Values SHALL equal those of the inspection this model replaces, except where a requirement states a change.','review those worktrees, then remove them yourself (--force for any that holds a submodule)','Remove the linked worktree first; branch deletion is a separate action.','No project found at PATH; supply a path or name.','Review and prune stale worktree metadata manually.','Review the stale worktree metadata before pruning it manually.','Review the stale worktree metadata before pruning it manually; a row'+C+'s path could not be read, so do not run git worktree prune, git worktree remove or git gc until it can.','The main worktree'+C+'s recommendation','This clean, merged, non-current worktree may be removed explicitly.','The branch is merged, but this is the current checkout; switch away before removal.');S=[v for v in S if ' ' in v and not v.startswith(('Cleanup plan for','selected:','rev-parse ')) and v not in R and v not in X];t=open('tests/clean_support.py').read();W=r'\b(?:'+chr(124).join(('ROOT','PATH','BRANCH','NAME','SOURCE','NEXT STEP','SAMPLE','CLASS','REASON','REASONS','CODES','B1','B2','P1','P2','N','K','M','ADMIN'))+r')\b';M=[v for v in S if not all(f.strip() in t for f in re.split(W,v) if len(f.strip())>2)];[print('no literal:',v) for v in M];print(len(S),'D14 and D18 spans');sys.exit(1 if M or not S else 0)" && python3 -c "import ast,glob,os,sys;F=sorted(glob.glob('tests/test_clean_*.py'))+['tests/test_status_doctor_update.py'];W={f:list(ast.walk(ast.parse(open(f).read()))) for f in F if os.path.isfile(f)};I=lambda w:[n for n in w if isinstance(n,ast.Import) and any('clean_support' in a.name for a in n.names)]+[n for n in w if isinstance(n,ast.ImportFrom) and ('clean_support' in (n.module or '') or any(a.name=='clean_support' for a in n.names))];ok=lambda n:all(a.name=='clean_support' for a in n.names) if isinstance(n,ast.Import) else (n.module=='clean_support' and n.level==0);sp=lambda w:[n for n in w if isinstance(n,ast.Attribute) and n.attr in ('insert','append','extend') and isinstance(n.value,ast.Attribute) and n.value.attr=='path' and isinstance(n.value.value,ast.Name) and n.value.value.id=='sys']+[n for n in w if isinstance(n,(ast.Subscript,ast.Attribute)) and isinstance(n.ctx,ast.Store) and ast.unparse(n).startswith('sys.path')];X=[f for f in F if f not in W];B=[f for f in W if not I(W[f]) or not all(ok(n) for n in I(W[f])) or sp(W[f])];T=[f for f in ['tests/test_clean_timing.py'] if any(isinstance(n,ast.FunctionDef) and n.name=='timing_repo' for n in W.get(f,[]))];print('missing:',X,'off the one import idiom:',B,'timing_repo still defined in:',T);sys.exit(1 if X or B or T else 0)" && python3 -m unittest discover -s tests -p 'test_clean_timing.py' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' && python3 -m unittest discover -s tests -p 'test_clean_scrub.py' && python3 -m unittest discover -s tests -p 'test_clean_parsers.py' && python3 -m unittest discover -s tests -p 'test_clean_escaping.py' && python3 -m unittest discover -s tests -p 'test_clean_runner.py' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' && python3 -m unittest discover -s tests -p 'test_clean_guard.py' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' && python3 -m unittest discover -s tests -p 'test_clean_apply.py' && python3 -m unittest discover -s tests -p 'test_clean_reflog.py' && python3 -m unittest discover -s tests -p 'test_clean_gates.py' && python3 -m unittest discover -s tests -p 'test_clean_single.py' && python3 -m unittest discover -s tests -p 'test_clean_push.py' && python3 -m unittest discover -s tests -p 'test_clean_revalidation.py' && python3 -m unittest discover -s tests -p 'test_clean_result.py' && python3 -m unittest discover -s tests -p 'test_clean_stop.py' && python3 -m unittest discover -s tests -p 'test_clean_bounds.py' && python3 -m unittest discover -s tests -p 'test_clean_resolution.py' && python3 -m unittest discover -s tests -p 'test_clean_paths.py' && python3 -m unittest discover -s tests -p 'test_status_doctor_update.py'`
+  — verify: `python3 -m unittest discover -s tests -p 'test_clean_harness.py' -k '*.test_clean_text_fixtures_equal_the_contract_table' && python3 -c "import glob,re,sys;d=open('openspec/changes/add-project-clean-all-safe/design.md').read();x=lambda a,b:d.split('### '+a+'.')[1].split('### '+b+'.')[0];s=x('D14','D15')+x('D18','D19');B,Q,C=chr(96),chr(34),chr(39);S=[' '.join(v.split()) for v in re.findall(B+'([^'+B+']+)'+B,s)+re.findall(Q+'([^'+Q+']+)'+Q,s)];R={l[17:].strip() for f in glob.glob('openspec/changes/add-project-clean-all-safe/specs/*/spec.md') for l in open(f) if l.startswith('### Requirement: ')};X=('these deferred rows will not drain while the 16 rows ahead of them are contains-submodule; review those worktrees, then remove them yourself','no commit was made on this branch here since it was created; review, then git worktree remove yourself','the branch'+chr(39)+'s reflog is missing, expired or undecidable; review, then git worktree remove yourself','Not protected: ignored files created or index flags set after the last check, and any change after Git'+chr(39)+'s own check.','git bisect reset','git merge --abort','git notes merge --abort','git rev-parse --git-dir','git -C ROOT branch -d -- BRANCH','git config --unset','git config --file','git config --file X/.git/config --unset core.worktree','git init --bare','git init --bare X/.git','project status --json','project status','project doctor','project update','validation failed, cannot remove working tree: '+C+'PATH/.git'+C+' does not exist',C+'PATH'+C+' is not a working tree','fatal: cannot chdir to '+C+'<value>'+C,'is a main working tree','Yes, warn (Recommended)','R-284: yes','F-2: yes','R-307: yes; R-310: yes','Yes, add T9 (Recommended)','(a) Add M3'+C+'s exception (Recommended)','A '+B+'.git'+B+' read that fails or is cut gets a third note','Values SHALL equal those of the inspection this model replaces, except where a requirement states a change.','review those worktrees, then remove them yourself (--force for any that holds a submodule)','Remove the linked worktree first; branch deletion is a separate action.','No project found at PATH; supply a path or name.','Review and prune stale worktree metadata manually.','Review the stale worktree metadata before pruning it manually.','Review the stale worktree metadata before pruning it manually; a row'+C+'s path could not be read, so do not run git worktree prune, git worktree remove or git gc until it can.','The main worktree'+C+'s recommendation','This clean, merged, non-current worktree may be removed explicitly.','The branch is merged, but this is the current checkout; switch away before removal.');S=[v for v in S if ' ' in v and not v.startswith(('Cleanup plan for','selected:','rev-parse ')) and v not in R and v not in X];t=open('tests/clean_support.py').read();W=r'\b(?:'+chr(124).join(('ROOT','PATH','BRANCH','NAME','SOURCE','NEXT STEP','SAMPLE','CLASS','REASON','REASONS','CODES','B1','B2','P1','P2','N','K','M','ADMIN'))+r')\b';M=[v for v in S if not all(f.strip() in t for f in re.split(W,v) if len(f.strip())>2)];[print('no literal:',v) for v in M];print(len(S),'D14 and D18 spans');sys.exit(1 if M or not S else 0)" && python3 -c "import ast,glob,os,sys;F=sorted(glob.glob('tests/test_clean_*.py'))+['tests/test_status_doctor_update.py'];W={f:list(ast.walk(ast.parse(open(f).read()))) for f in F if os.path.isfile(f)};I=lambda w:[n for n in w if isinstance(n,ast.Import) and any('clean_support' in a.name for a in n.names)]+[n for n in w if isinstance(n,ast.ImportFrom) and ('clean_support' in (n.module or '') or any(a.name=='clean_support' for a in n.names))];ok=lambda n:all(a.name=='clean_support' for a in n.names) if isinstance(n,ast.Import) else (n.module=='clean_support' and n.level==0);sp=lambda w:[n for n in w if isinstance(n,ast.Attribute) and n.attr in ('insert','append','extend') and isinstance(n.value,ast.Attribute) and n.value.attr=='path' and isinstance(n.value.value,ast.Name) and n.value.value.id=='sys']+[n for n in w if isinstance(n,(ast.Subscript,ast.Attribute)) and isinstance(n.ctx,ast.Store) and ast.unparse(n).startswith('sys.path')];X=[f for f in F if f not in W];B=[f for f in W if not I(W[f]) or not all(ok(n) for n in I(W[f])) or sp(W[f])];T=[f for f in ['tests/test_clean_timing.py'] if any(isinstance(n,ast.FunctionDef) and n.name=='timing_repo' for n in W.get(f,[]))];print('missing:',X,'off the one import idiom:',B,'timing_repo still defined in:',T);sys.exit(1 if X or B or T else 0)" && python3 -m unittest discover -s tests -p 'test_clean_timing.py' && python3 -m unittest discover -s tests -p 'test_clean_harness.py' && python3 -m unittest discover -s tests -p 'test_clean_scrub.py' && python3 -m unittest discover -s tests -p 'test_clean_parsers.py' && python3 -m unittest discover -s tests -p 'test_clean_escaping.py' && python3 -m unittest discover -s tests -p 'test_clean_runner.py' && python3 -m unittest discover -s tests -p 'test_clean_evidence.py' && python3 -m unittest discover -s tests -p 'test_clean_guard.py' && python3 -m unittest discover -s tests -p 'test_clean_batch.py' && python3 -m unittest discover -s tests -p 'test_clean_apply.py' && python3 -m unittest discover -s tests -p 'test_clean_reflog.py' && python3 -m unittest discover -s tests -p 'test_clean_gates.py' && python3 -m unittest discover -s tests -p 'test_clean_single.py' && python3 -m unittest discover -s tests -p 'test_clean_push.py' && python3 -m unittest discover -s tests -p 'test_clean_revalidation.py' && python3 -m unittest discover -s tests -p 'test_clean_result.py' && python3 -m unittest discover -s tests -p 'test_clean_stop.py' && python3 -m unittest discover -s tests -p 'test_clean_bounds.py' && python3 -m unittest discover -s tests -p 'test_clean_resolution.py' && python3 -m unittest discover -s tests -p 'test_clean_paths.py' && python3 -m unittest discover -s tests -p 'test_status_doctor_update.py'`
 - [x] T128 [S] Run the whole suite in this worktree: `python3 -m unittest discover
   -s tests -v` passes; record the test count and the elapsed time, under 8
   minutes in an idle `py-bench` (R11); run it under Python 3.10 too where an
@@ -5566,7 +5664,7 @@ verification.
   about 5 to 6 (lane 3's W102), 468 s at a load of 9 (T125) and 661 s at
   `28db786` at a load of about 26 (the lead's R-355). On a busy bench the
   verify's `timeout 480` can exit 124; it is then re-run on an idle one.
-  Note, 2026-10-31 (lead ruling R-429): the comparison base moves from
+  Note, 2026-10-31 (lead ruling R-429 (b)): the comparison base moves from
   `961c405` to `b42355e`, `main`'s copy after #40 (`f271a39`) added
   `WorkbenchesDiscoveryTests`, seven tests and three other methods, to
   `tests/test_project.py`. This branch merged `main` at `b42355e` in
@@ -5821,10 +5919,10 @@ T124.
   and pass at once (Phase 3).
 - Commit after each lane or phase at least, with `Lane: openRepoProject-2` in
   each commit body.
-- LQ-3: if Brett Heap rules a follow-up change instead of PR #19 (option (b)),
-  only the push child's treatment moves: T074, T077 and the push halves of T076
-  and T073 (research.md R1). The delete-branch child keeps the pins either way
-  (R5).
+- LQ-3: Brett Heap ruled option (a), PR #19, on 2026-10-31 (research.md R1);
+  had he ruled a follow-up change instead (option (b)), only the push child's
+  treatment would have moved: T074, T077 and the push halves of T076 and T073.
+  The delete-branch child keeps the pins either way (R5).
 - R-31: `TIOCSCTTY` is untested on macOS, so the controlling-terminal tests of
   T008, T072 and T074 are a note for a local run there, no CI job running macOS
   (R-35); a failure on macOS goes to the lead before any skip is added.

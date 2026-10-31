@@ -151,8 +151,10 @@ R-57, withdrawing R-51(c)'s known limit, and R-59 D5). The rule extends to
 present rows spelled differently with the same realpath, or with the same
 admin id, which both pass the two-way check: each is
 `registration-mismatch` too, in `--all-safe` and in single mode (lead
-ruling R-67 (c), lane 3's L-4). It is built, as `shared_identities()` in
-region `evidence` (evidence follow-up 2, merged as `a5156a5`; lead ruling
+ruling R-67 (c), lane 3's L-4). Both rules are `clean`'s plan alone, so that
+`status`, `doctor` and `update` read such rows as the baseline does (lead R-432;
+the paragraph on Q2 (1) and Q9 (b) below). It is built, as `shared_identities()`
+in region `evidence` (evidence follow-up 2, merged as `a5156a5`; lead ruling
 R-81 (a)). The comparison is among the present rows one `worktree_rows()`
 call inspects together, before any status probe, so that neither twin is
 probed; in single mode `match_target()` matches P against the whole
@@ -209,9 +211,19 @@ commands at the baseline's values (#19's `design.md:591-598` at `54e869b`).
 take `for_clean`, which `match_target()`, `build_plan()` and `registry_twin()`
 set and `repo_state()` does not, so `status`, `doctor` and `update` read such a
 row as the baseline does, probed and with its own `dirty`, as `f3724fc` did,
-where `41759a4` made both `inspection-error` and `doctor` exit 1. R-67 (c)'s
-shared-path and twin rows are not gated: they stay `registration-mismatch` in
-every command.
+where `41759a4` made both `inspection-error` and `doctor` exit 1.
+
+Two rules before them are `clean`'s plan alone too, since 2026-10-31 (lane 3's
+W161, row 004-08; lead R-432, ruled (b); writer's `b7cf86e`), for the same
+reason as those two, that the `project-command` delta states neither: R-57 L3's
+registry path that another entry names, and R-67 (c)'s two spellings of one
+worktree. `worktree_rows()` reads `shared_paths()` and `shared_identities()`
+only where `for_clean` is true, so `status`, `doctor` and `update` read such a
+row as the baseline does, probed and with its own `dirty`, and `doctor` exits 0
+where nothing else is wrong, where `project` through `aa342ad` made them
+`registration-mismatch` in every command; `clean` keeps both kinds of row
+`registration-mismatch`, with M3 (a)'s step and M4 (a)'s remedy
+(`registry_twin()`, revalidation's re-read, is clean's already).
 
 ### Branch evidence (D6, D7)
 
@@ -239,10 +251,19 @@ lead R-380; lane 2's wave 22 triage T9; writer's `70345ee`), and at round (r),
 `4512441`, with the qualifier (lane 3's W131 LOW-3; lead R-391). With
 `core.warnAmbiguousRefs` false, in the repository's configuration or the user's,
 which no pin overrides, the same pinned probe exits 0 with empty standard error,
-on Git 2.43.0 and 2.36.6, so that no row is `inspection-error` on that account,
-a run of `add-project-clean-branch-retirement` can retire `refs/heads/HEAD`, and
-that change's `Retired HEAD` restore line is then the restore that works; 004
-adds no pin for it and changes no behaviour (#19's design D1 at `4512441`).
+on Git 2.43.0 and 2.36.6, so that no row is `inspection-error` on that account.
+The row of a worktree whose branch is `refs/heads/HEAD` still is, by R-61 (b),
+which holds in every command, since the ref listing prints for that branch the
+upstream and track of the branch that HEAD names: under either setting such a
+row is `inspection-error`, by Q8 where Git warns that the refname is ambiguous
+and by R-61 (b) where it does not, and is never selected, so that no run removes
+its worktree or retires its branch, and `add-project-clean-branch-retirement`'s
+`Retired HEAD` restore line is never reached through such a row. This paragraph
+said until doc round 30 that with the setting false a run of that change could
+retire `refs/heads/HEAD` and that the line was then the restore that works (lane
+5's RN-1; lead R-432). #19 states R-61 (b) at round (u) (the `project-command`
+delta, `spec.md:251-256` at `1476110`, and design D1); 004 adds no pin for it
+and changes no behaviour.
 Where row 6 gives no listing, because it or a probe before it failed, each
 present row on a
 branch carries that probe's row errors and is `inspection-error`, its upstream
@@ -317,6 +338,28 @@ and the preview prints those rows in a group of their own under
 (`excluded_groups()`; the contract's paragraph after the
 `registration-mismatch` next step). Only a text and the preview's grouping
 change: no field, code, class or reason does.
+
+Brett Heap's M4 (a) (ruled on 2026-10-31T18:20:06Z, "(a) Add M3's exception
+(Recommended)"; lead R-432; lane 2's wave 24 question M4; #19's round (u) at
+`1476110`, design D18; writer's `949c58a`) gives the `inspection-incomplete`
+refusal's redirect remedy a second form, for the rows that M3 (a) gives their
+own step. Such a row is `registration-mismatch`, so it counts toward
+`inspection-incomplete`, and the remedy's "or remove the row by hand after
+review", followed for it, deletes what its path holds. Where any row the refusal
+counts is excluded as `registration-mismatch` and has `WorktreeRow.holds`,
+`incomplete_refusal()` takes `TEXT`'s
+`remedy_inspection_incomplete_redirect_holds`, or
+`remedy_inspection_incomplete_redirect_unread_holds` where any row of the plan
+has a path that could not be read: the redirect remedy, or its unread form, with
+M3's exception after that clause, `, except one whose path is or holds the main
+worktree, the common directory or another worktree, which must not be deleted by
+hand or with git worktree remove: review its registration with git worktree list
+--porcelain`, once and nothing else changed (699 and 534 characters, copied from
+`project` by script). Every other refusal prints the text it printed before: a
+counted row that a `core.worktree` or `core.bare` redirects, whose registration
+is broken or whose registered path is a symbolic link gives no `holds`, and a
+row the work deadline stopped is not counted. Only which text is chosen changes:
+no field, code, class or reason does.
 
 ### Classification (D6; FR-007)
 
@@ -425,7 +468,7 @@ as `3bc1d68`):
 | --- | --- | --- |
 | 1 | `main-worktree` | the row is the main worktree |
 | 2 | `unsupported-path-bytes` | the path is not valid UTF-8 |
-| 3 | `registration-mismatch` | the two-way registration was read and disagrees (`registered is False`), its `commondir` and, where row 4c is not false, its effective work tree included (LQ-11); a row whose registration was never read, a `present: false` one among them, passes and is excluded at gate 5 by its class (lead ruling R-53 P-16); or, in `clean`'s plan alone (`for_clean`; lead R-409), the row's path is, or holds, the common directory, the main worktree or another row's path (`enclosing_rows()`; Brett Heap's Q2 (1), ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; writer's `5eeaedd`), the row then unprobed and `inspection-error`, as a shared path is; or, in `clean`'s plan alone, the row's registered path is a symbolic link (`_read_row()`, from its `lstat`; Brett Heap's Q9 (b), ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; lane 2's wave 22 triage T12, sr-removal F7; writer's `338edb0`), which reads its registration as disagreeing, the row again unprobed and `inspection-error`; a row whose path is, holds or shares another row's is in a group of its own, first, with `next_step_registration_mismatch_holds` (Brett Heap's M3 (a), lead R-413; "Branch evidence" above) |
+| 3 | `registration-mismatch` | the two-way registration was read and disagrees (`registered is False`), its `commondir` and, where row 4c is not false, its effective work tree included (LQ-11); a row whose registration was never read, a `present: false` one among them, passes and is excluded at gate 5 by its class (lead ruling R-53 P-16); or, in `clean`'s plan alone (`for_clean`; lead R-409), the row's path is, or holds, the common directory, the main worktree or another row's path (`enclosing_rows()`; Brett Heap's Q2 (1), ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; writer's `5eeaedd`), the row then unprobed and `inspection-error`, as a shared path is; or, in `clean`'s plan alone, the row's registered path is a symbolic link (`_read_row()`, from its `lstat`; Brett Heap's Q9 (b), ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; lane 2's wave 22 triage T12, sr-removal F7; writer's `338edb0`), which reads its registration as disagreeing, the row again unprobed and `inspection-error`; a row whose path is, holds or shares another row's is in a group of its own, first, with `next_step_registration_mismatch_holds` (Brett Heap's M3 (a), lead R-413; "Branch evidence" above); a registry path listed twice (R-57 L3) and two spellings of one worktree (R-67 (c)) are `registration-mismatch` in `clean`'s plan alone too (lead R-432), and `status`, `doctor` and `update` read such rows as the baseline does |
 | 4 | `locked-worktree` | `locked` is true |
 | 5 | the classification | the class is not `merged-removable` |
 | 6 | `not-requested` | single mode, an eligible row other than P |
@@ -738,7 +781,7 @@ target:
 | 4. the narrowed ref listing | Git child | `branch-changed` (branch name or head); `state-changed` (upstream, `upstream_oid`, `ahead`, `behind`, merge target, or a listing that decides nothing) |
 | 5. the target's identity and registration (its `commondir` included), a twin of a checked row, the `modules` check and gate 11's listing of its administrative directory, by filesystem reads; then, where row 4c read true, its effective work tree, so that a filesystem check that refuses spares the probe's child (the lead's R-198; writer G's `963fccf`) | filesystem, then one Git child for the work tree | `identity-changed` (the identity or registration decided different; the target's path, its `.git` or its administrative directory found absent, `ENOENT` or `ENOTDIR`, the listing that finds no administrative directory included, writer G's reading of a gap in #19 at `9267303`, lead ruling R-220; or another present entry of the fresh registry listing sharing a checked row's realpath or admin id, `registry_twin()`, R-81 (a)); `contains-submodule` (a `modules` entry); `operation-in-progress` (a marker, LQ-14); `state-changed` for a read that fails other than with `ENOENT` or `ENOTDIR` or runs past its own budget: the target's lstat, its registration reads (a `.git` that cannot be read among them), a registry entry's lstat or realpath in the twin check, unless the plan read its lstat as failed too, null and null again (R-95 (c)), the `modules` check and the listing (the lead's R-208; lead rulings R-124 and R-127); for the work-tree probe, `identity-changed` only for a work tree the probe decides is not the target's path, its output read as one path (R-287), and `state-changed` for one that fails, runs past its own budget or prints output that is empty, a line feed alone or without a closing line feed (LQ-11; the lead's R-171 and R-287) |
 | 6. the combined status probe in the target, which must print nothing | Git child | `state-changed` (a record, or a probe that decides nothing) |
-| 7. the hidden-state probe, which lists the target's index again, and then the nested `.git` lstats of Q2 (2) over the directories of that listing that hold an index entry | Git child, then filesystem | `contains-submodule` (a gitlink, or an entry named `.git`, made after the plan, in a directory that holds an index entry); `hidden-local-state` (a flagged entry); `state-changed` (a probe that decides nothing, R-195, or an lstat that fails other than with `ENOENT` or `ENOTDIR` or runs past its own budget); `deadline-exceeded` (an lstat that the work deadline cuts, the target and every later one `not-attempted`) |
+| 7. the hidden-state probe, which lists the target's index again, and then the nested `.git` lstats of Q2 (2) over the directories of that listing that hold an index entry directly or below it, other than the worktree's own top level | Git child, then filesystem | `contains-submodule` (a gitlink, or an entry named `.git`, made after the plan, in a directory that holds an index entry); `hidden-local-state` (a flagged entry); `state-changed` (a probe that decides nothing, R-195, or an lstat that fails other than with `ENOENT` or `ENOTDIR` or runs past its own budget); `deadline-exceeded` (an lstat that the work deadline cuts, the target and every later one `not-attempted`) |
 | 8. gate 12's check in the target: `logs/HEAD` read again and the reachability probe run again, the negatives the plan's, taken as they were | filesystem, then one Git child | `worktree-only-commits` (an object printed, or a `logs/HEAD` read to its bound or holding a line that cannot be parsed); `state-changed` (a read that fails or times out, or a probe that decides nothing; LQ-13, lead rulings R-124 and R-127) |
 
 Step 7 runs Q2 (2)'s nested `.git` check again, as #19's round (r) (at
@@ -793,7 +836,16 @@ R-287), and a filesystem call that fails other than with `ENOENT` or
 gives `state-changed`, whatever its step, and a read gives its step's own
 reason only for a value it decided (the lead's R-171, R-195, R-198 and R-208;
 draft PR #19 at `4485678`, `2e819ad` and `9267303`; writer G's `73d8888`,
-merged as `9ab996e`). The filesystem calls are step 1's identity reads, step
+merged as `9ab996e`). R-208's reading of the packet's `BA:271-276`, that a
+filesystem read of revalidation that fails, or runs past its own budget while the
+deadline is not the limit, gives `state-changed` whatever its step, as a Git
+child does, is Brett Heap's O-2, ruled by his word of 2026-10-23T21:31:02Z,
+"yes, recommended for the ledger rows and 19-02 and 19-16", which he confirmed
+at 2026-10-31T17:58:12Z in lane openRepoProject-5's session to mean "Broad (lane
+3's reading)", and, to whether that word rules it, "Yes, ruled as recommended
+(Recommended)" at 2026-10-31T18:20:06Z in lane openRepoProject-2's question
+prompt (lead R-432; lane openRepoProject-3's ledger row 19-09; #19 states it in
+design D7). The filesystem calls are step 1's identity reads, step
 5's lstat of the target, its registration reads, the twin check's reads, the
 `modules` check and the listing, step 7's nested `.git` lstats (one `fs_call()`
 over its fresh listing's directories, counted in the filesystem budget), and

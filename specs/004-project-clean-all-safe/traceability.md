@@ -24,8 +24,11 @@ own title since doc round 27, `c0841aa`'s, and the second, row 124, a named gap,
 and, since doc round 28, round (s)'s "The main worktree's recommendation" (PR
 #19 at `dab8a64`; lead R-408) and round (t)'s "A worktree whose path holds the
 main worktree" (PR #19 at `54e869b`; lead R-413), whose builds are on 004 at
-`02aa71d` and `d640539`, rows 125 and 126, each a named gap: 126 rows, of which
-seven are named gaps (rows 104, 111, 116, 122, 124, 125 and 126, listed below).
+`02aa71d` and `d640539`, rows 125 and 126, each a named gap: 126 rows, and,
+since doc round 30, round (u)'s "A refusal beside a worktree whose path holds
+the main worktree" (PR #19 at `1476110`; lead R-432), whose build is on 004 at
+`949c58a`, row 127, a named gap: 127 rows, of which eight are named gaps (rows
+104, 111, 116, 122, 124, 125, 126 and 127, listed below).
 The Delta column is the capability, the directory under
 `specs/`; the Requirement column is the `### Requirement:` title the scenario
 sits under; the Scenario column is the `#### Scenario:` title exactly. The
@@ -161,18 +164,19 @@ column names the test methods that cover the scenario.
 | project-clean (PR #19 draft) | Clean classifies preservation and cleanup actions | A stale entry's recommendation | US2 | none named after it at `703b58c` (a gap; below) |
 | project-clean (PR #19 draft) | Clean classifies preservation and cleanup actions | The main worktree's recommendation | US2 | none named after it at `d640539` (a gap; below) |
 | project-clean (PR #19 draft) | Clean reports local worktree state | A worktree whose path holds the main worktree | US2 | none named after it at `d640539` (a gap; below) |
+| project-clean (PR #19 draft) | Clean reports local worktree state | A refusal beside a worktree whose path holds the main worktree | US2 | none named after it at `b7cf86e` (a gap; below) |
 
 T126's writer fills the Tests cells from the merged tests (lead ruling R-32b).
 
-The last twenty-six rows are PR #19's draft scenarios, from branch
+The last twenty-seven rows are PR #19's draft scenarios, from branch
 `change/amend-clean-all-safe-push-pins`, not yet on `main`; each Delta cell
 carries the mark "(PR #19 draft)". T002 and T126 name their titles, and read
 the others from `main`'s deltas.
 
 A test goes in a row only when its name begins with its scenario's title, as
-rule 1 and T126 require (lead ruling R-98 (a) 2). Seven of PR #19's scenarios
-have no test so named at `d640539`, though tests cover them; each is a gap, not
-a missing check (lead ruling R-166); an eighth, row 123, was one until doc
+rule 1 and T126 require (lead ruling R-98 (a) 2). Eight of PR #19's scenarios
+have no test so named at `b7cf86e`, though tests cover them; each is a gap, not
+a missing check (lead ruling R-166); a ninth, row 123, was one until doc
 round 27, and its note follows the list:
 
 - "Branch deletion refuses a branch it may not delete" (round (a)): by
@@ -259,6 +263,25 @@ round 27, and its note follows the list:
   scenario does; each half is pinned apart, the redirected row's refusal by
   `test_clean_a_redirected_worktree_s_incomplete_plan_names_the_unset` (T061).
   None is named after the title.
+- "A refusal beside a worktree whose path holds the main worktree" (round (u),
+  PR #19 at `1476110`, its `project-clean` delta, "Clean reports local worktree
+  state", `spec.md:133`; Brett Heap's M4 (a), ruled on 2026-10-31T18:20:06Z,
+  "(a) Add M3's exception (Recommended)", lead R-432; writer's `949c58a`): by
+  `test_clean_the_refusal_beside_a_row_that_holds_another_takes_m3_s_exception`
+  (T061), whose repository with w1 holding a second worktree, a registry path
+  listed twice, a worktree redirected by `core.bare` and one behind a symbolic
+  link prints the `_holds` form in the `--all-safe` preview, in `--all-safe
+  --apply` and in single mode naming each holding row, in human text and in
+  `--json`, and its unread form beside a row whose path cannot be read, while a
+  second repository with the last two rows alone prints the redirect form
+  unchanged, the scenario's clause without W; and by
+  `test_clean_the_main_worktree_inside_a_linked_worktree` (T061), whose W, which
+  holds the main worktree, has the exact `_holds` form asserted in batch and in
+  single mode, in `--json` too, and its unread form beside an unreadable row. No
+  single test puts W beside a linked worktree that `core.worktree` redirects in
+  one fixture, as the scenario does; each half is pinned apart, the redirect's
+  by `test_clean_a_redirected_worktree_s_incomplete_plan_names_the_unset`
+  (T061). None is named after the title.
 
 Row 123, "A nested repository made after the plan" (round (r), PR #19 at
 `4512441`, its `project-clean-review-safety` delta, "Cleanup revalidates
@@ -670,4 +693,46 @@ Brett Heap's M1 (a) is recorded in FR-064's note and the contract; the cites of
 at `54e869b`; the contract's note on F-6 and F-10 says that #19 states both;
 and T127's static check passes on this branch's own tree and on the tree that
 004 has once #19 lands, with #19 at `54e869b`, its 3 missing spans classed in
-T127. The head sentence reads `d640539`.
+T127. The head sentence read `d640539`.
+
+Doc round 30 (lane 3's W161, W164, W165 and W169; Brett Heap's M4 (a), ruled on
+2026-10-31T18:20:06Z, "(a) Add M3's exception (Recommended)", and his LQ-3, O-2
+and F-4, ruled by his words of 2026-10-31 (lead R-432); the lead's R-432 to
+R-443; the code round `aa342ad..b7cf86e` on `impl/004-q-build`, merged into this
+branch; #19's round (u) at `1476110`). Its tests, each named in its task:
+`test_clean_the_refusal_beside_a_row_that_holds_another_takes_m3_s_exception`
+(T061; `tests/test_clean_gates.py`; `949c58a`), which pins M4 (a)'s two `_holds`
+remedies beside the rows that hold or share another's path and the redirect form
+beside the rows that do not;
+`test_status_a_path_listed_twice_and_a_twin_spelling_keep_the_baseline_s_values`
+(T115; `tests/test_status_doctor_update.py`; `b7cf86e`), which pins `status`,
+`doctor` and `update` at the baseline's entries for a registry path listed twice
+and two spellings of one worktree while `clean --all-safe` still excludes the
+four rows, since R-57 L3 and R-67 (c) are `clean`'s alone (W161, row 004-08;
+R-432); the changed `test_clean_the_main_worktree_inside_a_linked_worktree` and
+`test_clean_every_protected_classifier_incomplete_copy` (T061),
+`test_clean_the_preview_says_what_keeps_each_row_single_mode_shared_path` (T053;
+`tests/test_clean_batch.py`),
+`test_clean_single_target_p_s_rows_the_deadline_stopped_are_not_counted_for_the_variant`
+(T070) and `test_clean_evidence_checks_registration_both_ways` (T029), which
+expect the `_holds` form or pass `for_clean=True`, their assertions otherwise
+unchanged; and `tests/clean_support.py`'s two new fixtures,
+`remedy_inspection_incomplete_redirect_holds` and
+`remedy_inspection_incomplete_redirect_unread_holds` (T011; `949c58a`). No other
+test name changes. #19's round (u) scenario "A refusal beside a worktree whose
+path holds the main worktree" (`spec.md:133` at `1476110`) is row 127 (127 rows;
+T002 and T126 count it), a named gap, since no test's name begins with its
+title: the gap note above names the tests that cover it, so that the named gaps
+go from seven to eight. The other items of the round are not rows: M4 (a) is in
+FR-027's and FR-028's notes, the contract, the data model and the README; Brett
+Heap's LQ-3, O-2 and F-4 are recorded as ruled in research.md R1, the plan, the
+spec's Assumptions and Dependencies, FR-047's note, the contract and the data
+model; R-67 (c) and R-57 L3 are confined to `clean`'s plan in FR-055's note, the
+contract, the data model and T029, T031 and T115; R-61 (b) is kept in every
+command in FR-057's note, the contract and the data model, whose sentence that a
+run of `add-project-clean-branch-retirement` can retire `refs/heads/HEAD` is
+corrected (lane 5's RN-1); gate 9's directory set is worded in full at the data
+model's revalidation step 7 (W164 OBS 1); T128's note cites R-429 (b) (W165
+OBS-4); and T127's static check passes on this branch's own tree and on the tree
+that 004 has once #19 lands, with #19 at `1476110`, its quoted answer to M4 an
+entry of `X` (W169 LOW-1). The head sentence reads `b7cf86e`.

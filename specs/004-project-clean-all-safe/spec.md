@@ -1219,6 +1219,9 @@ written".
   cause fits. Traces: "Clean previews and applies a batch of eligible
   worktree removals in one repository"; "Clean can explicitly retire
   verified worktrees"; design D13 and D18.
+  Note, 2026-10-31: where the refusal counts a row that holds or shares
+  another's path, removing the row by hand carries Brett Heap's M4 (a) exception
+  (FR-028's note of this date). The requirement's text stands as written.
 - **FR-028**: The human preview MUST list the selected rows, then the
   excluded rows grouped by reason with each group's next step, an
   `ignored-local-files` row showing its bounded count and first ignored
@@ -1329,6 +1332,26 @@ written".
   `core.worktree` or `core.bare` redirect, or Q9 (b)'s symbolic link) keeps the
   class's step, in its unread form where any path of the plan could not be read
   (writer's `d640539`). The requirement's text stands as written.
+  Note, 2026-10-31: Brett Heap's M4 (a), ruled on 2026-10-31T18:20:06Z, "(a) Add
+  M3's exception (Recommended)" (lead R-432; lane 2's wave 24 question M4, which
+  feature 004's code round raised on M3's rows, lead R-416; #19's round (u) at
+  `1476110`, design D18 and the scenario "A refusal beside a worktree whose path
+  holds the main worktree"; writer's `949c58a`), changes the remedy of the
+  `inspection-incomplete` refusal where a row it counts takes M3 (a)'s step.
+  Such a row, a `registration-mismatch` row whose path is, or holds, the main
+  worktree, the common directory or another worktree, or that shares its path
+  with another row, counts toward the refusal, and the remedy's "or remove the
+  row by hand after review", followed for it, deletes what its path holds. The
+  remedy that names the unset of `core.worktree` and `core.bare` therefore adds
+  M3's exception after that clause: `, except one whose path is or holds the
+  main worktree, the common directory or another worktree, which must not be
+  deleted by hand or with git worktree remove: review its registration with git
+  worktree list --porcelain` (`remedy_inspection_incomplete_redirect_holds`, 699
+  characters, and, where any row of the plan has a path that could not be read,
+  `remedy_inspection_incomplete_redirect_unread_holds`, 534 characters). Every
+  other refusal prints its remedy as before, those whose counted
+  `registration-mismatch` rows are a redirect, a broken registration or Q9 (b)'s
+  symbolic link alone included. The requirement's text stands as written.
 - **FR-029**: Each `project clean` invocation MUST set one monotonic deadline
   60 s after it starts and hold back a 10 s reconciliation reserve, so that
   work stops 50 s after start, both moving later by the time spent blocked at
@@ -1629,6 +1652,18 @@ written".
   with `deadline-exceeded`, as the paragraph above says of every filesystem call
   of the steps. The requirement's text above stands as written, and this note
   adds to its list of what `contains-submodule` covers.
+  Note, 2026-10-31: the lead's R-208 reading of the packet's `BA:271-276`, which
+  this requirement applies, that a filesystem call of revalidation that fails
+  other than with `ENOENT` or `ENOTDIR`, or runs past its own budget while the
+  deadline is not the limit, counts as `state-changed` whatever its step, as a
+  Git child does, is Brett Heap's O-2, ruled by his word of
+  2026-10-23T21:31:02Z, "yes, recommended for the ledger rows and 19-02 and
+  19-16", which he confirmed at 2026-10-31T17:58:12Z in lane openRepoProject-5's
+  session to mean "Broad (lane 3's reading)", and, to whether that word rules
+  it, "Yes, ruled as recommended (Recommended)" at 2026-10-31T18:20:06Z in lane
+  openRepoProject-2's question prompt (lead R-432; lane openRepoProject-3's
+  ledger row 19-09; #19 at `1476110` states it in design D7). The requirement's
+  text stands as written.
 - **FR-048**: Concurrent writers MUST be outside the safe contract, and cleanup
   MUST claim no lock, lease or writer-quiescence handoff. Its one guarantee
   MUST be that a removal child is spawned only if, at the revalidation
@@ -1809,8 +1844,21 @@ written".
   `f3724fc` read both rows; the code round's `455773a`, merged with `d640539`,
   confines them, and `clean` still excludes both rows as
   `registration-mismatch`. A path that two registry entries share, or that two
-  spellings of one worktree give (R-67 (c)), stays `registration-mismatch` in
-  every command, as at `f3724fc`. The requirement's text stands as written.
+  spellings of one worktree give (R-67 (c)), stayed `registration-mismatch`
+  in every command here until the note below. The requirement's text stands as
+  written.
+  Note, 2026-10-31 (lane 3's W161, row 004-08; the lead's R-432, ruled (b); the
+  code round's `b7cf86e`): R-57 L3's registry path that another entry names
+  (R-59 D5) and R-67 (c)'s two spellings of one worktree are `clean`'s alone as
+  well, as R-409 made Q2 (1) and Q9 (b), since the `project-command` delta
+  states neither and its parity rule keeps `status`, `doctor` and `update` at
+  the baseline's values (the note above). `worktree_rows()` reads
+  `shared_paths()` and `shared_identities()` only where `for_clean` is true, so
+  those three commands read such a row as the baseline does: probed, `dirty`
+  read, no `inspection-error`, and `doctor` exiting 0, where `project` through
+  `aa342ad` made both kinds `registration-mismatch` in every command. `clean`
+  keeps both, `registration-mismatch` with M3 (a)'s step and M4 (a)'s remedy
+  (FR-028's notes). The requirement's text stands as written.
 - **FR-056**: Once per common directory, the model MUST run the identity
   probe, the registry listing, row 4c's read of `extensions.worktreeConfig`
   from the common directory's own `config` (LQ-11, draft PR #19), one ref
@@ -1851,12 +1899,21 @@ written".
   3's W131 LOW-3; lead R-391). With `core.warnAmbiguousRefs` false, in the
   repository's configuration or the user's, which no pin overrides, the same
   pinned probe exits 0 with empty standard error, on Git 2.43.0 and 2.36.6, so
-  that no row is `inspection-error` on that account, a run of
-  `add-project-clean-branch-retirement` can retire `refs/heads/HEAD`, and that
-  change's `Retired HEAD` restore line is then the restore that works; 004 adds
-  no pin for it and changes no behaviour (#19's design D1 at `4512441`). Until
-  then 004's contract alone declared the rule (lead R-116), and it skipped a
-  blank line. The acceptance scenario of User Story 9 that
+  that no row is `inspection-error` on that account.
+  The row of a worktree whose branch is `refs/heads/HEAD` still is, by R-61 (b),
+  which holds in every command, since the ref listing prints for that branch the
+  upstream and track of the branch that HEAD names: under either setting such a
+  row is `inspection-error`, by Q8 where Git warns that the refname is ambiguous
+  and by R-61 (b) where it does not, and is never selected, so that no run
+  removes its worktree or retires its branch, and
+  `add-project-clean-branch-retirement`'s `Retired HEAD` restore line is never
+  reached through such a row. This note said until doc round 30 that with the
+  setting false a run of that change could retire `refs/heads/HEAD` and that the
+  line was then the restore that works (lane 5's RN-1; lead R-432). #19 states
+  R-61 (b) at round (u) (the `project-command` delta, `spec.md:251-256` at
+  `1476110`, and design D1); 004 adds no pin for it and changes no behaviour.
+  Until round (q), 004's contract alone declared the rule (lead R-116), and it
+  skipped a blank line. The acceptance scenario of User Story 9 that
   reads that the first fake Git "completes with no `probe-timeout` and its
   standard error kept capped" reads, as #19's scenario now does, that the row
   is also `inspection-error` with `probe-failed`. The requirement's text stands
@@ -2137,9 +2194,11 @@ written".
 - `.specify/memory/constitution.md` is still the unfilled template, so the
   ratified change alone governs this feature.
 - No clarification marker is used: the ratified change is the specification,
-  and the two questions that still stand before Brett Heap, the squash-merge
-  question and the push-child exception, are recorded in the next two entries,
-  this feature implementing the ratified text until he rules. The V5 deferral
+  and the one question that still stands before Brett Heap, the squash-merge
+  question, is recorded in the next entry, this feature implementing the
+  ratified text until he rules; the push-child exception, which stood beside
+  it, he ruled on 2026-10-31, and the entry after it records the ruling. The
+  V5 deferral
   (`design.md` D12) and the Git 2.36 floor kept with one more scrubbed name
   (R-21, `design.md` D17) were before Brett Heap at ratification and stand as
   ratified.
@@ -2162,12 +2221,17 @@ written".
   `test_clean_pushes_to_a_differently_named_upstream_branch` (`:978`), both at
   `961c405`, cannot pass: the push ends `fatal: transport 'file' not allowed`,
   exit 128, where the unpinned push exits 0 (checked on Git 2.43.0). The
-  conflict awaits Brett Heap's word on draft PR #19 (branch
-  `change/amend-clean-all-safe-push-pins`), which carries the push-child
-  exception (the lane's question LQ-3; task 1.7, which that PR adds to the
-  change's `tasks.md`, not yet ticked). Until he rules, this feature's plan
-  builds on that exception, and a different ruling moves only the push child's
-  treatment.
+  conflict is ruled, as the lane recommended (option (a)): draft PR #19 (branch
+  `change/amend-clean-all-safe-push-pins`) carries the push-child exception (the
+  lane's question LQ-3; lane openRepoProject-3's ledger row 19-08), so that the
+  push child of `clean --action push` is the one Git child without the pins, and
+  this feature builds on it. Brett Heap ruled it, by his word of
+  2026-10-23T21:31:02Z, "yes, recommended for the ledger rows and 19-02 and
+  19-16", which he confirmed at 2026-10-31T17:58:12Z in lane openRepoProject-5's
+  session to mean "Broad (lane 3's reading)", and, to whether that word rules
+  it, "Yes, ruled as recommended (Recommended)" at 2026-10-31T18:20:06Z in lane
+  openRepoProject-2's question prompt (lead R-432). Task 1.7, which that PR adds
+  to the change's `tasks.md`, is filled at the archive PR.
 - `probes` and `operations` count each Git child once: `probes.performed` every
   Git child other than a removal child, and `operations.performed` the removal
   children, as the lead ruled (R-27) from the packet's arithmetic, in which a
@@ -2176,8 +2240,8 @@ written".
   removals, which the wrapper counts, so this reading departs from its
   literal text; it awaits Brett Heap's word through draft PR #19's commit
   `cecb4fc`, "State which count holds the removals", as the push-child
-  exception beside it does, and FR-033, User Story 6 scenario 6 and SC-006
-  read it so until then.
+  exception beside it did until his ruling of 2026-10-31 (above), and FR-033,
+  User Story 6 scenario 6 and SC-006 read it so until then.
 - The caps and budgets stand as measured by governance task 2.1, and the
   2.36 floor as verified by task 2.2 on Git 2.36.6, 2.40.4 and 2.43.0. Their
   results are posted on PR #11, task 2.1 at
@@ -2239,12 +2303,12 @@ written".
 - **Governance**: tasks 1.1 to 1.6, 2.1 and 2.2 of the change are done; the
   Speckit handoff in its `tasks.md` names this feature.
 - **Draft PR #19** (`change/amend-clean-all-safe-push-pins`): the push-child
-  exception with its scenario, commit `cecb4fc`, "State which count holds
-  the removals", on the `probes` and `operations` count, a reading that
-  departs from the delta's literal text
-  (Assumptions), and the task 1.7 it adds to the change's `tasks.md`; it
-  awaits Brett Heap's word, and this feature's plan builds on it until he
-  rules (Assumptions).
+  exception with its scenario, which Brett Heap ruled on 2026-10-31
+  (Assumptions); commit `cecb4fc`, "State which count holds the removals", on
+  the `probes` and `operations` count, a reading that departs from the delta's
+  literal text (Assumptions), which awaits his word, and this feature's plan
+  builds on it until he rules; and the task 1.7 it adds to the change's
+  `tasks.md`, filled at the archive PR.
 - **Runtime and CI**: Git 2.36 or later where `project` inspects a
   repository; a Git 2.36 build for the CI floor job; every job of the
   existing `test` matrix, on Linux only since Brett Heap's decision of

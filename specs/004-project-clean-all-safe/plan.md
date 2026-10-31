@@ -275,7 +275,9 @@ test_clean_ -k test_status_ -k test_doctor_`. At `961c405` that selection ran
 
 No NEEDS CLARIFICATION remains: the change decides every technical question
 but those [research.md](research.md) settles, and its one open item, the
-push-child exception (LQ-3, R1), is planned under a stated assumption.
+push-child exception (LQ-3, R1), was planned under a stated assumption, which
+Brett Heap ruled on 2026-10-31: "Yes, ruled as recommended (Recommended)" (lead
+R-432; research.md R1 gives the chain).
 
 ## Constitution Check
 
@@ -289,9 +291,9 @@ constitution gates. What governs instead: the ratified change
 never rebases, no work outside this worktree). Pre-research: pass, nothing to
 evaluate. Post-design: pass; the Phase 1 artifacts cite the design and depart
 from its text only where research.md records why: the push-child exception
-(R1, awaiting Brett Heap's word on PR #19), the lead's rulings R-26 to R-32
-(R10, R8, R1, R10, R14, R10, R15) and R-35 (R11), D1's handler span (R4) and
-D2's `waitpid` wording (R14).
+(R1, which Brett Heap ruled on 2026-10-31, "Yes, ruled as recommended
+(Recommended)"), the lead's rulings R-26 to R-32 (R10, R8, R1, R10, R14, R10,
+R15) and R-35 (R11), D1's handler span (R4) and D2's `waitpid` wording (R14).
 
 ## Project Structure
 
@@ -354,9 +356,10 @@ the `OPENSPEC-SPECKIT-GLOBAL` block.
 ## Risks and Notes
 
 - **The push-child exception (LQ-3)**: planned to PR #19 (draft, after its
-  review fixes) for Brett Heap's word; if he rules a follow-up change
-  instead, only the push child's treatment moves (R1). The delete-branch
-  child carries the pins either way (R5).
+  review fixes) for Brett Heap's word, which he gave on 2026-10-31T18:20:06Z,
+  "Yes, ruled as recommended (Recommended)" (lead R-432; research.md R1 gives the
+  chain); a follow-up change instead would have moved only the push child's
+  treatment (R1). The delete-branch child carries the pins either way (R5).
 - **Test layout (lead ruling R-32)**: the new tests live in new modules, not
   in `tests/test_project.py`, which departs from design Migration Plan step 6
   and the proposal's Impact; the feature PR body states it for Brett Heap's
@@ -445,10 +448,11 @@ The feature PR body lists these for his word:
   `status`'s `worktrees`, or the change is a departure that needs his word;
   the code stays as built (T117).
 
-The others are recorded where they apply: LQ-3, the push-child exception
-(R1); LQ-4, the preflight's scope (R16); LQ-5, the remedy reading
-(contract, "Human output"); and LQ-20, the basis of design D14's fit, which
-draft PR #19 at `2e819ad` gives on three bases (Performance Goals, above).
+The others are recorded where they apply: LQ-3, the push-child exception (R1;
+ruled by Brett Heap on 2026-10-31); LQ-4, the preflight's scope (R16); LQ-5, the
+remedy reading (contract, "Human output"); and LQ-20, the basis of design D14's
+fit, which draft PR #19 at `2e819ad` gives on three bases (Performance Goals,
+above).
 
 ## Complexity Tracking
 
