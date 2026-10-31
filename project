@@ -2729,10 +2729,11 @@ class WorktreeRow(dict):
     `detached` in the `branch` field cannot tell from a branch named
     `detached` (T10; lane 2's wave 22 triage); `holds`, whether the row's
     path is, or holds, the main worktree, the common directory or another
-    row (enclosing_rows(), clean's plan alone), or is a path or a realpath
-    that another row shares (shared_paths(), shared_identities()), which
-    gives a `registration-mismatch` row Brett Heap's M3 (a) next step (lead
-    R-413); and `unprobed`, the
+    row (enclosing_rows()), or is a path or a realpath that another row
+    shares (shared_paths(), shared_identities()), each in clean's plan alone
+    (lead rulings R-409 and R-432), which gives a `registration-mismatch`
+    row Brett Heap's M3 (a) next step (lead R-413) and its refusal's remedy
+    his M4 (a) form (lead R-432); and `unprobed`, the
     marker that a read not finished within its filesystem budget sets (T066;
     analyze M6), never serialized and unset here."""
 
@@ -3092,7 +3093,8 @@ def registration_verdict(main, common_dir, named, worktrees=None, back=None, dot
     - shared: another entry of the registry names the row's path too
       (shared_paths()), or another present row built with it has its
       realpath or its admin id (shared_identities(); lead ruling R-67 (c)):
-      it disagrees, whatever else was read.
+      it disagrees, whatever else was read. Only clean's plan passes it
+      (worktree_rows(for_clean=True); lead R-432).
     - named: the realpath that `<path>/.git` names when it is a gitfile
       (_gitfile()), else None.
     - main: the main worktree has no admin directory; it holds when named,
@@ -3133,9 +3135,10 @@ def verify_registration(path, common_dir, main, fs=_fs):
     the registry's porcelain output does not name an entry's admin
     directory, and both of two entries naming one worktree under two
     spellings, with one admin id, since both read one `.git` file;
-    worktree_rows() fails both kinds closed (lead rulings R-57 L3 and R-67
-    (c)). It reads what registration_verdict() needs, in its order, and
-    decides there. fs makes each read: _fs(), each its own bounded call, or
+    worktree_rows() fails both kinds closed in clean's plan alone (lead
+    rulings R-57 L3 and R-67 (c), confined by R-432). It reads what
+    registration_verdict() needs, in its order, and decides there. fs makes
+    each read: _fs(), each its own bounded call, or
     _direct() inside one fs_call() (_identity_now())."""
     dotgit = os.path.join(path, b".git")
     named = _gitfile(path, fs)
@@ -3372,7 +3375,8 @@ def inspect_repository(directory, run, refresh=False, *, repeat_identity_at_root
 def shared_paths(registry):
     """The registry paths that more than one entry of registry names, as the
     raw bytes listed (lead rulings R-57 L3 and R-59 D5): a pure function of
-    row 4's records."""
+    row 4's records. Only clean's plan reads them (worktree_rows(for_clean=True);
+    lead R-432)."""
     seen, shared = set(), set()
     for record in registry:
         (shared if record["path"] in seen else seen).add(record["path"])
@@ -3383,9 +3387,10 @@ def shared_identities(reads):
     """The positions in reads, the reads of the rows that one worktree_rows()
     call builds (_read_row()), of the present rows whose realpath, or whose
     admin id, another present row among them has too (lead ruling R-67
-    (c)): each is registration-mismatch, as a shared registry path is. Two
-    spellings of one worktree both pass the two-way check, with one admin id,
-    since both read one `.git` file. A pure function of the values read: a
+    (c)): each is registration-mismatch in clean's plan, as a shared registry
+    path is (worktree_rows(for_clean=True) and registry_twin(); lead R-432).
+    Two spellings of one worktree both pass the two-way check, with one admin
+    id, since both read one `.git` file. A pure function of the values read: a
     row not present, or whose realpath was not read, is compared by neither
     (lead ruling R-57 L2), and only a registration that held has an admin
     id, the main worktree's being None and never compared."""
@@ -3541,7 +3546,8 @@ def _read_row(raw, main, common_dir, active, active_error, shared, for_clean=Fal
     probe, in D6's order: the lstat; for a present row, its realpath, the
     working directory's failure (active_error) if it failed, and the
     registration, a shared path's verdict taken with nothing read (lead
-    rulings R-57 L2 and L3). For clean's plan and its revalidation alone
+    rulings R-57 L2 and L3), shared being true in clean's plan alone (lead
+    R-432). For clean's plan and its revalidation alone
     (for_clean; lead R-409), so is a linked row's whose registered path the
     lstat shows to be a symbolic link: it disagrees, so the row is
     registration-mismatch and unprobed, since Git empties the link's target,
@@ -3661,7 +3667,10 @@ def worktree_rows(repo, run, records=None, for_clean=False):
     (match_target() and build_plan()), whose review safety adds Brett Heap's
     Q2 (1) and Q9 (b) below; repo_state() leaves it false, so status, doctor
     and update read an enclosing row and a symbolic-link path as the baseline
-    did (pc:311-312's parity rule; lane 3's W139 MEDIUM-1, lead R-409). The bare entry, and a first entry that is the
+    did (pc:311-312's parity rule; lane 3's W139 MEDIUM-1, lead R-409), and
+    so too a shared registry path and two spellings of one worktree, R-57 L3
+    and R-67 (c) below being clean's alone as well (lane 3's W161, row
+    004-08; lead R-432). The bare entry, and a first entry that is the
     common directory when the main worktree cannot be named, are no rows (D8),
     and where it can, that row's path is the main worktree's realpath; the
     registry's first entry is the main worktree in any order given.
@@ -3670,20 +3679,21 @@ def worktree_rows(repo, run, records=None, for_clean=False):
     ENOENT or ENOTDIR and null with an `os-error` on any other failure (lead
     ruling R-36); for a present row, `current` (the working directory is
     inside it, as the baseline reads it), the two-way registration and, only
-    when it holds, the combined status probe in that worktree. A row whose
-    registry path another entry of the whole registry names too is
-    registration-mismatch (`registered` false) with no registration read,
-    since the two-way check cannot tell such entries apart; a row not
-    present gets no registration or duplicate check (lead rulings R-57 L2
-    and L3, R-59 D5). Among the present rows one call builds, rows with one
-    realpath, or one admin id, are registration-mismatch too, two spellings
-    of one worktree passing the two-way check with one admin id
-    (shared_identities(); lead ruling R-67 (c)), in every command; and, in
-    clean's plan alone, so is a linked row whose path is the common
+    when it holds, the combined status probe in that worktree. In clean's
+    plan alone (for_clean; lead R-432): a row whose registry path another
+    entry of the whole registry names too is registration-mismatch
+    (`registered` false) with no registration read, since the two-way check
+    cannot tell such entries apart, while a row not present gets no
+    registration or duplicate check (lead rulings R-57 L2 and L3, R-59 D5);
+    among the present rows one call builds, rows with one realpath, or one
+    admin id, are registration-mismatch too, two spellings of one worktree
+    passing the two-way check with one admin id (shared_identities(); lead
+    ruling R-67 (c)); so is a linked row whose path is the common
     directory, the main worktree or another row's path, or an ancestor of
     one (enclosing_rows(); Brett Heap's Q2 (1), lead R-380), and one whose
-    registered path is a symbolic link (_read_row(); his Q9 (b)). They are
-    compared once every
+    registered path is a symbolic link (_read_row(); his Q9 (b)). Status,
+    doctor and update read each such row's registration, and probe it, as
+    the baseline did. They are compared once every
     row of the call is read and before any status probe, so that none of
     them gets one; an entry the call does not build is never read for it,
     so a row past the cap stays uninspected, while match_target() builds P's
@@ -3740,7 +3750,8 @@ def worktree_rows(repo, run, records=None, for_clean=False):
     unmerged = ([] if repo["refs"] is None or repo["merge_target"] is None or repo["merged"] is not None
                 else (list(repo["errors"]) or [unparseable_error("for-each-ref")]))
     redirectable = repo.get("worktree_config") is not False  # row 4c true, or not read (LQ-11)
-    shared = shared_paths(registry)
+    # R-57 L3 and R-59 D5: clean's plan alone (lead R-432), as pc states no such rule for status, doctor and update.
+    shared = shared_paths(registry) if for_clean else frozenset()
     entries = _registry_entries(registry, records)
     try:
         active, active_error = _realpath(b"."), None
@@ -3757,7 +3768,8 @@ def worktree_rows(repo, run, records=None, for_clean=False):
             raw = identity["root"]
         built.append((index, record, raw, _read_row(raw, index == 0, common_dir, active, active_error,
                                                     record["path"] in shared, for_clean)))
-    twins = shared_identities([read for _, _, _, read in built])
+    # R-67 (c): clean's plan alone too (lead R-432; lane 3's W161, row 004-08).
+    twins = shared_identities([read for _, _, _, read in built]) if for_clean else frozenset()
     # Q2 (1), lead R-380: clean's plan alone (R-409), as pc states no such rule for status, doctor and update.
     enclosing = enclosing_rows(built, identity, registry) if for_clean else frozenset()
     rows = []
@@ -3778,7 +3790,7 @@ def worktree_rows(repo, run, records=None, for_clean=False):
             read["errors"].extend(dict(error) for error in (unlisted or unmerged))
         row = row_evidence(record, raw, index == 0, read, refs, repo["merged"], target)
         # M3 (a), lead R-413: a path that is, holds or shares another's takes its own next step.
-        # In clean's plan the twins and shared terms add nothing to enclosing: enclosing_rows()
+        # In clean's plan the twins and shared terms add nothing beyond enclosing: enclosing_rows()
         # counts equality as enclosure, so a mutant that drops them survives by design (W155 OBS-1).
         row.holds = at in twins or at in enclosing or record["path"] in shared
         rows.append(row)
@@ -7491,7 +7503,9 @@ def repo_state(root):
     the invocation gives every command but `clean`, no deadline and no row cap,
     and without clean's Q2 (1) and Q9 (b) (for_clean false; lead R-409): an
     enclosing row and a symbolic-link path are probed as the baseline probed
-    them (pc:311-312), while R-67 (c)'s shared rows stay registration-mismatch.
+    them (pc:311-312), and so are a registry path listed twice (R-57 L3) and
+    two spellings of one worktree (R-67 (c)), which clean's plan alone makes
+    registration-mismatch (lane 3's W161, row 004-08; lead R-432).
     root's own row gives its branch, head, dirty, upstream, ahead and behind,
     so a linked worktree reports its own (lead ruling R-56); a deleted
     upstream keeps its configured short name with ahead and behind null.

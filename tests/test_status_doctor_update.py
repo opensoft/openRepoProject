@@ -16,6 +16,7 @@ import json
 import os
 from pathlib import Path
 import shlex
+import shutil
 import signal
 import subprocess
 import sys
@@ -942,6 +943,79 @@ class StatusDoctorUpdateTests(clean_support.CleanCase):
                 self.assertEqual((reasons[str(path)], rows[str(path)]["classification"], rows[str(path)]["dirty"]),
                                  ("registration-mismatch", "inspection-error", None), path)
             self.assertEqual(result.document["selected"], [])
+        for record in tools:
+            self.assertFalse(record.exists(), f"{record.name}: no owner tool ran")
+
+    def test_status_a_path_listed_twice_and_a_twin_spelling_keep_the_baseline_s_values(self):
+        # Lane 3's W161, row 004-08, lead R-432. A registry path listed twice
+        # through a copied admin directory (lead rulings R-57 L3 and R-59 D5)
+        # and a worktree listed again through a symbolic-link spelling (R-67
+        # (c)) are registration-mismatch in clean's plan alone, as R-409
+        # confined Brett Heap's Q2 (1) and Q9 (b): pc's evidence model states
+        # neither rule, so its parity rule (pc:311-312) keeps status, doctor
+        # and update at the baseline's values. These are 15504f1's, read from
+        # its `project` on this layout: every row probed, `dirty` false,
+        # `ignored_files` 0, no classification, and doctor exiting 0 with no
+        # error check, where 904aefc made the four rows inspection-error with
+        # `dirty` null and doctor exit 1. Each entry adds 004's
+        # `path_valid_utf8` and `ignored_samples`. The listing's order is
+        # Git's, so entries are compared sorted. Report runs only, no --apply,
+        # every owner tool a recording stand-in. clean, on the same fixture,
+        # still excludes the four rows as registration-mismatch, and its
+        # refusal takes M3's exception (Brett Heap's M4 (a), lead R-432).
+        root = self.repo()
+        head = self.git(root, "rev-parse", "HEAD").strip()
+        admin = self.common_dir(root) / "worktrees"
+        shared = self.base / "shared"
+        self.git(root, "worktree", "add", "-q", "-b", "001-shared", shared)
+        shutil.copytree(admin / "shared", admin / "shared-copy")
+        spelled = self.base / "spelled"
+        self.git(root, "worktree", "add", "-q", "-b", "002-spelled", spelled)
+        link = self.base / "twin-link"
+        link.symlink_to(self.base, target_is_directory=True)
+        shutil.copytree(admin / "spelled", admin / "spelled-copy")
+        (admin / "spelled-copy" / "gitdir").write_text(f"{link / 'spelled' / '.git'}\n")
+        listed = self.git(root, "worktree", "list", "--porcelain").splitlines()
+        self.assertEqual(listed.count(f"worktree {shared}"), 2, "the registry names shared twice")
+        self.assertIn(f"worktree {link / 'spelled'}", listed, "and spelled again through the link")
+        env, tools = self.report_env()
+
+        def entry(path, branch):
+            """A worktree entry as 15504f1 reports it, probed, with 004's two keys."""
+            return {"path": str(path), "path_valid_utf8": True, "present": True, "head": head, "branch": branch,
+                    "dirty": False, "ignored_files": 0, "ignored_samples": [], "current": False,
+                    "upstream": None, "ahead": None, "behind": None}
+
+        def ordered(entries):
+            return sorted(entries, key=lambda item: json.dumps(item, sort_keys=True))
+
+        expected = ordered([entry(root, "main"), entry(shared, "001-shared"), entry(shared, "001-shared"),
+                            entry(spelled, "002-spelled"), entry(link / "spelled", "002-spelled")])
+        for name in ("status", "doctor", "update"):
+            with self.subTest(command=name):
+                result = self.run_json(name, root, "--json", env=env)
+                self.assert_status(result, 0)
+                repository = result.document["repository"]
+                self.assertEqual(ordered(repository["worktrees"]), expected)
+                self.assertEqual([repository[key] for key in ("present", "branch", "head", "dirty")],
+                                 [True, "main", head, False])
+                self.assertNotIn("classification", repository)
+                if name == "doctor":
+                    self.assertEqual(checks(result.document, "error"), [])
+        with self.subTest("clean still excludes the four rows"):
+            result = self.run_json("clean", root, "--all-safe", "--json", env=env)
+            self.assert_status(result, 1)
+            four = sorted([str(shared), str(shared), str(spelled), str(link / "spelled")])
+            self.assertEqual(sorted((item["path"], item["reason"]) for item in result.document["excluded"]
+                                    if item["path"] != str(root)),
+                             [(path, "registration-mismatch") for path in four])
+            self.assertEqual(sorted((row["path"], row["classification"], row["dirty"])
+                                    for row in result.document["worktrees"] if row["path"] != str(root)),
+                             [(path, "inspection-error", None) for path in four])
+            message = TEXT["plan_incomplete"].format(CODE="inspection-incomplete",
+                                                     REMEDY=TEXT["remedy_inspection_incomplete_redirect_holds"])
+            self.assertEqual((result.document["selected"], result.document["refusals"]),
+                             ([], [{"code": "inspection-incomplete", "message": message}]))
         for record in tools:
             self.assertFalse(record.exists(), f"{record.name}: no owner tool ran")
 
