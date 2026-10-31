@@ -52,7 +52,7 @@ run against a repository: the plan step ran no `project` and no owner tool
 
 - **Finding**: C-56 (Q2 A) and A1's task 1.7 set the plan after feature 004
   merges into `main`, on Brett Heap's word given after that merge; spec 005 at
-  `f47c2fd` (its commit 3av) records in C-56 and its Status that his word below
+  `7c5eb54` (its commit 3aw) records in C-56 and its Status that his word below
   moved that order for the plan step, and in C-72 his words on the plan's held
   items (R20). Feature 004 has not merged: PR #33 is a draft, its branch now at
   `904aefc`, the plan's cites at `d6bac50` (below). Brett
@@ -126,9 +126,18 @@ run against a repository: the plan step ran no `project` and no owner tool
     `registry_twin()` (`:6343`) set true and `repo_state()` (`:7547`) leaves
     false, so `project status`, `doctor` and `update` read an enclosing row and
     a symbolic-link path as the baseline did, and `enclosing_rows()` (`:3391`)
-    runs only for `for_clean`; what stays shared by every command is R-67 (c)'s
-    rule, `shared_paths()` and `shared_identities()`, which make a row
-    `registration-mismatch` everywhere; `worktree_rows` also sets
+    runs only for `for_clean`; what stays shared by every command there is R-67
+    (c)'s rule, `shared_paths()` and `shared_identities()`, which make a row
+    `registration-mismatch` in every command at that head. Lane
+    openRepoProject-2's lead ruling R-432 of 2026-10-31 confines R-67 (c)'s
+    shared-path and twin rows to `project clean`'s plan, as its R-409 confines
+    Q2 (1) and Q9 (b), so that after that lane's next code round on feature
+    004, not landed, `project status`, `doctor` and `update` probe them as the
+    baseline does while `project clean` keeps them `registration-mismatch`; the
+    overview's rows that share a path, a realpath or an admin id are O23's
+    again, and keep FR-007's R-67 (c) reading until Brett Heap rules while spec
+    005 pins feature 004 at `904aefc`, O23 (A) recommended, not chosen (R20).
+    `worktree_rows` also sets
     `WorktreeRow.holds` (`:3764`; Brett Heap's M3 (a), a path that is, holds or
     shares another's), which only `excluded_groups()` reads, and makes each
     present row on a branch `inspection-error` where the merged-set listing
@@ -171,17 +180,20 @@ run against a repository: the plan step ran no `project` and no owner tool
     with T1 to T8 confirmed by Brett Heap ("R-320: yes" for T6 to T8) and their
     warnings in the words of his "R-324: yes" (the lead's R-343);
   - A1 at `e4a30fc`;
-  - #24's change at `fe5b245` (PR #27 at `d95eea2`, its round B24, moved
-    from `04be7f6` in revision 3, from `dafe476` in revision 5 and from
-    `288fc34` in revision 8; its eight pinned ranges byte-identical by the
-    lead's `cmp` at each move, at `d95eea2` its proposal's :803-806,
-    :834-837, :937-949 and :967-968, its design's :1199-1202, :1278-1281
-    and :1938-1944 and its tasks' :198-213, round B24 editing only its two
-    ADDED requirements among its deltas, and its `project-overview` block
-    blob `a40458cb` at `fe5b245`, `04be7f6`, `dafe476`, `288fc34` and
-    `d95eea2` alike) and #25's at `05a424a` (PR
-    #29 at `a529310`), both read only to confirm that neither gates this
-    feature (C-71).
+  - #24's change at `fe5b245` (PR #27 at `7f3453c`, its round B26 of
+    2026-10-23T22:49:28Z, after its round B25 at `37c0c23`, the two re-basing
+    the blocks it carries from PR #19 on #19's rounds (q) to (s), none of them a
+    block that this feature reads; moved from `04be7f6` in revision 3, from
+    `dafe476` in revision 5, from `288fc34` in revision 8 and from `d95eea2` in
+    revision 11; its eight pinned ranges byte-identical by the lead's `cmp` at
+    each move, at `7f3453c` its proposal's :893-896, :924-927, :1044-1056 and
+    :1074-1075, its design's :1345-1348, :1424-1427 and :2125-2131 and its
+    tasks' :222-237 (:803-806, :834-837, :937-949, :967-968, :1199-1202,
+    :1278-1281, :1938-1944 and :198-213 at `d95eea2`, its round B24 editing only
+    its two ADDED requirements among its deltas), and its `project-overview`
+    block blob `a40458cb` at `fe5b245`, `04be7f6`, `dafe476`, `288fc34`,
+    `d95eea2` and `7f3453c` alike) and #25's at `05a424a` (PR #29 at `a529310`),
+    both read only to confirm that neither gates this feature (C-71).
 - **Re-pin of revision 1, feature 004** (its lines cited at `d6bac50`):
   `0a82a62` is three merges after the first draft's `4b4c36b`: `7e0a61e`
   (`impl/004-codex-closed-stdout`, R-322: a `--json` apply run whose standard
@@ -687,7 +699,7 @@ run against a repository: the plan step ran no `project` and no owner tool
   write to the task pipe without a change to feature 004's signal code.
   The behaviour D1 asks for, any signal or finished task waking the loop
   at once, holds; no requirement changes. The packet names no pipe; spec
-  005 at `f47c2fd` records the choice in its Dependencies, where feature
+  005 at `7c5eb54` records the choice in its Dependencies, where feature
   004's runner is described: "D1's one self-pipe being realized as two
   read ends on one selector, `signal_scope`'s wakeup pipe and the loop's
   task pipe, with behaviour unchanged (the plan's research.md R4 at
@@ -722,8 +734,10 @@ run against a repository: the plan step ran no `project` and no owner tool
   the row's `path` when that is null, or at the candidate without Git),
   the extension read, the ref listing, merge-target resolution, the merged
   set, then each row's task, the twin decision (`shared_paths`,
-  `shared_identities`), and per row its work-tree probe (where the
-  extension is taken as true), its re-verification and its status probe,
+  `shared_identities`; FR-007's R-67 (c) reading, whose rows are O23's again and
+  keep it until Brett Heap rules while spec 005 pins feature 004 at `904aefc`,
+  O23 (A) recommended, not chosen; R20), and per row its work-tree probe (where
+  the extension is taken as true), its re-verification and its status probe,
   then classification
   (`row_evidence`, then `classify` through it), the reflog gate's reads and
   the findings. The main row of a bare repository (C-68), of a submodule
@@ -768,7 +782,7 @@ run against a repository: the plan step ran no `project` and no owner tool
   `KeyboardInterrupt` are `BaseException`s and pass. A merge is the identity
   step's result: a candidate whose common directory's `(dev, ino)` is already a
   repository joins it and its generator ends.
-- **The manifest's place**: FR-021 at `f47c2fd` places "the manifest read
+- **The manifest's place**: FR-021 at `7c5eb54` places "the manifest read
   at `repository.root` once that is named (after the identity probe where
   the candidate is the main worktree, else after the registry listing and
   design D3's steps), always before the ref listing (design D9), or at the
@@ -827,9 +841,11 @@ run against a repository: the plan step ran no `project` and no owner tool
   draft at `558b0c29`, :1424-1427; R20). At that point the 512-row cap
   selects its rows by rank and row order (FR-018). Within phase 2, a
   repository's first worktree probe waits until each of its rows within
-  the cap has finished its first-read task, so the twins are decided from
-  every row (EC-031). A row's re-verification task starts only when a slot
-  is free for its status probe, which is then held for it, so that the
+  the cap has finished its first-read task, so the twins are decided from every
+  row (EC-031; O23's rows again, which keep FR-007's R-67 (c) reading until
+  Brett Heap rules while spec 005 pins feature 004 at `904aefc`, O23 (A)
+  recommended, not chosen; R20). A row's re-verification task starts only when a
+  slot is free for its status probe, which is then held for it, so that the
   probe follows its re-verification at once, as FR-007's "immediately
   before" asks.
 - **Rationale**: A1's design D6; with it the JSON of an uncut run at
@@ -870,7 +886,7 @@ run against a repository: the plan step ran no `project` and no owner tool
     reads with the realpath of `core.worktree`, take the same shape;
   - one per re-verification that FR-007 makes immediately before a status
     probe, enclosing the same reads again (lane openRepoProject-2's R-101
-    (j); R17), the task FR-013 at `f47c2fd` names in those words;
+    (j); R17), the task FR-013 at `7c5eb54` names in those words;
   - one per linked row whose work-tree probe ran: the strict realpath of
     the toplevel it printed, compared with the row's;
   - one per reflog read (at most 64 KiB, `reflog_path`, `:5073`);
@@ -976,14 +992,14 @@ no Git and a later ruling edits one function:
   core.worktree` exits 1 (A1 `clarifications.md`:79-83). But A1's failure table
   (A1:369) excepts only the extension read's exit 1 and the effective-work-tree
   read, so, read literally, the unset key's exit 1 is `probe-failed`, and the
-  scenario's own test fails. Spec 005 at `f47c2fd` records the same conflict
+  scenario's own test fails. Spec 005 at `7c5eb54` records the same conflict
   and his answer: the collector table's row with its two exceptions and, as a
   third that departs from DI:535 the same way, the unset key's exit 1, which
-  O11's part 1 adds (spec.md:4531-4534 and :5636-5639), beside FR-008's
-  gitfile root sentence (:2680-2687) and its sentence reading the unset key as
-  no value (:2689-2699), User Story 8's scenario 1 (:1778-1788) and FR-007's
+  O11's part 1 adds (spec.md:4572-4575 and :5682-5685), beside FR-008's
+  gitfile root sentence (:2714-2721) and its sentence reading the unset key as
+  no value (:2723-2733), User Story 8's scenario 1 (:1794-1804) and FR-007's
   note on A1's item 11, both of whose parts his word of 2026-10-23 chose
-  (:2603-2615; C-72). The scenario's first case names no exit status, where its
+  (:2637-2649; C-72). The scenario's first case names no exit status, where its
   second case, only a linked worktree a candidate, gives exit 1; the plan reads
   the first case, by that contrast, as no error. The plan reads that conflict
   in ratified text as O11's part 1, built now, which departs from the
@@ -1085,12 +1101,16 @@ no Git and a later ruling edits one function:
   openRepoProject-2's reports to lane 4 of 2026-10-23, its R-416 and R-424). The
   overview's class follows it (FR-026), `inspection-error`, so that the gate
   decides no `merged-removable` row, FR-034 withholds `--all-safe` for the
-  repository as `inspection-incomplete` and SC-004 takes no new exclusion; a row
-  that shares its realpath with another is FR-007's disagreement already
-  (EC-031). Whether the overview also status-probes the other rows, and which
-  finding it shows for them, is O23, open for his word: until he rules, FR-007
-  as ratified, one status probe, `dirty` read, and the class's
-  `inspection-error` finding (C-72).
+  repository as `inspection-incomplete` and SC-004 takes no new exclusion.
+  Whether the overview status-probes these rows, and which finding it shows for
+  them, is O23, open for his word, O23 (A) recommended, not chosen: until he
+  rules, FR-007 as ratified, one status probe, `dirty` read, and the class's
+  `inspection-error` finding (C-72). The rows that share a path, a realpath or
+  an admin id with another, the main worktree's included, are O23's rows again
+  since spec 3aw, lane openRepoProject-2's lead ruling R-432 of 2026-10-31
+  confining R-67 (c) to `project clean`'s plan: until he rules they stay
+  FR-007's disagreement, its R-67 (c) reading, while spec 005 pins feature 004
+  at `904aefc` (EC-031; C-72).
 
 ## R10. Discovery details (FR-001 to FR-005; PN-9, PN-13)
 
@@ -1123,7 +1143,7 @@ no Git and a later ruling edits one function:
     the packet's rule, "`ENOENT` and `ENOTDIR` mean 'no marker'" (DI:142),
     so that a file named like its directory (the holder marker's `D/<name
     of D>`) is no error. Change 2's "an error other than 'no such entry'"
-    (POD:46, A1:51) is narrower than DI:142, and FR-005 at `f47c2fd` takes
+    (POD:46, A1:51) is narrower than DI:142, and FR-005 at `7c5eb54` takes
     DI:142's: "any error other than "no such entry" or "not a directory"
     (`ENOENT`, `ENOTDIR`; DI:142)" (lane openRepoProject-3's W96, LOW-7).
 - **Rationale**: PN-9's two choices keep what was read (the run is already
@@ -1236,9 +1256,14 @@ no Git and a later ruling edits one function:
   and that takes a status probe + 1 per such linked row in a repository
   whose extension read is taken as true. A bare main entry (C-68), a
   submodule checkout's main row and an unnamed git-directory record add
-  none (PN-12; A1 design D3, items 1 and 3): none takes a status probe
-  (FR-008). It is computed from first reads, and in an uncut run
-  `estimated` differs from `performed` only where:
+  none (PN-12; A1 design D3, items 1 and 3): none takes a status probe (FR-008).
+  The twins stay out of the term for registration-verified rows while they keep
+  FR-007's R-67 (c) reading: they are O23's rows again, kept so until Brett Heap
+  rules while spec 005 pins feature 004 at `904aefc`, O23 (A) recommended, not
+  chosen, and counted there under (B) or if that pin moves past lane
+  openRepoProject-2's code round for R-432 first (R20). It is computed from
+  first reads, and in an uncut run `estimated` differs from `performed`
+  only where:
   - a row that its re-verification stops keeps its estimate: `performed`
     1 lower;
   - a linked row whose work-tree probe disagrees, by its output or by its
@@ -1256,10 +1281,10 @@ no Git and a later ruling edits one function:
     leaves the rest unstarted, so `performed` is then 1 + k for that
     candidate, k at most 3, against the 4 counted.
   A failed registry listing makes no difference here, the other three
-  repository children still running (R5), and twins none, being excluded
-  above. Item 7's term is R20's O3, chosen, and comes once A1's
-  re-alignment lands: +3 per Git candidate whose identity probe exits 0 and
-  prints other than two non-empty lines. That trigger is the triage's R4-3
+  repository children still running (R5), and twins none, being excluded above
+  while that reading stands. Item 7's term is R20's O3, chosen, and comes once
+  A1's re-alignment lands: +3 per Git candidate whose identity probe exits 0
+  and prints other than two non-empty lines. That trigger is the triage's R4-3
   refining the option's words as he read them, "+3 per Git candidate whose
   identity probe prints other than two lines" (C-72, which R20 keeps), since
   the re-reads run only after such an exit (R5); item 8's term, 1 per
@@ -1383,10 +1408,14 @@ no Git and a later ruling edits one function:
     ([quickstart.md](quickstart.md)).
   - **Isolation**: every test runs with a scratch `HOME`, `PROJECTS_DIR`
     set or unset explicitly, `WORKBENCHES_ROOT` at an empty scratch
-    directory, so that `project` tries that root alone and never the
-    discovery that tries `openBenches` and then `workBenches` (`main`'s #40),
-    so no openBenches (formerly workBenches) checkout is read, the fixtures
-    outside every Git work tree, and a bin
+    directory, so that `project` tries that root alone and never the discovery
+    that tries a `.workbenches-path` marker beside the script, then
+    `openBenches` under every projects directory, then `workBenches` under every
+    projects directory, then the current directory, then, in the current
+    directory and in each of its parents in turn, `openBenches` and then
+    `workBenches` (`main`'s #40, its `workbenches()` at `b42355e`), so no
+    openBenches (formerly workBenches) checkout is read, the fixtures outside
+    every Git work tree, and a bin
     directory first on `PATH` holding the counting `git` wrapper and fake
     owner tools (`gh`, `setup-openspeckit`, `openspec`, `onp`, `docker`)
     that log and exit 97; each test asserts that log empty. In-process
@@ -1533,8 +1562,15 @@ no Git and a later ruling edits one function:
     flip (traceability.md): for a row that holds another or the main worktree,
     or is registered through a symbolic link, its `dirty` (read, by FR-007's
     last case, until he rules; null under (A)) and its finding (the class's
-    `inspection-error` finding; `registration-mismatch` under (A)); rows that
-    share a realpath (EC-031) are FR-007's disagreement in both readings.
+    `inspection-error` finding; `registration-mismatch` under (A)). The rows
+    that share a path, a realpath or an admin id with another, the main
+    worktree's included (EC-031), are O23's rows again (C-72): until he rules,
+    while spec 005 pins feature 004 at `904aefc`, the same two assertions, in
+    FR-007's twin tests, expect FR-007's R-67 (c) reading of them, `dirty` null
+    and the `registration-mismatch` finding, which (A) keeps, and flip the other
+    way, `dirty` read and the class's `inspection-error` finding, under (B) or
+    if that pin moves past lane openRepoProject-2's code round for R-432 first;
+    O23 (A) is recommended, not chosen.
   - **Lengths**: the composer's tests take the product of every gated own
     text (the attention table's read-only and `--all-safe` findings) and
     every remedy of the contract, the expected strings computed from the
@@ -1645,8 +1681,8 @@ openRepoProject-3's pane, on the five items that the review of the plan at
 in lane openRepoProject-4's session (RULED there at 21:11:44Z, issue #10), on
 O17 to O20, which #19's round (q) raised, and O21, which feature 004's
 `41759a4` raised. Spec 005 records all four as C-72, and this entry quotes
-C-72 at `f47c2fd` (spec 3av; spec.md:961-1181, 221 lines, sha256
-`08e05447e640...`) whole, as it stands, O22 and O23 included, which it
+C-72 at `7c5eb54` (spec 3aw; spec.md:961-1197, 237 lines, sha256
+`c71cf326ea2c...`) whole, as it stands, O22 and O23 included, which it
 records open for his word:
 
 > - **C-72** Q: Which options of the plan's held items does change 2 take: O1 to
@@ -1768,7 +1804,8 @@ records open for his word:
 > locked form, making them 305 and 318 characters, where the overview's stale
 > message is [L]'s 50-character text or, under O8 (A), the 63-character locked
 > form: the overview takes the warning, its stale message equal to clean's text
-> and kept whole past 200 characters, and where a gate's remedy also follows
+> and kept whole past 200 characters, A1's re-alignment carrying it, and where
+> a gate's remedy also follows
 > the stale message, that remedy is kept whole too, as D5 keeps every remedy,
 > the longest case being beside the redirect remedy, at 459 and 472 characters,
 > the warning not cut, since a shortened warning would drop the dry run it
@@ -1808,12 +1845,13 @@ records open for his word:
 > `registration-mismatch` gate, and the main worktree's row, where a linked
 > row shares its path, `inspection-error` too, at the `main-worktree` gate,
 > while a row that such a row holds is read and classified as before; the
-> overview's class follows it, by FR-026's parity, a row that shares its
-> realpath with another, the main worktree's included, being FR-007's
-> disagreement already (EC-031), so that FR-034 withholds `--all-safe` for the
-> repository as `inspection-incomplete`, as `project clean` refuses its plan,
-> and SC-004 takes no new exclusion; whether the overview status-probes the
-> other rows, and which finding it shows for them, is O23, below. Where the
+> overview's class follows it, by FR-026's parity, so that FR-034 withholds
+> `--all-safe` for the repository as `inspection-incomplete`, as `project
+> clean` refuses its plan, and SC-004 takes no new exclusion; whether the
+> overview status-probes these rows, and which finding it shows for them, is
+> O23, below, a row that shares a path, a realpath or an admin id with another,
+> the main worktree's included, staying FR-007's disagreement until he rules
+> while this spec pins feature 004 at `904aefc` (EC-031). Where the
 > merged-set listing fails, its ref listing read, `project clean` there still
 > gives each present row on a branch, the main worktree's included,
 > `inspection-error` (its `project:3717-3724` and :3760-3761 there), while a
@@ -1832,7 +1870,7 @@ records open for his word:
 > recommendation: #19 gives the main worktree's row, where the ladder classes
 > it `merged-removable` or `merged-current`, one whose upstream was deleted
 > included, "The main worktree is never removed by project clean." in place of
-> its class's, the class unchanged (its `specs/project-clean/spec.md:207-215`
+> its class's, the class unchanged (its `specs/project-clean/spec.md:207-214`
 > at `54e869b`), where the overview's message for a classified row is the
 > ladder's recommendation text (FR-028), so that a `merged-removable` main row
 > already shows those words through the `main-worktree` gate's finding while a
@@ -1844,30 +1882,44 @@ records open for his word:
 > baseline message for the main row until A1's re-alignment carries the
 > change, the difference from `project clean` recorded until then;
 > recommended, (A), and built until he rules, A1 as ratified (FR-028), whether
-> #19's change stands waiting on his ratification of #19. One more item, O23,
+> #19's change stands waiting on his ratification of #19, (A) falling back with
+> it if he does not ratify #19. One more item, O23,
 > which feature 004's `904aefc` raised and which this spec records for Brett
 > Heap's word at its commit 3au, with the lane's recommendation, is open for
-> his word in the same way. O23, how the overview reads a linked row whose
-> path is the common directory or an ancestor of it, of the main worktree or
-> of another row's path, or whose registered path is a symbolic link, cases
-> that FR-007's registration cases do not name, though they name a row that
-> shares its realpath with another (EC-031): read as written, such a row whose
-> registration agrees takes FR-007's last case, one status probe, its `dirty`
-> read, its class `inspection-error` by FR-026's parity, with that class's
-> finding, where `project clean` leaves the row unprobed, its `dirty` null,
-> and excludes it as `registration-mismatch`; (A) read such a row as FR-007's
-> disagreement case, no status probe, `inspection-error` set directly, a
-> `registration-mismatch` finding in place of the class's `inspection-error`
-> finding and no error, as for a row that shares its realpath, A1's
-> re-alignment carrying it with O19 (A), or (B) keep FR-007's last case for
-> it, one status probe, its `dirty` read, and the class's `inspection-error`
-> finding, the difference from `project clean` recorded; recommended, (A),
-> which keeps `dirty` as `project clean` reports it, needs no Git child for
-> such a row and names the gate that excludes it, and until he rules this spec
-> builds FR-007 as A1 ratifies it, as (B) reads it (FR-007, FR-032). Where
-> applied: C-40; C-68; FR-006; FR-007; FR-008; FR-009; FR-016; FR-020; FR-026;
-> FR-028; FR-032; FR-034; FR-035; FR-043; EC-012; EC-020; EC-032; SC-003;
-> SC-004; User Story 4; User Story 8; Key Entities, Repository identity;
+> his word in the same way. O23, how the overview reads a linked row whose path
+> is the common directory or an ancestor of it, of the main worktree or of
+> another row's path, or whose registered path is a symbolic link, cases that
+> FR-007's registration cases do not name, and rows that share a path, a
+> realpath or an admin id with another, the main worktree's row included, which
+> FR-007 names only by its fill of R-67 (c) (EC-031), a fill whose ground in
+> the evidence model the overview shares lane openRepoProject-2's lead ruling
+> R-432 of 2026-10-31 withdraws, confining R-67 (c) to `project clean`'s plan
+> as its R-409 confines Q2 (1) and Q9 (b): read as A1 ratifies it, such a row
+> whose registration agrees takes FR-007's last case, one status probe, its
+> `dirty` read, its class `inspection-error` by FR-026's parity, with that
+> class's finding, an error, so that the run exits 1 (FR-029), where `project
+> clean` leaves the row unprobed, its `dirty` null, and excludes it as
+> `registration-mismatch`; (A) read such a row as FR-007's disagreement case,
+> no status probe, `inspection-error` set directly, a `registration-mismatch`
+> finding in place of the class's `inspection-error` finding, a warning (C-26),
+> and no error, A1's re-alignment carrying it with O19 (A), the row then not
+> registration-verified, so that FR-020's `estimated` counts no status probe
+> for it, and the comparisons that decide it made before the repository's first
+> status probe, as FR-019 orders them for the twins, or (B) keep FR-007's last
+> case for it, one status probe, its `dirty` read, and the class's
+> `inspection-error` finding, the difference from `project clean` recorded;
+> recommended, (A), which keeps `dirty` as `project clean` reports it, needs no
+> Git child for such a row and names the gate that excludes it. Until he rules
+> this spec builds FR-007 as A1 ratifies it, as (B) reads it, for the first
+> three kinds, and keeps FR-007's R-67 (c) reading, (A)'s, for the rows that
+> share a path, a realpath or an admin id, which every command of feature 004
+> applies at `904aefc`, the head this spec pins (its `data-model.md:212-214`),
+> those rows too reading as (B) reads them if this spec re-pins feature 004
+> past lane openRepoProject-2's code round for R-432 before he rules (FR-007,
+> FR-032, EC-031). Where applied: C-40; C-68; FR-006; FR-007; FR-008; FR-009;
+> FR-016; FR-020; FR-026; FR-028; FR-032; FR-034; FR-035; FR-043; EC-012;
+> EC-020; EC-031; EC-032; SC-003; SC-004; User Story 4; User Story 8;
+> Key Entities, Repository identity;
 > Dependencies; the discovery-identity checklist's CHK009; the security
 > checklist's CHK002 and CHK019; the idempotency checklist's CHK008.
 
@@ -1881,8 +1933,11 @@ O11's part 2, O13 (A), O17 (A), O18 (A) and D5's clause 2, is built once A1's
 re-alignment lands at PR #34, the ratified text standing until then. Feature
 004's head `904aefc` states O19's outcome for a row in its two new cases and
 O21's case (C-72; O19 and O21, below), and two items stay open for his word, O22
-and O23, the plan building A1 as ratified for both until he rules (O22 and O23,
-below). Each item stays isolated to
+and O23, O23 widened at spec 3aw to the rows that share a path, a realpath or an
+admin id with another: until he rules the plan builds A1 as ratified for both,
+but for those rows, which keep FR-007's R-67 (c) reading while spec 005 pins
+feature 004 at `904aefc`, O23 (A) recommended, not chosen (O22 and O23, below).
+Each item stays isolated to
 one table row, one decider, one count term or one branch of the composer, so
 that a change in his review of the final text lands without touching the rest,
 with one exception: a change to O11's part 1 would also re-word the scenario "A
@@ -2192,9 +2247,13 @@ R-416 and R-424): O19's outcome for such a row and O21's case are stated below
   2026-10-23, its R-416 and R-424). The overview's class follows it (FR-026),
   `inspection-error`, so that the gate decides no `merged-removable` row, FR-034
   withholds `--all-safe` for the repository as `inspection-incomplete` and
-  SC-004 takes no new exclusion; a row that shares its realpath with another is
-  FR-007's disagreement already (EC-031). R18 names the two cases' fixtures with
-  these results; the one point left open is O23 (below).
+  SC-004 takes no new exclusion. R18 names the two cases' fixtures with these
+  results. Whether the overview status-probes these rows, and which finding it
+  shows for them, is O23 (below), open, which since spec 3aw also holds the rows
+  that share a path, a realpath or an admin id with another, the main worktree's
+  included: they stay FR-007's disagreement, its R-67 (c) reading, until he
+  rules while spec 005 pins feature 004 at `904aefc`, O23 (A) recommended, not
+  chosen (EC-031; C-72).
 - **O20. The fifth status pin** (FR-016). CHOSEN (A): `-c
   core.ignoreCase=false`, which #19 adds to every status probe (PCM:158-162 at
   `4512441`), is taken with feature 004's `STATUS_PINS`, five at `41759a4`,
@@ -2221,9 +2280,13 @@ R-416 and R-424): O19's outcome for such a row and O21's case are stated below
 
 Two items that #19's round (s) at `dab8a64` (O22) and feature 004's `904aefc`
 (O23) raised, which C-72 records for his word with the lane's recommendation:
-O22 was put to him at 2026-10-23T22:39:41Z, O23 is recorded at spec commit 3au.
-Until he rules, the plan builds A1 as ratified for both, each in its own place,
-and the contract marks each OPEN where its text would change.
+O22 was put to him at 2026-10-23T22:39:41Z, O23 is recorded at spec commit 3au
+and widened at 3aw, after lane openRepoProject-2's lead ruling R-432 of
+2026-10-31, to the rows that share a path, a realpath or an admin id with
+another. Until he rules, the plan builds A1 as ratified for both, but for those
+rows, which keep FR-007's R-67 (c) reading while spec 005 pins feature 004 at
+`904aefc` (O23, below), each in its own place, and the contract marks each OPEN
+where its text would change.
 
 - **O22. The main worktree's recommendation** (FR-028). OPEN. #19's round (s)
   (R-408; PCL:207-214 at `54e869b`) gives the main worktree's row, where the
@@ -2245,26 +2308,47 @@ and the contract marks each OPEN where its text would change.
   `merged-current` main row differs from `project clean`'s output today as well
   as from round (s). Design if chosen: one message-table row for a row with the
   `main` flag, beside the class's two findings (R12).
-- **O23. A row in O19's cases: status probe and finding** (FR-007, FR-032).
-  OPEN. FR-007's registration cases do not name a linked row whose path is the
-  common directory or an ancestor of it, of the main worktree or of another
-  row's path, or whose registered path is a symbolic link, though they name a
-  row that shares its realpath with another (EC-031). Read as written, such a
-  row whose registration agrees takes FR-007's last case, one status probe, its
-  `dirty` read, its class `inspection-error` by FR-026's parity, with that
-  class's finding, where `project clean` leaves the row unprobed, its `dirty`
-  null, and excludes it as `registration-mismatch`. (A) read such a row as
-  FR-007's disagreement case, no status probe, `inspection-error` set directly,
-  a `registration-mismatch` finding in place of the class's `inspection-error`
-  finding and no error, A1's re-alignment carrying it with O19 (A); (B) keep
-  FR-007's last case for it, the difference from `project clean` recorded.
-  Recommended (A), which keeps `dirty` as `project clean` reports it, needs no
-  Git child for such a row and names the gate that excludes it. Until he rules
-  the plan builds (B)'s reading, FR-007 as ratified. Design if chosen: the O19
-  decider's verdict joins the twin decision, made before the repository's first
-  status probe, so that such a row takes neither the work-tree probe, the
-  re-verification nor the status probe (R5), and `estimated` leaves out their
-  probes (R14).
+- **O23. A row in O19's cases, or one that shares a path, a realpath or an admin
+  id: status probe and finding** (FR-007, FR-032, EC-031). OPEN. FR-007's
+  registration cases do not name a linked row whose path is the common directory
+  or an ancestor of it, of the main worktree or of another row's path, or whose
+  registered path is a symbolic link; rows that share a path, a realpath or an
+  admin id with another, the main worktree's row included, FR-007 names only by
+  its fill of R-67 (c) (EC-031), whose ground in the evidence model the overview
+  shares lane openRepoProject-2's lead ruling R-432 of 2026-10-31 withdraws,
+  confining R-67 (c) to `project clean`'s plan as its R-409 confines Q2 (1) and
+  Q9 (b): at feature 004's `904aefc` every command makes those rows
+  `registration-mismatch` (its `data-model.md:212-214`), and after that lane's
+  next code round, not landed, `project status`, `doctor` and `update` probe
+  them as the baseline does while `project clean` keeps them
+  `registration-mismatch` (EC-031). Read as A1 ratifies it, such a row whose
+  registration agrees takes FR-007's last case, one status probe, its `dirty`
+  read, its class `inspection-error` by FR-026's parity, with that class's
+  finding, an error, so that the run exits 1 (FR-029), where `project clean`
+  leaves the row unprobed, its `dirty` null, and excludes it as
+  `registration-mismatch`. (A) read such a row as FR-007's disagreement case, no
+  status probe, `inspection-error` set directly, a `registration-mismatch`
+  finding in place of the class's `inspection-error` finding, a warning (C-26),
+  and no error, A1's re-alignment carrying it with O19 (A), the row then not
+  registration-verified, so that `estimated` counts no status probe for it
+  (R14), and the comparisons that decide it made before the repository's first
+  status probe, as FR-019 orders them for the twins; (B) keep FR-007's last case
+  for it, the difference from `project clean` recorded. Recommended (A), not
+  chosen, which keeps `dirty` as `project clean` reports it, needs no Git child
+  for such a row and names the gate that excludes it. Until he rules the plan
+  builds (B)'s reading, FR-007 as A1 ratifies it, for a row in O19's cases, and
+  keeps FR-007's R-67 (c) reading, the one (A) gives, for the rows that share a
+  path, a realpath or an admin id, which every command of feature 004 applies at
+  `904aefc`, the head spec 005 pins; those rows too take (B)'s reading if spec
+  005 re-pins feature 004 past lane openRepoProject-2's code round for R-432
+  before he rules (C-72). Design: the twin decision (R5, R6) is built now, as
+  FR-007's R-67 (c) reading, made before the repository's first status probe; if
+  (A) is chosen, the O19 decider's verdict joins it, so that such a row takes
+  neither the work-tree probe, the re-verification nor the status probe (R5),
+  and `estimated` leaves out their probes (R14); under (B), or on that re-pin,
+  the twin decision gives the rows it names their class alone, by FR-026's
+  parity, and they take FR-007's last case, `estimated` counting their probes
+  (R14).
 
 ### Lengths
 
@@ -3010,7 +3094,7 @@ that part 1 left. Each input of part 3, and where it is taken:
 
 Revision 10 is complete with this part.
 
-## Revision 11: O17-O21 chosen, O22, O23 open, C-72 at c71a53e, f47c2fd
+## Revision 11: O17-O21 chosen, O22, O23 open, C-72 at c71a53e, f47c2fd, 7c5eb54
 
 Made from `c71a53e` (spec commit 3as), on the lead's decisions for spec 3as and
 plan revision 11, in parts; this is part 1. Its inputs: Brett Heap's "yes,
@@ -3150,12 +3234,14 @@ PR #27 stays at `d95eea2`, A1 at `e4a30fc` and the `project:N` cites at
   MEDIUM, 2 LOW, 6 OBS): LOW-1, plan.md's Summary sentence on what reaches A1 no
   longer reads as if O17 to O20's texts were not his word, the lead's-choice
   clause being the O16 (a) entry's alone; LOW-2, part 1's record omitted three
-  changes, which this part names: the data model's note on the items that change
-  one row of each table gained "and O17" (data-model.md:415), R1's Decision
-  names his fourth word beside the three before it (research.md:63-71), and
+  changes, which this part names, each at its lines at `8c3b046`: the data
+  model's note on the items that change one row of each table gained "and O17"
+  (data-model.md:415, :429 at `d67c120`), R1's Decision names his fourth word
+  beside the three before it (research.md:63-71, :65-73 at `d67c120`), and
   plan.md's Summary (:91-102) says "Two points wait"; and part 1's record said
   the closing Technical Context sentence waits, which plan.md:289-292 does not
-  (a forward pointer in place, above); OBS-2, R18's Parity and traceability.md's
+  (:303-307 at `d67c120`; a forward pointer in place, above); OBS-2, R18's
+  Parity and traceability.md's
   SC-003 line no longer imply O21's held half. Its OBS-1, OBS-3, OBS-4, OBS-5
   and OBS-6 are taken by the bullets above, and plan.md's Citations name W159's
   read.
@@ -3181,4 +3267,85 @@ PR #27 stays at `d95eea2`, A1 at `e4a30fc` and the `project:N` cites at
 - **Bookkeeping**: this record's heading names O22, O23 and the new sha.
 - **Not taken here**: #27's B26. Spec 3au moved its own #27 cites from `d95eea2`
   to `7f3453c`; R1's #27 bullet keeps `d95eea2`, its re-pin not among this
-  part's inputs.
+  part's inputs (part 3 takes it, below).
+
+Part 3, made from `7c5eb54` (spec commit 3aw, on part 2 at `d67c120`), on the
+lead's brief for part 3 and its 3at decisions (sections 5, 9 and 10), on lane
+openRepoProject-4's reading of EC-031's basis after lane openRepoProject-2's
+lead ruling R-432 of 2026-10-31, whose Option 1 spec 3aw takes, and on lane
+openRepoProject-3's W168 and W171 read of part 2 at `d67c120` (0 HIGH, 0 MEDIUM,
+0 LOW, 5 OBS). Brett Heap has not ruled on O22 or O23. PR #27 moves to
+`7f3453c`; PR #19 stays at `54e869b`, A1 at `e4a30fc`, feature 004 at `904aefc`
+(lane openRepoProject-2's code round for R-432 and M4 not landed), the
+`project:N` cites at `d6bac50` and the baseline's at `15504f1`. Each input of
+part 3, and where it is taken:
+
+- **O23 widened, Option 1** (C-72; EC-031; FR-007; FR-032): R-432 confines R-67
+  (c) to `project clean`'s plan, as R-409 confines Q2 (1) and Q9 (b), so the
+  rows that share a path, a realpath or an admin id with another, the main
+  worktree's included, are O23's rows again, and no new point is raised. Until
+  he rules they keep FR-007's R-67 (c) reading while spec 005 pins feature 004
+  at `904aefc`, and take (B)'s if spec 005 re-pins feature 004 past that lane's
+  code round first; O23 (A) is recommended, never chosen. Each site now says so:
+  plan.md's slice 4, Summary, closing Technical Context sentence and held-items
+  section; R1's pin note (its "everywhere" for R-67 (c), now "in every command
+  at that head", with R-432's confinement; lane openRepoProject-3's W170 on
+  spec 3aw), R5's twin decision, R6's twin wait, R9's bullet on the wider
+  class, R14's term for
+  registration-verified rows and its failed-registry sentence, R18's fixture
+  bullet (W168: "in both readings"), and R20's terms, O19 entry, open-items
+  opening and O23 entry, with (A), (B) and (B)'s exit 1 as C-72 words them; the
+  data model's worktree-row note, finding sources and `registration-mismatch`
+  gate; the contract's O19 and OPEN (O23) lines; and traceability.md's FR-049
+  twins sentence, its "Held items, open" opening and its O23 row (W168: "stay as
+  they are"), which now names what flips on (A) and on (B). No site needed a
+  decision to be stated truly, and none states a ruling.
+- **M4 (a)** (FR-028): Brett Heap ruled lane openRepoProject-2's M4 (a) on
+  2026-10-31; its variants are `project clean`'s `inspection-incomplete`
+  redirect remedies, which the overview never shows (C-59). No plan site names
+  M4, and the 459 and 472 characters stand, the redirect remedy beside them
+  being the overview's own 152 characters (the contract's composer; R20's
+  "Lengths"), so nothing changes here.
+- **C-72 at `7c5eb54`** (spec.md:961-1197, 237 lines, sha256 `c71cf326ea2c...`):
+  R20 quotes it whole in place of its text at `f47c2fd` (spec.md:961-1181), O22
+  and O23 included, open; the quote less its `> ` marks equals those lines by
+  `cmp`, each continuation line less its two-space indent. R20's opening names
+  the new sha and lines. plan.md's ordering quote, 99 words, is C-72's at
+  spec.md:1010-1017 word for word, its lines unmoved and its sha now `7c5eb54`.
+- **PR #27 at `7f3453c`**, its round B26 (2026-10-23T22:49:28Z), from `d95eea2`,
+  with round B25 at `37c0c23` on the way: R1's #27 bullet, by the lead's map of
+  its eight pinned ranges, each moved and byte-identical, which this part
+  re-read by comparing each range at `d95eea2` with its new lines at `7f3453c`:
+  proposal :803-806 to :893-896, :834-837 to :924-927, :937-949 to :1044-1056
+  and :967-968 to :1074-1075; design :1199-1202 to :1345-1348, :1278-1281 to
+  :1424-1427 and :1938-1944 to :2125-2131; tasks :198-213 to :222-237. Its
+  `project-overview` block is still blob `a40458cb`.
+- **W168 and W171**: W168's two sentences and its OBS-W168-3 are taken by the
+  O23 bullet; OBS-W168-1, part 2's mixed line bases, is fixed in its W159
+  bullet, which now says its lines are `8c3b046`'s and gives `d67c120`'s beside
+  them; OBS-W168-2: plan.md's slice 1, R18's Isolation and quickstart.md's
+  isolation sentence now give `main`'s discovery order whole, as its
+  `workbenches()` builds it at `b42355e`, a `.workbenches-path` marker beside
+  the script, `openBenches` under every projects directory, `workBenches` under
+  every projects directory, the current directory, then both names in the
+  current directory and in each of its parents in turn; OBS-W171-1, two sites
+  that part 2 declared in substance only (R9's sha and R20's 21:10:35Z
+  preamble), is met here by naming every site; OBS-W171-2, R20's O20 cite of
+  PCM:158-162 at `4512441`, the same lines at `54e869b`, is left for the re-pin
+  of every #19 cite that a separate map makes. plan.md's Citations name W168's
+  read.
+- **The spec cites** move from `f47c2fd` to `7c5eb54`. Method: each range is
+  mapped by the line shifts of the 20 hunks of `git diff -U0 f47c2fd 7c5eb54` on
+  spec.md and compared byte for byte at its mapped lines, and each quoted string
+  is counted once at both heads, whitespace normalised. Of the eight ranges, 1
+  is the same (the ordering quote, :1010-1017), 6 moved, byte-identical (R9's
+  :4531-4534 to :4572-4575, :5636-5639 to :5682-5685, :2680-2687 to :2714-2721,
+  :2689-2699 to :2723-2733, :1778-1788 to :1794-1804 and :2603-2615 to
+  :2637-2649), and 1 changed (C-72, re-quoted, above); no other cite falls
+  inside a changed hunk. The four quoted strings (R4's Dependencies, R5's
+  FR-021, R7's FR-013 and R10's FR-005) occur once at both heads, and C-56, the
+  Status paragraph, FR-005, FR-013 and FR-021 are byte-identical, so plan.md's
+  Input, R1's Finding, R4, R5, R7, R9's sentence before its ranges and R10 move
+  their sha alone. No plan site cites a line of the checklists.
+- **Bookkeeping**: this record's heading names `7c5eb54`, and part 2's "Not
+  taken here" points to this part.

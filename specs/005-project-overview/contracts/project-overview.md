@@ -537,14 +537,19 @@ O8 (A)'s 63-character locked form; until then A1's one text, research.md R12):
     R-424). The overview's class follows it (FR-026), `inspection-error`, so
     that the gate decides no `merged-removable` row, FR-034 withholds
     `--all-safe` for the repository as `inspection-incomplete` and SC-004
-    takes no new exclusion; a row that shares its realpath with another is
-    FR-007's disagreement already (EC-031).
-  - OPEN (O23): whether such a row takes no status probe, its `dirty` null,
-    and this finding in place of the class's `inspection-error` finding, as
-    FR-007's disagreement case reads a row that shares its realpath (EC-031);
-    recommended (A); until Brett Heap rules, such a row takes FR-007's last
-    case, one status probe, its `dirty` read, and the class's
-    `inspection-error` finding (C-72).
+    takes no new exclusion. A row that shares a path, a realpath or an admin
+    id with another, the main worktree's included, is O23's too since spec 3aw
+    (EC-031; below).
+  - OPEN (O23): whether such a row, and a row that shares a path, a realpath
+    or an admin id with another (EC-031), takes no status probe, its `dirty`
+    null, and this finding, a warning, in place of the class's
+    `inspection-error` finding, an error; recommended (A), not chosen. Until
+    Brett Heap rules, a row in O19's cases takes FR-007's last case, one
+    status probe, its `dirty` read, and the class's `inspection-error`
+    finding, and a row that shares a path, a realpath or an admin id keeps
+    FR-007's R-67 (c) reading, no status probe and this finding, while spec
+    005 pins feature 004 at `904aefc`, taking FR-007's last case too if that
+    pin moves past lane openRepoProject-2's code round for R-432 first (C-72).
 - `finding.unsupported-path-bytes.worktree`: "This worktree's path is not
   valid UTF-8, so no clean command can name it; rename it to valid UTF-8."
 - `finding.unsupported-path-bytes.repository`: "The repository's root or

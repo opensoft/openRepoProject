@@ -6,7 +6,7 @@ Lane: openRepoProject-4
 **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `specs/005-project-overview/spec.md`
-at `f47c2fd` (its commit 3av; its 72 clarifications, Brett Heap's answers
+at `7c5eb54` (its commit 3aw; its 72 clarifications, Brett Heap's answers
 of 2026-10-21 folded in and his words on the held items in C-72), with its
 17 checklists and `clarify-questions.md`.
 
@@ -57,9 +57,13 @@ Implementation slices, in dependency order; each leaves the suite green:
    configuration-path test and the version check. Add
    `tests/overview_support.py`: scratch `HOME`, explicit `PROJECTS_DIR`,
    `WORKBENCHES_ROOT` at an empty directory, so that `project` never runs its
-   discovery of an openBenches (formerly workBenches) checkout, which tries
-   `openBenches` and then `workBenches` (`main`'s #40), fake owner tools first
-   on `PATH`, the audit hook, the snapshot, the allow-list on feature 004's
+   discovery of an openBenches (formerly workBenches) checkout, which tries a
+   `.workbenches-path` marker beside the script, then `openBenches` under every
+   projects directory, then `workBenches` under every projects directory, then
+   the current directory, then, in the current directory and in each of its
+   parents in turn, `openBenches` and then `workBenches` (`main`'s #40, its
+   `workbenches()` at `b42355e`), fake owner tools first on `PATH`, the audit
+   hook, the snapshot, the allow-list on feature 004's
    counting wrapper. Scenarios 47, 55, 56 and 64. The three 004-touching
    changes ship in this slice alone, under the gates below.
 2. **Discovery** (R7, R10). `FsTask`, the root tasks with their cancel
@@ -71,11 +75,13 @@ Implementation slices, in dependency order; each leaves the suite green:
    18, 19, 20, 57 and 58; PN-10.
 4. **Repositories and rows** (R5, R8, R9, R14, R17). The registry, A1
    design D3's layouts, the manifest reader, the extension read, the
-   keep-filter, change 1's resolver (`resolve_merge_target`, called on the
-   kept records), the merged set, the row tasks, the twins, the work-tree
-   probe, the re-verification, the status probe and classification through
-   `row_evidence`. Scenarios 5 to 12, 15, 17, 21, 22, 24 to 34, 62 and 63;
-   EC-031 to EC-033.
+   keep-filter, change 1's resolver (`resolve_merge_target`, called on the kept
+   records), the merged set, the row tasks, the twins (O23's rows again, which
+   keep FR-007's R-67 (c) reading until Brett Heap rules while spec 005 pins
+   feature 004 at `904aefc`, O23 (A) recommended, not chosen; R20), the
+   work-tree probe, the re-verification, the status probe and classification
+   through `row_evidence`. Scenarios 5 to 12, 15, 17, 21, 22, 24 to 34, 62 and
+   63; EC-031 to EC-033.
 5. **Findings, gates and messages** (R12, R13). The attention table, the
    default-branch set, the row and repository gates, the reflog gate, the
    composer and the suggestions. Scenarios 35 to 43 and 51 to 54.
@@ -103,9 +109,14 @@ merges; until then the ratified text stands. Feature 004's head `904aefc`
 states O19's outcome for a row in its two new cases, `inspection-error` as
 `project clean` gives it, and O21's case, a lasting difference that the parity
 tests name (C-72; R20). Two items are open for his word, O22, the main
-worktree's recommendation, and O23, whether a row in O19's cases takes a status
-probe: until he rules, the plan builds A1 as ratified for both (C-72; R20).
-C-72 at `f47c2fd` (spec.md:1010-1017) gives the order: "A1's ordering rule (its
+worktree's recommendation, and O23, whether a row in O19's cases, or one that
+shares a path, a realpath or an admin id with another, the main worktree's
+included, takes a status probe: until he rules, the plan builds A1 as ratified
+for O22 and for a row in O19's cases, and keeps FR-007's R-67 (c) reading for
+the shared-path and twin rows, O23's rows again since lane openRepoProject-2's
+lead ruling R-432 confined R-67 (c) to `project clean`'s plan, while spec 005
+pins feature 004 at `904aefc`; O23 (A) is recommended, not chosen (C-72; R20).
+C-72 at `7c5eb54` (spec.md:1010-1017) gives the order: "A1's ordering rule (its
 `proposal.md:1278-1284`) is the four LQ items' and reaches O10 (LQ-15's
 extension) and O5 (item 9, owed under it); the other chosen items that change
 A1's text, its items 2, 6, 7, 8, 10 and 11, rest on his word for change 2 and
@@ -210,9 +221,9 @@ feature 005 merges, and slice 1's pull request quotes the checks of (a) to
 - Lane openRepoProject-3's reads of this plan: W96's at `a80f10b`, with its
   delta reads at `aeb0bb2`, `6fb619c`, `664461f`, `06b16e1` and `464c361`,
   W112's delta reads at `d500312` and `39f4ab6`, W132's at `d0a7c07`, W137's
-  at `e342275`, W148's at `dd69a2b` and W159's at `8c3b046`; revisions 2 onward
-  take each of their HIGH, MEDIUM and LOW findings (research.md, "Revision 2"
-  onward). Lane
+  at `e342275`, W148's at `dd69a2b`, W159's at `8c3b046` and W168's at
+  `d67c120`; revisions 2 onward take each of their HIGH, MEDIUM and LOW
+  findings (research.md, "Revision 2" onward). Lane
   openRepoProject-4's own
   nine-reader review of revision 7 at `39f4ab6`, with its triage: revision 8
   takes its choices' marks and pins, and revision 9 its FIX-PLAN items.
@@ -304,7 +315,9 @@ No NEEDS CLARIFICATION remains: the change, A1 and the spec decide every
 behaviour but what research.md R1 to R19 settles, and the held items, O1 to O21
 and D5's clause 2, all chosen (C-72), are planned each in its place, most
 landing with A1's re-alignment (R20); O22 and O23, open for his word, are
-planned as A1 is ratified until he rules (C-72; R20).
+planned as A1 is ratified until he rules, but for O23's shared-path and twin
+rows, which keep FR-007's R-67 (c) reading while spec 005 pins feature 004 at
+`904aefc`, O23 (A) recommended, not chosen (C-72; R20).
 
 ## Constitution Check
 
@@ -504,8 +517,13 @@ O19's outcome and O21's case (lane openRepoProject-2's reports to lane 4 of
 2026-10-23, its R-416 and R-424; C-72; research.md R20). Still before him:
 
 - O22, the main worktree's recommendation, and O23, whether a row in O19's
-  cases takes a status probe (C-72; research.md R20): until he rules, the plan
-  builds A1 as ratified for both.
+  cases, or one that shares a path, a realpath or an admin id with another, the
+  main worktree's included, takes a status probe (C-72; research.md R20): until
+  he rules, the plan builds A1 as ratified for O22 and for a row in O19's
+  cases, and keeps FR-007's R-67 (c) reading for the shared-path and twin rows
+  while spec 005 pins feature 004 at `904aefc`, those rows reading as A1
+  ratifies them too if that pin moves past lane openRepoProject-2's code round
+  for R-432 before he rules; O23 (A) is recommended, not chosen.
 - The base: `main` after PR #33 (recommended, C-56), or stacked on feature
   004's branch (his word needed; R2).
 - His word on the tasks, then on the implementation.

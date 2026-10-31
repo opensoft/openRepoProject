@@ -183,10 +183,13 @@ worktree that O4 (a)'s detector finds redirected (R20's O4 (a), chosen;
 One per registry entry, the main worktree included; a bare main entry, an
 unnamed git-directory record and a submodule checkout's main row are rows
 with no status probe (C-68; A1 design D3, items 1 to 3), each taking only
-its `lstat` task: no registration read, no twin decision and no
-`row_evidence`, its status fields and `classification` null (research.md
-R5). Each field's "Null when" keeps every case of the packet's column
-(DI:770-790), as C-40 asks, and adds the overview's own: the cap, a cut,
+its `lstat` task: no registration read, no twin decision (FR-007's R-67 (c)
+reading, whose rows are O23's again and keep it until Brett Heap rules while
+spec 005 pins feature 004 at `904aefc`, O23 (A) recommended, not chosen;
+research.md R20) and no `row_evidence`, its status fields and `classification`
+null (research.md R5). Each field's "Null when" keeps every case of the
+packet's column (DI:770-790), as C-40 asks, and adds the overview's own: the
+cap, a cut,
 the working directory's realpath, and O16 (a)'s bare row (built now, ahead of
 A1's text).
 
@@ -321,7 +324,10 @@ Sources of findings, in the order a row computes them:
    `unpushed`, `remote-ahead`, each with D4's message and no suggestion;
 3. a disagreeing registration's `registration-mismatch` in place of the class's
    `inspection-error` finding (FR-007; a row in O19's cases joins it only if
-   O23 (A) is chosen);
+   O23 (A) is chosen, and a row that shares a path, a realpath or an admin id
+   with another, O23's too, takes it by FR-007's R-67 (c) reading until Brett
+   Heap rules while spec 005 pins feature 004 at `904aefc`, O23 (A)
+   recommended, not chosen);
 4. layouts: `unsupported-layout` (submodule, unnamed gitfile), and
    `main-worktree-missing` in place of `stale-worktree`; and paths:
    `unsupported-path-bytes`, once at repository level (null `checkout`)
@@ -361,11 +367,15 @@ fails replaces the housekeeping finding with its own, the class unchanged:
     2026-10-23, its R-416 and R-424). The overview's class follows it (FR-026),
     `inspection-error`, so that the gate decides no `merged-removable` row,
     FR-034 withholds `--all-safe` for the repository as `inspection-incomplete`
-    and SC-004 takes no new exclusion; a row that shares its realpath with
-    another is FR-007's disagreement already (EC-031). Whether the overview
-    also status-probes the other rows, and which finding it shows for them, is
-    O23, open for his word: until he rules, FR-007 as ratified, one status
-    probe, `dirty` read, and the class's `inspection-error` finding (C-72)
+    and SC-004 takes no new exclusion. Whether the overview status-probes these
+    rows, and which finding it shows for them, is O23, open for his word, O23
+    (A) recommended, not chosen: until he rules, FR-007 as ratified, one status
+    probe, `dirty` read, and the class's `inspection-error` finding (C-72). A
+    row that shares a path, a realpath or an admin id with another, the main
+    worktree's included, is O23's too since spec 3aw, lane openRepoProject-2's
+    lead ruling R-432 of 2026-10-31 confining R-67 (c) to `project clean`'s
+    plan, and stays FR-007's disagreement, its R-67 (c) reading, until he rules
+    while spec 005 pins feature 004 at `904aefc` (EC-031; C-72)
 - `locked-worktree`
   - Fails when: it is locked
   - Finding: `locked-worktree`, read-only

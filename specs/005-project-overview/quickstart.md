@@ -102,10 +102,13 @@ python3 -m unittest discover -s tests -v \
 Every path is under a fresh scratch directory; `HOME`, `PROJECTS_DIR` and
 `WORKBENCHES_ROOT` point into it, so no real projects directory or
 openBenches (formerly workBenches) checkout is read: with `WORKBENCHES_ROOT`
-set, `project` tries that root alone, never the discovery that tries
-`openBenches` and then `workBenches` under each projects directory and the
-current directory and its parents (`main`'s #40), and fake owner tools first
-on `PATH` log any call (feature 004's hand-run rule, R-202).
+set, `project` tries that root alone, never the discovery that tries a
+`.workbenches-path` marker beside the script, then `openBenches` under every
+projects directory, then `workBenches` under every projects directory, then
+the current directory, then, in the current directory and in each of its
+parents in turn, `openBenches` and then `workBenches` (`main`'s #40, its
+`workbenches()` at `b42355e`), and fake owner tools first on `PATH` log any
+call (feature 004's hand-run rule, R-202).
 
 ```bash
 P="$PWD/project"                      # the feature's script

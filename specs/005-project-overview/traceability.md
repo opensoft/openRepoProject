@@ -221,9 +221,12 @@ manifest with invalid text in its row.
 ## Requirements no scenario exercises (FR-049)
 
 Each gets a test of its own, named here when written: FR-004's candidates that
-are not family holders; FR-007's twins (EC-031), its identity re-read before a
-status probe, its extension read, effective-work-tree probe and `commondir`
-check, and a wrapper log with no `rev-parse` child in a linked worktree where
+are not family holders; FR-007's twins (EC-031), O23's rows again, asserted in
+FR-007's R-67 (c) reading until Brett Heap rules while spec 005 pins feature 004
+at `904aefc`, O23 (A) recommended, not chosen ("Held items, open", below), its
+identity re-read before a status probe, its extension read, effective-work-tree
+probe and `commondir` check, and a wrapper log with no `rev-parse` child in a
+linked worktree where
 the extension reads false; FR-010; FR-020's `estimated`; FR-021's `refused` and
 `undecodable-output`; FR-022's 200-character bound (a unit test over the error
 table with the longest STRERROR the platform gives, asserting at most 200) and
@@ -395,9 +398,11 @@ what flips.
 ## Held items, open: their tests
 
 Brett Heap has not ruled on O22 and O23 (C-72): the first build asserts A1 as
-ratified for both, and the commit that carries his word flips, in one commit,
-the assertions named here. Per item: its behaviour test (module), its fixture
-and what flips.
+ratified for both, but for O23's rows that share a path, a realpath or an admin
+id, which it asserts in FR-007's R-67 (c) reading while spec 005 pins feature
+004 at `904aefc`, and the commit that carries his word flips, in one commit, the
+assertions named here. Per item: its behaviour test (module), its fixture and
+what flips.
 
 - O22: a unit over the message table and the attention test of a main
   worktree's row on a merged branch, run from outside it (`merged-removable`)
@@ -406,13 +411,20 @@ and what flips.
   away before removal." to "The main worktree is never removed by project
   clean.", the `merged-removable` main row staying as it is, the words reaching
   it through the `main-worktree` gate.
-- O23: `test_overview_the_wider_registration_mismatch` (gates), its fixtures
-  for a row that holds another row or the main worktree, one registered through
-  a symbolic link and one at the common directory or an ancestor of it, with a
-  unit of the decider (R18); flips: the status probe and the `dirty` read to
-  none (null), the class's `inspection-error` finding to
-  `registration-mismatch`, and `estimated` leaving out the probes of such rows
-  (R14); the rows that share a realpath (EC-031) stay as they are.
+- O23: `test_overview_the_wider_registration_mismatch` (gates), its fixtures for
+  a row that holds another row or the main worktree, one registered through a
+  symbolic link and one at the common directory or an ancestor of it, with a
+  unit of the decider (R18), and FR-007's twin tests (EC-031), for rows that
+  share a path, a realpath or an admin id with another, the main worktree's
+  included, O23's rows again (C-72). On (A), recommended, not chosen: for the
+  first fixtures, the status probe and the `dirty` read flip to none (null), the
+  class's `inspection-error` finding to `registration-mismatch`, and `estimated`
+  to leaving out the probes of such rows (R14), the twin tests staying as they
+  are. On (B), or if spec 005 re-pins feature 004 past lane openRepoProject-2's
+  code round for R-432 before he rules: the twin tests flip the other way, a
+  status probe and the `dirty` read, the class's `inspection-error` finding, and
+  `estimated` counting their probes (R14), the first fixtures staying as they
+  are.
 
 ## Success criteria
 
