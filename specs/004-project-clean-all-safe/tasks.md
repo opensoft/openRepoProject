@@ -254,8 +254,14 @@ regions and contracts every lane writes against.
   (merged at `45584a3`) and the tasks from T003 on change those paths by
   design, so it is not re-run, and citations are read with `git show
   961c405:<file>` (Path Conventions).
+  Note, 2026-10-31 (lead ruling R-429): this branch merged `main` at
+  `b42355e` in `1a29e80`, and #40 (`f271a39`) added
+  `WorkbenchesDiscoveryTests`, seven tests, to `main`'s
+  `tests/test_project.py`. The verify's count is therefore `main`'s 103 at
+  `b42355e`, where it was 96 at `961c405`; 004 adds no test to that file.
+  The baseline recorded above is unchanged.
   — files: (none)
-  — verify: `git merge-base --is-ancestor 961c405 HEAD && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=f(L.discover('tests',pattern='test_project.py'));print(len(I),'tests');sys.exit(0 if len(I)==96 and not L.errors else 1)" && python3 -m unittest discover -s tests -p 'test_project.py'`
+  — verify: `git merge-base --is-ancestor 961c405 HEAD && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=f(L.discover('tests',pattern='test_project.py'));print(len(I),'tests');sys.exit(0 if len(I)==103 and not L.errors else 1)" && python3 -m unittest discover -s tests -p 'test_project.py'`
 - [x] T002 [P] [S] Create `specs/004-project-clean-all-safe/traceability.md`, lane
   line first: one row per delta scenario, 101 rows (the 100 of the three delta
   files on `main`, and PR #19's "The push child reaches its remote", marked as
@@ -477,8 +483,14 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   `@dataclass` in `project` loads there too (R-29): it is that file's only edit
   outside T046, and no test there changes but T046's, which the verify's
   second script is given by name (lead rulings R-32 and R-95 (e)).
+  Note, 2026-10-31 (lead ruling R-429): the second script's base moves from
+  `961c405` to `b42355e`, as T128's does. This branch merged `main` at
+  `b42355e` in `1a29e80`, and #40 (`f271a39`) added
+  `WorkbenchesDiscoveryTests` to `main`'s `tests/test_project.py`; against
+  `961c405` its methods show as changed although they are `main`'s, not
+  004's. Against `b42355e` the script allows the same two edits as before.
   — files: `tests/clean_support.py`, `tests/test_project.py`
-  — verify: `python3 -c "import os,sys;sys.path.insert(0,'tests');import clean_support as c;M=[n for n in ('load_project','REAL_GIT','CleanCase','run_cli','timing_table','run_launched','run_json','git','commit','linux_paths','not_root','git_236_to_239') if not (hasattr(c,n) or hasattr(c.CleanCase,n))];p=c.load_project();ok=p.__name__=='project_clean' and sys.modules['project_clean'] is p and os.path.isabs(str(c.REAL_GIT));print('missing:',M,'load_project ok:',ok);sys.exit(0 if ok and not M else 1)" && python3 -c "import ast,subprocess as s,sys;o=ast.parse(s.run(['git','show','961c405:tests/test_project.py'],capture_output=True,text=True,check=True).stdout);n=ast.parse(open('tests/test_project.py').read());d=lambda m:{(c.name if isinstance(c,ast.ClassDef) else '')+'.'+x.name:ast.dump(x) for c in [m]+[y for y in m.body if isinstance(y,ast.ClassDef)] for x in c.body if isinstance(x,ast.FunctionDef)};top=lambda m:[ast.dump(x) for x in m.body if not isinstance(x,(ast.FunctionDef,ast.ClassDef))];A,B=d(o),d(n);K=set(sys.argv[1:]);M=[k for k in set(A).union(B) if k.split('.')[-1] not in K and not A.get(k)==B.get(k)];E=[k for k in K if not any(x.endswith('.'+k) for x in A) or not any(x.endswith('.'+k) for x in B)];add=[x for x in top(n) if x not in top(o)];rem=[x for x in top(o) if x not in top(n)];line=ast.dump(ast.parse('sys.modules[loader.name] = module').body[0]);[print('changed method:',k) for k in M];[print('missing method:',k) for k in E];print('module-level added',len(add),'removed',len(rem));sys.exit(0 if not M and not E and not rem and add==[line] else 1)" test_clean_revalidates_a_worktree_after_confirmation && python3 -m unittest discover -s tests -p 'test_project.py'`
+  — verify: `python3 -c "import os,sys;sys.path.insert(0,'tests');import clean_support as c;M=[n for n in ('load_project','REAL_GIT','CleanCase','run_cli','timing_table','run_launched','run_json','git','commit','linux_paths','not_root','git_236_to_239') if not (hasattr(c,n) or hasattr(c.CleanCase,n))];p=c.load_project();ok=p.__name__=='project_clean' and sys.modules['project_clean'] is p and os.path.isabs(str(c.REAL_GIT));print('missing:',M,'load_project ok:',ok);sys.exit(0 if ok and not M else 1)" && python3 -c "import ast,subprocess as s,sys;o=ast.parse(s.run(['git','show','b42355e:tests/test_project.py'],capture_output=True,text=True,check=True).stdout);n=ast.parse(open('tests/test_project.py').read());d=lambda m:{(c.name if isinstance(c,ast.ClassDef) else '')+'.'+x.name:ast.dump(x) for c in [m]+[y for y in m.body if isinstance(y,ast.ClassDef)] for x in c.body if isinstance(x,ast.FunctionDef)};top=lambda m:[ast.dump(x) for x in m.body if not isinstance(x,(ast.FunctionDef,ast.ClassDef))];A,B=d(o),d(n);K=set(sys.argv[1:]);M=[k for k in set(A).union(B) if k.split('.')[-1] not in K and not A.get(k)==B.get(k)];E=[k for k in K if not any(x.endswith('.'+k) for x in A) or not any(x.endswith('.'+k) for x in B)];add=[x for x in top(n) if x not in top(o)];rem=[x for x in top(o) if x not in top(n)];line=ast.dump(ast.parse('sys.modules[loader.name] = module').body[0]);[print('changed method:',k) for k in M];[print('missing method:',k) for k in E];print('module-level added',len(add),'removed',len(rem));sys.exit(0 if not M and not E and not rem and add==[line] else 1)" test_clean_revalidates_a_worktree_after_confirmation && python3 -m unittest discover -s tests -p 'test_project.py'`
 - [x] T010 [P] [O] Add the fixture builders to `tests/clean_support.py`: `repo()`;
   `bare_remote()`; `merged_worktree(branch, path=None)`, the recipe of
   `tests/test_project.py:857` copied, not extracted (`worktree add -b`, a
@@ -1742,8 +1754,12 @@ L-8).
   (`ask_removal`) dirties the worktree and answers `yes`; `clean(args)`
   returns 2, the one document on the captured standard output has its target
   `refused` with `state-changed`, and the worktree remains.
+  Note, 2026-10-31 (lead ruling R-429): the verify's base moves from
+  `961c405` to `b42355e`, as T128's does, since #40 (`f271a39`) added
+  `WorkbenchesDiscoveryTests` to `main`'s copy and this branch merged `main`
+  at `b42355e` in `1a29e80`.
   — files: `tests/test_project.py`
-  — verify: `python3 -c "import ast,subprocess as s,sys;o=ast.parse(s.run(['git','show','961c405:tests/test_project.py'],capture_output=True,text=True,check=True).stdout);n=ast.parse(open('tests/test_project.py').read());d=lambda m:{(c.name if isinstance(c,ast.ClassDef) else '')+'.'+x.name:ast.dump(x) for c in [m]+[y for y in m.body if isinstance(y,ast.ClassDef)] for x in c.body if isinstance(x,ast.FunctionDef)};top=lambda m:[ast.dump(x) for x in m.body if not isinstance(x,(ast.FunctionDef,ast.ClassDef))];A,B=d(o),d(n);K=set(sys.argv[1:]);M=[k for k in set(A).union(B) if k.split('.')[-1] not in K and not A.get(k)==B.get(k)];E=[k for k in K if not any(x.endswith('.'+k) for x in A) or not any(x.endswith('.'+k) for x in B)];add=[x for x in top(n) if x not in top(o)];rem=[x for x in top(o) if x not in top(n)];line=ast.dump(ast.parse('sys.modules[loader.name] = module').body[0]);[print('changed method:',k) for k in M];[print('missing method:',k) for k in E];print('module-level added',len(add),'removed',len(rem));sys.exit(0 if not M and not E and not rem and add==[line] else 1)" test_clean_revalidates_a_worktree_after_confirmation && python3 -c "import ast,sys;t=open(sys.argv[1]).read();F=[n for n in ast.walk(ast.parse(t)) if isinstance(n,ast.FunctionDef) and n.name==sys.argv[2]];s=ast.get_source_segment(t,F[0]) if F else '';M=[k for k in sys.argv[3:] if k not in s];[print('absent from',sys.argv[2]+':',m) for m in M];sys.exit(1 if M or not F or len(sys.argv)<4 else 0)" tests/test_project.py test_clean_revalidates_a_worktree_after_confirmation 'all_safe=False' 'expect_plan=None' 'ask_removal' 'state-changed'`
+  — verify: `python3 -c "import ast,subprocess as s,sys;o=ast.parse(s.run(['git','show','b42355e:tests/test_project.py'],capture_output=True,text=True,check=True).stdout);n=ast.parse(open('tests/test_project.py').read());d=lambda m:{(c.name if isinstance(c,ast.ClassDef) else '')+'.'+x.name:ast.dump(x) for c in [m]+[y for y in m.body if isinstance(y,ast.ClassDef)] for x in c.body if isinstance(x,ast.FunctionDef)};top=lambda m:[ast.dump(x) for x in m.body if not isinstance(x,(ast.FunctionDef,ast.ClassDef))];A,B=d(o),d(n);K=set(sys.argv[1:]);M=[k for k in set(A).union(B) if k.split('.')[-1] not in K and not A.get(k)==B.get(k)];E=[k for k in K if not any(x.endswith('.'+k) for x in A) or not any(x.endswith('.'+k) for x in B)];add=[x for x in top(n) if x not in top(o)];rem=[x for x in top(o) if x not in top(n)];line=ast.dump(ast.parse('sys.modules[loader.name] = module').body[0]);[print('changed method:',k) for k in M];[print('missing method:',k) for k in E];print('module-level added',len(add),'removed',len(rem));sys.exit(0 if not M and not E and not rem and add==[line] else 1)" test_clean_revalidates_a_worktree_after_confirmation && python3 -c "import ast,sys;t=open(sys.argv[1]).read();F=[n for n in ast.walk(ast.parse(t)) if isinstance(n,ast.FunctionDef) and n.name==sys.argv[2]];s=ast.get_source_segment(t,F[0]) if F else '';M=[k for k in sys.argv[3:] if k not in s];[print('absent from',sys.argv[2]+':',m) for m in M];sys.exit(1 if M or not F or len(sys.argv)<4 else 0)" tests/test_project.py test_clean_revalidates_a_worktree_after_confirmation 'all_safe=False' 'expect_plan=None' 'ask_removal' 'state-changed'`
 
 ### Implementation for User Story 1
 
@@ -5546,7 +5562,7 @@ verification.
   selection naming an absent module passes vacuously: check the module
   count in its output, which must equal the number of `tests/test_*.py`
   modules (lead ruling R-85 (d), lane 3's LOW-H); and confirm by script that
-  `git diff 961c405 -- tests/test_project.py` changes only
+  `git diff b42355e -- tests/test_project.py` changes only
   `test_clean_revalidates_a_worktree_after_confirmation` and adds the one
   `sys.modules` line to the loader, every other method's `ast` source being
   identical.
@@ -5555,8 +5571,15 @@ verification.
   about 5 to 6 (lane 3's W102), 468 s at a load of 9 (T125) and 661 s at
   `28db786` at a load of about 26 (the lead's R-355). On a busy bench the
   verify's `timeout 480` can exit 124; it is then re-run on an idle one.
+  Note, 2026-10-31 (lead ruling R-429): the comparison base moves from
+  `961c405` to `b42355e`, `main`'s copy after #40 (`f271a39`) added
+  `WorkbenchesDiscoveryTests`, seven tests and three other methods, to
+  `tests/test_project.py`. This branch merged `main` at `b42355e` in
+  `1a29e80`, so against `961c405` those methods show as changed although
+  they are `main`'s, not 004's. Against `b42355e` the check allows the same
+  two edits as before: the one method and the one `sys.modules` line.
   — files: (none)
-  — verify: `timeout 480 python3 -m unittest discover -s tests && python3 -c "import ast,subprocess as s,sys;o=ast.parse(s.run(['git','show','961c405:tests/test_project.py'],capture_output=True,text=True,check=True).stdout);n=ast.parse(open('tests/test_project.py').read());d=lambda m:{(c.name if isinstance(c,ast.ClassDef) else '')+'.'+x.name:ast.dump(x) for c in [m]+[y for y in m.body if isinstance(y,ast.ClassDef)] for x in c.body if isinstance(x,ast.FunctionDef)};top=lambda m:[ast.dump(x) for x in m.body if not isinstance(x,(ast.FunctionDef,ast.ClassDef))];A,B=d(o),d(n);K=set(sys.argv[1:]);M=[k for k in set(A).union(B) if k.split('.')[-1] not in K and not A.get(k)==B.get(k)];E=[k for k in K if not any(x.endswith('.'+k) for x in A) or not any(x.endswith('.'+k) for x in B)];add=[x for x in top(n) if x not in top(o)];rem=[x for x in top(o) if x not in top(n)];line=ast.dump(ast.parse('sys.modules[loader.name] = module').body[0]);[print('changed method:',k) for k in M];[print('missing method:',k) for k in E];print('module-level added',len(add),'removed',len(rem));sys.exit(0 if not M and not E and not rem and add==[line] else 1)" test_clean_revalidates_a_worktree_after_confirmation`
+  — verify: `timeout 480 python3 -m unittest discover -s tests && python3 -c "import ast,subprocess as s,sys;o=ast.parse(s.run(['git','show','b42355e:tests/test_project.py'],capture_output=True,text=True,check=True).stdout);n=ast.parse(open('tests/test_project.py').read());d=lambda m:{(c.name if isinstance(c,ast.ClassDef) else '')+'.'+x.name:ast.dump(x) for c in [m]+[y for y in m.body if isinstance(y,ast.ClassDef)] for x in c.body if isinstance(x,ast.FunctionDef)};top=lambda m:[ast.dump(x) for x in m.body if not isinstance(x,(ast.FunctionDef,ast.ClassDef))];A,B=d(o),d(n);K=set(sys.argv[1:]);M=[k for k in set(A).union(B) if k.split('.')[-1] not in K and not A.get(k)==B.get(k)];E=[k for k in K if not any(x.endswith('.'+k) for x in A) or not any(x.endswith('.'+k) for x in B)];add=[x for x in top(n) if x not in top(o)];rem=[x for x in top(o) if x not in top(n)];line=ast.dump(ast.parse('sys.modules[loader.name] = module').body[0]);[print('changed method:',k) for k in M];[print('missing method:',k) for k in E];print('module-level added',len(add),'removed',len(rem));sys.exit(0 if not M and not E and not rem and add==[line] else 1)" test_clean_revalidates_a_worktree_after_confirmation`
 - [x] T129 [S] Run quickstart.md's "The Git 2.36 floor run", as plan review M18
   corrects it (the tests run from the repository): `git version 2.36.6`, then
   every selected test passing, with
