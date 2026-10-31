@@ -33,7 +33,13 @@ duplicate them.
   otherwise, R-324's no-prune clause first for one whose path could not be
   read (round A24, rulings A-98 and A-103), and a flagged `--apply` without
   `--yes` on a standard input that is not a terminal refusing as the removal
-  apply it is, with `confirmation-required` (round A26, ruling A-109);
+  apply it is, with `confirmation-required` (round A26, ruling A-109), once
+  its plan has passed the batch requirement's earlier checks, the clean last
+  holder of a shared branch that the run did not reach named with the flagged
+  single-target command, a holder whose path is missing and one whose
+  registration names another worktree's path given steps of their own, and
+  the `Retired` line's `update-ref` form only defensive for `HEAD` under
+  either setting (round A28, rulings A-126 and A-128);
   verified by its Capabilities section accounting for every canonical
   requirement of `project-clean` and `project-clean-review-safety` and every
   requirement change 1 adds to them.
@@ -230,7 +236,16 @@ duplicate them.
   note re-run and M1 and M3 named as ruled), by `e76ee75` (the spec delta,
   OBS-1), `f6ba086` (the design) and the commit that edits the proposal's
   body, records the round's table and updates this task; verified by
-  "Re-read and Codex Findings (round A27)" in `proposal.md`.
+  "Re-read and Codex Findings (round A27)" in `proposal.md`. Round A28, on
+  `a6f6616`, applied the lane's rulings A-126 (the lane's reader RJ's read of
+  `a6f6616`, 0 HIGH, 4 MEDIUM and 3 LOW, with lane openRepoProject-3's W153
+  observations 1 and 2), A-127 (Brett Heap's answers on his ledger word: four
+  Open Questions ruled and row 26-09 taken) and A-128 (the reader RN's RN-1
+  and RN-2 on feature 004 at `904aefc`, RN-1 superseding RJ's F2), with
+  A-120 to A-125 recorded, by `bde4b3d` and `b564ae1` (the spec delta),
+  `4f16558` and `ae5894d` (the design) and the commit that edits the
+  proposal's body, records the round's table and updates this task; verified
+  by "Re-read and Codex Findings (round A28)" in `proposal.md`.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md`
   modifies five requirements and adds one (72 scenarios: 43 carried unchanged
   from change 1 and PR #19, 6, 14, 10, 5 and 8 by block, and 29 added, the
@@ -287,7 +302,15 @@ duplicate them.
   to the ADDED requirement and one AND to "A single target with the flag
   equals a one-item batch", under ruling A-110, and round A27 adding no
   scenario, editing one reason clause of the ADDED requirement's
-  main-worktree holder line, under ruling A-119),
+  main-worktree holder line, under ruling A-119, and round A28 adding no
+  scenario, editing the ADDED requirement's sentence on a flagged apply's
+  refusal, its `Retired` line's sentence and its holder lines, two of them
+  new, adding four ANDs to three ADDED scenarios, one to "Retire the
+  branches of a batch", two to "A holder's own work is kept by its next step"
+  and one to "A clean holder the plan would remove", whose AND that prints
+  the `branch-shared` line it also rewrites, and rewriting one AND of "A
+  branch name in a printed command is quoted for the shell", under rulings
+  A-126 and A-128),
   `specs/project-clean-review-safety/spec.md` modifies one (4 scenarios: 3
   carried, 1 added, whose THEN round A24 edits and to which it adds an AND),
   and `specs/project-command/spec.md` modifies one on
@@ -304,9 +327,9 @@ duplicate them.
   each modified requirement's source text kept byte for byte; `design.md`
   holds D1 to D10 (`8341954`, `d0b33ce`, and the commit titled 'Settle which
   later targets carry branch-retention-stop'), revised by the alignment fix
-  round (1.2), the council round (1.3) and rounds A3 to A27; verified
+  round (1.2), the council round (1.3) and rounds A3 to A28; verified
   by `grep -c '^#### Scenario:'` on each spec file and by a scenario-carry
-  script run after the council round and again after rounds A3 to A27
+  script run after the council round and again after rounds A3 to A28
   over all seven MODIFIED blocks, every source scenario present byte for byte
   and in order.
 - [x] 1.5 Validation passes: `/usr/bin/openspec validate
@@ -315,11 +338,12 @@ duplicate them.
   `/usr/bin/openspec status --change add-project-clean-branch-retirement
   --json` shows every artifact done; verified by running the three on this
   branch after 1.4, after the alignment fix round, after the council round
-  and after rounds A3 to A27
+  and after rounds A3 to A28
   (build 1.13.1, which notes only as INFO that archive would refuse the
   MODIFIED blocks whose base still sits in change 1).
 - [ ] 1.6 Ratified by Brett Heap's word on the pull request, quoted with its
-  link here, the proposal's six Open Questions before him, the project-command
+  link here, the two of the proposal's six Open Questions that his ledger
+  word did not rule before him (ruling A-127), the project-command
   block that lane openRepoProject-2 agreed being dropped if PR #19 absorbs its
   clauses (lane openRepoProject-2's LQ-6) and also a Budgets exception that
   covers the re-read's shorter budget, which LQ-6 does not list for this
