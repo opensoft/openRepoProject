@@ -355,7 +355,7 @@ code with no baseline message gets one here:
 | `target-not-repository-root` | `Not the main worktree of a repository: PATH; pass the repository root.`, or, where a `core.worktree` or `core.bare` of the repository's own redirects the main worktree away from the directory examined (see "Resolution"), `Not the main worktree of a repository: PATH; core.worktree or core.bare redirects the main worktree; unset both in the repository's config, or in the main worktree's config.worktree, then run again.` (`target_not_repository_root_redirect`) |
 | `unsupported-path-bytes` | `The repository path is not valid UTF-8: PATH` |
 | `manifest-invalid` | `Manifest PATH is larger than 1 MiB.`; otherwise the baseline messages of `read_yaml()` and `manifest()`: `Cannot read PATH: ...` (an `OSError`, a read cut at its budget, or a parse error), `Expected a mapping in PATH`, `Unexpected kind in PATH; expected project-manifest` or `expected family-manifest`, and, where PyYAML is missing, `read_yaml()`'s own `YAML inspection needs PyYAML; use a workBench with python3-yaml installed.` (lead ruling R-73 (e)) |
-| `inspection-incomplete`, `inspect-cap`, `deadline-exceeded` | `The plan is incomplete (CODE): REMEDY.`, REMEDY being "D18 remedies": for `inspection-incomplete`, `repair or remove the inspection-error rows first: git worktree repair, git worktree prune, or remove the row by hand after review; git worktree prune also deletes the entry, and so the HEAD reflog, of every other worktree whose path is missing, one moved or on an unmounted drive included, so run git worktree prune --dry-run first and remount or repair any it lists that still exists` (`remedy_inspection_incomplete`) and, where any row the refusal counts is excluded as `registration-mismatch`, `repair or remove the inspection-error rows first: git worktree repair, git worktree prune, unset core.worktree and core.bare in the repository's config or in a worktree's config.worktree, or remove the row by hand after review; git worktree prune also deletes the entry, and so the HEAD reflog, of every other worktree whose path is missing, one moved or on an unmounted drive included, so run git worktree prune --dry-run first and remount or repair any it lists that still exists` (`remedy_inspection_incomplete_redirect`, below), each in its unread form where any row of the plan has a path that could not be read (`remedy_inspection_incomplete_unread` and `remedy_inspection_incomplete_redirect_unread`, "The unread forms" below); for `inspect-cap`, `N rows exceed the row cap of M; remove worktrees explicitly, or prune stale entries by hand; if a worktree's path cannot be read, do not run git worktree prune, git worktree remove or git gc until it can; git worktree prune also deletes the entry, and so the HEAD reflog, of every other worktree whose path is missing, one moved or on an unmounted drive included, so run git worktree prune --dry-run first and remount or repair any it lists that still exists` (`remedy_inspect_cap`, always, "The unread forms" below); for `deadline-exceeded`, `the run ran out of time; remove worktrees explicitly or re-run` |
+| `inspection-incomplete`, `inspect-cap`, `deadline-exceeded` | `The plan is incomplete (CODE): REMEDY.`, REMEDY being "D18 remedies": for `inspection-incomplete`, `repair or remove the inspection-error rows first: git worktree repair, git worktree prune, or remove the row by hand after review; git worktree prune also deletes the entry, and so the HEAD reflog, of every other worktree whose path is missing, one moved or on an unmounted drive included, so run git worktree prune --dry-run first and remount or repair any it lists that still exists` (`remedy_inspection_incomplete`) and, where any row the refusal counts is excluded as `registration-mismatch`, `repair or remove the inspection-error rows first: git worktree repair, git worktree prune, unset core.worktree and core.bare in the repository's config or in a worktree's config.worktree, or remove the row by hand after review; git worktree prune also deletes the entry, and so the HEAD reflog, of every other worktree whose path is missing, one moved or on an unmounted drive included, so run git worktree prune --dry-run first and remount or repair any it lists that still exists` (`remedy_inspection_incomplete_redirect`, below) and, where such a row also holds or shares another's path (Brett Heap's M4 (a)), `repair or remove the inspection-error rows first: git worktree repair, git worktree prune, unset core.worktree and core.bare in the repository's config or in a worktree's config.worktree, or remove the row by hand after review, except one whose path is or holds the main worktree, the common directory or another worktree, which must not be deleted by hand or with git worktree remove: review its registration with git worktree list --porcelain; git worktree prune also deletes the entry, and so the HEAD reflog, of every other worktree whose path is missing, one moved or on an unmounted drive included, so run git worktree prune --dry-run first and remount or repair any it lists that still exists` (`remedy_inspection_incomplete_redirect_holds`, below), each in its unread form where any row of the plan has a path that could not be read (`remedy_inspection_incomplete_unread`, `remedy_inspection_incomplete_redirect_unread` and `remedy_inspection_incomplete_redirect_unread_holds`, "The unread forms" below); for `inspect-cap`, `N rows exceed the row cap of M; remove worktrees explicitly, or prune stale entries by hand; if a worktree's path cannot be read, do not run git worktree prune, git worktree remove or git gc until it can; git worktree prune also deletes the entry, and so the HEAD reflog, of every other worktree whose path is missing, one moved or on an unmounted drive included, so run git worktree prune --dry-run first and remount or repair any it lists that still exists` (`remedy_inspect_cap`, always, "The unread forms" below); for `deadline-exceeded`, `the run ran out of time; remove worktrees explicitly or re-run` |
 | `plan-digest-mismatch` | `The fresh plan's digest DIGEST differs from --expect-plan EXPECTED; nothing was changed.` |
 | `confirmation-required` | `Standard input is not a terminal; pass --yes to apply this plan.` (the removal question; `confirm()` keeps its own) |
 | push, `remote-gone` | `Cannot push BRANCH; its upstream UPSTREAM was deleted (remote-gone); review it before it is republished.` |
@@ -389,6 +389,39 @@ ruling R-287 (a); lane 3's W73 L-2; writer G's `ded85bb`, merged as
 registration mismatch; `inspect-cap` and `deadline-exceeded` keep their
 remedies.
 
+Brett Heap's M4 (a) gives the redirect variant a second form,
+`remedy_inspection_incomplete_redirect_holds` (ruled on 2026-10-31T18:20:06Z,
+"(a) Add M3's exception (Recommended)"; lead R-432; lane 2's wave 24 question
+M4, which feature 004's code round raised on M3's rows (lead R-416); #19's round
+(u) at `1476110`, design D18 and the scenario "A refusal beside a worktree whose
+path holds the main worktree"; writer's `949c58a`). A row that takes M3 (a)'s
+own next step, a `registration-mismatch` row whose path is, or holds, the main
+worktree, the common directory or another worktree (Q2 (1)), or is shared with
+another entry or row (R-57 L3, R-67 (c)), counts toward `inspection-incomplete`
+like any other, and the variant's "or remove the row by hand after review",
+followed for such a row, deletes what its path holds, as M3's step says. Where
+any row that the refusal counts is excluded as `registration-mismatch` and has
+`WorktreeRow.holds`, the variant therefore adds M3's exception after that
+clause, once, with nothing else changed: `repair or remove the inspection-error
+rows first: git worktree repair, git worktree prune, unset core.worktree and
+core.bare in the repository's config or in a worktree's config.worktree, or
+remove the row by hand after review, except one whose path is or holds the main
+worktree, the common directory or another worktree, which must not be deleted by
+hand or with git worktree remove: review its registration with git worktree list
+--porcelain; git worktree prune also deletes the entry, and so the HEAD reflog,
+of every other worktree whose path is missing, one moved or on an unmounted
+drive included, so run git worktree prune --dry-run first and remount or repair
+any it lists that still exists` (699 characters). Every other refusal prints the
+text it printed before: one whose counted `registration-mismatch` rows are a
+redirect by `core.worktree` or `core.bare`, a broken registration or Q9 (b)'s
+symbolic link alone has no `holds` row, a row that the work deadline stopped is
+not counted, and a refusal that counts no `registration-mismatch` row keeps the
+base remedy. `incomplete_refusal()` chooses the form in every mode that counts
+rows, single mode's P rows included, where a P that shares its path, or its
+realpath, with another entry is such a row
+(`test_clean_the_refusal_beside_a_row_that_holds_another_takes_m3_s_exception`,
+T061).
+
 The unread forms are #19's round (l) at `ccc52b9`, design D18 (lane 3's W87
 M-1; the lead's R-307 and R-310, confirmed by Brett Heap (R-319); writer's
 `e569564`, merged as `1edf64e`). A row is unread where its path could not be
@@ -412,9 +445,18 @@ remove or git gc until it can`, and, where the redirect variant would print,
 inspection-error rows first: git worktree repair, unset core.worktree and
 core.bare in the repository's config or in a worktree's config.worktree, or
 remove the row by hand after review; a row's path could not be read, so do not
-run git worktree prune, git worktree remove or git gc until it can`; the
-variant's counting is unchanged, a single removal that names the unread row
-counts P's rows alone, none redirected, so it takes the first, and
+run git worktree prune, git worktree remove or git gc until it can`, and, where
+a counted row also holds or shares another's path (Brett Heap's M4 (a); the
+paragraph above), `remedy_inspection_incomplete_redirect_unread_holds`, `repair
+or remove the inspection-error rows first: git worktree repair, unset
+core.worktree and core.bare in the repository's config or in a worktree's
+config.worktree, or remove the row by hand after review, except one whose path
+is or holds the main worktree, the common directory or another worktree, which
+must not be deleted by hand or with git worktree remove: review its registration
+with git worktree list --porcelain; a row's path could not be read, so do not
+run git worktree prune, git worktree remove or git gc until it can` (534
+characters); the variant's counting is unchanged, a single removal that names
+the unread row counts P's rows alone, none redirected, so it takes the first, and
 `deadline-exceeded` keeps its remedy, and the `inspect-cap` remedy is
 `remedy_inspect_cap`, `N rows exceed the row cap of M; remove worktrees
 explicitly, or prune stale entries by hand; if a worktree's path cannot be
@@ -491,6 +533,16 @@ two recommendations end in `.` after it, with no clause trailing:
   path is missing, one moved or on an unmounted drive included, so run git
   worktree prune --dry-run first and remount or repair any it lists that still
   exists`
+- `remedy_inspection_incomplete_redirect_holds`: `repair or remove the
+  inspection-error rows first: git worktree repair, git worktree prune, unset
+  core.worktree and core.bare in the repository's config or in a worktree's
+  config.worktree, or remove the row by hand after review, except one whose path
+  is or holds the main worktree, the common directory or another worktree, which
+  must not be deleted by hand or with git worktree remove: review its
+  registration with git worktree list --porcelain; git worktree prune also
+  deletes the entry, and so the HEAD reflog, of every other worktree whose path
+  is missing, one moved or on an unmounted drive included, so run git worktree
+  prune --dry-run first and remount or repair any it lists that still exists`
 - `remedy_inspect_cap`: `N rows exceed the row cap of M; remove worktrees
   explicitly, or prune stale entries by hand; if a worktree's path cannot be
   read, do not run git worktree prune, git worktree remove or git gc until it
@@ -995,8 +1047,9 @@ only). The owner tools that `update --apply` runs are no Git children of
 ruling LQ-12, draft PR #19 at `eae1a79`; lead rulings R-102 and R-111).
 
 The protocol pins, on every Git child except the push child (the push-child
-exception, LQ-3, awaiting Brett Heap's word on draft PR #19; research.md
-R1):
+exception, LQ-3, ruled by Brett Heap at 2026-10-31T18:20:06Z, "Yes, ruled as
+recommended (Recommended)", lead R-432, in draft PR #19; research.md R1 gives
+the chain):
 
 ```text
 -c protocol.allow=never -c protocol.file.allow=never
@@ -1061,7 +1114,13 @@ a branch named `-f` as an option (`fatal: branch name required`, exit 128,
 the branch kept), so the retry `--branch=-f` that #26 prints could never
 succeed; with it, as push's vector has it, `git branch -d -- -f` deletes the
 branch (lane 3's W52 F-4; writer E's `02aa71d`, merged as `d764c26`). It
-rests on lane 2's ruling R-259 alone, for Brett Heap's yes or no. #19 states
+rested on lane 2's ruling R-259 alone, for Brett Heap's yes or no, until he
+ruled it: his word of 2026-10-23T21:31:02Z, "yes, recommended for the ledger
+rows and 19-02 and 19-16", which he confirmed at 2026-10-31T17:58:12Z in lane
+openRepoProject-5's session to mean "Broad (lane 3's reading)", and, to whether
+that word rules it, "Yes, ruled as recommended (Recommended)" at
+2026-10-31T18:20:06Z in lane openRepoProject-2's question prompt (lead R-432;
+lane openRepoProject-3's ledger row 004-01, an accepted departure). #19 states
 it at `b3228bb`: design D18 (`design.md:1309`) says that #19 states no
 argument vector for branch deletion and that feature 004 runs `git -C ROOT
 branch -d -- BRANCH`, the `--` ending the options, and its proposal repeats
@@ -1116,10 +1175,20 @@ records, so a row whose untracked directory is unreadable no longer reads clean.
 With `core.warnAmbiguousRefs` false, in the repository's configuration or the
 user's, which no pin overrides, the same pinned probe exits 0 with empty
 standard error, on Git 2.43.0 and 2.36.6, so that no row is `inspection-error`
-on that account, a run of `add-project-clean-branch-retirement` can retire
-`refs/heads/HEAD`, and that change's `Retired HEAD` restore line is then the
-restore that works; 004 adds no pin for it and changes no behaviour (#19's
-design D1 at `4512441`).
+on that account.
+The row of a worktree whose branch is `refs/heads/HEAD` still is, by R-61 (b),
+which holds in every command: the ref listing prints for that branch the
+upstream and track of the branch that HEAD names, so its evidence is never
+established (the paragraph above on a branch named `HEAD`). Under either setting
+such a row is therefore `inspection-error`, by Q8 where Git warns that the
+refname is ambiguous and by R-61 (b) where it does not, and is never selected,
+so that no run removes its worktree or retires its branch, and
+`add-project-clean-branch-retirement`'s `Retired HEAD` restore line is never
+reached through such a row. This paragraph said until doc round 30 that with the
+setting false a run of that change could retire `refs/heads/HEAD` and that the
+line was then the restore that works (lane 5's RN-1; lead R-432). #19 states
+R-61 (b) at round (u) (the `project-command` delta, `spec.md:251-256` at
+`1476110`, and design D1); 004 adds no pin for it and changes no behaviour.
 
 In `clean`'s plan, a linked row whose path encloses another repository path
 is `registration-mismatch` (Brett Heap's Q2 (1), ruled on 2026-10-23T13:30:27Z,
@@ -1175,8 +1244,23 @@ wrong. `project` at `41759a4` applied both in those commands too, where
 `f3724fc` read both rows; the code round's `455773a` confines them, and `clean`
 still excludes both rows: `test_status_an_enclosing_worktree_and_a_symbolic_link_path_keep_the_baseline_s_values`
 (T115) pins the three commands' entries and `clean --all-safe`'s exclusion on
-one fixture. R-67 (c)'s shared-path and twin rows stay `registration-mismatch`
-in every command, as at `f3724fc`.
+one fixture.
+
+Note, 2026-10-31 (lane 3's W161, row 004-08; lead R-432, ruled (b); writer's
+`b7cf86e`): a registry path listed twice (R-57 L3, R-59 D5) and two spellings of
+one worktree (R-67 (c)) are `clean`'s alone as well, for the same reason: the
+`project-command` delta states neither, so its parity rule keeps `status`,
+`doctor` and `update` at the baseline's values. Those commands read such rows as
+the baseline does, probed, with their own `dirty` and no `inspection-error`, and
+`doctor` exits 0 where nothing else is wrong, where `project` through `aa342ad`
+made them `registration-mismatch` in every command. `worktree_rows()` reads
+`shared_paths()` and `shared_identities()` only where `for_clean` is true;
+`clean` keeps both kinds of row `registration-mismatch`, with M3 (a)'s step and
+M4 (a)'s remedy.
+`test_status_a_path_listed_twice_and_a_twin_spelling_keep_the_baseline_s_values`
+(T115) pins the three commands' entries, against values read from the baseline's
+`project` on the same layout, and `clean --all-safe`'s exclusion of the four
+rows.
 
 Gate 9 also looks for a `.git` inside a tracked directory (Q2 (2), the same
 ruling and triage item; writer's `5eeaedd`). Git's directory walk recurses into
@@ -1301,7 +1385,7 @@ Brett Heap (lead rulings R-196 and R-197).
 | `handoff()`'s remote read | `git remote get-url origin` only for a root whose repository was inspected, present and past the version check; otherwise the same no-identity state and no child (lead ruling R-66 (c)) |
 | No `.git` | `present: false`, no Git child, as today |
 | Uninspectable root, leg or worktree | `classification: "inspection-error"`, `errors`, unestablished values null, `worktrees` among them (R-56); status exits 0; a failed configuration-path test gives the root `present` null and one `errors` entry, `relative-config-path` with D18's lines |
-| A worktree that holds another, or whose registered path is a symbolic link | read as the baseline reads it, probed and with its own `dirty`: Brett Heap's Q2 (1) and Q9 (b) apply in `clean`'s plan alone (`for_clean`; "Git children" above; lane 3's W139 MEDIUM-1, lead R-409) |
+| A worktree that holds another, whose registered path is a symbolic link, whose registry path another entry names, or that is one of two spellings of one worktree | read as the baseline reads it, probed and with its own `dirty`: Brett Heap's Q2 (1) and Q9 (b), and R-57 L3 and R-67 (c), apply in `clean`'s plan alone (`for_clean`; "Git children" above; lane 3's W139 MEDIUM-1 and W161 row 004-08, lead R-409 and R-432) |
 | Doctor's `git` row | `ok` with the detail `PATH (git version X)`, or `error` with the detail `CODE: MESSAGE`, CODE `git-too-old` or `git-unavailable` and MESSAGE its command-neutral text, or CODE `relative-config-path` and MESSAGE D18's lines ("Codes"; lead rulings R-48 and R-57; LQ-15); doctor then exits 1 by its error rows |
 | Doctor's error rows | one per null `present`, null `dirty` from a failed or timed-out probe, and `inspection-error` row; none for a null that means "none" |
 | Human `status` and `doctor` | `Git: inspection-error (CODES)` in place of the branch line |

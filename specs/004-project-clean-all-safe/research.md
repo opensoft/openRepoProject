@@ -10,7 +10,7 @@ implementation:
 
 - R1 to R6: six places where the code at `961c405` contradicts the change's
   text, each resolved inside that text (the push-child exception, LQ-3 in
-  R1, waits on Brett Heap's word);
+  R1, was ruled by Brett Heap on 2026-10-31);
 - R7: the reviewed spec the plan cites;
 - R8 to R15: the unknowns of counting, ordering, timing and the test
   harness, test runtime and CI, the digest's bytes, the bare-name test,
@@ -29,7 +29,7 @@ quotes, spec ids beside them) and what they cost. Line citations are
 were run on Git 2.43.0 and Python 3.12.3 with their fixtures and scripts in a
 scratch directory, never in the repository.
 
-## R1. The push-child exception (LQ-3, awaiting Brett Heap's word)
+## R1. The push-child exception (LQ-3, ruled by Brett Heap)
 
 - **Finding**: the `project-command` delta says that "Every Git child, of
   every kind, SHALL also pass `-c protocol.allow=never`" and the six
@@ -44,9 +44,9 @@ scratch directory, never in the repository.
   `test_clean_pushes_explicit_clean_feature_branch_without_force` (`:899`)
   and `test_clean_pushes_to_a_differently_named_upstream_branch` (`:978`)
   push to a local-path origin.
-- **Decision** (a plan assumption, awaiting Brett Heap's word): the
-  amendment that PR #19 (draft, after its review fixes; branch
-  `change/amend-clean-all-safe-push-pins`) carries for his word as option
+- **Decision** (a plan assumption until Brett Heap ruled it on 2026-10-31;
+  see Ruling, below): the amendment that PR #19 (draft, after its review
+  fixes; branch `change/amend-clean-all-safe-push-pins`) carries as option
   (a). The push child of `clean --action push` runs through `execute()`, not
   through D2's driver: its standard input, output and error are `project`'s
   own, never read or capped; it runs in `project`'s process group, so it is
@@ -71,9 +71,9 @@ scratch directory, never in the repository.
   passphrase, as it does today.
 - **Independence**: no other decision here depends on it. The pins and the
   session are applied by one argument-vector builder and one spawn helper,
-  and the push child is built in one place (R5). If Brett Heap rules a
+  and the push child is built in one place (R5). Had Brett Heap ruled a
   follow-up change instead (option (b)), only the push child's treatment
-  moves: that builder, that helper and the push tests.
+  would have moved: that builder, that helper and the push tests.
 - **Scenarios**: "Push an unpushed feature branch" (US3 scenario 6), "Push
   refuses a branch whose upstream was deleted" (US3-7), "Push refuses an
   incomplete inspection" (US3-8), "A lazy fetch in a partial clone is refused
@@ -91,14 +91,26 @@ scratch directory, never in the repository.
   opens `/dev/tty`, Git's prompts are answered there, the terminal's
   foreground group is the push child's, and a `^C` typed at the prompt
   stops the push, nothing pushed, `project` exiting 130.
-- **Cost**: until the word, the plan departs from the delta's literal text
-  for one child.
+- **Ruling** (2026-10-31): Brett Heap ruled option (a), by his word of
+  2026-10-23T21:31:02Z, "yes, recommended for the ledger rows and 19-02 and
+  19-16", which he confirmed at 2026-10-31T17:58:12Z in lane openRepoProject-5's
+  session to mean "Broad (lane 3's reading)", and, to whether that word rules
+  it, "Yes, ruled as recommended (Recommended)" at 2026-10-31T18:20:06Z in lane
+  openRepoProject-2's question prompt (lead R-432; lane openRepoProject-3's
+  ledger row 19-08, which is taken under both readings of his word, its lean
+  being LQ-3's own recommendation, (a)). Draft PR #19 amends the unarchived
+  change in place, so that the push child is the one Git child without the pins,
+  and this feature builds on it as assumed; task 1.7, which that PR adds to the
+  change's `tasks.md`, is filled at the archive PR. No code changes.
+- **Cost**: the plan departs from the delta's literal text for one child; it
+  did so on an assumption until Brett Heap's ruling of 2026-10-31 (Ruling,
+  above).
 - **Alternatives considered**: (a) amend the unarchived change in place by
   its own pull request on his word, with a scenario for the push child (PR
-  #19, the lead's recommendation); (b) a follow-up change after this one
-  archives, as lane openRepoProject-1 did with `fix-parent-obstacle-wording`;
-  (c) the literal reading, rejected because every push would then fail with
-  exit 128, breaking a requirement the change keeps.
+  #19, the lead's recommendation, ruled by Brett Heap on 2026-10-31); (b) a
+  follow-up change after this one archives, as lane openRepoProject-1 did with
+  `fix-parent-obstacle-wording`; (c) the literal reading, rejected because every
+  push would then fail with exit 128, breaking a requirement the change keeps.
 
 ## R2. `discover()` without a usable Git
 
@@ -402,8 +414,9 @@ scratch directory, never in the repository.
   includes the removals, so this reading departs from that literal text; it
   awaits Brett Heap's word through draft PR #19's commit `cecb4fc`, "State
   which count holds the removals", as the push-child exception beside it
-  does, and US6 scenario 6 and SC-006 of the reviewed spec read it this way
-  until then (lead rulings R-57 L4 and R-59 D10).
+  did until Brett Heap's ruling of 2026-10-31 (R1), and US6 scenario 6 and
+  SC-006 of the reviewed spec read it this way until then (lead rulings R-57 L4
+  and R-59 D10).
 - **Alternatives considered**: counting removals in `probes` too, rejected
   (then `operations` would duplicate a subset of `probes`); adding 6T + 3
   (7T + 3) and T only for an apply, rejected by the plan review (a preview's

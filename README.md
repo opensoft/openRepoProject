@@ -351,6 +351,33 @@ repository's config or in a worktree's config.worktree, or remove the row by
 hand after review; a row's path could not be read, so do not run git worktree
 prune, git worktree remove or git gc until it can`.
 
+Where a row that the `inspection-incomplete` refusal counts is
+`registration-mismatch` and its path is, or holds, the main worktree, the common
+directory or another worktree, or it shares its path with another entry, the
+remedy's `or remove the row by hand after review`, followed for that row, would
+delete what its path holds, so the remedy that names the unset takes an
+exception after that clause: `repair or remove the inspection-error rows first:
+git worktree repair, git worktree prune, unset core.worktree and core.bare in
+the repository's config or in a worktree's config.worktree, or remove the row by
+hand after review, except one whose path is or holds the main worktree, the
+common directory or another worktree, which must not be deleted by hand or with
+git worktree remove: review its registration with git worktree list --porcelain;
+git worktree prune also deletes the entry, and so the HEAD reflog, of every
+other worktree whose path is missing, one moved or on an unmounted drive
+included, so run git worktree prune --dry-run first and remount or repair any it
+lists that still exists`; and where any row of the plan has a path that could
+not be read, `repair or remove the inspection-error rows first: git worktree
+repair, unset core.worktree and core.bare in the repository's config or in a
+worktree's config.worktree, or remove the row by hand after review, except one
+whose path is or holds the main worktree, the common directory or another
+worktree, which must not be deleted by hand or with git worktree remove: review
+its registration with git worktree list --porcelain; a row's path could not be
+read, so do not run git worktree prune, git worktree remove or git gc until it
+can`. A refusal whose counted `registration-mismatch` rows are only worktrees
+that `core.worktree` or `core.bare` redirects, ones whose registration is
+broken, or ones whose registered path is a symbolic link, and every other
+`inspection-incomplete` refusal, prints the remedies above, unchanged.
+
 `--all-safe` cannot be combined with `--action`, `--branch` or `--worktree`,
 and `--expect-plan` needs `--all-safe` and `--apply`: each is
 `invalid-arguments`, exit 2, with nothing run, as is an `--expect-plan` value
