@@ -235,25 +235,56 @@ TRIAD_ANSWERS = {"": "triad", "1": "triad", "y": "triad", "yes": "triad",
 VISIBILITIES = ("private", "public", "internal")
 
 
+def parent_case(parent):
+    """The resolved parent's case as a pair (kind, path), read locally with pathlib, opening nothing
+    (refuse-non-directory-parent-early design D1). The reads, in order and only as needed:
+    parent.is_dir(); parent.exists(); then exists() on each path of parent.parents from the nearest,
+    up to the first that exists, and that path's is_dir(). The kinds: "directory" (path: the parent),
+    "not a directory" (the parent), "below a non-directory" (the nearest existing path above the
+    parent, which is not a directory) and "missing" (that path, a directory). The parent is absolute,
+    so the walk ends at the root, which exists; the last return is never reached (clarifications N2)."""
+    if parent.is_dir():
+        return "directory", parent
+    if parent.exists():
+        return "not a directory", parent
+    for above in parent.parents:
+        if above.exists():
+            return ("missing", above) if above.is_dir() else ("below a non-directory", above)
+    return "missing", parent
+
+
+def blocked_parent_sentence(parent, kind, path):
+    """The sentence for a parent blocked by a non-directory, from parent_case()'s kind and path
+    (refuse-non-directory-parent-early design D2): sentence (a) for "not a directory", sentence (b),
+    naming the path that blocks it, for "below a non-directory". Called for the two blocked kinds
+    only: for "directory" or "missing", sentence (b) would be false."""
+    if kind == "not a directory":
+        return f"The parent {parent} exists but is not a directory; choose a parent that is a directory."
+    return (f"The parent {parent} cannot be created because {path} exists but is not a directory; choose a parent"
+            " that is a directory.")
+
+
 def known_obstacles(name, parent):
     """The known Triad obstacles as D13 sentences, in the order name, openRepoShape, parent: three
-    local facts, with no network and no subprocess (design D3). The parent fact is parent.is_dir()
-    and, only when that is false, parent.exists() on the same path, which chooses the parent
-    sentence: D13's for a parent that does not exist, or the second parent sentence, for a parent
-    that exists but is not a directory (fix-parent-obstacle-wording design D1, D2)."""
+    local facts, with no network and no subprocess (design D3). The parent fact is one parent_case()
+    read, which walks up parent.parents for a missing parent (refuse-non-directory-parent-early design
+    D1), and it chooses the parent sentence: none for a directory; D13's for a parent that does not
+    exist below a directory; for a parent blocked by a non-directory, the sentence of
+    blocked_parent_sentence(): the second parent sentence, for a parent that exists but is not a
+    directory (fix-parent-obstacle-wording design D1, D2), or sentence (b), for a parent that cannot
+    be created below a path that is not a directory (refuse-non-directory-parent-early design D2)."""
     obstacles = []
     if not ASSEMBLY_NAME.fullmatch(name):
         obstacles.append(f"{name} cannot be a Triad name; a Triad name is a letter first, then letters and digits"
                          " only, such as MyApp.")
     if shutil.which("openRepoShape") is None:
         obstacles.append("openRepoShape is not on PATH. Install openRepoShape through workBenches first.")
-    if not parent.is_dir():
-        if parent.exists():
-            obstacles.append(f"The parent {parent} exists but is not a directory; choose a parent that is a"
-                             " directory.")
-        else:
-            obstacles.append(f"The parent directory {parent} does not exist; a Triad is created inside an existing"
-                             " directory.")
+    kind, path = parent_case(parent)
+    if kind in ("not a directory", "below a non-directory"):
+        obstacles.append(blocked_parent_sentence(parent, kind, path))
+    elif kind == "missing":
+        obstacles.append(f"The parent directory {parent} does not exist; a Triad is created inside an existing"
+                         " directory.")
     return obstacles
 
 
@@ -385,6 +416,10 @@ def new(args):
     else:
         if args.org or args.visibility or args.family or args.elected_by:
             raise Refused("--org, --visibility, --family and --elected-by require --shape.")
+        # The head refusal (refuse-non-directory-parent-early design D1, D2): the parent read afresh.
+        kind, path = parent_case(parent)
+        if kind in ("not a directory", "below a non-directory"):
+            raise Refused(blocked_parent_sentence(parent, kind, path) + " Nothing was created.")
         row = choose(registry(workbenches(args.workbenches)), args)
         command = ["bash", row["script"], name, str(parent)]
     commands = [command]
