@@ -108,8 +108,11 @@ Lane: openRepoProject-4
   - Result: pass. Read at run time, never copied.
 - [x] CHK023 Non-functional: does the overview add no dependency? [Coverage, Spec FR-047]
   - Result: pass.
-- [x] CHK024 Edge: are installed copies elsewhere (workBenches' `onp`) addressed? [Edge Case, Spec Assumptions]
-  - Result: pass.
+- [x] CHK024 Edge: are installed copies elsewhere (the `onp` of openBenches,
+  formerly workBenches) addressed? [Edge Case, Spec Assumptions]
+  - Result: pass. The repository is openBenches since its rename, GitHub
+    redirecting the old name (lane openRepoProject-3's check; `main`'s #41,
+    re-read on 2026-10-31).
 - [ ] CHK025 Edge: is the place of FR-015's keep-filter left to the plan, feature 004's `RefParser` keeping every record and offering no hook for it? [Edge Case, Dependency, Gap, Spec FR-015, Dependencies]
   - Result: plan note PN-16; at feature 004's head `2cf34d3` its parsers are
     unchanged and no hook serves the keep-filter.
@@ -154,7 +157,9 @@ to (n) at `9267303`, `f0bf538`, `662be89`, `4f1c0e0`, `3dcd2d8`, `6bf9f77`,
 `b3228bb`, `e0c91bb`, `e14ada0`, `173d83c`, `ccc52b9`, `20084cd` and `2250830`
 and after lane openRepoProject-3's W39 LOW-4, their categories unchanged, and
 CHK013 after the plan word of 2026-10-22, its category unchanged too, and
-CHK004 after Brett Heap's words on O9 and O12, unchanged too. 26 items:
+CHK004 after Brett Heap's words on O9 and O12, unchanged too, and CHK024 on
+2026-10-31 after `main`'s #41, which links the repository as openBenches,
+unchanged too. 26 items:
 24 pass, 0 fixed in the spec, 0 open, 2 plan notes, 0 new questions. An open
 item waits on the question or residual its result names; a plan note is for the
 plan, not the spec; a new question is asked in `clarify-questions.md`.

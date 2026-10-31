@@ -1438,8 +1438,8 @@ Lane: openRepoProject-4
   :188-213 there now state the four forms; and C-72 says that the entry for O16
   (a)'s null `branch`, `head` and `merged_into_target` that reaches A1 is the
   lane openRepoProject-4 lead's choice on lane openRepoProject-3's W130 LOW-1,
-  not his word, which chose O16 (a) itself. C-72 is now spec.md:956-1106, 151
-  lines, sha256 `296a50e2...`; O17 to O20 stay open. #19 stays at `4512441`
+  not his word, which chose O16 (a) itself. C-72 was spec.md:956-1106 at 3ap,
+  151 lines, sha256 `296a50e2...`; O17 to O20 stay open. #19 stays at `4512441`
   beside the reading at `2250830`, #27 at `d95eea2` and feature 004's pins as
   they stand, and no pin moves. No checklist category changes, and the totals
   below were recounted by script. Traceability is checked against A1's ratified
@@ -1460,8 +1460,9 @@ Lane: openRepoProject-4
   record's account of `41759a4`. EC-028's "the one [L] gives it" holds; beside
   it, at `41759a4` [L] gives a worktree on a branch named `detached` the
   ladder's class, where `d8724e2` gave it `detached`; C-52 states no class and
-  is unchanged. C-72 is now spec.md:956-1118, 163 lines, sha256 `126d943e...`;
-  O17 to O21 stay open. #19 stays at `4512441` beside the reading at `2250830`,
+  is unchanged. C-72 was spec.md:956-1118 at 3aq, 163 lines, sha256
+  `126d943e...`; O17 to O21 stay open. #19 stays at `4512441` beside the
+  reading at `2250830`,
   #27 at `d95eea2` and feature 004's pins as they stand, and no pin moves. No
   checklist category changes, and the totals below were recounted by script.
   Traceability is checked against A1's ratified deltas at `e4a30fc` (64 of 64).
@@ -1520,8 +1521,9 @@ Lane: openRepoProject-4
   dated records' commits, `d8724e2` being named with no line cited.
   security.md's CHK002 and CHK019 and idempotency.md's CHK008, each file's
   Evaluation recording the re-read, and this file's record of FR-016's pins say
-  five pins, no category changing. C-72 is now spec.md:960-1112, 153 lines,
-  sha256 `9e3e09f0...`. #19 stays at `4512441` and #27 at `d95eea2`, and no pin
+  five pins, no category changing. C-72 was spec.md:960-1112 at 3as, 153
+  lines, sha256 `9e3e09f0...`. #19 stays at `4512441` and #27 at `d95eea2`, and
+  no pin
   moves. No checklist category changes, and the totals below were recounted by
   script. Traceability is checked against A1's ratified deltas at `e4a30fc` (64
   of 64). A1 stays cited at `e4a30fc`, and `clarify-questions.md` is unchanged.
@@ -1582,6 +1584,40 @@ Lane: openRepoProject-4
   were recounted by script. Traceability is checked against A1's ratified
   deltas at `e4a30fc` (64 of 64). A1 stays cited at `e4a30fc`, and
   `clarify-questions.md` is unchanged.
+- 2026-10-31, a fiftieth pass, commit 3av, by the lead's 3at decisions,
+  sections 2 to 5, from `76c0073` (3au). #19's cites move from `4512441` to
+  `54e869b` by lane openRepoProject-4's map of rounds (s) and (t) and its edit
+  list (groups G01 to G20, X1 and X2), each group found once by its text at
+  3au: EC-033, FR-016, FR-028, FR-032, FR-035, the A1 and LQ-10 bullets, the
+  round (r) record and security.md's CHK019. Every moved or same range is
+  byte-identical at `54e869b` (27 of 27, by script), and the three changed
+  ones, the nested `.git` gate (pcl:850-858, twice) and the review-safety
+  revalidation sentence (prs:112-118), keep 005's sentence, round (s)
+  rewording them with no change of meaning here; a cite that names an older
+  head, and these dated passes, keep the heads they name. Lane
+  openRepoProject-3's W158: LOW-1, design:591-598 names feature 004 at
+  `41759a4`, where W139 found both widenings applied; LOW-2, round (t)'s new
+  scenario lies in a requirement that #27 does not carry, and neither round
+  edits [E]; C-72's question and its "every held item" name O22 and O23;
+  FR-028 keeps the class's text for a `merged-current` main row, a
+  `merged-removable` one already showing #19's words through the
+  `main-worktree` gate (FR-032); the round (s) cites name `54e869b`; OBS-5 and
+  the B26 sentence were settled at 3au, and OBS-6 needs no edit, the
+  forty-ninth pass recording W151 OBS (4) as taken and the totals line naming
+  the recounted passes. W147's open OBS: C-72's O18 (A) and O21 carry the
+  question's reasons; EC-028 cites [L] for "branch or detached state" and
+  feature 004's code for what it reads; the round (n) record names
+  `unsupported-path-bytes`, whose next step `41759a4` changes (T14) while the
+  overview shows A1's remedy (A1:623); and the three dated passes above, with
+  W151 OBS (5), say "C-72 was ... at" 3ap, 3aq and 3as. `main` at `b42355e`
+  (#40, #41) is recorded once in the round (r) record as a moved base that
+  changes no quoted text, and the repository is named "openBenches (formerly
+  workBenches)" in the Assumptions, Out of Scope and integration.md's CHK024.
+  O22 and O23 stay open for Brett Heap's word. C-72 was spec.md:961-1181 at
+  3av, 221 lines, sha256 `08e05447...`. #27 stays at `7f3453c` and A1 at
+  `e4a30fc`. No checklist category changes, and the totals below were
+  recounted by script. Traceability is checked against A1's ratified deltas at
+  `e4a30fc` (64 of 64), and `clarify-questions.md` is unchanged.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -1706,5 +1742,5 @@ to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
 passes of that day, and after the thirteenth to thirty-fourth passes on
-2026-10-22, the thirty-fifth to forty-seventh on 2026-10-23 and the
-forty-ninth on 2026-10-24.
+2026-10-22, the thirty-fifth to forty-seventh on 2026-10-23, the
+forty-ninth on 2026-10-24 and the fiftieth on 2026-10-31.

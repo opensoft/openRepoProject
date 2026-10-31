@@ -117,7 +117,7 @@ Lane: openRepoProject-4
     ratification. #19's round (q) at `818311a` adds a fifth, `-c
     core.ignoreCase=false`, which FR-016 now quotes after the four, on Brett
     Heap's word for O20 (A) (C-72), so that FR-016's five agree with [E]'s at
-    `4512441` (`specs/project-command/spec.md:159-161`) character for
+    `54e869b` (`specs/project-command/spec.md:159-161`) character for
     character, and its first four with A1's, whose re-alignment adds the fifth
     to requirement 3 and design D13.
 - [x] CHK020 Does no requirement exempt any Git child of the overview from the pins or the scrub? [Consistency, Spec FR-016, Clarifications C-5]
@@ -170,7 +170,9 @@ revision 7 at `0394be4` and #29's `6b5bf8f`, and after its revisions 8, 9 and
 `e4a30fc`, CHK003 also after #29's `2ab3743`, `e1a9f84`, `a6080a7`, `a529310`
 and `5ba7984`, and CHK002 and CHK019 after #19's round (q) at `818311a`, whose
 fifth status pin is O20, and again after Brett Heap's word for O20 (A) on
-2026-10-23, FR-016 now quoting five pins (C-72), their categories unchanged. 25
+2026-10-23, FR-016 now quoting five pins (C-72), and CHK019 again at the re-pin
+of #19 to its round (t), `54e869b`, on 2026-10-31, their categories unchanged.
+25
 items: 23 pass, 1 fixed in the spec, 0 open, 1 plan notes, 0 new questions. An
 open item waits on the question or residual its result names; a plan note is
 for the plan, not the spec; a new question is asked in `clarify-questions.md`.
