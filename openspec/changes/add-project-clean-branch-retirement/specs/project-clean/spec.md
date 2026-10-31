@@ -1068,7 +1068,9 @@ member is added. A run with no removal in flight SHALL still end within 64 s of
 its start, not counting the time blocked at the confirmation question.
 
 A flagged `--apply`, single or batch, is a removal apply: on a standard input
-that is not a terminal and without `--yes` it SHALL refuse with
+that is not a terminal and without `--yes`, once its plan has passed the
+checks that "Clean previews and applies a batch of eligible worktree removals
+in one repository" runs before any question, it SHALL refuse with
 `confirmation-required` and exit status 2 before any mutation, as "Clean hands
 off work requiring review" states for a removal apply, so that no branch stage
 starts; any refusal that requirement keeps for branch deletion is the explicit
@@ -1093,17 +1095,16 @@ order:
 - `Retired BRANCH (was SHA); restore: git -C ROOT branch BRANCH SHA`, or, for
   a name that `git branch` refuses to create, one that begins with `-` or that
   equals `HEAD`, `Retired BRANCH (was SHA); restore: git -C ROOT update-ref
-  refs/heads/BRANCH SHA ''`, a form only defensive where BRANCH is `HEAD` and
-  Git's `core.warnAmbiguousRefs` has its default: every status probe of a
-  repository that holds `refs/heads/HEAD` then exits 0 and warns
-  `refname 'HEAD' is ambiguous.`, which makes every row of it
-  `inspection-error`, so that no run retires such a branch, while with that
-  setting false the probe exits 0 with nothing on standard error and this
-  form is the restore that works, where a run retires it: for a branch named
-  `HEAD`, Git's own non-force check and the ref listing take the upstream of
-  the command directory's current branch, never the branch's own, so that a
-  run retires such a branch only where that upstream holds its tip, and
-  otherwise Git refuses its deletion, `git-refused`; each followed,
+  refs/heads/BRANCH SHA ''`, a form only defensive where BRANCH is `HEAD`,
+  since under either setting of Git's `core.warnAmbiguousRefs` the row of a
+  worktree on `refs/heads/HEAD` is `inspection-error` before any plan
+  selects it, so that no run retires such a branch: under the default every
+  status probe of a repository that holds `refs/heads/HEAD` exits 0 and
+  warns `refname 'HEAD' is ambiguous.`, which makes every row of it
+  `inspection-error`, and with that setting false, where the probe exits 0
+  with nothing on standard error, that row's upstream evidence cannot be
+  read, since the ref listing gives a branch named `HEAD` the upstream of
+  the command directory's current branch, never its own; each followed,
   for every local branch BRANCH2 that the run did not retire and whose
   configured upstream the plan's ref
   listing gives as `refs/heads/BRANCH`, by `Note: BRANCH2 tracks BRANCH as its
@@ -2040,16 +2041,13 @@ N; branches kept: `; and then the residual-window line.
   run by a POSIX shell recreates the ref, and with the refusing test `git` the
   retry it prints passes `--branch=-f`; and where one is instead written by
   hand as `refs/heads/HEAD` the same way, a name that `git branch HEAD <sha>`
-  refuses to create, under Git's default `core.warnAmbiguousRefs` every status
-  probe of the repository exits 0 and warns `refname 'HEAD' is ambiguous.`,
-  every row is `inspection-error`, and the run removes no worktree and prints
-  no `Retired HEAD` line, while with `core.warnAmbiguousRefs` set to false in
-  the repository's configuration, the main worktree on the merge target and
-  the merge target pushed, so that the merge target's upstream, which Git and
-  the ref listing take as that branch's, holds its tip, the branch is retired
-  and the result prints `Retired HEAD (was <sha>); restore: git -C '<root>'
-  update-ref refs/heads/HEAD <sha> ''`, which run by a POSIX shell recreates
-  the ref
+  refuses to create, no run retires it under either setting of
+  `core.warnAmbiguousRefs`: under Git's default every status probe of the
+  repository exits 0 and warns `refname 'HEAD' is ambiguous.` and every row
+  is `inspection-error`, and with the setting false in the repository's
+  configuration the row of the worktree on `refs/heads/HEAD` is
+  `inspection-error`; in both the plan is incomplete, and the run removes no
+  worktree and prints no `Retired HEAD` line
 - **AND** for an eligible branch whose name is `topic`, U+202E and `x`, a name
   Git accepts that holds a code point to escape, the result prints `Retired
   $'topic\u202ex' (was <sha>); restore: git -C '<root>' branch $'topic\u202ex'
