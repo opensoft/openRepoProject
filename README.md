@@ -17,6 +17,17 @@ project --help
 It also runs during workBenches setup and command installation. Python 3.10+
 is required. YAML project/family/workspace inspection requires PyYAML (available
 in the development bench); other commands use Python's standard library.
+Git 2.36 or later is required wherever `project` inspects a repository:
+`project clean` refuses an older Git, and `project status` and `project doctor`
+report it as an inspection error.
+`HOME`, `XDG_CONFIG_HOME`, `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM` must be
+absolute paths when set to anything but an empty value: Git reads a relative
+one inside the repository it runs in, so a repository's own files would act as
+your configuration. Where one is set to a value that does not begin with `/`,
+`project clean` refuses with `relative-config-path` (exit 2) before it runs
+Git, `project status` and `project doctor` report it as an inspection error,
+and `project update --apply --component shape` or `bench` refuses; make the
+value absolute or unset it.
 For source development, run `python3 project --help` in this checkout.
 
 ## Create a project
@@ -177,28 +188,463 @@ to them and is not implied by a normal status report.
 
 ## Clean up Git worktrees
 
+Five behaviour changes come first. Each differs from what `project clean` did
+before:
+
+1. An incomplete report exits 1. Plain `project clean` used to exit 0 for every
+   report it printed. It now prints `Report: complete` or `Report: incomplete
+   (CODES)`, and exits 1 when the report is incomplete: a worktree or probe it
+   could not inspect (`inspection-incomplete`), more worktrees than the row cap
+   (`inspect-cap`: above 256 for the plain report, above 128 for an
+   `--all-safe` preview), or a run that ran out of time (`deadline-exceeded`).
+   A plain report of 129 to 256 rows is still complete and exits 0; it only
+   says `--all-safe would be incomplete (inspect-cap)`. A preview ends the
+   same way.
+2. `clean` refuses below Git 2.36. An older Git ends the run with
+   `git-too-old`, and a missing or unusable one with `git-unavailable`, exit 2,
+   before any repository is probed.
+3. `--worktree P` refuses a freshly created merged worktree as
+   `unstarted-branch`. A branch just created at the merge target counts as
+   merged, and as published once it is pushed, so such a worktree used to look
+   removable. It is now refused, exit 2, with the remedy `no commit was made on
+   this branch here since it was created; its later gates did not run, so check
+   git log -g HEAD, git ls-files -v and git status there, then git worktree
+   remove yourself (--force if it holds a submodule, once its commits are
+   kept)`, which names the checks that the gates after gate 7, which did not
+   run for it, would have made: a commit that only the HEAD reflog holds, an
+   edit flagged assume-unchanged, and changes the status shows.
+4. `--worktree P` refuses a merged worktree whose branch reflog keeps no
+   decisive entry as `reflog-unavailable`: the reflog is missing, expired (no
+   activity for `gc.reflogExpire`, 90 days by default) or undecidable. The
+   remedy is `the branch's reflog is missing, expired or undecidable; its later
+   gates did not run, so check git log -g HEAD, git ls-files -v and git status
+   there, then git worktree remove yourself (--force if it holds a submodule,
+   once its commits are kept)`, the same checks, and a batch withholds such a
+   worktree too.
+5. `--worktree P` removes a merged worktree whose upstream was deleted, and
+   keeps its branch. A branch merged and then deleted on the remote used to be
+   refused as `unpublished`; it is now `merged-removable` when it passes the
+   gates below.
+
 ```sh
 project clean
 project clean /path/to/project --json
+project clean /path/to/project --all-safe
+project clean /path/to/project --all-safe --json
+project clean /path/to/project --all-safe --apply
+project clean /path/to/project --all-safe --apply --expect-plan DIGEST
 project clean --apply --action push --branch 001-feature --yes
 project clean --apply --action remove --worktree /path/to/feature-tree --yes
 project clean --apply --action delete-branch --branch 001-feature --yes
 ```
 
-`clean` is read-only by default. It inspects all linked worktrees using local
-refs and labels remote comparisons as of the last fetch. It protects the
-default branch and preserves dirty, detached, unpublished, remote-gone and
-unmerged work. Ignored local files, remote divergence, and an unknown default
-branch also stop destructive cleanup. A pushed-but-unmerged branch is handed
-off to the repository's normal pull-request or merge process.
+`clean` is read-only by default. It inspects the linked worktrees, up to the row
+caps below, using local refs and labels remote comparisons as of the last
+fetch. It protects the default branch and preserves dirty, detached,
+unpublished, remote-gone and unmerged work. Ignored local files, remote
+divergence, and an unknown default branch also stop destructive cleanup. A
+pushed-but-unmerged branch is handed off to the repository's normal
+pull-request or merge process. With no argument it uses the repository Git
+finds at the current directory; an absolute path must be the repository's main
+worktree, or `clean` refuses with `target-not-repository-root` (exit 2). The
+message is `Not the main worktree of a repository: PATH; pass the repository
+root.` except for the directory where the repository's main worktree would
+be when a `core.worktree` or `core.bare` of the repository's own sends the
+main worktree elsewhere, or makes it bare; there it says so, `Not the main
+worktree of a repository: PATH; core.worktree or core.bare redirects the main
+worktree; unset both in the repository's config, or in the main worktree's
+config.worktree, then run again.` A subdirectory, a linked worktree and a
+submodule checkout keep the first message, and so does a `core.worktree` that
+names a missing directory by a relative path, where Git itself fails (a missing
+directory named absolutely takes the second). A submodule whose own
+configuration redirects, by `core.bare` or by a `core.worktree` naming another
+directory, takes the second message, then the first once the redirect is
+unset; pass the superproject's root instead.
 
-Apply actions are always explicit and target one branch or worktree. Pushes
-are normal non-force pushes. A worktree can be removed only when it is clean,
-non-current and verified merged into the local default branch; deleting its
-local branch is a separate action. `clean` never fetches, stashes, resets,
-force-pushes, creates or merges pull requests, or replaces `park`/`resume`.
-It rechecks the selected state after confirmation and before executing an
-action.
+Apply actions are explicit. `--all-safe --apply` always builds its own fresh
+plan, never reusing a preview, and removes that plan's worktrees, at most 16 a
+run; `--action push`, `--action remove` and `--action delete-branch` each
+target one branch or worktree. Pushes are normal non-force pushes, and a push
+refuses (`remote-gone`, exit 2) when the branch's upstream was deleted. A
+worktree can be removed only when it is clean, non-current, verified merged into
+the local merge target and past every gate below; removing it never deletes its
+local branch, which is a separate action. `clean` never fetches, stashes,
+resets, force-pushes, creates or merges pull requests, or replaces
+`park`/`resume`. It rechecks the selected state after confirmation and before
+executing each action.
+
+### Preview and apply
+
+`project clean ROOT --all-safe` previews and changes nothing, ROOT being the
+repository's main worktree. After the header (`Cleanup plan for ROOT`, `Merge
+target: NAME (SOURCE)`, `Freshness:`) it prints `Selected (N):` with one `
+remove PATH [BRANCH]` line for each worktree a batch would remove, then
+`Excluded (M):` with a group `  REASON (K): NEXT STEP` for each reason and its
+worktrees beneath (each heading prints only when it has rows), then, when a
+worktree is selected, `Not protected: ...` (see "What is guaranteed"). A
+worktree whose path could not be read (the `lstat` failed for a reason other
+than the path's absence, as it does for a directory the process may not
+search, or ran out of time) is `inspection-error`, and such worktrees form a
+group of their own, printed first under that reason, with the next step
+`inspect the row by hand; its path could not be read, so do not run git
+worktree prune, git worktree remove or git gc until it can`; the plan's other
+`inspection-error` and `registration-mismatch` groups then name no `git
+worktree prune` either (see "Gates and next steps"). A `registration-mismatch`
+worktree whose path is, or holds, the main worktree, the common directory or
+another worktree, or that shares its path with another entry, forms a group of
+its own too, printed first under that reason, with the next step `its path is
+or holds the main worktree, the common directory or another worktree, so do not
+delete it by hand or with git worktree remove; review its registration with git
+worktree list --porcelain`, since the usual next step ends `or remove the row
+by hand`, which for such a worktree deletes what its path holds. When a
+complete plan selects nothing it prints `No eligible worktrees` and exits 0.
+The plain report adds `Report: complete` or `Report: incomplete (CODES)` and
+`--all-safe would select N`. A plain report inspects up to 256 worktrees and
+`--all-safe` up to 128; a report of more than 128 says `--all-safe would be
+incomplete (inspect-cap)` in place of the count and withholds the selection;
+such a report, up to 256 worktrees, is still complete and exits 0.
+
+`--apply` runs the plan. `clean` plans again, prints the plan, and asks
+`Remove N worktrees, keeping N branches? [yes/N]` (singular for one). Only
+`yes`, surrounding spaces ignored, goes on; any other answer is refused as
+`cancelled` (exit 2, nothing removed), and Ctrl-C or end of input prints
+`Cancelled.` and exits 130. `--yes` accepts the fresh plan without asking.
+Standard input that is not a terminal, without `--yes`, refuses with
+`confirmation-required` (exit 2) after printing the plan, so a script must say
+`--yes`. An incomplete plan under `--apply` is refused before any question,
+exit 2 (a preview of it exits 1): `The plan is incomplete (CODE): REMEDY.` For
+`inspection-incomplete` the remedy is to repair or remove the inspection-error
+rows first (`git worktree repair`, `git worktree prune`, or remove the row by
+hand after review), and where any row the refusal counts is excluded as
+`registration-mismatch`, it also names the unset, `unset core.worktree and
+core.bare in the repository's config or in a worktree's config.worktree`,
+before the removal by hand; that holds for every registration mismatch, a
+linked worktree that `core.worktree` or `core.bare` redirects, one whose
+registration is broken, a path two entries share, or one whose path is, or
+holds, the repository's common directory, its main worktree or another
+worktree's path, or one whose registered path is a symbolic link; both of those
+remedies end `; git worktree prune also deletes the entry, and so the HEAD
+reflog, of every other worktree whose path is missing, one moved or on an
+unmounted drive included, so run git worktree prune --dry-run first and remount
+or repair any it lists that still exists`, because `git worktree prune` acts on
+the whole repository and deletes the registration, with the HEAD reflog, of
+every other worktree whose path is missing, one moved
+or on a drive that is not mounted; for `inspect-cap`, `N rows exceed the row
+cap of M; remove worktrees explicitly, or prune stale entries by hand; if a
+worktree's path cannot be read, do not run git worktree prune, git worktree
+remove or git gc until it can; git worktree prune also deletes the entry, and
+so the HEAD reflog, of every other worktree whose path is missing, one moved or
+on an unmounted drive included, so run git worktree prune --dry-run first and
+remount or repair any it lists that still exists`, whether or not any row is
+unread, since the rows past the cap are never read; for `deadline-exceeded`,
+to remove worktrees explicitly or re-run. Where any row of the plan has a path
+that could not be read, whether or not the refusal counts that row, the
+`inspection-incomplete` remedy names no `git worktree prune` and warns against
+it, and against `git worktree remove` and `git gc` too, since `git worktree
+prune` deletes the registration of a live worktree whose path Git cannot stat:
+`repair or remove the inspection-error rows first: git worktree repair, or
+remove the row by hand after review; a row's path could not be read, so do not
+run git worktree prune, git worktree remove or git gc until it can`; and where
+the unset above would be named, `repair or remove the inspection-error rows
+first: git worktree repair, unset core.worktree and core.bare in the
+repository's config or in a worktree's config.worktree, or remove the row by
+hand after review; a row's path could not be read, so do not run git worktree
+prune, git worktree remove or git gc until it can`.
+
+`--all-safe` cannot be combined with `--action`, `--branch` or `--worktree`,
+and `--expect-plan` needs `--all-safe` and `--apply`: each is
+`invalid-arguments`, exit 2, with nothing run, as is an `--expect-plan` value
+that is not 64 lowercase hexadecimal characters. `--apply --json` stays refused
+for `--action push` and `--action delete-branch`. `--apply --action remove
+--worktree P` gives the one worktree P the same gates and checks, asks the same
+question and takes `--yes` and `--json`; it prints the other worktrees as
+`not-requested`, a gate that excludes P refuses with `target-excluded`, exit 2,
+and no match is `worktree-not-found`. This mode differs on completeness: P's row
+and its gates come first, and only the repository-wide evidence and P's own row
+must be complete. Another row's inspection error, rows past the cap of 128 and
+rows the deadline stopped are noted and do not block P, so P's row still
+decides. If the deadline cuts a read of P's own row, the plan is refused with
+`deadline-exceeded`, exit 2, as a one-item batch's is, and with no repair
+remedy; a P whose match could not be decided is refused with
+`inspection-incomplete` instead, exit 2; and if less than 5 s of work time is left
+when P's removal would start, P is `not-attempted` (`deadline-exceeded`) and
+the run exits 1. The
+`target-excluded` message is `Worktree is excluded: REASON; NEXT STEP` for a
+gate, and the older wording, with no next step, for the current worktree
+(`Cannot remove the current worktree.`) and for a class that is not removable
+(`Worktree is CLASS; only clean merged worktrees may be removed.`).
+
+With `--json`, a report or preview prints one JSON document (`mode`,
+`selected`, `excluded`, `completeness`, `apply_allowed`, `plan_digest`, and
+more), and `--apply --json` prints one document: the result record below once
+the apply phase has begun, otherwise the plan (or the error object) with its
+refusal. The plan, the question and the progress go to standard error. An empty
+plan, `No eligible worktrees`, is no refusal and exits 0. A refusal under
+`--json` is a JSON document with its `code`, not a `REFUSED:` line.
+
+### Pin a preview with `--expect-plan`
+
+The preview's digest is `plan_digest` in `project clean ROOT --all-safe
+--json`: 64 lowercase hexadecimal characters over the repository's identity, the
+merge target and the selected worktrees (path, branch, head). The human preview
+does not print it. Pass it back with `--apply --expect-plan DIGEST` and `clean`
+rebuilds the plan first; when the fresh digest differs it refuses with
+`plan-digest-mismatch`, exit 2, prints the fresh plan and changes nothing, so
+the apply removes what was previewed and nothing else. A change to a worktree
+the preview excluded leaves the digest alone; a change to a selected one, or to
+the merge target, does not. A report above 128 worktrees withholds its
+selection, so its digest cannot be pinned.
+
+```sh
+project clean ROOT --all-safe --json      # read plan_digest
+project clean ROOT --all-safe --apply --expect-plan DIGEST
+```
+
+### Gates and next steps
+
+A worktree is selected only if it passes every gate, checked in this order. An
+excluded worktree is listed under the first gate it fails, and each reason
+carries its next step:
+
+| Reason | Next step |
+| --- | --- |
+| `main-worktree` | never removed by project clean |
+| `unsupported-path-bytes` | move it to a valid UTF-8 path with git worktree move, or mv it and then git worktree repair NEWPATH |
+| `registration-mismatch` | review, then git worktree repair or git worktree prune, unset core.worktree and core.bare in the repository's config, or in that worktree's config.worktree, or remove the row by hand; git worktree prune also deletes the entry, and so the HEAD reflog, of every other worktree whose path is missing, one moved or on an unmounted drive included, so run git worktree prune --dry-run first and remount or repair any it lists that still exists |
+| `registration-mismatch`, a worktree whose path is or holds the main worktree, the common directory or another worktree, or that shares its path with another entry | its path is or holds the main worktree, the common directory or another worktree, so do not delete it by hand or with git worktree remove; review its registration with git worktree list --porcelain |
+| `locked-worktree` | unlock it yourself if it should go |
+| `inspection-error` | review, then git worktree repair or git worktree prune, or remove the row by hand; git worktree prune also deletes the entry, and so the HEAD reflog, of every other worktree whose path is missing, one moved or on an unmounted drive included, so run git worktree prune --dry-run first and remount or repair any it lists that still exists |
+| `dirty` | commit or preserve the changes |
+| `ignored-local-files` | move or delete the ignored files by hand |
+| any other class, such as `pushed-unmerged` | the report's recommendation for that class |
+| `not-requested` | name it with --worktree to plan its removal |
+| `unstarted-branch` | no commit was made on this branch here since it was created; its later gates did not run, so check git log -g HEAD, git ls-files -v and git status there, then git worktree remove yourself (--force if it holds a submodule, once its commits are kept) |
+| `reflog-unavailable` | the branch's reflog is missing, expired or undecidable; its later gates did not run, so check git log -g HEAD, git ls-files -v and git status there, then git worktree remove yourself (--force if it holds a submodule, once its commits are kept) |
+| `deferred-target-cap` | this run removes up to 16; run again: project clean ROOT --all-safe --apply |
+| `contains-submodule` | push or otherwise keep each submodule's commits first, since --force deletes its repository with this worktree's git directory, then git worktree remove --force yourself |
+| `hidden-local-state` | review, then remove the worktree yourself |
+| `operation-in-progress` | a git am, merge, notes merge, cherry-pick, revert, rebase or bisect is, or may be, in progress there; finish or abort it (a squash merge that holds an autostash ends with git commit, --allow-empty where nothing is staged, or with git merge --quit, which keeps the edit in the stash list), or, where --abort fails for a marker with nothing in progress, its --quit, or, where Git leaves such a marker in place, delete it by hand from that worktree's git directory, then run again |
+| `worktree-only-commits` | a commit is, or may be, held only by this worktree's HEAD reflog or refs/worktree; keep it on a branch or tag, or review, then git worktree remove yourself |
+
+Where any row of the plan has a path that could not be read, none of these
+next steps offers `git worktree prune`, which acts on the whole repository and
+deletes the registration of a live worktree whose path Git cannot stat, and
+each warns against `git worktree remove` and `git gc` as well: the
+`registration-mismatch` next step reads `review, then git worktree repair,
+unset core.worktree and core.bare in the repository's config, or in that
+worktree's config.worktree, or remove the row by hand; a row's path could not
+be read, so do not run git worktree prune, git worktree remove or git gc until
+it can`, the `inspection-error` next step reads `review, then git worktree
+repair, or remove the row by hand; a row's path could not be read, so do not
+run git worktree prune, git worktree remove or git gc until it can`, and an
+`inspection-error` row whose own path could not be read has a group of its
+own, listed first, with the next step `inspect the row by hand; its path could
+not be read, so do not run git worktree prune, git worktree remove or git gc
+until it can`; and a `stale-worktree` row's recommendation, which the report
+prints and the preview's group takes as its next step, reads `Review and prune
+stale worktree metadata manually; a row's path could not be read, so do not
+run git worktree prune, git worktree remove or git gc until it can.`, or, for
+a locked row in the report, `Review, unlock it, then prune stale worktree
+metadata manually; a row's path could not be read, so do not run git worktree
+prune, git worktree remove or git gc until it can.`. With every path readable
+the table above applies, and a `stale-worktree` row's recommendation, which the
+report prints and the preview's group takes as its next step, reads `Review and
+prune stale worktree metadata manually; git worktree prune also deletes the
+entry, and so the HEAD reflog, of every other worktree whose path is missing,
+one moved or on an unmounted drive included, so run git worktree prune
+--dry-run first and remount or repair any it lists that still exists.`, or, for
+a locked row in the report, `Review, unlock it, then prune stale worktree
+metadata manually; git worktree prune also deletes the entry, and so the HEAD
+reflog, of every other worktree whose path is missing, one moved or on an
+unmounted drive included, so run git worktree prune --dry-run first and remount
+or repair any it lists that still exists.`.
+
+The first four reasons are facts about the row. `registration-mismatch` covers
+a worktree whose registration disagrees in either direction, a path that two
+entries share, a linked worktree that `core.worktree` or `core.bare` redirects,
+one whose path is, or holds, the repository's common directory, its main
+worktree or another worktree's path, which a worktree does when the main
+worktree sits in one of its tracked directories, and one whose registered path
+is a symbolic link, which a worktree moved by hand and replaced by a link
+leaves, since Git then empties the link's target and still deletes the
+registration; such a worktree is `inspection-error`, the plan is incomplete and
+nothing is removed. Only `clean` applies those last two rules: `project status`,
+`project doctor` and `project update` report such a worktree as before, probed,
+with its own `dirty`. The next four are its classification, one gate, and only a
+`merged-removable` row passes it. `not-requested` applies to `--worktree P`
+only. `unstarted-branch` and `reflog-unavailable` come from the branch's
+reflog, read from the filesystem. A read that is not finished leaves the
+worktree listed as `reflog-unavailable` and the plan incomplete: with
+`inspection-incomplete` where the read's own time budget ran out, and with
+`deadline-exceeded`, which names no repair, where the run's deadline did.
+`contains-submodule` and `hidden-local-state` read the worktree's own index (a
+gitlink; an assume-unchanged or skip-worktree flag) and its administrative
+directory (a `modules` entry), and `contains-submodule` also looks, with one
+`lstat` of `DIR/.git` for each directory of the index that holds an entry, for
+a repository or any other `.git` entry nested in a tracked directory, which
+Git's own status never lists and its removal would delete, for the 16 worktrees
+a run can take. The revalidation before each removal makes those `lstat`s again,
+over a fresh listing of the worktree's index, so a `.git` entry made after the
+plan refuses the worktree as `contains-submodule`, and an `lstat` that fails or
+runs past its own time budget refuses it as `state-changed`; one that the run's
+deadline cuts leaves the worktree `not-attempted` (`deadline-exceeded`).
+`operation-in-progress` lists that administrative directory for
+the same 16: a stopped `am`, merge, cherry-pick, revert, rebase, sequence or
+bisect, a squash merge that holds an autostash, or a stopped notes merge leaves
+a marker there (`MERGE_HEAD`, `CHERRY_PICK_HEAD`, `REVERT_HEAD`, `BISECT_LOG`,
+`BISECT_START`, `rebase-apply`, `rebase-merge`, `sequencer`,
+`MERGE_AUTOSTASH`, `NOTES_MERGE_PARTIAL` or `NOTES_MERGE_REF`), though the
+worktree's files and index may look clean. A directory that cannot be listed
+makes the worktree `inspection-error`. A marker that no Git command clears,
+such as an empty `sequencer` file, which `git cherry-pick` and `git revert`
+refuse to remove with `--quit` or `--abort`, is deleted by hand from that
+worktree's git directory (`git rev-parse --git-dir` there prints it), and the
+worktree is then selected again. `worktree-only-commits`, the last gate,
+keeps a worktree that holds a commit no branch, tag or remote-tracking ref
+holds: one made on a detached HEAD there and left behind when the branch was
+checked out again, which only the worktree's HEAD reflog names, or one only a
+ref under its `refs/worktree/` holds. It reads the worktree's `logs/HEAD` in
+that administrative directory and runs one `git rev-list` in the worktree,
+for the same 16; the commits that the branch's own reflog names, as after an
+amend and a reset, do not count. A `logs/HEAD` too large or too damaged to
+read keeps the worktree as `worktree-only-commits`, and a read or a
+`git rev-list` that fails, as on a commit whose object was deleted, makes it
+`inspection-error`. Tag the commit or make a branch at it, and the worktree is
+selected again.
+
+A run removes at most 16 worktrees. Further eligible worktrees show as
+`deferred-target-cap`, and each run plans afresh, so run the same command again
+until none are left; the preview digest covers only the selected worktrees, so a
+deferred one's change leaves a preview valid. When every one of the 16 worktrees
+ahead of the deferred ones is excluded by a gate after `deferred-target-cap`,
+the preview says `these deferred rows will not drain while the 16 rows ahead of
+them are REASONS; follow each group's next step for those worktrees`, REASONS
+naming their reasons, each once, in gate order, such as `contains-submodule,
+worktree-only-commits`; each of those 16 rows is in a group above with its own
+next step, which a plain removal would have skipped.
+
+### What is guaranteed
+
+`clean` takes no lock and does not stop other writers. Its one guarantee is that
+it spawns a removal only if, at the revalidation immediately before it, what
+the plan recorded still holds: the repository and the worktree (identity,
+registration, lock), the branch's name and tip, its upstream, the merge target,
+the manifest, a clean status, no submodule (a gitlink, a `modules` entry, or a
+`.git` entry in a tracked directory, which the revalidation looks for again with
+the same `lstat`s) or hidden index flag, no operation in progress
+(`operation-in-progress`), and no commit that only the worktree's HEAD reflog
+or `refs/worktree/` holds (`worktree-only-commits`). The first
+target's repository-wide checks serve every target, so a difference found there
+removes nothing at all. A difference refuses that target (`refused`), starts no
+removal, attempts no later target and exits 2. Git's own `git worktree remove`,
+never forced, is the last check.
+
+The residual window is stated in one line in the preview when a worktree is
+selected, in the confirmation and in the result: `Not protected: ignored files
+created, index flags set, operations started or worktree-only commits made
+after the last check, and any change after Git's own check.` A removal never
+deletes a branch, so a branch that moves during a run
+loses no commit; one seen only after Git removed the worktree leaves the target
+`removed` with `branch-advanced-after-removal` or
+`branch-missing-after-removal`, stops the run and exits 2.
+
+### The result and recovery
+
+An apply prints one line per target as it ends, `  removed PATH` or
+`  STAGE PATH (REASON)`, then either `Removed N; branches kept: B1, B2.` or a
+stop block, and the residual-window line:
+
+```text
+Stopped at PATH (REASON). Removed K of N. Not attempted: P1, P2. Next: project clean ROOT --all-safe
+Branches kept: B1, B2.
+```
+
+A branch that read absent after its removal, or was not read back, is left out
+of that line and listed on its own, `Branches not confirmed: B1.`, and the kept
+line reads `Branches kept: none.` when no branch is left.
+
+The run stops at the first target that does not end as a plain `removed`, and
+every later target is `not-attempted`. The `Next:` command is a preview, not an
+apply: run it, read what changed, then apply again; nothing from the stopped run
+is reused. Each target ends in one stage: `removed`; `refused` (revalidation
+found a difference, and no removal started); `failed` (Git refused or failed,
+its status in `exit_status`); `unknown` (what happened could not be confirmed);
+or `not-attempted`. The result record, which `--apply --json` prints, carries
+for each target its `stage`, `reason`, `notes`, `command`, `exit_status` and
+`reconciliation` (whether its registry entry, path and branch are still there),
+beside `exit_code` and `completeness`.
+
+A started removal is never interrupted. A signal during the apply is only
+recorded, and when a signal or the deadline arrives during a removal, `Waiting
+for git worktree remove PATH to finish; a started removal is never interrupted
+(at most 300 s).` prints once and the removal is waited for. After a signal,
+later targets are `not-attempted` (`interrupted`) and the run exits 130, 143
+(SIGTERM) or 129 (SIGHUP); once less than 5 s of work time is left, later
+targets are `not-attempted` (`deadline-exceeded`) and the run exits 1. At 300 s
+the removal is killed, and its target is `removed` or `unknown` with reason
+`removal-ceiling` by what a rescan finds, exit 1. A removal that Git refuses or
+fails ends the run with Git's own status.
+
+A removal killed at the ceiling, or whose exit was not seen, can leave the
+worktree's registry entry or directory behind. The result then prints a note
+for that target (`partially-removed`), and the note follows what the rescan
+finds, because Git refuses `git worktree remove --force` once the worktree's
+`.git` file is gone or its registry entry is gone. Where the rescan shows the
+registry entry and the `.git` file both present, the note is `Probable partial
+removal: inspect, then git worktree remove --force PATH by hand.` Where the
+`.git` file is gone, as a kill part way through a removal usually leaves it, or
+the entry is gone or could not be read, it is `Probable partial removal:
+inspect, then delete PATH and its administrative directory ADMIN by hand.`,
+ADMIN being the worktree's own directory under the repository's `worktrees`,
+`<common_dir>/worktrees/<admin_id>`, printed as a path is. It names no `git
+worktree prune`, because prune acts on the whole repository and deletes the
+registration, with the HEAD reflog, of every other worktree whose path is
+missing, one moved or on a drive that is not mounted, and of a live worktree
+whose path Git cannot stat; the note is the same in every mode and beside any
+other worktree. The `--force` note and the note for an unreadable `.git`, next,
+are unchanged, since `git worktree remove --force PATH` acts on PATH alone and
+the second names no prune already. Where the rescan tried to read the `.git`
+file and could not, the `lstat` failing for a reason other than its absence, as
+it does for a directory the process may not search, or running out of time, or
+where its own `lstat` of the worktree's path failed the same way, as it does
+when a directory above the worktree denies search, so that it read no `.git` at
+all, whatever it showed of the entry, it is `Probable partial removal: inspect
+PATH by hand; its .git could not be read, so do not run git worktree prune, git
+worktree remove or git gc until it can.`, because `git worktree prune` deletes
+the registration of a live worktree whose `.git` Git cannot stat. The rescan
+reads the `.git` file with one `lstat`, never a Git child, and only where it
+shows the entry and the path both present (a path it could not look at is a
+`.git` it could not read); the JSON result is the same in every case. Under the
+`dirty` advice of a worktree whose tracked files are all deleted, which is how
+an interrupted removal looks and why the note says "probable", the report and
+the preview print the note with its check first, `Probable partial removal:
+check that git -C PATH status --short --ignored lists only deleted files, then
+git worktree remove --force PATH by hand.`, since the note is judged on the
+status records read, which stop at 4,096 and leave an ignored record's work
+alone, so that `--force` could delete an untracked or modified file past that
+bound, or an ignored work file; the check shows them. The result's own note,
+where the rescan shows the entry and the `.git` file both present, keeps
+`inspect` with no check, since its target was clean at its revalidation. For a
+locked worktree, which `git worktree remove --force` refuses, the row's note in
+the report and the preview reads `Probable partial removal: check that git -C
+PATH status --short --ignored lists only deleted files, unlock it, then git
+worktree remove --force PATH by hand.` The forced removal, or the deletion by
+hand, is the person's own step, after looking, never `clean`'s. A target with
+the note `orphaned-directory` has lost its registry entry but its directory is
+still there. When Git had already deleted the worktree's `.git` file, the row
+is `registration-mismatch`: use `git worktree repair`, or `git worktree prune`
+after its `--dry-run`, or remove the row by hand.
+
+### Close sessions first
+
+Close every session (editor, terminal, agent) whose directory is in a selected
+worktree before a batch apply. `clean` does not look for them, since no process
+scan sees all of them: an editor on the Windows side of WSL2, another user's
+shell and a macOS process are invisible to it. A session left open can find its
+worktree removed. The branch is kept, so no commit is lost, but work the session
+had not yet written is. The plan lists every path before the question.
+
+### Profile and container state
 
 A portable profile may declare:
 
@@ -289,9 +735,12 @@ Run development commands in the Python workBench. Tests create disposable local
 repositories and fake generators, never real GitHub projects. CI covers Linux
 only. On Windows, use WSL2 for Bash generators and estate commands.
 
-Exit codes: 0 success; 1 doctor findings (warnings only with `--strict`);
-2 invalid input/missing prerequisite; 130 cancellation. Delegated failures
-preserve their exit status.
+Exit codes: 0 success; 1 doctor findings (warnings only with `--strict`), and
+for `clean` an incomplete report or preview, or an apply that ends `unknown`, at
+the removal ceiling or past the deadline; 2 invalid input/missing prerequisite,
+and any `clean` refusal; 130 cancellation; 143 and 129 `clean` stopped by
+SIGTERM or SIGHUP. Delegated failures preserve their exit status, and so does
+Git's own status from a `clean` removal, even when it equals one of these.
 
 ## License
 

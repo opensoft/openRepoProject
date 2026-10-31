@@ -23,6 +23,7 @@ CLI = ROOT / "project"
 loader = importlib.machinery.SourceFileLoader("project_cli", str(CLI))
 spec = importlib.util.spec_from_loader(loader.name, loader)
 module = importlib.util.module_from_spec(spec)
+sys.modules[loader.name] = module
 loader.exec_module(module)
 
 # Fixed text of design.md D13, character for character. NAME, ORG, VIS and
@@ -1030,14 +1031,29 @@ class ProjectTests(unittest.TestCase):
         self.git(tree, "push", "-u", "origin", "001-feature")
         self.git(root, "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
                  "merge", "--no-ff", "001-feature", "-m", "merge feature")
-        def change_after_plan(_):
+        class Terminal(io.StringIO):
+            def isatty(self):
+                return True
+
+        def change_after_plan(plan, run):
             (tree / "late-change").write_text("preserve")
-        args = module.argparse.Namespace(target=str(root), json=False, apply=True, action="remove",
-                                         branch=None, worktree=str(tree), yes=True)
-        with patch.object(module, "confirm", side_effect=change_after_plan):
-            with self.assertRaises(module.Refused):
-                module.clean(args)
+            return "yes"
+        args = module.argparse.Namespace(target=str(root), json=True, apply=True, action="remove",
+                                         branch=None, worktree=str(tree), yes=False, all_safe=False,
+                                         expect_plan=None)
+        out, err = io.StringIO(), io.StringIO()
+        with patch.dict(os.environ, self.env), patch.object(module.sys, "stdin", Terminal()), \
+                patch.object(module, "ask_removal", side_effect=change_after_plan) as asked, \
+                contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            status = module.clean(args)
+        self.assertEqual(status, 2, err.getvalue())
+        self.assertEqual(asked.call_count, 1)
+        document = json.loads(out.getvalue())
+        [target] = document["targets"]
+        self.assertEqual((target["path"], target["stage"], target["reason"]), (str(tree), "refused", "state-changed"))
+        self.assertEqual(document["exit_code"], 2)
         self.assertTrue(tree.is_dir())
+        self.assertTrue((tree / "late-change").is_file())
 
     def test_inproc_person_at_terminal_rule(self):
         for ci in (None, "", "0", "false", "no", " FALSE ", " No "):

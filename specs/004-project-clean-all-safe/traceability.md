@@ -1,0 +1,673 @@
+Lane: openRepoProject-2
+
+# Traceability: delta scenarios to tests
+
+One row per scenario of the three spec deltas of the ratified change
+`openspec/changes/add-project-clean-all-safe/` (`specs/project-clean/spec.md`,
+`specs/project-clean-review-safety/spec.md` and `specs/project-command/spec.md`
+under it), in each file's order: the 100 scenarios on `main`, then PR #19's
+scenario "The push child reaches its remote" as the 101st (`tasks.md` T002,
+T074), then thirteen more of PR #19's scenarios as amended at `6f2cb54`, by
+Brett Heap's rulings Q9 B, LQ-10, LQ-11, LQ-12, LQ-14 and LQ-15 and round
+(a), whose builds are on 004 at `cceb6d7` (doc round 13), and, since doc
+round 14, LQ-13's two, "A commit held only by the worktree" and "A
+worktree-only commit made after the plan", and round (c)'s "A work-tree probe
+at revalidation" (PR #19 at `2e819ad`), whose builds are on 004 at
+`93a3ae9`, each in its delta's order: 117 rows (lead rulings R-122, R-166 and
+R-196), and, since doc round 26, round (q)'s five scenarios (PR #19 at
+`818311a`; lead R-389), whose builds are on 004 at `da5502d` and, for the last,
+`d8724e2`: 122 rows, and, since doc round 26, Part D, round (r)'s two scenarios
+(PR #19 at `4512441`; lead R-396), "A nested repository made after the plan" and
+"A stale entry's recommendation", whose builds are on 004 at `5eeaedd` and
+`da5502d`: 124 rows, of round (r)'s two the first, row 123, with a test of its
+own title since doc round 27, `c0841aa`'s, and the second, row 124, a named gap,
+and, since doc round 28, round (s)'s "The main worktree's recommendation" (PR
+#19 at `dab8a64`; lead R-408) and round (t)'s "A worktree whose path holds the
+main worktree" (PR #19 at `54e869b`; lead R-413), whose builds are on 004 at
+`02aa71d` and `d640539`, rows 125 and 126, each a named gap: 126 rows, of which
+seven are named gaps (rows 104, 111, 116, 122, 124, 125 and 126, listed below).
+The Delta column is the capability, the directory under
+`specs/`; the Requirement column is the `### Requirement:` title the scenario
+sits under; the Scenario column is the `#### Scenario:` title exactly. The
+Story column names the user stories (`spec.md`, US1 to US9) whose test tasks in
+`tasks.md` list the scenario, each one when two stories test it. The Tests
+column names the test methods that cover the scenario.
+
+| Delta | Requirement | Scenario | Story | Tests |
+| --- | --- | --- | --- | --- |
+| project-clean | Clean reports local worktree state | Audit a repository with a feature worktree | US6 | `test_clean_audit_a_repository_with_a_feature_worktree` |
+| project-clean | Clean reports local worktree state | The plain report exits by completeness | US6 | `test_clean_the_plain_report_exits_by_completeness`, `test_clean_the_plain_report_exits_by_completeness_when_the_caller_ignores_the_signal` |
+| project-clean | Clean reports local worktree state | An unreadable worktree is one row | US6 | `test_clean_an_unreadable_worktree_is_one_row` |
+| project-clean | Clean reports local worktree state | A failed status probe on the merge-target checkout | US6 | `test_clean_a_failed_status_probe_on_the_merge_target_checkout` |
+| project-clean | Clean reports local worktree state | A failed status in the repository root | US6 | `test_clean_a_failed_status_in_the_repository_root` |
+| project-clean | Clean reports local worktree state | Git older than 2.36 | US9 | `test_clean_git_older_than_2_36` |
+| project-clean | Clean classifies preservation and cleanup actions | Dirty or unmerged work is preserved | US2 | `test_clean_dirty_or_unmerged_work_is_preserved` |
+| project-clean | Clean classifies preservation and cleanup actions | A deleted upstream is remote-gone | US2 | `test_clean_a_deleted_upstream_is_remote_gone` |
+| project-clean | Clean classifies preservation and cleanup actions | A merged worktree whose upstream was deleted | US2 | `test_clean_a_merged_worktree_whose_upstream_was_deleted` |
+| project-clean | Clean classifies preservation and cleanup actions | Only tracked-file deletions | US5 | `test_clean_only_tracked_file_deletions` |
+| project-clean | Clean can explicitly push safe feature branches | Push an unpushed feature branch | US3 | `test_clean_push_an_unpushed_feature_branch`, `test_clean_push_an_unpushed_feature_branch_named_dash_dash_force`, `test_clean_push_an_unpushed_feature_branch_named_dash_dash_mirror`, `test_clean_push_an_unpushed_feature_branch_named_plus_x`, `test_clean_push_an_unpushed_feature_branch_tracking_a_remote_named_a_b`, `test_clean_push_an_unpushed_feature_branch_under_a_forced_push_mapping`, `test_clean_push_an_unpushed_feature_branch_with_an_unusable_upstream_refuses`, `test_clean_push_an_unpushed_feature_branch_whose_merge_is_outside_refs_heads_refuses` |
+| project-clean | Clean can explicitly push safe feature branches | Push refuses a branch whose upstream was deleted | US3 | `test_clean_push_refuses_a_branch_whose_upstream_was_deleted` |
+| project-clean | Clean can explicitly push safe feature branches | Push refuses an incomplete inspection | US3, US6 | `test_clean_push_refuses_an_incomplete_inspection`, `test_clean_push_refuses_an_incomplete_inspection_deadline` |
+| project-clean | Clean can explicitly push safe feature branches | Push and branch deletion stay human-only | US3 | `test_clean_push_and_branch_deletion_stay_human_only` |
+| project-clean | Clean can explicitly retire verified worktrees | Remove a merged clean worktree | US3 | `test_clean_remove_a_merged_clean_worktree` |
+| project-clean | Clean can explicitly retire verified worktrees | Every branch remains after a batch | US1 | `test_clean_every_branch_remains_after_a_batch` |
+| project-clean | Clean can explicitly retire verified worktrees | A published branch with no commit of its own | US2 | `test_clean_a_published_branch_with_no_commit_of_its_own` |
+| project-clean | Clean can explicitly retire verified worktrees | A fast-forward-merged branch at the target's tip stays eligible | US2 | `test_clean_a_fast_forward_merged_branch_at_the_target_s_tip_stays_eligible` |
+| project-clean | Clean can explicitly retire verified worktrees | A branch reset to the merge target's tip stays unstarted | US2 | `test_clean_a_branch_reset_to_the_merge_target_s_tip_stays_unstarted` |
+| project-clean | Clean can explicitly retire verified worktrees | A branch fetched at the merge target's tip stays unstarted | US2 | `test_clean_a_branch_fetched_at_the_merge_target_s_tip_stays_unstarted` |
+| project-clean | Clean can explicitly retire verified worktrees | A branch whose reflog is missing, empty or expired | US2 | `test_clean_a_branch_whose_reflog_is_missing_empty_or_expired` |
+| project-clean | Clean can explicitly retire verified worktrees | Git's own check runs on the pinned configuration | US4 | `test_clean_git_s_own_check_runs_on_the_pinned_configuration` |
+| project-clean | Clean can explicitly retire verified worktrees | A named removal beside another row's inspection error | US3 | `test_clean_a_named_removal_beside_another_row_s_inspection_error` |
+| project-clean | Clean can explicitly retire verified worktrees | A named removal among seventeen eligible rows | US3 | `test_clean_a_named_removal_among_seventeen_eligible_rows` |
+| project-clean | Clean can explicitly retire verified worktrees | A named removal beyond the row cap | US3 | `test_clean_a_named_removal_beyond_the_row_cap` |
+| project-clean | Clean can explicitly retire verified worktrees | Single target equals a one-item batch | US3 | `test_clean_single_target_equals_a_one_item_batch` |
+| project-clean | Clean can explicitly retire verified worktrees | A removal past the hard ceiling | US5 | `test_clean_a_removal_past_the_hard_ceiling` |
+| project-clean | Clean can explicitly retire verified worktrees | project killed during a deletion | US5 | `test_clean_project_killed_during_a_deletion` |
+| project-clean | Clean hands off work requiring review | Pushed feature branch has an open review path | US2 | `test_clean_pushed_feature_branch_has_an_open_review_path` |
+| project-clean | Clean hands off work requiring review | A noninteractive batch needs --yes | US1 | `test_clean_a_noninteractive_batch_needs_yes` |
+| project-clean | Clean resolves its target Git-first | Absolute path that is not a repository root | US7 | `test_clean_absolute_path_that_is_not_a_repository_root` |
+| project-clean | Clean resolves its target Git-first | Overview handoff keeps identity | US7 | `test_clean_overview_handoff_keeps_identity` |
+| project-clean | Clean resolves its target Git-first | A bare repository reached from a linked worktree | US7 | `test_clean_a_bare_repository_reached_from_a_linked_worktree` |
+| project-clean | Clean resolves its target Git-first | A separate git directory | US7 | `test_clean_a_separate_git_directory`, `test_clean_a_separate_git_directory_with_a_relative_core_worktree` |
+| project-clean | Clean resolves its target Git-first | A submodule checkout | US7 | `test_clean_a_submodule_checkout` |
+| project-clean | Clean resolves its target Git-first | Merge target missing, invalid, or conflicting | US7 | `test_clean_merge_target_missing_invalid_or_conflicting`, `test_clean_merge_target_missing_invalid_or_conflicting_unreadable_manifest`, `test_clean_merge_target_missing_invalid_or_conflicting_a_value_pyyaml_cannot_build` |
+| project-clean | Clean resolves its target Git-first | A tracking branch spelled with its remote | US7 | `test_clean_a_tracking_branch_spelled_with_its_remote` |
+| project-clean | Clean resolves its target Git-first | A manifest over 1 MiB | US7 | `test_clean_a_manifest_over_1_mib` |
+| project-clean | Clean previews and applies a batch of eligible worktree removals in one repository | Stable order and preserved work | US1 | `test_clean_stable_order_and_preserved_work`, `test_clean_stable_order_and_preserved_work_target_not_checked_out` |
+| project-clean | Clean previews and applies a batch of eligible worktree removals in one repository | Every protected classifier | US2 | `test_clean_every_protected_classifier`, `test_clean_every_protected_classifier_incomplete_copy` |
+| project-clean | Clean previews and applies a batch of eligible worktree removals in one repository | Hidden local state | US2, US4 | `test_clean_hidden_local_state`, `test_clean_hidden_local_state_after_confirmation` |
+| project-clean | Clean previews and applies a batch of eligible worktree removals in one repository | Submodules | US2, US4 | `test_clean_submodules`, `test_clean_submodules_after_confirmation`, `test_clean_submodules_beside_hidden_local_state`, `test_clean_submodules_beside_hidden_local_state_with_a_modules_entry` |
+| project-clean | Clean previews and applies a batch of eligible worktree removals in one repository | Paths and empty plans | US1 | `test_clean_paths_and_empty_plans`, `test_clean_paths_and_empty_plans_paths_with_spaces_are_removed` |
+| project-clean | Clean previews and applies a batch of eligible worktree removals in one repository | Preview is advisory | US1 | `test_clean_preview_is_advisory` |
+| project-clean | Clean previews and applies a batch of eligible worktree removals in one repository | Plan digest mismatch | US1 | `test_clean_plan_digest_mismatch`, `test_clean_plan_digest_mismatch_unchanged_digest_applies` |
+| project-clean | Clean previews and applies a batch of eligible worktree removals in one repository | Invalid argument combinations | US1 | `test_clean_invalid_argument_combinations`, `test_clean_invalid_argument_combinations_unrefused_flags` |
+| project-clean | Clean previews and applies a batch of eligible worktree removals in one repository | Only yes confirms | US1 | `test_clean_only_yes_confirms`, `test_clean_only_yes_confirms_an_undecodable_answer` |
+| project-clean | Clean previews and applies a batch of eligible worktree removals in one repository | The preview says what keeps each row | US1 | `test_clean_the_preview_says_what_keeps_each_row`, `test_clean_the_preview_says_what_keeps_each_row_single_mode`, `test_clean_the_preview_says_what_keeps_each_row_single_mode_shared_path` |
+| project-clean | Clean bounds its Git work and reports omitted work | Row cap and planning failures | US6 | `test_clean_row_cap_and_planning_failures`, `test_clean_row_cap_and_planning_failures_an_unreadable_realpath_in_single_mode` |
+| project-clean | Clean bounds its Git work and reports omitted work | Twenty rows pass every gate before deferred-target-cap | US6 | `test_clean_twenty_rows_pass_every_gate_before_deferred_target_cap` |
+| project-clean | Clean bounds its Git work and reports omitted work | Ignored-file bound | US6 | `test_clean_ignored_file_bound` |
+| project-clean | Clean bounds its Git work and reports omitted work | Bounded revalidation work | US6 | `test_clean_bounded_revalidation_work` |
+| project-clean | Clean bounds its Git work and reports omitted work | Deadline expiry mid-batch | US6 | `test_clean_deadline_expiry_mid_batch`, `test_clean_deadline_expiry_mid_batch_a_rescan_read_cut_at_the_deadline`, `test_clean_deadline_expiry_mid_batch_a_revalidation_read_cut_at_the_deadline`, `test_clean_deadline_expiry_mid_batch_a_revalidation_read_cut_at_its_probe_budget` |
+| project-clean | Clean records a reconcilable result for every removal target | Exit 0 without evidence | US5 | `test_clean_exit_0_without_evidence` |
+| project-clean | Clean records a reconcilable result for every removal target | A signal during a removal | US5 | `test_clean_a_signal_during_a_removal`, `test_clean_a_signal_during_a_removal_sigint_during_a_revalidation`, `test_clean_a_signal_during_a_removal_ignored_on_entry_stays_ignored` |
+| project-clean | Clean records a reconcilable result for every removal target | SIGTERM before the apply phase | US5 | `test_clean_sigterm_before_the_apply_phase`, `test_clean_sigterm_before_the_apply_phase_after_the_last_probe`, `test_clean_sigterm_before_the_apply_phase_while_the_plan_is_written` |
+| project-clean | Clean records a reconcilable result for every removal target | Git leaves an orphaned directory | US5 | `test_clean_git_leaves_an_orphaned_directory` |
+| project-clean | Clean records a reconcilable result for every removal target | Git refuses the removal | US5 | `test_clean_git_refuses_the_removal` |
+| project-clean | Clean records a reconcilable result for every removal target | Unreadable path after removal | US5 | `test_clean_unreadable_path_after_removal` |
+| project-clean | Clean records a reconcilable result for every removal target | Exception after the apply phase begins | US5 | `test_clean_exception_after_the_apply_phase_begins` |
+| project-clean | Clean records a reconcilable result for every removal target | The stop block | US5 | `test_clean_the_stop_block` |
+| project-clean | Clean reports every path exactly or excludes it | Control-character and non-UTF-8 paths | US8 | `test_clean_control_character_and_non_utf_8_paths` |
+| project-clean | Clean reports every path exactly or excludes it | Non-UTF-8 repository root | US8 | `test_clean_non_utf_8_repository_root`, `test_clean_non_utf_8_repository_root_common_directory` |
+| project-clean | Clean plans and refusals are versioned JSON | Apply with JSON prints one document | US8 | `test_clean_apply_with_json_prints_one_document`, `test_clean_apply_with_json_prints_one_document_when_standard_error_fails` |
+| project-clean | Clean plans and refusals are versioned JSON | The plain report in JSON | US8 | `test_clean_the_plain_report_in_json`, `test_clean_the_plain_report_in_json_with_standard_output_closed` |
+| project-clean-review-safety | Cleanup preserves all local work not proven disposable | A merged worktree has ignored local files | US2 | `test_clean_a_merged_worktree_has_ignored_local_files` |
+| project-clean-review-safety | Cleanup preserves all local work not proven disposable | Default branch cannot be established locally | US2 | `test_clean_default_branch_cannot_be_established_locally` |
+| project-clean-review-safety | Cleanup preserves all local work not proven disposable | An edit hidden by assume-unchanged survives | US2 | `test_clean_an_edit_hidden_by_assume_unchanged_survives` |
+| project-clean-review-safety | Cleanup preserves all local work not proven disposable | A worktree holding a submodule is never offered | US2 | `test_clean_a_worktree_holding_a_submodule_is_never_offered` |
+| project-clean-review-safety | Cleanup preserves all local work not proven disposable | The main worktree and a locked worktree | US2 | `test_clean_the_main_worktree_and_a_locked_worktree` |
+| project-clean-review-safety | Cleanup revalidates destructive actions | Worktree changes while confirmation is pending | US4 | `test_clean_worktree_changes_while_confirmation_is_pending` |
+| project-clean-review-safety | Cleanup revalidates destructive actions | Target directory replaced | US4 | `test_clean_target_directory_replaced` |
+| project-clean-review-safety | Cleanup revalidates destructive actions | Admin registration changed | US4 | `test_clean_admin_registration_changed`, `test_clean_admin_registration_changed_a_twin_made_after_planning`, `test_clean_admin_registration_changed_a_twin_spelled_through_an_unsearchable_directory` |
+| project-clean-review-safety | Cleanup revalidates destructive actions | Parent directory swapped | US4 | `test_clean_parent_directory_swapped` |
+| project-clean-review-safety | Cleanup revalidates destructive actions | New worktree and pre-removal changes | US4 | `test_clean_new_worktree_and_pre_removal_changes` |
+| project-clean-review-safety | Cleanup revalidates destructive actions | State changes before revalidation | US4 | `test_clean_state_changes_before_revalidation`, `test_clean_state_changes_before_revalidation_a_tracking_branch_that_is_not_a_string` |
+| project-clean-review-safety | Cleanup revalidates destructive actions | Changed later target | US4 | `test_clean_changed_later_target` |
+| project-clean-review-safety | Cleanup revalidates destructive actions | Untracked file under status.showUntrackedFiles=no | US4 | `test_clean_untracked_file_under_status_showuntrackedfiles_no` |
+| project-clean-review-safety | Cleanup revalidates destructive actions | Branch advances before removal | US4 | `test_clean_branch_advances_before_removal` |
+| project-clean-review-safety | Cleanup revalidates destructive actions | Deleted upstream reappears before revalidation | US4 | `test_clean_deleted_upstream_reappears_before_revalidation` |
+| project-clean-review-safety | Cleanup states a narrow guarantee and its residual window | Ignored file in the residual window | US4 | `test_clean_ignored_file_in_the_residual_window` |
+| project-clean-review-safety | Cleanup states a narrow guarantee and its residual window | Branch advances after removal | US4 | `test_clean_branch_advances_after_removal` |
+| project-clean-review-safety | Cleanup states a narrow guarantee and its residual window | Repository replaced mid-batch | US4 | `test_clean_repository_replaced_mid_batch` |
+| project-command | Inspect and diagnose | Missing leg | US9 | `test_doctor_missing_leg` |
+| project-command | Inspect and diagnose | Git older than 2.36 in status and doctor | US9 | `test_status_git_older_than_2_36_in_status_and_doctor` |
+| project-command | Inspect and diagnose | No git on PATH | US9 | `test_doctor_no_git_on_path` |
+| project-command | Inspect and diagnose | Not established is an error, none is not | US9 | `test_doctor_not_established_is_an_error_none_is_not` |
+| project-command | Inspect and diagnose | A failed root status is reported | US9 | `test_status_a_failed_root_status_is_reported` |
+| project-command | Inspect and diagnose | A deleted upstream in status and doctor | US9 | `test_status_a_deleted_upstream_in_status_and_doctor` |
+| project-command | Explicit maintenance | Default report | US9 | `test_update_default_report` |
+| project-command | Explicit maintenance | A leg's probe times out | US9 | `test_update_a_leg_s_probe_times_out` |
+| project-command | Explicit maintenance | Tools and workflow need no Git | US9 | `test_update_tools_and_workflow_need_no_git` |
+| project-command | Repository inspection requires Git 2.36 and shares one evidence model | A git that floods standard error | US9 | `test_status_a_git_that_floods_standard_error` |
+| project-command | Repository inspection requires Git 2.36 and shares one evidence model | A git that ignores SIGTERM | US9 | `test_status_a_git_that_ignores_sigterm` |
+| project-command | Repository inspection requires Git 2.36 and shares one evidence model | Five thousand ignored records | US9 | `test_status_five_thousand_ignored_records` |
+| project-command | Repository inspection requires Git 2.36 and shares one evidence model | User status configuration | US9 | `test_status_user_status_configuration` |
+| project-command | Repository inspection requires Git 2.36 and shares one evidence model | A caller's Git environment is ignored | US9 | `test_status_a_caller_s_git_environment_is_ignored` |
+| project-command | Repository inspection requires Git 2.36 and shares one evidence model | The sixteenth scrubbed name on Git 2.36 | US9 | `test_status_the_sixteenth_scrubbed_name_on_git_2_36` |
+| project-command | Repository inspection requires Git 2.36 and shares one evidence model | The pinned status configuration | US9 | `test_status_the_pinned_status_configuration`, `test_status_the_pinned_status_configuration_sees_a_same_size_edit` |
+| project-command | Repository inspection requires Git 2.36 and shares one evidence model | A lazy fetch in a partial clone is refused locally | US9 | `test_status_a_lazy_fetch_in_a_partial_clone_is_refused_locally` |
+| project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | The push child reaches its remote | US3 | `test_clean_the_push_child_reaches_its_remote`, `test_clean_the_push_child_reaches_its_remote_at_a_terminal` |
+| project-clean (PR #19 draft) | Clean reports local worktree state | A relative configuration path | US9 | `test_clean_a_relative_configuration_path`, `test_clean_a_relative_configuration_path_each_variable_and_spelling`, `test_clean_a_relative_configuration_path_not_valid_utf_8`, `test_clean_a_relative_configuration_path_empty_and_absolute_values_pass`, `test_clean_a_relative_configuration_path_before_the_version_check`, `test_clean_a_relative_configuration_path_after_the_argument_checks` |
+| project-clean (PR #19 draft) | Clean can explicitly push safe feature branches | Push refuses a branch it may not push | US3 | `test_clean_push_refuses_a_branch_it_may_not_push_no_unique_worktree` |
+| project-clean (PR #19 draft) | Clean can explicitly retire verified worktrees | Branch deletion refuses a branch it may not delete | US3 | none named after it at `e8dda2a` (a gap; below) |
+| project-clean (PR #19 draft) | Clean previews and applies a batch of eligible worktree removals in one repository | An operation in progress | US2 | `test_clean_an_operation_in_progress`, `test_clean_an_operation_in_progress_admin_directory_that_cannot_be_listed` |
+| project-clean (PR #19 draft) | Clean previews and applies a batch of eligible worktree removals in one repository | A squash merge that holds an autostash | US2 | `test_clean_a_squash_merge_that_holds_an_autostash` |
+| project-clean (PR #19 draft) | Clean previews and applies a batch of eligible worktree removals in one repository | A commit held only by the worktree | US2 | `test_clean_a_commit_held_only_by_the_worktree` |
+| project-clean-review-safety (PR #19 draft) | Cleanup revalidates destructive actions | A worktree-only commit made after the plan | US4 | `test_clean_a_worktree_only_commit_made_after_the_plan` |
+| project-clean-review-safety (PR #19 draft) | Cleanup revalidates destructive actions | An operation started after the plan | US4 | `test_clean_an_operation_started_after_the_plan` |
+| project-clean-review-safety (PR #19 draft) | Cleanup revalidates destructive actions | A check that fails at revalidation | US4 | `test_clean_a_check_that_fails_at_revalidation` |
+| project-clean-review-safety (PR #19 draft) | Cleanup revalidates destructive actions | A work-tree probe at revalidation | US4 | none named after it at `e8dda2a` (a gap; below) |
+| project-command (PR #19 draft) | Explicit maintenance | Owner tools see the repository the check inspected | US9 | `test_update_owner_tools_see_the_repository_the_check_inspected` |
+| project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | A linked worktree whose work tree is redirected | US9 | `test_clean_a_linked_worktree_whose_work_tree_is_redirected`, `test_clean_a_linked_worktree_whose_work_tree_is_redirected_after_the_plan` |
+| project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | A commondir that names another repository | US9 | `test_clean_a_commondir_that_names_another_repository` |
+| project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | A relative configuration path in status, doctor and update | US9 | `test_status_a_relative_configuration_path_in_status_doctor_and_update`, `test_status_a_relative_configuration_path_in_status_doctor_and_update_home_beginning_with_tilde` |
+| project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | An edit that keeps its size and restores its mtime | US9 | none named after it at `e8dda2a` (a gap; below) |
+| project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | Trace targets are never written | US9 | `test_status_trace_targets_are_never_written`, `test_status_trace_targets_are_never_written_by_any_kind_of_child` |
+| project-clean-review-safety (PR #19 draft) | Cleanup preserves all local work not proven disposable | A repository nested in a tracked directory | US2 | `test_clean_a_repository_nested_in_a_tracked_directory` |
+| project-clean-review-safety (PR #19 draft) | Cleanup preserves all local work not proven disposable | The main worktree inside a linked worktree | US2 | `test_clean_the_main_worktree_inside_a_linked_worktree` |
+| project-clean (PR #19 draft) | Clean can explicitly retire verified worktrees | Two worktree paths that differ only in case | US2 | `test_clean_two_worktree_paths_that_differ_only_in_case` |
+| project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | A case-variant untracked file | US9 | `test_status_a_case_variant_untracked_file` |
+| project-command (PR #19 draft) | Repository inspection requires Git 2.36 and shares one evidence model | A stale entry beside a worktree whose path cannot be read | US9 | none named after it at `703b58c` (a gap; below) |
+| project-clean-review-safety (PR #19 draft) | Cleanup revalidates destructive actions | A nested repository made after the plan | US4 | `test_clean_a_nested_repository_made_after_the_plan` |
+| project-clean (PR #19 draft) | Clean classifies preservation and cleanup actions | A stale entry's recommendation | US2 | none named after it at `703b58c` (a gap; below) |
+| project-clean (PR #19 draft) | Clean classifies preservation and cleanup actions | The main worktree's recommendation | US2 | none named after it at `d640539` (a gap; below) |
+| project-clean (PR #19 draft) | Clean reports local worktree state | A worktree whose path holds the main worktree | US2 | none named after it at `d640539` (a gap; below) |
+
+T126's writer fills the Tests cells from the merged tests (lead ruling R-32b).
+
+The last twenty-six rows are PR #19's draft scenarios, from branch
+`change/amend-clean-all-safe-push-pins`, not yet on `main`; each Delta cell
+carries the mark "(PR #19 draft)". T002 and T126 name their titles, and read
+the others from `main`'s deltas.
+
+A test goes in a row only when its name begins with its scenario's title, as
+rule 1 and T126 require (lead ruling R-98 (a) 2). Seven of PR #19's scenarios
+have no test so named at `d640539`, though tests cover them; each is a gap, not
+a missing check (lead ruling R-166); an eighth, row 123, was one until doc
+round 27, and its note follows the list:
+
+- "Branch deletion refuses a branch it may not delete" (round (a)): by
+  `test_clean_a_branch_deletion_of_the_default_branch_is_refused`,
+  `test_clean_a_branch_deletion_of_a_branch_a_worktree_holds_is_refused` and,
+  for D3's `REFUSED: Branch B is not verified as merged into main.`,
+  `test_clean_a_branch_deletion_of_a_branch_not_merged_into_the_merge_target_is_refused`
+  (T073; lead ruling R-167). Since writer E's `02aa71d` (lane 3's W52 F-5;
+  lead ruling R-259) the second of them expects D18's own refusal for a branch
+  that the main worktree holds, and
+  `test_clean_a_branch_the_main_worktree_holds_is_deleted_after_either_remedy`
+  pins that the two remedies it names work (T073); neither is named after the
+  scenario either.
+- "An edit that keeps its size and restores its mtime" (LQ-10): by
+  `test_status_the_pinned_status_configuration_sees_a_same_size_edit`, named
+  after "The pinned status configuration" (T012); since lane 3's W115 LOW-2
+  (T15; lead R-373 and R-385, writer's `e702a65`) it also pins row 116's
+  `--all-safe --apply --yes` arm, which leaves the worktree and the edit, so
+  that the name is the gap and no check is missing.
+- "A work-tree probe at revalidation" (round (c), `2e819ad`): its first arm,
+  a decided other work tree giving `identity-changed`, by
+  `test_clean_a_linked_worktree_whose_work_tree_is_redirected_after_the_plan`
+  (T030), and its `state-changed` and `deadline-exceeded` arms by
+  `test_clean_a_work_tree_probe_that_decides_nothing_at_revalidation` (T083;
+  the lead's R-171; writer G's `6dec3f4`; since R-287 its cases are a probe
+  that prints nothing or P's own path with no closing line feed, which is
+  `state-changed`, and two lines, which are one other path and so
+  `identity-changed`), with the probe's place after the filesystem checks by
+  `test_clean_a_redirected_work_tree_beside_a_later_check_s_difference` (T083;
+  the lead's R-198; writer G's `963fccf`). Lane 3's W115 LOW-3 (T15; lead R-373
+  and R-385, writer's `e702a65`) adds the arm on real Git,
+  `test_clean_a_work_tree_probe_that_exits_128_at_revalidation_on_real_git`
+  (T030): Git's own `rev-parse --show-toplevel` exiting 128 in P at
+  revalidation refuses P `state-changed`, nothing is removed, and the second
+  target is `not-attempted` with `batch-stopped`; its name does not begin with
+  the title either.
+- "A stale entry beside a worktree whose path cannot be read" (round (q), PR
+  #19 at `818311a`; R-365's T9, ruled by Brett Heap on 2026-10-23, "Yes, add T9
+  (Recommended)"; lead R-365): by
+  `test_status_a_stale_worktree_beside_an_unread_row_warns_against_prune`
+  (T115), named after neither the scenario's title nor "A deleted upstream in
+  status and doctor".
+- "A stale entry's recommendation" (round (r), PR #19 at `4512441`, its
+  `project-clean` delta, "Clean classifies preservation and cleanup actions";
+  lane 3's W133 MEDIUM-4; lead R-391; Brett Heap's Q3 (b), ruled on
+  2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9", lead R-380; writer's
+  `da5502d`): by `test_clean_report_advice_for_the_main_worktree_and_a_locked_stale_row`
+  (T028), where an unlocked stale row beside rows whose paths can all be read
+  takes `recommendation_stale_worktree` in the plain report, and
+  `test_clean_a_stale_row_beside_an_unread_row_warns_against_prune` (T061),
+  whose last arm, the unread row's path readable again, pins the plain text in
+  the report's human lines and in the `worktrees` rows of `--json`; the text
+  itself, RECOMMENDATIONS's with the dry-run warning, is pinned by
+  `test_clean_row_evidence_never_recommends_a_step_git_refuses` (T028). None is
+  named after the title.
+- "The main worktree's recommendation" (round (s), PR #19 at `dab8a64`, its
+  `project-clean` delta, "Clean classifies preservation and cleanup actions";
+  lane 3's W141 MEDIUM-1; lead R-408; writer E's `02aa71d`): by
+  `test_clean_report_advice_for_the_main_worktree_and_a_locked_stale_row`
+  (T028), where the main worktree on a merged, clean, published branch reads
+  `merged-removable` from outside it and `merged-current` from inside it, each
+  with `recommendation_main_worktree` in the plain report, and
+  `merged-removable` with it in the `worktrees` row of `--json`, and the
+  explicit removal that the baseline text invited is refused `main-worktree`,
+  exit 2; the baseline's two texts, which the scenario quotes as what the row
+  said before, stay `RECOMMENDATIONS`'s for every other row, pinned by
+  `test_clean_ladder_is_a_pure_function` (T028). Neither is named after the
+  title.
+- "A worktree whose path holds the main worktree" (round (t), PR #19 at
+  `54e869b`, its `project-clean` delta, "Clean reports local worktree state";
+  Brett Heap's M3 (a), ruled on 2026-10-23T21:10:31Z, "yes, recommended for M1
+  and M3"; lead R-413; lane 3's W133 MEDIUM-3; writer's `d640539`): by
+  `test_clean_the_main_worktree_inside_a_linked_worktree` (T061), whose linked
+  worktree W, which holds the main worktree, now has its group of
+  `next_step_registration_mismatch_holds` checked in batch and in single mode,
+  and by
+  `test_clean_a_row_whose_path_is_or_holds_another_worktree_takes_its_own_next_step`
+  (T061): five rows that hold or share another's path form that group, printed
+  first, and a symbolic-link row (Q9 (b)) keeps the class's group after it, in
+  the `--all-safe` preview, in the human text of `--all-safe --apply --json`
+  and in single mode, and beside a row whose path cannot be read the class's
+  group takes its unread form and M3's step stays. No single test puts W beside
+  a linked worktree redirected by `core.worktree` in one fixture, as the
+  scenario does; each half is pinned apart, the redirected row's refusal by
+  `test_clean_a_redirected_worktree_s_incomplete_plan_names_the_unset` (T061).
+  None is named after the title.
+
+Row 123, "A nested repository made after the plan" (round (r), PR #19 at
+`4512441`, its `project-clean-review-safety` delta, "Cleanup revalidates
+destructive actions"; lane 3's W133 MEDIUM-2; lead R-391 and R-395), was the
+sixth gap until R-397's test (lead R-405; a fresh writer's `c0841aa` on
+`impl/004-q-build`): `test_clean_a_nested_repository_made_after_the_plan`
+(T083) is named after the title and runs the scenario through `--apply`: a
+repository is `git init`-ed, at the question, in a tracked directory of the
+first target, where Git's own status prints nothing, so that the first target
+is refused `contains-submodule`, the run exits 2, the later target is
+`not-attempted` with `batch-stopped`, no removal child runs and the nested
+repository and every tree remain. Its fail-before, against `project`
+at `e702a65`, removed both targets, the nested repository included. That
+closes the gap that R-397 recorded, that no test ran the scenario through
+`--apply` and that its exit status 2 and the later target's `batch-stopped`
+were pinned for a `contains-submodule` refusal only by
+`test_clean_submodules_after_confirmation` (T083), whose difference is a
+`modules` directory, not a nested `.git`. Two in-process tests also pin step
+7's nested `.git` check, neither named after the title:
+`test_clean_revalidate_refuses_a_repository_nested_after_the_plan` (T045;
+writer's `5eeaedd`), where `revalidate()` refuses the target
+`contains-submodule` and the nested repository remains, and, for step 7's
+`lstat` of `<dir>/.git` that fails or is cut,
+`test_clean_revalidate_a_nested_git_lstat_that_fails_or_is_cut` (T045;
+writer's `703b58c`): `state-changed`, `state-changed` and `deadline-exceeded`.
+One residual is left, and it is measured as far as it goes: the nested `.git`
+`lstat` loop is one `_fs()` call (`project:5557` at `c0841aa`) under `min(5 s,
+the work remaining)`; measured warm (Python 3.12.3, Git 2.43.0) at 1,000,
+10,000 and 50,000 tracked directories, planning stays eligible at `41759a4` as
+at `e702a65`, adding about 0.25 s at 50,000 (medians of 11 runs, 2.216 s and
+2.461 s); cold-cache cost and deep nesting are unmeasured, and both fail
+closed, `inspection-error` at planning and `state-changed` at revalidation
+(lead R-398 and R-406).
+
+"Push refuses a branch it may not push" names lane A's addendum 5 test
+(`f0e4945`, on 004 at `598929b`), which pins the baseline's `No unique linked
+worktree found for branch B` for a branch no worktree holds and for one two
+worktrees hold (#19 round (b) at `4485678`). Its other cases are pinned by
+tests not named after it: `test_clean_push_refuses_the_default_branch`,
+`test_clean_push_refuses_a_dirty_worktree`,
+`test_clean_push_refuses_a_detached_worktree`,
+`test_clean_push_refuses_a_branch_to_reconcile`,
+`test_clean_push_an_unpushed_feature_branch_whose_merge_is_outside_refs_heads_refuses`
+and `test_clean_push_refuses_to_publish_without_an_origin_remote` (T072).
+
+"A check that fails at revalidation" names its test, which pins both its
+clauses: the unlistable administrative directory (LQ-14) and, since writer
+G's `8ae0bb5`, a `logs/HEAD` line naming an object the repository does not
+hold, the reachability child exiting 128 (LQ-13); since writer G's `73d8888`
+it also pins a `.git` made unreadable (`state-changed`) and one gone, an
+absent path (`identity-changed`; the lead's R-208). Since writer B's `46c1f87`
+(lane 3's W41 L-4; the lead's R-241) the absence clause for a `.git` that goes
+between its lstat and its read is pinned too, by
+`test_clean_a_dot_git_file_gone_between_its_lstat_and_its_read` (T083), which
+no scenario title names. Lane 3's W49 LOW-3 adds
+`test_clean_an_identity_probe_that_fails_with_no_work_time_left_at_revalidation`
+(T083; writer `impl/004-w49-low3`'s `16c4474`, merged as `b60792c`), step 1's `work_spent(run)` arm: an
+identity probe that fails with exit 128 with no work time left ends the target
+`not-attempted` with `deadline-exceeded`.
+
+"State changes before revalidation" names its test, which since writer B's
+`9af46ab` (lane 3's W41, NOT DONE 5; the lead's R-241) also pins an unreadable
+manifest where planning read no candidate from it, in two cases,
+`manifest-unparseable-where-the-plan-read-none` and
+`manifest-unparseable-where-the-plan-read-no-key` (T081, the cases listed in
+T083).
+
+Tests that pin a requirement and match no scenario title are listed in their
+tasks, not here: among them N10's
+`test_clean_a_signal_during_the_push_or_branch_deletion_recorded_in_process`
+and N13's `..._recorded_before_the_spawn`, beside
+`..._once_git_has_mutated` (T073; lead rulings R-167 and R-177), the
+evidence fixes' `test_clean_evidence_*` tests (T030), lane 3's W32 M2 tests
+of gate 11's place, `test_clean_operation_in_progress_comes_after_the_index_gates`
+and `test_clean_operation_in_progress_never_reaches_a_row_past_the_cap`
+(T063), and R-208's tests of revalidation reads that fail,
+`test_clean_identity_reads_that_fail_at_revalidation`,
+`test_clean_a_target_lstat_that_fails_at_revalidation`,
+`test_clean_a_twin_read_that_fails_at_revalidation`,
+`test_clean_a_modules_check_that_fails_at_revalidation` and
+`test_clean_an_admin_directory_gone_at_its_listing` (T083), and lane 3's W41
+tests (writer B's `9af46ab` and `46c1f87`; the lead's R-241), the nine tests of
+revalidation reads cut at the work deadline,
+`test_clean_an_identity_probe_cut_at_revalidation`,
+`test_clean_a_manifest_re_read_cut_at_revalidation`,
+`test_clean_a_registry_listing_cut_at_revalidation`,
+`test_clean_a_ref_listing_cut_at_revalidation`,
+`test_clean_a_target_lstat_cut_at_revalidation`,
+`test_clean_a_registration_read_cut_at_revalidation`,
+`test_clean_a_twin_read_cut_at_revalidation`,
+`test_clean_a_modules_check_cut_at_revalidation` and
+`test_clean_a_status_probe_cut_at_revalidation`, beside
+`test_clean_a_ref_listing_that_decides_nothing_at_revalidation` and
+`test_clean_a_dot_git_file_gone_between_its_lstat_and_its_read` (T083), and
+`test_clean_an_identity_probe_that_fails_with_no_work_time_left_at_revalidation`
+(T083; lane 3's W49 LOW-3, writer `impl/004-w49-low3`'s `16c4474`, merged as
+`b60792c`), and lane 3's W52 and W59 tests (writer E's `02aa71d` and
+`64ad453`; the lead's R-259):
+`test_clean_a_branch_deletion_passes_the_name_after_double_dash` (F-4) and
+`test_clean_a_branch_the_main_worktree_holds_is_deleted_after_either_remedy`
+(F-5) (T073), `test_clean_row_evidence_never_recommends_a_step_git_refuses` and
+`test_clean_report_advice_for_the_main_worktree_and_a_locked_stale_row` (F-6
+and F-10; T028) and `test_clean_a_locked_worktree_s_partial_removal_note_unlocks_it_first`
+(F-2; T091), which no scenario title names. F-2's note replaces ratified text;
+Brett Heap ruled it on 2026-10-22, "F-2: yes" (the lead's R-263), and it is in
+its own commit, `64ad453`, which stays.
+
+His other two rulings of that day that change the build's text, "F-1:
+prune-then-delete" and "O-1: deadline-exceeded", and #19's rounds (h) and (i)
+(writer G's `3eb2e9c`, `c33f761`, `457a20f`, `63e4573`, `c26e44b`, `99848dd`,
+`a038961`, `2707ff2`, `6a32d10`, `4dfd6f5` and `ded85bb`, merged as `7164d7f`,
+`60631eb` and `3bc1d68`; the lead's R-258, R-259, R-263, R-271, R-274, R-278,
+R-283, R-284, R-287 and R-290) add tests that no scenario title names either.
+F-1: `test_clean_rescan_reads_the_git_file_where_the_entry_and_the_path_remain`
+(T085), `test_clean_the_ceiling_s_recovery_text_follows_the_git_file_and_the_entry`
+(T089) and `test_clean_the_ceiling_s_partial_removal_note_follows_the_git_file_and_the_entry`
+(T091); and, since R-284 (ruled by Brett Heap, "R-284: yes", R-290),
+`test_clean_the_ceiling_s_recovery_text_where_the_git_file_cannot_be_read`
+(T089), whose third note a failed lstat of the target's own path also gives
+(lane 3's W90 M-1, lead ruling R-329, which applies R-284 as Brett Heap ruled
+it; the rows of T091's table). O-1:
+`test_clean_a_reflog_read_cut_by_the_deadline_against_its_budget` and
+`test_clean_only_gate_7_s_deadline_cut_makes_an_unprobed_row_deadline_stopped`
+(T059), and, for a named removal whose own row the deadline cut,
+`test_clean_single_target_p_s_reflog_read_cut_by_the_deadline`,
+`test_clean_single_target_p_s_admin_listing_cut_by_the_deadline`,
+`test_clean_single_target_p_s_status_probe_cut_by_the_deadline` and
+`test_clean_single_target_p_s_rows_the_deadline_stopped_are_not_counted_for_the_variant`
+(T070). Round (h):
+`test_clean_operation_in_progress_a_marker_git_leaves_is_deleted_by_hand`
+(T063), `test_clean_a_redirected_worktree_s_incomplete_plan_names_the_unset`,
+`test_clean_a_redirected_row_the_deadline_stopped_is_not_counted_for_the_variant`
+and `test_clean_a_named_removal_s_repository_wide_refusal_beside_a_redirected_target`
+(T061), and
+`test_clean_the_estimate_counts_an_identity_probe_read_one_option_per_child`
+(T098). Round (i):
+`test_clean_a_redirected_main_worktree_names_the_redirect`,
+`test_clean_a_redirected_main_worktree_whose_git_is_a_file`,
+`test_clean_a_bare_repository_beside_a_main_worktree_that_core_bare_redirects`,
+`test_clean_plain_refusals_beside_a_redirected_main_worktree` and
+`test_clean_a_row_3b_that_fails_or_is_cut_keeps_the_plain_message` (T105); and,
+for the plain message where the layout gives no redirect (lane 3's W81 M-1 to
+M-3, the lead's R-297; its writer's `1061dd7`, merged as `769215d`),
+`test_clean_a_main_checkout_refused_for_another_reason_keeps_the_plain_message`,
+`test_clean_a_dot_git_file_that_names_no_git_directory_keeps_the_plain_message`
+and
+`test_clean_a_relative_core_worktree_naming_a_missing_directory_keeps_the_plain_message`
+(T105, T107); and, for round (l)'s unread forms (lane 3's W87 M-1; the lead's
+R-307 and R-310, confirmed by Brett Heap (R-319); its writer's `e569564`, merged as `1edf64e`),
+`test_clean_an_unread_row_s_next_step_and_remedy_name_no_prune`,
+`test_clean_an_unread_row_beside_a_readable_inspection_error_row` and
+`test_clean_an_unread_row_beside_a_redirected_row` (T061), and the five tests
+that now expect them: `test_clean_an_unreadable_worktree_is_one_row` (T096),
+`test_clean_paths_and_empty_plans` (T038),
+`test_clean_every_protected_classifier_incomplete_copy` (T061),
+`test_clean_single_target_equals_a_one_item_batch` (T069) and
+`test_clean_push_refuses_an_incomplete_inspection` (T072); for R-320 (lane 3's W86
+NM-1; ruled by Brett Heap, "R-320: yes", lead R-321; its writer's `dfc2baa`,
+merged as `12c1821`),
+`test_clean_a_stale_row_beside_an_unread_row_warns_against_prune` (T061) and the
+changed `test_clean_row_cap_and_planning_failures` (T097); and, for R-322
+(Codex's P2 on PR #33; its writer's `42454cb`, merged as `12c1821`), in
+`tests/test_clean_apply.py` (T057),
+`test_clean_all_safe_apply_json_with_standard_output_closed_at_startup_removes_nothing`,
+`test_clean_single_apply_json_with_standard_output_closed_at_startup_removes_nothing`,
+`test_clean_standard_output_closed_at_startup_refuses_as_the_write_error`,
+`test_clean_push_and_delete_branch_with_json_never_reach_the_apply_phase`,
+`test_clean_check_writes_records_a_missing_json_stream_only_under_json` and
+`test_clean_a_reader_that_closes_after_the_apply_phase_began_keeps_the_removals`;
+and for lane 3's W90 (M-1, lead ruling R-329; L-1, R-291; writers' `b96b335`
+and `488d6f6`, merged as `7149e08`), the changed
+`test_clean_rescan_reads_the_git_file_where_the_entry_and_the_path_remain`
+(T085, the subtest for a directory above the target that denies search),
+`test_clean_the_ceiling_s_partial_removal_note_follows_the_git_file_and_the_entry`
+(T091, three more rows),
+`test_clean_a_work_tree_probe_that_decides_nothing_at_revalidation` (T083, a
+line feed alone) and
+`test_clean_effective_work_tree_reads_its_output_as_one_path` (T030, the
+working-directory cases). Row 4c's exit 1 (lead ruling R-332; #19's design D7;
+writer's `c8e23cd`), in `tests/test_clean_evidence.py`
+(T030): `test_clean_row_4c_reads_an_exit_1_by_what_it_printed`,
+`test_clean_row_4c_reads_a_real_repository_s_keys`,
+`test_clean_a_row_4c_exit_1_that_printed_gives_each_linked_row_its_work_tree_probe`
+and `test_clean_a_row_4c_exit_1_that_printed_adds_its_probes_to_the_estimate`; and, for row 4b (lead ruling R-336; writer's `b3f7e0b`),
+`test_clean_row_4b_reads_an_exit_1_by_what_it_printed`,
+`test_clean_a_row_4b_exit_1_that_printed_leaves_the_main_worktree_unreadable`
+and `test_clean_row_4b_reads_a_real_repository_s_unset_core_worktree_as_unset`;
+and, with no new test name, a subtest "the common directory's config is a
+directory" on real Git in each of
+`test_clean_row_4c_reads_a_real_repository_s_keys` and
+`test_clean_row_4b_reads_a_real_repository_s_unset_core_worktree_as_unset`
+(T030, T031; lane 3's W100 LOW-B, routed by the lead's R-344; writer's
+`2057c31`).
+R-324 (ruled by Brett Heap, "R-324: yes", lead R-343; #19's round (n)
+at `2250830`; writer's `e8dda2a`) changes seven tests, which expect the
+warning with `git worktree remove` and `git gc` named:
+`test_clean_the_ceiling_s_partial_removal_note_follows_the_git_file_and_the_entry`
+(T091),
+`test_clean_the_ceiling_s_recovery_text_where_the_git_file_cannot_be_read`
+(T089), `test_clean_row_cap_and_planning_failures` (T097) and, in
+`tests/test_clean_gates.py` (T061),
+`test_clean_an_unread_row_s_next_step_and_remedy_name_no_prune`,
+`test_clean_an_unread_row_beside_a_readable_inspection_error_row`,
+`test_clean_an_unread_row_beside_a_redirected_row` and
+`test_clean_a_stale_row_beside_an_unread_row_warns_against_prune`; and
+`tests/clean_support.py`'s nine fixtures (T011).
+R-365 (ruled by Brett Heap on 2026-10-23, "Yes, warn (Recommended)" for lane
+3's W52 F-1 (b) and "Yes, add T9 (Recommended)" for T9; lead R-365; writer's
+`7a20789`, merged as `d8724e2`) added three tests:
+`test_clean_the_prune_note_beside_an_unread_row_warns_against_prune` (T091),
+`test_clean_the_ceiling_s_prune_note_beside_an_unread_sibling_warns_against_prune`
+(T089) and, in `tests/test_status_doctor_update.py`,
+`test_status_a_stale_worktree_beside_an_unread_row_warns_against_prune`
+(T115); changed two, which passed `partial_removal_text()` its new second
+argument as `False`:
+`test_clean_the_ceiling_s_partial_removal_note_follows_the_git_file_and_the_entry`
+(T091) and
+`test_clean_rescan_reads_the_git_file_where_the_entry_and_the_path_remain`
+(T085); and gave `tests/clean_support.py` one more fixture,
+`partial_removal_note_prune_unread` (T011). Brett Heap's Q3 (a) (doc round 26,
+below) supersedes all of it but the third test: the first two are replaced by
+`test_clean_the_ceiling_s_second_note_names_no_prune_beside_any_row` (T091) and
+`test_clean_the_ceiling_s_second_note_beside_an_unread_sibling_names_no_prune`
+(T089), the second argument and the fixture are gone, and the two changed tests
+read `partial_removal_text(target)` again. The work-tree probe's output read as
+one path (lane 3's W70 M-2, R-287):
+`test_clean_effective_work_tree_reads_its_output_as_one_path`,
+`test_clean_a_work_tree_probe_whose_output_is_empty_or_ends_in_no_line_feed` and
+`test_clean_a_redirected_linked_worktree_whose_path_holds_a_line_feed` (T030),
+and `test_clean_line_feed_paths_where_row_4c_reads_true` (T110). F-1's ceiling
+literal in `test_clean_the_stop_block`, the deadline case of
+`test_clean_reflog_gate_outcomes` (T059), the registration-mismatch pins of
+`test_clean_every_protected_classifier_incomplete_copy` and
+`test_clean_the_preview_says_what_keeps_each_row_single_mode_shared_path`
+(T061, T053), the third fixture of
+`test_clean_the_estimate_counts_an_identity_probe_read_one_option_per_child`
+and the cases of `test_clean_a_work_tree_probe_that_decides_nothing_at_revalidation`
+(T083) change with them.
+
+Doc round 24 (the lead's R-360; lane 3's W102 and W108): T030's spy clause is
+row 4b's subtest alone, T128's bound is for an idle `py-bench` and records the
+measured times, and `hand-runs.md` records that the hand runs are owed again
+at the landing head. No test name changes.
+
+Doc round 25 (the lead's R-365 and R-377): R-365's three tests are listed
+above. Feature 004 no longer edits change 1's `tasks.md` (R-377): Path
+Conventions and T133 say that PR #19's round (p) carries its hunks, T131 no
+longer lists the file among those this branch may change, and T133's verify
+reads it as `main`'s copy. `hand-runs.md` names R-365 among the changes since
+its walk. Its head sentence read `d8724e2`.
+
+Doc round 26 (the lead's R-373, R-374, R-380, R-385 and R-389; Brett Heap's Q1
+to Q3, ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; the build's
+writers' `e702a65`, `9d5c2fb`, `5eeaedd` and `da5502d` on `impl/004-q-build`,
+merged as `ff12f47`): the tests below are named in their tasks. A-items, in
+`tests/test_clean_evidence.py` unless said otherwise: T7's
+`test_clean_a_nul_byte_in_a_worktree_s_git_file_or_commondir_makes_its_row_inspection_error`,
+`test_clean_a_tracking_branch_no_ref_can_hold_names_no_local_branch` and
+`test_clean_a_manifest_name_with_a_lone_surrogate_is_no_candidate_and_no_ref_pattern`
+(T030); T10's
+`test_clean_a_branch_named_detached_is_classified_by_its_upstream` and
+`test_clean_a_merge_target_named_detached_protects_no_detached_row` (T029),
+and, in `tests/test_clean_push.py`,
+`test_clean_a_branch_named_detached_is_held_by_its_own_worktree_and_by_no_detached_row`
+(T073); T19's
+`test_clean_a_failed_row_7_makes_each_present_row_on_a_branch_inspection_error`
+(T029); T15's
+`test_clean_a_work_tree_probe_that_exits_128_at_revalidation_on_real_git`
+(T030), which row 111's gap note above names, and the new arm of
+`test_status_the_pinned_status_configuration_sees_a_same_size_edit` (T012),
+which row 116's does; and the changed `test_clean_ladder_is_a_pure_function`
+(T028), `test_clean_row_evidence_assembles_a_row_from_literal_reads` (T029),
+`test_clean_control_character_and_non_utf_8_paths` in
+`tests/test_clean_paths.py` (T14; T110) and
+`test_clean_the_plain_report_exits_by_completeness` in
+`tests/test_clean_bounds.py` (LOW-5; T096). Q1:
+`test_status_a_case_variant_untracked_file` and
+`test_clean_two_worktree_paths_that_differ_only_in_case` (T012), in their rows,
+and the pin lists of `test_clean_pins_are_on_every_argv` (T012),
+`test_clean_git_s_own_check_runs_on_the_pinned_configuration` (T082) and
+`test_status_the_pinned_status_configuration` (T116), and the pin lists of
+`tests/test_clean_apply.py` (T045), `tests/test_clean_result.py` (T089),
+`tests/test_clean_runner.py` and `tests/test_status_doctor_update.py` (T116),
+which read `core.ignoreCase=false` as the fifth status pin, the removal's
+sixth. Q2: in `tests/test_clean_gates.py`,
+`test_clean_a_repository_nested_in_a_tracked_directory` and
+`test_clean_a_nested_git_lstat_that_fails` (T063),
+`test_clean_the_main_worktree_inside_a_linked_worktree` and
+`test_clean_enclosing_rows_decides_on_literal_values` (T061);
+`test_clean_hidden_state_parser_names_the_directories_that_hold_an_entry` in
+`tests/test_clean_parsers.py` (T014) and
+`test_clean_revalidate_refuses_a_repository_nested_after_the_plan` in
+`tests/test_clean_apply.py` (T045). Q3 (a) and (b), besides the two replaced
+tests above: the changed
+`test_clean_the_ceiling_s_recovery_text_follows_the_git_file_and_the_entry`
+(T089),
+`test_clean_the_ceiling_s_partial_removal_note_follows_the_git_file_and_the_entry`
+(T091),
+`test_clean_rescan_reads_the_git_file_where_the_entry_and_the_path_remain`
+(T085), `test_clean_row_evidence_never_recommends_a_step_git_refuses` and
+`test_clean_report_advice_for_the_main_worktree_and_a_locked_stale_row` (T028),
+`test_clean_a_redirected_worktree_s_incomplete_plan_names_the_unset` and
+`test_clean_a_stale_row_beside_an_unread_row_warns_against_prune` (T061),
+`test_clean_row_cap_and_planning_failures` (T097) and
+`test_clean_paths_and_empty_plans` (T038), with `tests/clean_support.py`'s
+fixtures (T011): the new `recommendation_stale_worktree`, the dry-run warning
+on `recommendation_stale_locked`, `remedy_inspection_incomplete`,
+`remedy_inspection_incomplete_redirect`, `remedy_inspect_cap` and the next
+steps of `registration-mismatch` and `inspection-error`, the new
+`unsupported-path-bytes` step, and `partial_removal_note_prune` in its new
+form, `partial_removal_note_prune_unread` being removed. No test name changes
+beyond the two replaced ones. Round (q)'s five scenarios have rows above; its
+head sentence read `da5502d`.
+
+Doc round 26, Part C (the lead's R-393; Brett Heap's Q4, Q5, Q8 and Q9 (b),
+ruled on 2026-10-23T13:30:27Z, "yes, recommended for Q1-Q9"; lead R-380; the
+build's writers' `c6daebc`, `c28c9ea`, `70345ee`, `338edb0` and `703b58c` on
+`impl/004-q-build`, merged as `c81b948`). Q4:
+`test_clean_the_partial_removal_note_names_its_check_first` (T091), and the
+changed `test_clean_only_tracked_file_deletions`,
+`test_clean_a_locked_worktree_s_partial_removal_note_unlocks_it_first`,
+`test_clean_the_stop_block`,
+`test_clean_the_ceiling_s_partial_removal_note_follows_the_git_file_and_the_entry`
+and `test_clean_the_ceiling_s_second_note_names_no_prune_beside_any_row`
+(T091), `test_clean_a_removal_past_the_hard_ceiling`,
+`test_clean_the_ceiling_s_recovery_text_follows_the_git_file_and_the_entry` and
+`test_clean_the_ceiling_s_second_note_beside_an_unread_sibling_names_no_prune`
+(T089), with `test_clean_a_worktree_holding_a_submodule_is_never_offered`
+(T063, which has its row), which pins the new `contains-submodule` step. Q5:
+`test_clean_gate_7_s_step_names_the_checks_of_the_gates_that_did_not_run`
+(T060), and the changed
+`test_clean_twenty_rows_pass_every_gate_before_deferred_target_cap` and
+`test_clean_deferred_rows_that_will_not_drain_name_the_gates_after_the_cap`
+(T097). Q8: `test_clean_evidence_the_status_warning_rule_counts_every_line` and
+`test_clean_evidence_refs_heads_head_makes_every_row_inspection_error` (T030);
+the scenario "A git that floods standard error" now reads, in #19's round (q),
+that the row is `inspection-error` with `probe-failed`, which its row's
+`test_status_a_git_that_floods_standard_error` already pinned. Q9 (b):
+`test_clean_a_registered_path_that_is_a_symbolic_link` (T061), a requirement's
+clause that no scenario names. Q2 (2):
+`test_clean_revalidate_a_nested_git_lstat_that_fails_or_is_cut` (T045).
+`tests/clean_support.py`'s fixtures change with them (T011):
+`partial_removal_note`, `partial_removal_note_locked` and `non_drain_line` in
+their new forms, the new `partial_removal_note_ceiling`, and the new
+`unstarted-branch`, `reflog-unavailable` and `contains-submodule` next steps.
+No scenario is added and no test name changes; T127's verify exempts two more
+old spans of main's `design.md` D18 (T127). The head sentence read `703b58c`.
+
+Doc round 26, Part D (lane 3's W133 MEDIUM-2 and MEDIUM-4; the lead's R-391,
+R-395 and R-396; PR #19's round (r) at `4512441`). Its two new scenarios,
+"A nested repository made after the plan" (`project-clean-review-safety`,
+"Cleanup revalidates destructive actions") and "A stale entry's
+recommendation" (`project-clean`, "Clean classifies preservation and cleanup
+actions"), are rows 123 and 124 above (124 rows; T002 and T126 count them),
+each a named gap because no test's name begins with its title: the gap notes
+above name the tests that cover them, all already built and listed in the
+paragraphs above and in their tasks (T045, T028 and T061), so that no test is
+added and no test name changes. Revalidation's step 7 re-runs the hidden-state
+probe's listing and, over its directories, the nested `.git` lstats of Q2 (2),
+which the contract, the data model, the README and FR-046 and FR-047 now say
+(`project` unchanged since `703b58c`). The head sentence read `703b58c`.
+
+Doc round 27 (lane 3's W140 on the docs at `41759a4`; the lead's R-405, R-406
+and R-407). R-397's test, `test_clean_a_nested_repository_made_after_the_plan`
+(T083; `tests/test_clean_revalidation.py`, on `impl/004-q-build` at
+`c0841aa`), is named after row 123's title, so that row 123 names it and
+leaves the named gaps, which go from six to five (rows 104, 111, 116, 122 and
+124); T126's verify lists five, and its fail-before, against `project` at
+`e702a65`, removed both targets, the nested repository included. R-406's
+measured residual of Q2 (2)'s nested `lstat` loop is in row 123's note above.
+No other test name changes, and `project` is unchanged since `703b58c`. The
+other items of the round are not rows: T127's static check now passes on the
+tree that 004 has once #19 lands, its 32 failing spans classed in T127;
+Brett Heap's Q8 is stated with round (r)'s "under Git's default
+`core.warnAmbiguousRefs`" in FR-057's note, the contract and the data model;
+the three `project-command` cites that were the ratified copy's lines say so;
+and FR-064's note on `status` and Q3 (b) says that M1 is open. The head
+sentence read `c0841aa`.
+
+Doc round 28 (lane 3's W139, W140 and W146; Brett Heap's M1 (a) and M3 (a),
+ruled on 2026-10-23T21:10:31Z, "yes, recommended for M1 and M3"; the lead's
+R-409, R-413, R-415 and R-416; the code round `c0841aa..d640539` on
+`impl/004-q-build`, merged into this branch). Its tests, each named in its
+task:
+`test_status_an_enclosing_worktree_and_a_symbolic_link_path_keep_the_baseline_s_values`
+(T115; `tests/test_status_doctor_update.py`; `455773a`), which pins `status`,
+`doctor` and `update` at the baseline's entries for an enclosing row and a
+symbolic-link row while `clean --all-safe` still excludes both, since Q2 (1)
+and Q9 (b) are `clean`'s alone (W139 MEDIUM-1; R-409); the changed
+`test_status_a_stale_worktree_beside_an_unread_row_warns_against_prune` (T115;
+`c456cac`), which reads `update --json` too (W139 LOW-2);
+`test_clean_cleanup_inspects_main_from_a_feature_worktree_from_a_directory_nested_in_it`
+(T071; `tests/test_clean_single.py`; `bc10262`; W140 LOW-2);
+`test_clean_a_row_whose_path_is_or_holds_another_worktree_takes_its_own_next_step`
+(T061; `tests/test_clean_gates.py`; `d640539`) and the changed
+`test_clean_the_main_worktree_inside_a_linked_worktree` (T061), which pin M3
+(a)'s next step; and `tests/clean_support.py`'s new fixture
+`next_step_registration_mismatch_holds` (T011; `d640539`) and the changed
+comment on `partial_removal_note_locked` (T011; `5884a79`; W140 LOW-4), which
+changes no text. No other test name changes. The two new scenarios of #19's
+rounds (s) and (t) are rows 125 and 126 (126 rows; T002 and T126 count them),
+each a named gap, since no test's name begins with its title: the gap notes
+above name the tests that cover them, so that the named gaps go from five to
+seven. The other items of the round are not rows: FR-055's notes, the contract
+and the data model say that Q2 (1) and Q9 (b) are `clean`'s alone; M3 (a)'s
+next step is in FR-028's note, the contract, the data model and the README;
+Brett Heap's M1 (a) is recorded in FR-064's note and the contract; the cites of
+#19's `project-clean-review-safety` lines are `spec.md:112-114` and `:133-134`
+at `54e869b`; the contract's note on F-6 and F-10 says that #19 states both;
+and T127's static check passes on this branch's own tree and on the tree that
+004 has once #19 lands, with #19 at `54e869b`, its 3 missing spans classed in
+T127. The head sentence reads `d640539`.
