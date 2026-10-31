@@ -266,9 +266,13 @@ class GatesTests(clean_support.CleanCase):
         # Where a row the refusal counts is excluded as registration-mismatch,
         # the remedy is the variant naming the unset (#19's round (h) at
         # b3228bb, design.md D18), a broken admin registration's and a shared
-        # registry path's included.
+        # registry path's included. A shared registry path's row shares its
+        # path with another, so its variant also takes M3's exception
+        # (Brett Heap's M4 (a), lead R-432).
         mismatch = TEXT["plan_incomplete"].format(CODE="inspection-incomplete",
                                                   REMEDY=TEXT["remedy_inspection_incomplete_redirect"])
+        held = TEXT["plan_incomplete"].format(CODE="inspection-incomplete",
+                                              REMEDY=TEXT["remedy_inspection_incomplete_redirect_holds"])
         # Where a row's path could not be read, the remedy names no git
         # worktree prune (#19's round (l); W87 M-1, lead ruling R-307).
         unread = TEXT["plan_incomplete"].format(CODE="inspection-incomplete",
@@ -332,8 +336,9 @@ class GatesTests(clean_support.CleanCase):
             self.assertEqual(self.git(root, "worktree", "list", "--porcelain").splitlines().count(
                 f"worktree {shared}"), 2)
             # Both entries are registration-mismatch (lead rulings R-57 L3 and
-            # R-59 D6); the map holds the path once, the document twice.
-            assert_incomplete({str(shared): "registration-mismatch"})
+            # R-59 D6); the map holds the path once, the document twice. Each
+            # shares its path, so the variant takes M3's exception (M4 (a), R-432).
+            assert_incomplete({str(shared): "registration-mismatch"}, held)
             document = self.preview(root, cwd=current).document
             self.assertEqual([entry["reason"] for entry in document["excluded"] if entry["path"] == str(shared)],
                              ["registration-mismatch", "registration-mismatch"])
@@ -344,13 +349,13 @@ class GatesTests(clean_support.CleanCase):
             result, records = self.run_counted("clean", root, "--apply", "--action", "remove", "--worktree", shared,
                                                "--yes", cwd=current)
             self.assert_status(result, 2)
-            self.assertEqual(result.stderr, f"REFUSED: {mismatch}\n")
+            self.assertEqual(result.stderr, f"REFUSED: {held}\n")
             self.assertEqual(removals(records), [])
             result = self.run_json("clean", root, "--apply", "--action", "remove", "--worktree", shared, "--yes",
                                    "--json", cwd=current)
             self.assert_status(result, 2)
             self.assertEqual((result.document["refusals"], result.document["selected"]),
-                             ([{"code": "inspection-incomplete", "message": mismatch}], []))
+                             ([{"code": "inspection-incomplete", "message": held}], []))
             self.assertEqual(self.snapshot(root), before, "nothing removed")
 
     # T062: "Hidden local state" (its after-confirmation clause is T083's);
@@ -791,7 +796,10 @@ class GatesTests(clean_support.CleanCase):
         # unprobed and inspection-error: the plan is incomplete, and nothing
         # is removed, in batch and in single mode. W's group prints Brett
         # Heap's M3 (a) next step (lead R-413), never the class's "or remove
-        # the row by hand", which here deletes the repository.
+        # the row by hand", which here deletes the repository. The refusal's
+        # remedy, which counts W, takes M3's exception too, in human text and
+        # --json, and its unread form beside a row whose path cannot be read
+        # (Brett Heap's M4 (a), lead R-432).
         main = self.base / "M"
         self._init_repo(main, "other")
         (main / "README").write_text("hello\n")
@@ -826,14 +834,16 @@ class GatesTests(clean_support.CleanCase):
         self.assertEqual(by_path(document), {str(root): "main-worktree", str(tree): "registration-mismatch"})
         self.assertEqual((row_of(document, tree)["classification"], row_of(document, tree)["dirty"]),
                          ("inspection-error", None))
-        self.assertEqual([refusal["code"] for refusal in document["refusals"]], ["inspection-incomplete"])
-        for words in (("--all-safe", "--apply", "--yes"),
-                      ("--apply", "--action", "remove", "--worktree", tree, "--yes")):
+        held = TEXT["plan_incomplete"].format(CODE="inspection-incomplete",
+                                              REMEDY=TEXT["remedy_inspection_incomplete_redirect_holds"])
+        self.assertEqual(document["refusals"], [{"code": "inspection-incomplete", "message": held}])
+        everything = (("--all-safe", "--apply", "--yes"),
+                      ("--apply", "--action", "remove", "--worktree", tree, "--yes"))
+        for words in everything:
             with self.subTest(words=words[:2]):
                 result, records = self.run_counted("clean", root, *words)
                 self.assert_status(result, 2)
-                self.assertTrue(result.stderr.startswith("REFUSED: The plan is incomplete (inspection-incomplete)"),
-                                result.stderr)
+                self.assertEqual(result.stderr, "REFUSED: " + held + "\n")
                 self.assertEqual(removals(records), [])
                 lines = result.stdout.splitlines()
                 step = TEXT["excluded_group"].format(
@@ -841,9 +851,41 @@ class GatesTests(clean_support.CleanCase):
                 self.assertIn(step, lines, "\n" + result.stdout)
                 self.assertEqual(lines[lines.index(step) + 1], TEXT["excluded_row"].format(PATH=tree, BRANCH="feat"))
                 self.assertNotIn("remove the row by hand", result.stdout)
+                result, records = self.run_counted("clean", root, *words, "--json")
+                self.assert_status(result, 2)
+                self.assertEqual(self.load_json(result)["refusals"],
+                                 [{"code": "inspection-incomplete", "message": held}])
+                self.assertEqual(removals(records), [])
         self.assertEqual(self.snapshot(root), before, "nothing removed")
         self.assertTrue((root / ".git").is_dir(), "the common directory remains")
         self.assertEqual(self.git(root, "rev-parse", "refs/heads/secret").strip(), secret)
+
+        @clean_support.not_root
+        def unread():
+            # M4 (a)'s unread form (lead R-432): a worktree at par/u, then
+            # `chmod 000 par`, so that its path cannot be read.
+            parent = self.base / "par"
+            parent.mkdir()
+            self.git(root, "worktree", "add", "-q", "-b", "unread", parent / "u")
+            self.addCleanup(parent.chmod, 0o700)
+            parent.chmod(0o000)
+            message = TEXT["plan_incomplete"].format(
+                CODE="inspection-incomplete", REMEDY=TEXT["remedy_inspection_incomplete_redirect_unread_holds"])
+            for words in everything:
+                with self.subTest(words=words[:2]):
+                    result, records = self.run_counted("clean", root, *words)
+                    self.assert_status(result, 2)
+                    self.assertEqual(result.stderr, "REFUSED: " + message + "\n")
+                    result, more = self.run_counted("clean", root, *words, "--json")
+                    self.assert_status(result, 2)
+                    self.assertEqual(self.load_json(result)["refusals"],
+                                     [{"code": "inspection-incomplete", "message": message}])
+                    self.assertEqual(removals(records + more), [])
+            parent.chmod(0o700)
+
+        with self.subTest("a row whose path cannot be read"):
+            unread()
+        self.assertTrue((root / ".git").is_dir() and tree.is_dir(), "nothing removed")
 
     def test_clean_a_registered_path_that_is_a_symbolic_link(self):
         # Brett Heap's Q9 (b), "yes, recommended for Q1-Q9" (lead R-380; lane
@@ -1030,6 +1072,125 @@ class GatesTests(clean_support.CleanCase):
         with self.subTest("a row whose path cannot be read"):
             unread()
         self.assertTrue(linked.is_symlink() and inner.is_dir() and shared.is_dir() and spelled.is_dir())
+
+    # Brett Heap's M4 (a), 2026-10-31T18:20:06Z, "(a) Add M3's exception
+    # (Recommended)" (lead R-432; lane 2's wave24 question M4). A row that
+    # takes M3's step is registration-mismatch, so it counts toward
+    # inspection-incomplete, and the redirect remedy's "or remove the row by
+    # hand after review", followed for such a row, deletes what it holds.
+    # Where a row the refusal counts is registration-mismatch and holds or
+    # shares another (WorktreeRow.holds), the redirect remedy, plain or
+    # unread, takes its _holds form, M3's exception after that clause; a
+    # refusal that counts only another registration-mismatch row, a core.bare
+    # redirect or Q9 (b)'s symbolic-link row, prints the same text as before.
+    # test_clean_the_main_worktree_inside_a_linked_worktree pins the form for
+    # a row holding the main worktree.
+
+    def test_clean_the_refusal_beside_a_row_that_holds_another_takes_m3_s_exception(self):
+        # Two repositories. held-repo: w1 holding a second worktree at
+        # w1/sub/w2 (Q2 (1), an enclosing row); `shared`, listed twice by a
+        # copied admin directory (R-57 L3, a shared-path row); a worktree whose
+        # config.worktree sets core.bare (LQ-11); and one moved with a
+        # symbolic link left at its registered path (Q9 (b)). plain-repo: the
+        # last two alone. Each run is made human, its standard error the one
+        # refusal, and with --json, its refusals that one, with no removal
+        # child: the --all-safe preview and apply of each repository, and in
+        # held-repo a single removal naming each row, which counts P's rows
+        # alone. Then, with a row whose path cannot be read in each
+        # repository, the same runs print the unread forms. Nothing is removed.
+        by_hand = "or remove the row by hand after review"
+        exception = (", except one whose path is or holds the main worktree, the common directory or another "
+                     "worktree, which must not be deleted by hand or with git worktree remove: review its "
+                     "registration with git worktree list --porcelain")
+        for key, size in (("remedy_inspection_incomplete_redirect", 699),
+                          ("remedy_inspection_incomplete_redirect_unread", 534)):
+            self.assertEqual(TEXT[key + "_holds"], TEXT[key].replace(by_hand, by_hand + exception), key)
+            self.assertEqual(len(TEXT[key + "_holds"]), size, key)
+
+        def redirected_and_linked(root, name):
+            """In root, a worktree whose config.worktree sets core.bare (LQ-11),
+            and one moved with a symbolic link left at its registered path
+            (Q9 (b)): their paths."""
+            redirected = self.base / f"redirected-{name}"
+            self.git(root, "worktree", "add", "-q", "-b", f"redirected-{name}", redirected)
+            self.git(root, "config", "extensions.worktreeConfig", "true")
+            self.git(redirected, "config", "--worktree", "core.bare", "true")
+            linked = self.base / f"wt-{name}"
+            self.git(root, "worktree", "add", "-q", "-b", f"linked-{name}", linked)
+            moved = self.base / "elsewhere" / linked.name
+            moved.parent.mkdir(exist_ok=True)
+            linked.rename(moved)
+            linked.symlink_to(moved, target_is_directory=True)
+            return redirected, linked
+
+        held_root = self.repo("held-repo")
+        outer = self.base / "w1"
+        self.git(held_root, "worktree", "add", "-q", "-b", "001-w1", outer)
+        self.git(held_root, "worktree", "add", "-q", "-b", "002-w2", outer / "sub" / "w2")
+        shared = self.base / "shared"
+        self.git(held_root, "worktree", "add", "-q", "-b", "003-shared", shared)
+        admin = self.common_dir(held_root) / "worktrees"
+        shutil.copytree(admin / "shared", admin / "shared-copy")
+        self.assertEqual(self.git(held_root, "worktree", "list", "--porcelain").splitlines().count(
+            f"worktree {shared}"), 2)
+        redirected, linked = redirected_and_linked(held_root, "held")
+        plain_root = self.repo("plain-repo")
+        redirected_and_linked(plain_root, "plain")
+        single = ("--apply", "--action", "remove", "--worktree")
+        runs = (  # (label, root, words, exit status, whether a counted row holds or shares another)
+            ("held-repo: the --all-safe preview", held_root, ("--all-safe",), 1, True),
+            ("held-repo: --all-safe --apply", held_root, ("--all-safe", "--apply", "--yes"), 2, True),
+            ("held-repo: --worktree w1, an enclosing row", held_root, (*single, outer, "--yes"), 2, True),
+            ("held-repo: --worktree shared, a shared-path row", held_root, (*single, shared, "--yes"), 2, True),
+            ("held-repo: --worktree redirected-held, core.bare's row alone", held_root,
+             (*single, redirected, "--yes"), 2, False),
+            ("held-repo: --worktree wt-held, Q9 (b)'s row alone", held_root, (*single, linked, "--yes"), 2, False),
+            ("plain-repo: the --all-safe preview", plain_root, ("--all-safe",), 1, False),
+            ("plain-repo: --all-safe --apply", plain_root, ("--all-safe", "--apply", "--yes"), 2, False),
+        )
+
+        def check(unread):
+            """Every run of runs: the redirect remedy, its unread form where
+            unread, and its _holds form where a counted row holds another."""
+            for label, root, words, status, held in runs:
+                key = ("remedy_inspection_incomplete_redirect" + ("_unread" if unread else "")
+                       + ("_holds" if held else ""))
+                message = TEXT["plan_incomplete"].format(CODE="inspection-incomplete", REMEDY=TEXT[key])
+                with self.subTest(label, remedy=key):
+                    result, records = self.run_counted("clean", root, *words)
+                    self.assert_status(result, status)
+                    self.assertEqual(result.stderr, "REFUSED: " + message + "\n")
+                    self.assertEqual(removals(records), [])
+                    result, records = self.run_counted("clean", root, *words, "--json")
+                    self.assert_status(result, status)
+                    self.assertEqual(self.load_json(result)["refusals"],
+                                     [{"code": "inspection-incomplete", "message": message}])
+                    self.assertEqual(removals(records), [])
+
+        before = [self.snapshot(root) for root in (held_root, plain_root)]
+        check(unread=False)
+        self.assertEqual([self.snapshot(root) for root in (held_root, plain_root)], before, "nothing removed")
+
+        @clean_support.not_root
+        def unread():
+            parents = []
+            for root, name in ((held_root, "held"), (plain_root, "plain")):
+                parent = self.base / f"par-{name}"
+                parent.mkdir()
+                self.git(root, "worktree", "add", "-q", "-b", f"unread-{name}", parent / "u")
+                parents.append(parent)
+            before = [self.snapshot(root) for root in (held_root, plain_root)]
+            for parent in parents:
+                self.addCleanup(parent.chmod, 0o700)
+                parent.chmod(0o000)
+            check(unread=True)
+            for parent in parents:
+                parent.chmod(0o700)
+            self.assertEqual([self.snapshot(root) for root in (held_root, plain_root)], before, "nothing removed")
+
+        with self.subTest("a row whose path cannot be read"):
+            unread()
+        self.assertTrue(outer.is_dir() and shared.is_dir() and linked.is_symlink() and redirected.is_dir())
 
     # T064: "A merged worktree whose upstream was deleted"; "A deleted upstream
     # is remote-gone". They pin T032, T049 and T057.

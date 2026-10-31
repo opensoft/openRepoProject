@@ -782,8 +782,10 @@ class SingleTests(clean_support.CleanCase):
         # answered by a DriverOutcome, so that its error is each row's one
         # error. Cut by the work deadline, P's rows are deadline_stopped() and
         # not counted: the base remedy. With no cut, or cut at its budget, they
-        # are counted: the variant. Nothing is removed, and the run stops
-        # before the question.
+        # are counted: the variant, in its form with M3's exception, since each
+        # shares its path with the other (Brett Heap's M4 (a), lead R-432); a
+        # stopped row, not counted, makes neither. Nothing is removed, and the
+        # run stops before the question.
         root = self.repo()
         self.bare_remote()
         target = self.merged_worktree("001-p")
@@ -793,7 +795,7 @@ class SingleTests(clean_support.CleanCase):
         self.assertEqual(listed.count(f"worktree {target}"), 2, "the registry names P twice")
         before = self.snapshot(root)
         asked = AssertionError("the run reached the question stage")
-        variant, base = TEXT["remedy_inspection_incomplete_redirect"], TEXT["remedy_inspection_incomplete"]
+        variant, base = TEXT["remedy_inspection_incomplete_redirect_holds"], TEXT["remedy_inspection_incomplete"]
         cuts = (
             ("no cut", None, [], variant),
             ("its budget", ("timeout", "no answer within 5 s"),
