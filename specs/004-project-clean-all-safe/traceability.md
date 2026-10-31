@@ -19,12 +19,14 @@ R-196), and, since doc round 26, round (q)'s five scenarios (PR #19 at
 `d8724e2`: 122 rows, and, since doc round 26, Part D, round (r)'s two scenarios
 (PR #19 at `4512441`; lead R-396), "A nested repository made after the plan" and
 "A stale entry's recommendation", whose builds are on 004 at `5eeaedd` and
-`da5502d`: 124 rows, the first of them with a test of its own title since doc
-round 27, `c0841aa`'s, and, since doc round 28, round (s)'s "The main worktree's
-recommendation" (PR #19 at `dab8a64`; lead R-408) and round (t)'s "A worktree
-whose path holds the main worktree" (PR #19 at `54e869b`; lead R-413), whose
-builds are on 004 at `02aa71d` and `d640539`: 126 rows, each a named gap. The
-Delta column is the capability, the directory under
+`da5502d`: 124 rows, of round (r)'s two the first, row 123, with a test of its
+own title since doc round 27, `c0841aa`'s, and the second, row 124, a named gap,
+and, since doc round 28, round (s)'s "The main worktree's recommendation" (PR
+#19 at `dab8a64`; lead R-408) and round (t)'s "A worktree whose path holds the
+main worktree" (PR #19 at `54e869b`; lead R-413), whose builds are on 004 at
+`02aa71d` and `d640539`, rows 125 and 126, each a named gap: 126 rows, of which
+seven are named gaps (rows 104, 111, 116, 122, 124, 125 and 126, listed below).
+The Delta column is the capability, the directory under
 `specs/`; the Requirement column is the `### Requirement:` title the scenario
 sits under; the Scenario column is the `#### Scenario:` title exactly. The
 Story column names the user stories (`spec.md`, US1 to US9) whose test tasks in
