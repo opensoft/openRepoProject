@@ -1618,6 +1618,59 @@ Lane: openRepoProject-4
   `e4a30fc`. No checklist category changes, and the totals below were
   recounted by script. Traceability is checked against A1's ratified deltas at
   `e4a30fc` (64 of 64), and `clarify-questions.md` is unchanged.
+- 2026-10-31, a fifty-first pass, commit 3aw, by the lead's 3aw edit lists and
+  Brett Heap's standing word that lane openRepoProject-4 specifies 005 now,
+  from `d67c120` (plan revision 11 part 2), the spec files being those of
+  `f47c2fd` (3av). A subset: the 414 items are not re-run, and only what these
+  edits touch is re-read. Lane openRepoProject-2's lead ruling R-432 of
+  2026-10-31, on lane openRepoProject-3's W161, confines R-67 (c) to `project
+  clean`'s plan, as its R-409 confines Q2 (1) and Q9 (b), so that the ground
+  EC-031 and FR-007's R-67 (c) clause had in the evidence model the overview
+  shares goes when that lane's code round lands, which it has not at 3aw. O23
+  is widened again, to the four kinds of its body, the shared-path and twin
+  rows rejoining it, and no new point is raised: until he rules, the three
+  kinds read as (B), A1 as ratified, and the shared rows keep FR-007's R-67 (c)
+  reading while this spec pins feature 004 at `904aefc`, reading as (B) too if
+  it re-pins past that code round first. C-72 (the O19 sentence, and O23's
+  paragraph, which now gives (A)'s two consequences, the estimate leaving out
+  such a row's status probes and the comparisons made before the first one, and
+  the exit 1 under (B), FR-029), EC-031's close, FR-007 and FR-032 say so; W162
+  OBS-4 is closed, both its halves. M4 is ruled (a) (R-432,
+  2026-10-31T18:20:06Z): `project clean`'s `inspection-incomplete` redirect
+  remedy, plain and unread, gains a variant for a counted row whose path is or
+  holds the main worktree, the common directory or another worktree, texts that
+  the overview never shows (C-59), and FR-028 now says that the 459 and 472
+  characters stand, the redirect remedy beside them being the overview's own
+  152-character remedy (O4 (a); FR-035). That corrects the forty-eighth pass's
+  "M4's bearing on O18's 459 and 472", whose premise, that the lengths move
+  with M4's answer, was false of the overview's remedy; that pass keeps its
+  words as a dated record. Lane openRepoProject-3's W163 on 3av: LOW-1, the
+  totals line now names the forty-eighth pass, the fiftieth pass's "needs no
+  edit" having been true of the totals and not of the line; PARTIAL, W147 OBS-1
+  (b), C-72's O18 (A) says that A1's re-alignment carries it; PARTIAL, W162
+  OBS-2 (b), SC-003 gives O12 (A)'s FR-026 and `Clarifications, C-72` again,
+  and (c), C-72's "a row that such a row holds is read and classified as
+  before" is true at feature 004's `904aefc` (lane openRepoProject-2's table
+  (a), and `enclosing_rows()`, which returns the rows that enclose another path
+  and never one inside them), so it needs no edit; OBS-1, seven bare cites of
+  #19's project-clean spec now name their record's head (`b3228bb` of round
+  (h), `e0c91bb` of round (i), `173d83c` of round (k) and `20084cd` of round
+  (m)), four others keeping the head their own clause names; OBS-2, main's
+  README prose still names workBenches in nine places, 005 cites no README line
+  and quotes none of that prose, and no text changes. Lane openRepoProject-3's
+  W158 OBS-2 and OBS-4: C-72's O22 says that (A) falls back with it if #19 is
+  not ratified, and three cites (pcl:207-215, :308-320 and :112-130) that end
+  one blank line past their text read :207-214, :308-319 and :112-129 at
+  `54e869b`, at five sites. Owed when this spec re-pins feature 004 past lane
+  openRepoProject-2's code round: the shared rows reading as (B) if he has not
+  ruled, and the note on `904aefc` in the record of feature 004's later heads,
+  "`project status`, `doctor` and `update` reading such a row as before Q2 (1)
+  and Q9 (b)", adding the shared-path and twin rows. O22 and O23 stay open for
+  Brett Heap's word. C-72 was spec.md:961-1197 at 3aw, 237 lines, sha256
+  `c71cf326...`. #19 stays at `54e869b`, #27 at `7f3453c` and A1 at `e4a30fc`.
+  No checklist category changes, and the totals below were recounted by script.
+  Traceability is checked against A1's ratified deltas at `e4a30fc` (64 of 64),
+  and `clarify-questions.md` is unchanged.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
 
 ## Cross-cutting Requirements Quality (no-argument `/speckit.checklist`, 2026-10-19)
@@ -1742,5 +1795,5 @@ to an exception of any other kind in human mode and widened to a failed write's
 standard-error line), 0 new questions. Recounted by script on 2026-10-21, and
 again after the re-check, after the W6 read and after the fourth to twelfth
 passes of that day, and after the thirteenth to thirty-fourth passes on
-2026-10-22, the thirty-fifth to forty-seventh on 2026-10-23, the
-forty-ninth on 2026-10-24 and the fiftieth on 2026-10-31.
+2026-10-22, the thirty-fifth to forty-eighth on 2026-10-23, the
+forty-ninth on 2026-10-24 and the fiftieth and fifty-first on 2026-10-31.
