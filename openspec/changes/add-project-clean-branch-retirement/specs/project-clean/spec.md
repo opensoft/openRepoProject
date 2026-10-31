@@ -1098,8 +1098,12 @@ order:
   repository that holds `refs/heads/HEAD` then exits 0 and warns
   `refname 'HEAD' is ambiguous.`, which makes every row of it
   `inspection-error`, so that no run retires such a branch, while with that
-  setting false the probe exits 0 with nothing on standard error, a run can
-  retire it, and this form is the restore that works; each followed,
+  setting false the probe exits 0 with nothing on standard error and this
+  form is the restore that works, where a run retires it: for a branch named
+  `HEAD`, Git's own non-force check and the ref listing take the upstream of
+  the command directory's current branch, never the branch's own, so that a
+  run retires such a branch only where that upstream holds its tip, and
+  otherwise Git refuses its deletion, `git-refused`; each followed,
   for every local branch BRANCH2 that the run did not retire and whose
   configured upstream the plan's ref
   listing gives as `refs/heads/BRANCH`, by `Note: BRANCH2 tracks BRANCH as its
@@ -1131,15 +1135,53 @@ order:
   for `branch-in-use` and for `branch-shared`, PATH2 being the worktree that
   holds BRANCH, for `branch-shared` its last holder, a selected row and so
   never the main worktree, whose line is printed only when the run did not
-  remove that holder: `; next: BRANCH is checked out at PATH2; remove that
-  worktree first`, which prints no retry, only where PATH2 is a holder that
-  this run read and found with none of the local state the plan protects, a
-  holder the plan itself would remove, which only the last holder of a
-  `branch-shared` branch is, and only when it is `not-attempted`; `; next:
+  remove that holder: `; next: BRANCH is checked out at PATH2, which this run
+  selected and did not reach; remove it and retire BRANCH with project clean
+  ROOT --apply --action remove --worktree PATH2 --retire-branches`, which
+  prints no retry, only where PATH2 is the last holder of a `branch-shared`
+  branch and is `not-attempted`, a holder the plan selected, since this run's
+  read of it is its plan's alone, the run having stopped before it
+  revalidated that holder, and that command removes PATH2 only if a fresh
+  plan of its own selects it, every gate read again, and retires BRANCH only
+  on that plan's proof of its reflog, where `git worktree remove` would
+  delete, with exit 0, state that the holder gained since and that the gates
+  protect, a commit that only its HEAD reflog holds among it; `; next:
   BRANCH is checked out at PATH2; its path could not be read, so do not run
   git worktree prune, git worktree remove or git gc until it can; once it
   can, HOLD`, where PATH2 is a row of the plan whose path could not be read,
-  its `present` null; where PATH2 is the main worktree, which Git refuses to
+  its `present` null; `; next: BRANCH is checked out at PATH2; its path is or
+  holds the main worktree, the common directory or another worktree, so do
+  not delete it by hand or with git worktree remove; review its registration
+  with git worktree list --porcelain; once it is repaired, switch that
+  worktree off BRANCH by running git switch --detach there, which changes
+  none of its files; BRANCH's reflog was proven merged into MERGE_TARGET only
+  at this run's plan; inspect git -C ROOT reflog show refs/heads/BRANCH
+  before retrying: RETRY`, where PATH2 is a linked row that the plan excludes
+  as `registration-mismatch` because its path is, or holds, the main
+  worktree, the common directory or another worktree, or is another row's
+  path, even one whose path is the main worktree's, so that a step run at
+  PATH2 acts on another worktree, and the worktree that the repaired
+  registration names still holds BRANCH; `; next: BRANCH is checked out at
+  PATH2, whose path is missing; if that worktree still exists, moved or on a
+  drive that is not mounted, remount or repair it and switch it off BRANCH by
+  running git switch --detach there, which changes none of its files;
+  otherwise STALE; BRANCH's reflog was proven merged into MERGE_TARGET only
+  at this run's plan; inspect git -C ROOT reflog show refs/heads/BRANCH
+  before retrying: RETRY`, where PATH2 is a row of the plan whose path is
+  missing, its `present` false, a `stale-worktree` row, at which `git -C
+  PATH2 switch --detach` cannot run, STALE being `review and prune stale
+  worktree metadata manually; git worktree prune also deletes the entry, and
+  so the HEAD reflog, of every other worktree whose path is missing, one
+  moved or on an unmounted drive included, so run git worktree prune
+  --dry-run first and remount or repair any it lists that still exists` or,
+  where a row of the plan has `present` null, `review and prune stale
+  worktree metadata manually; a row's path could not be read, so do not run
+  git worktree prune, git worktree remove or git gc until it can`, either
+  beginning `review, unlock it, then prune` in the place of `review and
+  prune` where PATH2's row is locked, since `git worktree remove` and `git
+  worktree prune` each delete such an entry's administrative directory with
+  exit 0, and with it the HEAD reflog of a worktree that was only moved or
+  unmounted; where PATH2 is the main worktree, which Git refuses to
   remove, `; next: BRANCH is checked out at PATH2, the main worktree; switch
   it off BRANCH, by detaching it with git -C PATH2 switch --detach, which
   changes none of its files, or by checking out MERGE_TARGET there; BRANCH's
@@ -1157,11 +1199,13 @@ order:
   -C PATH2 switch --detach, which changes none of its files; BRANCH's reflog
   was proven merged into MERGE_TARGET only at this run's plan; inspect git -C
   ROOT reflog show refs/heads/BRANCH before retrying: RETRY`,
-  in which, where the plan finds the branch's upstream remote-tracking ref
-  absent and the main worktree's `HEAD` not the merge target's SHA, as
-  `head-not-merge-target` tests, `which changes none of its files` is followed
-  by `; then check out MERGE_TARGET in the main worktree` or, where the plan's
-  registry listing shows MERGE_TARGET checked out in a linked worktree at
+  in which, and in the forms above for a path that is or holds another
+  worktree and for a path that is missing, where the plan finds the branch's
+  upstream remote-tracking ref absent and the main worktree's `HEAD` not the
+  merge target's SHA, as `head-not-merge-target` tests, `; BRANCH's reflog
+  was proven merged` is preceded by `; then check out MERGE_TARGET in the
+  main worktree` or, where the plan's registry listing shows MERGE_TARGET
+  checked out in a linked worktree at
   PATH3, by `; then, MERGE_TARGET being checked out at PATH3, check out its
   tip TARGET_SHA detached in the main worktree`; for `branch-changed`, `; now
   at SHA2; its reflog is not proven merged into MERGE_TARGET; inspect it and
@@ -1203,13 +1247,14 @@ order:
   and back passes every check of the re-read, and RETRY proves only the branch's
   tip and would delete the branch with a reflog that may name a commit only that
   reflog holds. The `head-not-merge-target` and `branch-changed` lines, the
-  `branch-in-use` and `branch-shared` lines other than `remove that worktree
-  first`, and the line of a branch that moved after its re-proof name that
-  inspection for the same reason, their own steps ending in RETRY for a branch
-  whose reflog the stage did not re-prove, or proved before the branch moved:
-  a plan's keep spawns no stage, a stage that keeps a branch with
-  `branch-in-use` or `branch-changed` stops before its re-proof, or never
-  starts, and a move after the re-proof can write a commit that no proof saw.
+  `branch-in-use` and `branch-shared` lines other than the one that names
+  PATH2's flagged removal, and the line of a branch that moved after its
+  re-proof name that inspection for the same reason, their own steps ending
+  in RETRY for a branch whose reflog the stage did not re-prove, or proved
+  before the branch moved: a plan's keep spawns no stage, a stage that keeps
+  a branch with `branch-in-use` or `branch-changed` stops before its
+  re-proof, or never starts, and a move after the re-proof can write a commit
+  that no proof saw.
   The lines that name that inspection for `state-changed`, `deadline-exceeded`,
   `interrupted`, `internal-error` and `removal-ceiling`, and the
   `head-not-merge-target`, `branch-in-use` and `branch-shared` lines, say that
@@ -1293,6 +1338,15 @@ N; branches kept: `; and then the residual-window line.
   `refs/heads/b1`), the same run retires b1 and b2, prints after b1's
   `Retired` line `Note: b3 tracks b1 as its upstream, which now reads gone; no
   commit is lost`, leaves b3 at its SHA, and exits 0
+- **AND** when b3, at b1's tip, is instead checked out in a third eligible
+  linked worktree P3 that canonical order puts between P1 and P2, P3's
+  revalidation compares the ref listing of P1's rescan, read before b1's
+  branch stage, and passes, P3 is removed and its `branch_retirement` is
+  `retained` with `state-changed`, its re-read finding b3's upstream gone, b3
+  stays at its SHA, the result prints the same note after b1's `Retired`
+  line, P2 is `not-attempted` with `batch-stopped` and its
+  `branch_retirement` `not-attempted` with `branch-retention-stop`, and the
+  exit status is 2
 
 #### Scenario: Without the flag every branch remains
 
@@ -1739,6 +1793,42 @@ N; branches kept: `; and then the residual-window line.
   refs/heads/b before retrying: project clean <root> --apply --action
   delete-branch --branch b`, and following its steps in order deletes b with
   exit 0, where the retry without the checkout is refused with exit 1
+- **AND** when instead H's directory is moved away before the plan, as an
+  unmounted drive leaves it, so that its row is `stale-worktree` with
+  `present: false`, the plan still keeps b with `branch-in-use`, P is
+  removed, no branch child runs, the result prints `Kept b (branch-in-use);
+  next: b is checked out at <H>, whose path is missing; if that worktree
+  still exists, moved or on a drive that is not mounted, remount or repair it
+  and switch it off b by running git switch --detach there, which changes
+  none of its files; otherwise review and prune stale worktree metadata
+  manually; git worktree prune also deletes the entry, and so the HEAD
+  reflog, of every other worktree whose path is missing, one moved or on an
+  unmounted drive included, so run git worktree prune --dry-run first and
+  remount or repair any it lists that still exists; b's reflog was proven
+  merged into <merge target> only at this run's plan; inspect git -C <root>
+  reflog show refs/heads/b before retrying: project clean <root> --apply
+  --action delete-branch --branch b`, H's administrative directory remains,
+  and the exit status is 0; once H's directory is moved back, the switch run
+  there exits 0 and leaves H's files and their index flags as they were, and
+  the printed retry, run with `--yes`, deletes b and exits 0
+- **AND** when instead H's administrative `gitdir` file names the main
+  worktree's `.git`, so that the registry listing gives H the main
+  worktree's path, and `project clean <root> --apply --action remove
+  --worktree P --yes --retire-branches` names P, the plan excludes H as
+  `registration-mismatch` and keeps b with `branch-in-use`, P is removed, no
+  branch child runs, the result prints `Kept b (branch-in-use); next: b is
+  checked out at <root>; its path is or holds the main worktree, the common
+  directory or another worktree, so do not delete it by hand or with git
+  worktree remove; review its registration with git worktree list
+  --porcelain; once it is repaired, switch that worktree off b by running git
+  switch --detach there, which changes none of its files; b's reflog was
+  proven merged into <merge target> only at this run's plan; inspect git -C
+  <root> reflog show refs/heads/b before retrying: project clean <root>
+  --apply --action delete-branch --branch b`, the main worktree stays on the
+  merge target, and the exit status is 0; once `git worktree repair <H>` has
+  repaired H's registration, the switch run in H exits 0 and leaves its files
+  as they were, and the printed retry, run with `--yes`, deletes b and
+  exits 0
 
 #### Scenario: A holder whose path cannot be read is not to be removed
 
@@ -1773,9 +1863,17 @@ N; branches kept: `; and then the residual-window line.
   `branch-shared`, P2 is `refused` with `state-changed`, P3 is `not-attempted`
   with `batch-stopped`, no branch child runs, and the exit status is 2
 - **AND** the result prints `Kept b (branch-shared); next: b is checked out at
-  <P3>; remove that worktree first`, P3 being a holder that the plan read and
-  selected and the run did not reach, and `git worktree remove <P3>`, run
-  then, exits 0 and leaves b and its reflog in place
+  <P3>, which this run selected and did not reach; remove it and retire b with
+  project clean <root> --apply --action remove --worktree <P3>
+  --retire-branches`, P3 being a holder that the plan read and selected and
+  the run did not reach, and that command, run then with `--yes`, removes P3
+  and retires b, and exits 0
+- **AND** when the test hook also makes, in P3, a commit on a detached `HEAD`
+  and then checks b out there again, so that only P3's HEAD reflog holds that
+  commit, the result prints the same line, and the printed command, run with
+  `--yes`, refuses with `target-excluded`, reason `worktree-only-commits`, and
+  exit 2, P3, b and that commit remaining, where `git worktree remove <P3>`
+  would exit 0 and leave that commit unreachable
 - **AND** when instead `project clean <root> --apply --action remove --worktree
   P1 --yes --retire-branches` names P1 alone, P3 is `not-requested`, a gate
   before the index gates, so that the plan never read P3's index, the plan
@@ -1946,9 +2044,12 @@ N; branches kept: `; and then the residual-window line.
   probe of the repository exits 0 and warns `refname 'HEAD' is ambiguous.`,
   every row is `inspection-error`, and the run removes no worktree and prints
   no `Retired HEAD` line, while with `core.warnAmbiguousRefs` set to false in
-  the repository's configuration the branch is retired and the result prints
-  `Retired HEAD (was <sha>); restore: git -C '<root>' update-ref
-  refs/heads/HEAD <sha> ''`, which run by a POSIX shell recreates the ref
+  the repository's configuration, the main worktree on the merge target and
+  the merge target pushed, so that the merge target's upstream, which Git and
+  the ref listing take as that branch's, holds its tip, the branch is retired
+  and the result prints `Retired HEAD (was <sha>); restore: git -C '<root>'
+  update-ref refs/heads/HEAD <sha> ''`, which run by a POSIX shell recreates
+  the ref
 - **AND** for an eligible branch whose name is `topic`, U+202E and `x`, a name
   Git accepts that holds a code point to escape, the result prints `Retired
   $'topic\u202ex' (was <sha>); restore: git -C '<root>' branch $'topic\u202ex'
