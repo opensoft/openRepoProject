@@ -1387,11 +1387,11 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   `status`, `doctor` and `update` report such a row as the baseline does
   (`f3724fc`'s values, where `41759a4` made both `inspection-error` and
   `doctor` exit 1); R-57 L3's shared-path and R-67 (c)'s twin rows stayed in
-  every command until lane 3's W161 (row 004-08; lead R-432, ruled (b); writer's
-  `b7cf86e`) confined them to clean's plan as well: `worktree_rows()` reads
-  `shared_paths()` and `shared_identities()` only where `for_clean` is true, so
-  that `status`, `doctor` and `update` read such rows as the baseline does, and
-  `clean` keeps both `registration-mismatch`.
+  every command until 2026-10-31, when lane 3's W161 (row 004-08; lead R-432,
+  ruled (b); writer's `b7cf86e`) confined them to clean's plan as well:
+  `worktree_rows()` reads `shared_paths()` and `shared_identities()` only where
+  `for_clean` is true, so that `status`, `doctor` and `update` read such rows as
+  the baseline does, and `clean` keeps both `registration-mismatch`.
   Brett Heap's M3 (a) (lead R-413; writer's `d640539`) adds
   `WorktreeRow.holds`, set by `worktree_rows()` for a row in
   `enclosing_rows()`, `shared_identities()` or `shared_paths()`, never

@@ -213,17 +213,17 @@ set and `repo_state()` does not, so `status`, `doctor` and `update` read such a
 row as the baseline does, probed and with its own `dirty`, as `f3724fc` did,
 where `41759a4` made both `inspection-error` and `doctor` exit 1.
 
-Two rules before them are `clean`'s plan alone too (lane 3's W161, row 004-08;
-lead R-432, ruled (b); writer's `b7cf86e`), for the same reason, since the
-`project-command` delta states neither: R-57 L3's registry path that another
-entry names, and R-67 (c)'s two spellings of one worktree. `worktree_rows()`
-reads `shared_paths()` and `shared_identities()` only where `for_clean` is true,
-so `status`, `doctor` and `update` read such a row as the baseline does, probed
-and with its own `dirty`, and `doctor` exits 0 where nothing else is wrong,
-where `project` through `aa342ad` made them `registration-mismatch` in every
-command; `clean` keeps both kinds of row `registration-mismatch`, with M3 (a)'s
-step and M4 (a)'s remedy (`registry_twin()`, revalidation's re-read, is clean's
-already).
+Two rules before them are `clean`'s plan alone too, since 2026-10-31 (lane 3's
+W161, row 004-08; lead R-432, ruled (b); writer's `b7cf86e`), for the same
+reason as those two, that the `project-command` delta states neither: R-57 L3's
+registry path that another entry names, and R-67 (c)'s two spellings of one
+worktree. `worktree_rows()` reads `shared_paths()` and `shared_identities()`
+only where `for_clean` is true, so `status`, `doctor` and `update` read such a
+row as the baseline does, probed and with its own `dirty`, and `doctor` exits 0
+where nothing else is wrong, where `project` through `aa342ad` made them
+`registration-mismatch` in every command; `clean` keeps both kinds of row
+`registration-mismatch`, with M3 (a)'s step and M4 (a)'s remedy
+(`registry_twin()`, revalidation's re-read, is clean's already).
 
 ### Branch evidence (D6, D7)
 
