@@ -925,7 +925,8 @@ class GatesTests(clean_support.CleanCase):
                              frozenset({0}))
 
     # Brett Heap's M3 (a), "yes, recommended for M1 and M3" (lead R-413; lane
-    # 3's W133 MEDIUM-3; #19's Open Questions at 4512441). The class's next
+    # 3's W133 MEDIUM-3; #19's D18 at 54e869b, design.md:1480-1483 and
+    # pcl:120-123). The class's next
     # step ends "or remove the row by hand", which, for a row whose path is or
     # holds the main worktree, the common directory or another worktree,
     # deletes what it holds. Such a row, Q2 (1)'s, and one that shares its path
