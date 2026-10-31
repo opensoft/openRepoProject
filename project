@@ -3670,13 +3670,14 @@ def worktree_rows(repo, run, records=None, for_clean=False):
     (match_target() and build_plan()), whose review safety adds Brett Heap's
     Q2 (1) and Q9 (b) below; repo_state() leaves it false, so status, doctor
     and update read an enclosing row and a symbolic-link path as the baseline
-    did (pc:311-312's parity rule; lane 3's W139 MEDIUM-1, lead R-409), and
-    so too a shared registry path and two spellings of one worktree, R-57 L3
-    and R-67 (c) below being clean's alone as well (lane 3's W161, row
-    004-08; lead R-432). The bare entry, and a first entry that is the
-    common directory when the main worktree cannot be named, are no rows (D8),
-    and where it can, that row's path is the main worktree's realpath; the
-    registry's first entry is the main worktree in any order given.
+    did (#19's parity rule at d9c482b, pcm:316-317; lane 3's W139 MEDIUM-1,
+    lead R-409), and so too a shared registry path and two spellings of one
+    worktree, R-57 L3 and R-67 (c) below being clean's alone as well (lane
+    3's W161, row 004-08; lead R-432). The bare entry, and a first entry that
+    is the common directory when the main worktree cannot be named, are no
+    rows (D8), and where it can, that row's path is the main worktree's
+    realpath; the registry's first entry is the main worktree in any order
+    given.
 
     Per row (D6, D7; FR-006, FR-055 to FR-057): presence by lstat, false on
     ENOENT or ENOTDIR and null with an `os-error` on any other failure (lead
@@ -7506,9 +7507,10 @@ def repo_state(root):
     the invocation gives every command but `clean`, no deadline and no row cap,
     and without clean's Q2 (1) and Q9 (b) (for_clean false; lead R-409): an
     enclosing row and a symbolic-link path are probed as the baseline probed
-    them (pc:311-312), and so are a registry path listed twice (R-57 L3) and
-    two spellings of one worktree (R-67 (c)), which clean's plan alone makes
-    registration-mismatch (lane 3's W161, row 004-08; lead R-432).
+    them (#19's parity rule at d9c482b, pcm:316-317), and so are a registry
+    path listed twice (R-57 L3) and two spellings of one worktree (R-67 (c)),
+    which clean's plan alone makes registration-mismatch (lane 3's W161, row
+    004-08; lead R-432).
     root's own row gives its branch, head, dirty, upstream, ahead and behind,
     so a linked worktree reports its own (lead ruling R-56); a deleted
     upstream keeps its configured short name with ahead and behind null.
