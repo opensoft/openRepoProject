@@ -508,6 +508,12 @@ class StatusDoctorUpdateTests(clean_support.CleanCase):
         shape = self.base / "shape"
         shape_runs = self.recording_script(shape / "update-shape.py")
         line = config_lines("HOME")
+        # The no-root doctor run's lookup runs, and finds this fixture registry
+        # first, under PROJECTS_DIR (self.base): it reads no registry above the
+        # temporary directory, in the current directory or in its parents.
+        fixture_config = self.base / "workBenches" / "config"
+        fixture_config.mkdir(parents=True)
+        shutil.copyfile(self.wb / "config" / "bench-config.json", fixture_config / "bench-config.json")
         for home in ("~", "~/x", "~user"):
             env = self.path_first(bin_dir, dict(self.env, HOME=home))
             no_root = {name: value for name, value in env.items() if name != "WORKBENCHES_ROOT"}
@@ -952,13 +958,13 @@ class StatusDoctorUpdateTests(clean_support.CleanCase):
         # and a worktree listed again through a symbolic-link spelling (R-67
         # (c)) are registration-mismatch in clean's plan alone, as R-409
         # confined Brett Heap's Q2 (1) and Q9 (b): pc's evidence model states
-        # neither rule, so its parity rule (pc:311-312) keeps status, doctor
-        # and update at the baseline's values. These are 15504f1's, read from
-        # its `project` on this layout: every row probed, `dirty` false,
-        # `ignored_files` 0, no classification, and doctor exiting 0 with no
-        # error check, where 904aefc made the four rows inspection-error with
-        # `dirty` null and doctor exit 1. Each entry adds 004's
-        # `path_valid_utf8` and `ignored_samples`. The listing's order is
+        # neither rule, so its parity rule (#19's, at d9c482b, pcm:316-317)
+        # keeps status, doctor and update at the baseline's values. These are
+        # 15504f1's, read from its `project` on this layout: every row probed,
+        # `dirty` false, `ignored_files` 0, no classification, and doctor
+        # exiting 0 with no error check, where 904aefc made the four rows
+        # inspection-error with `dirty` null and doctor exit 1. Each entry adds
+        # 004's `path_valid_utf8` and `ignored_samples`. The listing's order is
         # Git's, so entries are compared sorted. Report runs only, no --apply,
         # every owner tool a recording stand-in. clean, on the same fixture,
         # still excludes the four rows as registration-mismatch, and its
