@@ -1990,8 +1990,8 @@ as amended, Codex's P2 on `9ff8202`).
     git -C ROOT update-ref refs/heads/BRANCH SHA ''`: the naive line for `-f`,
     `git branch -f SHA`, creates a branch named after the SHA, and `git branch
     HEAD SHA` refuses (Context); for `HEAD` the form is only defensive under
-    Git's default `core.warnAmbiguousRefs`, since every status probe of a
-    repository that holds `refs/heads/HEAD` then exits 0 and warns
+    either setting of Git's `core.warnAmbiguousRefs`: under its default every
+    status probe of a repository that holds `refs/heads/HEAD` exits 0 and warns
     `refname 'HEAD' is ambiguous.` (Context, round A25), which PR #19's
     warned-probe rule, Brett Heap's yes to Q8, makes a failed probe, so that
     every row is `inspection-error` and no run retires such a branch (its
