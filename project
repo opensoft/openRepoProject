@@ -969,6 +969,23 @@ TEXT = {
     "row_error_git_operation": "git {SUBCOMMAND}",
 }
 
+# The two redirect remedies of `inspection-incomplete` where a row the refusal
+# counts is `registration-mismatch` and its path is, or holds, the main
+# worktree, the common directory or another worktree, or shares its path with
+# another (WorktreeRow.holds; incomplete_refusal()): the remedy's "or remove
+# the row by hand after review", followed for such a row, deletes what it
+# holds, so each takes M3's exception after it. Brett Heap's M4 (a),
+# 2026-10-31T18:20:06Z, "(a) Add M3's exception (Recommended)" (lead R-432;
+# lane 2's wave24 question M4). Each is built from its remedy as the lead's
+# generator built wave26/m4-texts.json: the clause replaced once, nothing
+# else changed, so the unread form still names no `git worktree prune`.
+REMOVE_BY_HAND = "or remove the row by hand after review"
+HOLDS_EXCEPTION = (", except one whose path is or holds the main worktree, the common directory or another "
+                   "worktree, which must not be deleted by hand or with git worktree remove: review its "
+                   "registration with git worktree list --porcelain")
+TEXT.update({remedy + "_holds": TEXT[remedy].replace(REMOVE_BY_HAND, REMOVE_BY_HAND + HOLDS_EXCEPTION, 1)
+             for remedy in ("remedy_inspection_incomplete_redirect", "remedy_inspection_incomplete_redirect_unread")})
+
 # D18's next step by exclusion reason; every other class takes its
 # recommendation, and `deferred-target-cap` has its own line in TEXT. D18 gives
 # none for `main-worktree`, `unsupported-path-bytes` or `not-requested`.
@@ -4715,7 +4732,13 @@ def incomplete_refusal(plan, code, exclude=()):
     path that could not be read (unread_paths()), since prune deletes such a
     live worktree's admin directory: the cause is safety, not counting, and
     the redirect's counting is unchanged (#19's round (l); lane 3's W87 M-1,
-    lead ruling R-307)."""
+    lead ruling R-307). Where a row the refusal counts is excluded as
+    `registration-mismatch` and holds or shares another (WorktreeRow.holds),
+    the redirect remedy, plain or unread, takes its `_holds` form, M3's
+    exception after "or remove the row by hand after review", since that
+    clause, followed for such a row, deletes what it holds; every other
+    refusal prints the same text as before (Brett Heap's M4 (a), lead
+    R-432)."""
     if code == "inspect-cap":
         evidence = plan.evidence or {}
         registry = evidence.get("records") or ()
@@ -4729,11 +4752,13 @@ def incomplete_refusal(plan, code, exclude=()):
         mismatched = {id(row) for row, reason in getattr(plan, "excluded", None) or ()
                       if reason == "registration-mismatch"}
         redirect = any(id(row) in mismatched for row in rows)
+        # M4 (a), lead R-432: a counted registration-mismatch row that holds or shares another.
+        held = any(id(row) in mismatched and getattr(row, "holds", False) for row in rows)
         if unread_paths(plan):  # R-307: any row of the plan, counted or not
-            remedy = TEXT["remedy_inspection_incomplete_redirect_unread" if redirect
-                          else "remedy_inspection_incomplete_unread"]
+            key = "remedy_inspection_incomplete_redirect_unread" if redirect else "remedy_inspection_incomplete_unread"
         else:
-            remedy = TEXT["remedy_inspection_incomplete_redirect" if redirect else "remedy_inspection_incomplete"]
+            key = "remedy_inspection_incomplete_redirect" if redirect else "remedy_inspection_incomplete"
+        remedy = TEXT[key + "_holds" if held else key]
     return Refused(TEXT["plan_incomplete"].format(CODE=code, REMEDY=remedy), code=code)
 
 

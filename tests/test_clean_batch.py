@@ -869,9 +869,11 @@ class BatchTests(clean_support.CleanCase):
         # exit 2, before any target-excluded; nothing is removed. P's rows are
         # excluded as registration-mismatch, by bytes and by realpath alike, so
         # the remedy is the variant naming the unset (#19's round (h) at
-        # b3228bb, design.md D18).
+        # b3228bb, design.md D18), in its form with M3's exception, since each
+        # of P's rows shares its path or realpath with another (Brett Heap's
+        # M4 (a), lead R-432).
         refused = "REFUSED: " + TEXT["plan_incomplete"].format(
-            CODE="inspection-incomplete", REMEDY=TEXT["remedy_inspection_incomplete_redirect"]) + "\n"
+            CODE="inspection-incomplete", REMEDY=TEXT["remedy_inspection_incomplete_redirect_holds"]) + "\n"
         # Raw bytes: a copied admin directory lists the same path twice (lane G's
         # fixture), and both rows are inspection-error (registration-mismatch).
         bytes_root = self.repo("bytes-repo")
