@@ -3707,7 +3707,8 @@ US3, US7 and US9; US5's text lane follows it (analyze M2 and L9).
   (`project:6550-6558` at `703b58c`) calls `hidden_state_probe()`, which runs
   gate 10's listing again, its one Git child
   (`project:5590`), and then `nested_git_check()` (`project:5595`) over the
-  directories that listing shows holding an index entry, so that revalidation
+  directories that listing shows holding an index entry directly or below it,
+  other than the worktree's own top level, so that revalidation
   re-runs Q2 (2)'s nested `.git` checks, in #19's words "the hidden-state probe,
   with the `lstat` of `<dir>/.git` for every directory that its listing shows
   holding an index entry directly or below it, other than the worktree's own
@@ -5384,7 +5385,7 @@ verification.
   one of the 101 rows names at least one test (114 rows since doc round 13, 117
   since doc round 14, 122 since doc round 26, 124 since its Part D, 126 since
   doc round 28, and, since doc round 27, five of PR #19's rows naming a gap
-  instead (six until row 123's test), seven since doc round 28), which the
+  instead (six until row 123's test), seven since doc round 28, which the
   verify lists: "Branch deletion refuses a branch it may not delete", "An edit
   that keeps its size and restores its mtime", "A work-tree probe at
   revalidation", "A stale entry beside a worktree whose path cannot be read",

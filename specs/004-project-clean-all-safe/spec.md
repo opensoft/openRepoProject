@@ -1164,7 +1164,8 @@ written".
   proven disposable"; PR #19's "An operation in progress", "A squash merge
   that holds an autostash" and "A commit held only by the worktree".
   Note, 2026-10-23: gate 9's `contains-submodule` also covers an entry of any
-  type named `.git` in a directory of the worktree that holds an index entry,
+  type named `.git` in a directory of the worktree that holds an index entry
+  directly or below it, other than the worktree's own top level,
   found by one `lstat` of `<dir>/.git` for each such directory, counted in the
   filesystem budget and made for the rows that reach gate 9, again at
   revalidation inside the hidden-state probe (Brett Heap's Q2 (2), ruled on

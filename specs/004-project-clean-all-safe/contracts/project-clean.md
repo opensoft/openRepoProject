@@ -1200,7 +1200,8 @@ It runs for the rows that reach gate 9, at most 16, and again at revalidation.
 Step 7 (data-model.md, "Revalidation step and `probes_performed`") calls
 `hidden_state_probe()`, which runs gate 10's listing again, the step's one Git
 child, and then `nested_git_check()` over the directories that fresh listing
-shows holding an index entry, the same `lstat` of `<dir>/.git` for each, in one
+shows holding an index entry directly or below it, other than the worktree's own
+top level, the same `lstat` of `<dir>/.git` for each, in one
 `fs_call()` counted in the filesystem budget. #19's round (r) (at `4512441`;
 lane 3's W133 MEDIUM-2; the lead's R-391 and R-395) words it in the
 `project-clean-review-safety` delta, "Cleanup revalidates destructive
