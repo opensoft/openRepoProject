@@ -1104,7 +1104,8 @@ order:
   `inspection-error`, and with that setting false, where the probe exits 0
   with nothing on standard error, that row's upstream evidence cannot be
   read, since the ref listing gives a branch named `HEAD` the upstream of
-  the command directory's current branch, never its own; each followed,
+  the command directory's current branch, which is its own only where that
+  directory is the worktree on `refs/heads/HEAD`; each followed,
   for every local branch BRANCH2 that the run did not retire and whose
   configured upstream the plan's ref
   listing gives as `refs/heads/BRANCH`, by `Note: BRANCH2 tracks BRANCH as its
