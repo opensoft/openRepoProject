@@ -3,7 +3,7 @@
 The `project` command creates, inspects, diagnoses and maintains projects using
 [openRepoShape](https://github.com/opensoft/openRepoShape),
 [openRepoTools](https://github.com/opensoft/openRepoTools), and
-[workBenches](https://github.com/opensoft/workBenches).
+[openBenches](https://github.com/opensoft/openBenches).
 
 ## Install
 
@@ -256,6 +256,14 @@ No component silently pulls Git branches or implements pin/worktree mechanics.
 
 The installer records its workstation checkout in a host-local
 `.workbenches-path` beside the command. Environment/CLI overrides take precedence.
+
+Without an explicit override, the installed marker is tried before automatic
+discovery. Discovery tries `openBenches` before `workBenches` in each projects
+directory (`~/projects` then `~/Projects` by default), then checks the current
+directory itself and both basenames beneath the current directory and each
+ancestor, nearest first. Every candidate must contain
+`config/bench-config.json`; an invalid explicit root refuses rather than
+falling back to another checkout.
 
 ## Ownership
 

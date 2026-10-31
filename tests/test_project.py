@@ -1906,5 +1906,101 @@ class ProjectTests(unittest.TestCase):
         self.assertFalse((self.base / "Flow5").exists())
 
 
+class WorkbenchesDiscoveryTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.base = Path(self.temp.name).resolve()
+        self.command = self.base / "bin/project"
+        self.command.parent.mkdir()
+
+    def checkout(self, root):
+        (root / "config").mkdir(parents=True)
+        (root / "config/bench-config.json").write_text('{"benches": {}}\n')
+        return root
+
+    def resolve(self, cwd, *, home, explicit=None, env=None, marker=None, required=True):
+        cwd.mkdir(parents=True, exist_ok=True)
+        marker_path = self.command.parent / ".workbenches-path"
+        if marker is None:
+            marker_path.unlink(missing_ok=True)
+        else:
+            marker_path.write_text(str(marker) + "\n")
+        with patch.dict(os.environ, env or {}, clear=True), \
+                patch.object(module.Path, "home", return_value=home), \
+                patch.object(module.Path, "cwd", return_value=cwd), \
+                patch.object(module.sys, "argv", [str(self.command)]):
+            return module.workbenches(explicit=explicit, required=required)
+
+    def test_discovers_old_and_new_checkouts_in_projects_directories(self):
+        for projects_name in ("projects", "Projects"):
+            for checkout_name in ("workBenches", "openBenches"):
+                with self.subTest(projects=projects_name, checkout=checkout_name):
+                    home = self.base / f"{projects_name}-{checkout_name}-home"
+                    root = self.checkout(home / projects_name / checkout_name)
+                    cwd = self.base / f"cwd-{projects_name}-{checkout_name}"
+                    self.assertEqual(self.resolve(cwd, home=home), root)
+
+    def test_new_checkout_wins_when_both_are_present(self):
+        for projects_name in ("projects", "Projects"):
+            with self.subTest(projects=projects_name):
+                home = self.base / f"{projects_name}-both-home"
+                self.checkout(home / projects_name / "workBenches")
+                new = self.checkout(home / projects_name / "openBenches")
+                cwd = self.base / f"cwd-{projects_name}-both"
+                self.assertEqual(self.resolve(cwd, home=home), new)
+
+    def test_new_checkout_wins_across_projects_conventions(self):
+        home = self.base / "split-roots-home"
+        self.checkout(home / "projects/workBenches")
+        new = self.checkout(home / "Projects/openBenches")
+        cwd = self.base / "split-roots-cwd"
+        self.assertEqual(self.resolve(cwd, home=home), new)
+
+    def test_flag_environment_and_marker_precedence(self):
+        home = self.base / "precedence-home"
+        self.checkout(home / "projects/openBenches")
+        marker = self.checkout(self.base / "marker-root")
+        environment = self.checkout(self.base / "environment-root")
+        flag = self.checkout(self.base / "flag-root")
+        cwd = self.base / "precedence-cwd"
+        env = {"WORKBENCHES_ROOT": str(environment)}
+        self.assertEqual(self.resolve(cwd, home=home, explicit=flag, env=env, marker=marker), flag)
+        self.assertEqual(self.resolve(cwd, home=home, env=env, marker=marker), environment)
+        self.assertEqual(self.resolve(cwd, home=home, marker=marker), marker)
+
+    def test_explicit_validation_and_marker_fallback_are_preserved(self):
+        home = self.base / "validation-home"
+        automatic = self.checkout(home / "Projects/workBenches")
+        marker = self.checkout(self.base / "valid-marker-root")
+        environment = self.checkout(self.base / "valid-environment-root")
+        missing = self.base / "missing-root"
+        cwd = self.base / "validation-cwd"
+        cases = (("flag", missing, {"WORKBENCHES_ROOT": str(environment)}),
+                 ("environment", None, {"WORKBENCHES_ROOT": str(missing)}))
+        for label, explicit, env in cases:
+            with self.subTest(explicit=label):
+                with self.assertRaisesRegex(module.Refused, "Cannot find openBenches or workBenches"):
+                    self.resolve(cwd, home=home, explicit=explicit, env=env, marker=marker, required=False)
+        self.assertEqual(self.resolve(cwd, home=home, marker=missing, required=False), automatic)
+
+    def test_discovers_either_basename_from_ancestors(self):
+        for checkout_name in ("workBenches", "openBenches"):
+            with self.subTest(checkout=checkout_name):
+                home = self.base / f"{checkout_name}-ancestor-home"
+                root = self.checkout(self.base / f"{checkout_name}-ancestor" / checkout_name)
+                cwd = root / "nested/child"
+                self.assertEqual(self.resolve(cwd, home=home), root)
+
+    def test_current_and_ancestor_candidates_are_deterministic(self):
+        home = self.base / "current-home"
+        parent = self.base / "current-parent"
+        old = self.checkout(parent / "workBenches")
+        new = self.checkout(parent / "openBenches")
+        self.assertEqual(self.resolve(parent, home=home), new)
+        self.assertEqual(self.resolve(parent / "nested/child", home=home), new)
+        self.assertEqual(self.resolve(old, home=home), old)
+
+
 if __name__ == "__main__":
     unittest.main()
