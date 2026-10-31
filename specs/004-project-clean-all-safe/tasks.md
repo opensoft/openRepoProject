@@ -254,14 +254,8 @@ regions and contracts every lane writes against.
   (merged at `45584a3`) and the tasks from T003 on change those paths by
   design, so it is not re-run, and citations are read with `git show
   961c405:<file>` (Path Conventions).
-  Note, 2026-10-31 (lead ruling R-429): this branch merged `main` at
-  `b42355e` in `1a29e80`, and #40 (`f271a39`) added
-  `WorkbenchesDiscoveryTests`, seven tests, to `main`'s
-  `tests/test_project.py`. The verify's count is therefore `main`'s 103 at
-  `b42355e`, where it was 96 at `961c405`; 004 adds no test to that file.
-  The baseline recorded above is unchanged.
   — files: (none)
-  — verify: `git merge-base --is-ancestor 961c405 HEAD && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=f(L.discover('tests',pattern='test_project.py'));print(len(I),'tests');sys.exit(0 if len(I)==103 and not L.errors else 1)" && python3 -m unittest discover -s tests -p 'test_project.py'`
+  — verify: `git merge-base --is-ancestor 961c405 HEAD && python3 -c "import sys,unittest as u;L=u.defaultTestLoader;f=lambda s:[i for t in s for i in (f(t) if isinstance(t,u.TestSuite) else [t.id()])];I=f(L.discover('tests',pattern='test_project.py'));print(len(I),'tests');sys.exit(0 if len(I)==96 and not L.errors else 1)" && python3 -m unittest discover -s tests -p 'test_project.py'`
 - [x] T002 [P] [S] Create `specs/004-project-clean-all-safe/traceability.md`, lane
   line first: one row per delta scenario, 101 rows (the 100 of the three delta
   files on `main`, and PR #19's "The push child reaches its remote", marked as
@@ -483,7 +477,7 @@ T033), when B, D, E and F are; H, guard (T034, T035), when T023 is, beside G
   `@dataclass` in `project` loads there too (R-29): it is that file's only edit
   outside T046, and no test there changes but T046's, which the verify's
   second script is given by name (lead rulings R-32 and R-95 (e)).
-  Note, 2026-10-31 (lead ruling R-429): the second script's base moves from
+  Note, 2026-10-31 (lead ruling R-429 (b)): the second script's base moves from
   `961c405` to `b42355e`, as T128's does. This branch merged `main` at
   `b42355e` in `1a29e80`, and #40 (`f271a39`) added
   `WorkbenchesDiscoveryTests` to `main`'s `tests/test_project.py`; against
@@ -1754,7 +1748,7 @@ L-8).
   (`ask_removal`) dirties the worktree and answers `yes`; `clean(args)`
   returns 2, the one document on the captured standard output has its target
   `refused` with `state-changed`, and the worktree remains.
-  Note, 2026-10-31 (lead ruling R-429): the verify's base moves from
+  Note, 2026-10-31 (lead ruling R-429 (b)): the verify's base moves from
   `961c405` to `b42355e`, as T128's does, since #40 (`f271a39`) added
   `WorkbenchesDiscoveryTests` to `main`'s copy and this branch merged `main`
   at `b42355e` in `1a29e80`.
