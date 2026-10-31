@@ -644,8 +644,9 @@ TEXT_FIXTURES = {
     "partial_removal_note_unread": "Probable partial removal: inspect {PATH} by hand; its .git could not be read, so do not run git worktree prune, git worktree remove or git gc until it can.",
     # D18's note for a locked worktree (#19 at 4f1c0e0, design.md:1225-1228; W52 F-2, R-248).
     # It replaces ratified text; Brett Heap ruled it on 2026-10-22, "F-2: yes" (the lead's R-263;
-    # traceability.md:307-308), as project's own comment has said since T16. Its check first by
-    # his Q4 (a) and (b) (lead R-380), copied exactly from #19's round (q) at 818311a, design.md D18.
+    # traceability.md, the sentence "F-2's note replaces ratified text"), as project's own comment
+    # has said since T16. Its check first by his Q4 (a) and (b) (lead R-380), copied exactly from
+    # #19's round (q) at 818311a, design.md D18.
     "partial_removal_note_locked": "Probable partial removal: check that git -C {PATH} status --short --ignored lists only deleted files, unlock it, then git worktree remove --force {PATH} by hand.",
     # D18: refusal messages and remedies.
     "target_excluded_gate": "Worktree is excluded: {REASON}; {NEXT_STEP}",
@@ -677,7 +678,7 @@ TEXT_FIXTURES = {
     # common directory or another row (Q2 (1)), or that shares its path with another row (R-57 L3,
     # R-67 (c)), in place of the class's, whose "or remove the row by hand" deletes what it holds:
     # Brett Heap's M3 (a), "yes, recommended for M1 and M3" (lead R-413), copied exactly from #19's
-    # Open Questions at 4512441 (design.md, M3 (a)) and the lead's message. It names no git
+    # D18 at 54e869b (design.md:1480-1483; pcl:120-123) and the lead's message. It names no git
     # worktree prune, so it has no unread form and no Q3 (b) suffix.
     "next_step_registration_mismatch_holds": "its path is or holds the main worktree, the common directory or another worktree, so do not delete it by hand or with git worktree remove; review its registration with git worktree list --porcelain",
     # The inspect-cap remedy always warns against git worktree prune, since the rows past the

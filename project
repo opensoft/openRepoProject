@@ -773,9 +773,9 @@ TEXT = {
     # D18's note for a locked worktree's row, which `git worktree remove
     # --force` refuses (#19 at 4f1c0e0; lane 3's W52 F-2, R-248). It replaces
     # ratified text; Brett Heap ruled it on 2026-10-22, "F-2: yes" (the lead's
-    # R-263; traceability.md:253-255), and it is in its own commit, 64ad453.
-    # Its check comes first, as in the plain note (Brett Heap's Q4 (a) and (b),
-    # lead R-380).
+    # R-263; traceability.md, the sentence "F-2's note replaces ratified
+    # text"), and it is in its own commit, 64ad453. Its check comes first, as
+    # in the plain note (Brett Heap's Q4 (a) and (b), lead R-380).
     "partial_removal_note_locked":
         "Probable partial removal: check that git -C {PATH} status --short --ignored lists only deleted files, "
         "unlock it, then git worktree remove --force {PATH} by hand.",
@@ -843,9 +843,9 @@ TEXT = {
     # "or remove the row by hand", deletes what it holds, so the preview gives
     # these rows a group of their own (excluded_groups()). Brett Heap's M3
     # (a), "yes, recommended for M1 and M3" (lead R-413; lane 3's W133
-    # MEDIUM-3; #19's Open Questions at 4512441, 197 characters). It names no
-    # `git worktree prune`, so it takes no PRUNE_DRY_RUN and has no unread
-    # form: it is the same in every mode.
+    # MEDIUM-3; #19's D18 at 54e869b, design.md:1480-1483 and pcl:120-123,
+    # 197 characters). It names no `git worktree prune`, so it takes no
+    # PRUNE_DRY_RUN and has no unread form: it is the same in every mode.
     "next_step_registration_mismatch_holds":
         "its path is or holds the main worktree, the common directory or another worktree, so do not delete it "
         "by hand or with git worktree remove; review its registration with git worktree list --porcelain",
@@ -3761,6 +3761,8 @@ def worktree_rows(repo, run, records=None, for_clean=False):
             read["errors"].extend(dict(error) for error in (unlisted or unmerged))
         row = row_evidence(record, raw, index == 0, read, refs, repo["merged"], target)
         # M3 (a), lead R-413: a path that is, holds or shares another's takes its own next step.
+        # In clean's plan the twins and shared terms add nothing to enclosing: enclosing_rows()
+        # counts equality as enclosure, so a mutant that drops them survives by design (W155 OBS-1).
         row.holds = at in twins or at in enclosing or record["path"] in shared
         rows.append(row)
     return rows
