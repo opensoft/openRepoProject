@@ -263,11 +263,31 @@ Questions (the four questions that A-127 rules); the spec delta edits a flagged
 apply's refusal sentence, the `Retired` line's sentence, the holder lines and
 four ADDED scenarios, adding ANDs and no scenario (proposal, "Re-read and Codex
 Findings (round A28)").
+Round A29 maps A-131 and A-132 (lane openRepoProject-3's W160, OBS-9, on
+main's move to `b42355e`; the reader RN's RN-3, which re-pins the cites of
+feature 004 at `f3724fc` to `904aefc`; A-129's calls (2) and (4); and lane
+openRepoProject-3's W166 confirm read of round A28, its LOW-1 and OBS-1 to
+OBS-4), with A-133, and A-134 (lane openRepoProject-3's W169 read of PR #19's
+round (u) at `1476110`) to the Context table (round A29's row: the ref listing
+run in the worktree on `refs/heads/HEAD`), the citation key (main at
+`b42355e`), the Context's account of feature 004 (`GIT_KINDS` at `904aefc`),
+D3 and D8 (the upstream the listing gives a branch named `HEAD`, OBS-1; F-4
+and `RelayParser` at `904aefc`), D4 and D7 (the sentences that named
+`54e869b` as PR #19's head dated, its D14 and task 2.1 unchanged at
+`1476110`), D7 (RE-4 at `904aefc`, and the cache change's B-3/CD-6 ruled,
+A-129's call (4) and OBS-4) and the Migration Plan (the README's edit points
+at `904aefc`); the spec delta edits the `Retired` line's sentence, adding no
+scenario (proposal, "Re-read and Codex Findings (round A29)").
 
 Citations follow `proposal.md`: packet files at `da33d92`, `CAS` for change 1,
 `APO` for change 2, `project:N` and `tests:N` at `961c405`, all but the packet
 files unchanged at main `15504f1`, whose `ideation/` holds packet revision 1
-(`e45155a`).
+(`e45155a`). Main has since moved to `b42355e` (#40 and #41), whose `project`
+changes only inside `workbenches()`, three net lines longer there, so that
+each fact cited at `project:N` past `:89` holds at `b42355e` three lines
+lower, as checked for each such cite, and whose `tests/test_project.py` keeps
+every line cited here (`proposal.md`, the citation key; lane
+openRepoProject-3's W160, OBS-9).
 
 What in `project` shapes the approach:
 
@@ -306,14 +326,14 @@ What in `project` shapes the approach:
   that seam, after `decide_stage()`; its branch child is one more kind for
   `git_env` and `git_argv`, a row `branch` of its own in `GIT_KINDS`, not
   read-only, with no status pins and the protocol pins, and not the
-  `delegate` row reused: at `f3724fc` that table holds `probe`, `status`,
-  `hidden`, `removal`, `delegate` and `push` (`project:1090-1103`),
+  `delegate` row reused: at `904aefc` that table holds `probe`, `status`,
+  `hidden`, `removal`, `delegate` and `push` (`project:1175-1188`),
   `child_budget` gives a `removal` or `delegate` child no budget and any
   other kind, under a deadline, the 5 s probe budget or the time left
-  (`:1402-1417`), and only a read-only handle is put in `LIVE_PROBES`
-  (`:1161`, `:1189-1190`), so that a `branch` row, not read-only, gets that
+  (`:1487-1502`), and only a read-only handle is put in `LIVE_PROBES`
+  (`:1246`, `:1274-1275`), so that a `branch` row, not read-only, gets that
   budget and stays out of that registry (the reader RE's RE23-4; ruling
-  A-100).
+  A-100; re-pinned from `f3724fc` by the reader RN's RN-3, ruling A-131).
 - `tests:857-878`, `test_clean_removes_only_merged_worktree_and_keeps_branch`,
   removes a worktree, sees its branch kept, then deletes it with
   `delete-branch`: the default path and the retry path in one test, kept
@@ -364,6 +384,7 @@ bare remote, `GIT_CONFIG_NOSYSTEM=1` and an empty global configuration:
 | `b3`, whose configured upstream is the local `b1`, at `b1`'s tip, in a linked worktree P3, beside P1 on `b1`, on Git 2.43.0 and on the 2.36.6 floor (round A28; ruling A-126, the reader RJ's F3) | after P1's `worktree remove`, the ref listing still gives `b3` the upstream `refs/heads/b1` with an empty track and `b1` at its SHA, as the plan's listing did; after `branch -d -- b1`, exit 0, the listing gives `b3`'s upstream track `[gone]` and no `b1`; `worktree remove` of P3 exits 0 and `b3` stays at its SHA (`S/round-A28/bin/f3.sh`) |
 | a linked holder S of a merged `b` whose directory is moved away, as an unmounted drive leaves it, beside P on `b`, which `worktree remove` removes, S holding an untracked and an ignored file, on Git 2.43.0 and on the 2.36.6 floor (round A28; ruling A-126, the reader RJ's F5) | `worktree list --porcelain` lists S with `branch refs/heads/b` and `prunable gitdir file points to non-existent location`; `branch -d -- b` refuses, "cannot delete branch 'b' used by worktree at" (2.36.6: "Cannot delete branch 'b' checked out at"), exit 1; `git -C <S> switch --detach` fails, "cannot change to", exit 128; with S moved back, the detach run there exits 0 and keeps both files, and `branch -d -- b` deletes `b`, exit 0; with S moved to a new path, `git worktree repair <new path>` exits 0, the registry lists the new path on `b`, and the detach there and `branch -d -- b` do the same; with S gone and another worktree T also moved away, `git worktree prune --dry-run -v` lists both, `git worktree prune` removes both entries, T then fails "not a git repository" once moved back, and `branch -d -- b` deletes `b`, exit 0 (`S/round-A28/bin/f5.sh`) |
 | a linked worktree X on a merged `b` whose administrative `gitdir` file names the main worktree's `.git`, beside P on `b`, which `worktree remove` removes, the main worktree on `main`, on Git 2.43.0 and on the 2.36.6 floor (round A28; ruling A-126, the reader RJ's F7) | `worktree list --porcelain` lists the main worktree's path twice, on `refs/heads/main` and on `refs/heads/b`; `branch -d -- b` refuses, naming the main worktree's path, exit 1; `git -C <main> switch --detach` exits 0 and detaches the main worktree, and `branch -d -- b` still refuses, exit 1; `git worktree repair <X>` exits 0 and the registry lists X on `b`, `branch -d -- b` still refusing, now naming X, exit 1; `git -C <X> switch --detach` exits 0 and keeps X's untracked file, and `branch -d -- b` deletes `b`, exit 0, the main worktree on `main` (`S/round-A28/bin/f7.sh`) |
+| a hand-written `refs/heads/HEAD` with a commit of its own, published as `refs/heads/HEAD` with `branch.HEAD.remote` `origin` and `branch.HEAD.merge` `refs/heads/HEAD`, merged into `main` and `main` pushed, the main worktree on `main`, a linked worktree T on a published `topic` and a linked worktree H on `refs/heads/HEAD`, `core.warnAmbiguousRefs` false, the ref listing `for-each-ref refs/heads/HEAD` run in each, on Git 2.43.0 and on the 2.36.6 floor (round A29; ruling A-132, lane openRepoProject-3's W166, OBS-1) | run in the main worktree the listing gives `refs/heads/HEAD` the upstream `refs/remotes/origin/main`, in T `refs/remotes/origin/topic`, and in H `refs/remotes/origin/HEAD`, its own; `branch -d -- HEAD` run in H refuses, "cannot delete branch 'HEAD' used by worktree at" (2.36.6: "Cannot delete branch 'HEAD' checked out at"), exit 1, and the branch stays; with `branch.HEAD.*` removed the listing run in H gives no upstream, and run in the main worktree still `refs/remotes/origin/main` (`S/round-A29/bin/o1.sh`) |
 
 The council's adversary engineer added, on Git 2.43.0 (council finding AE-1):
 a commit reset or amended away on a branch stays reachable through that
@@ -602,9 +623,12 @@ preceding `merged-removable`, so Git compares the branch with an equal upstream
 and passes. A branch named `HEAD` never reaches that test, since its row is
 `inspection-error` before any plan selects it (D8; ruling A-128); for it, Git's
 test and the ref listing would take the upstream of the command directory's
-current branch, never the branch's own, which is why its row's upstream
-evidence is not read (Context, round A28; the reader RJ's F2, under the reader
-RN's RN-1; rulings A-126 and A-128). That is the PR #2
+current branch, the branch's own only where that directory is the worktree on
+`refs/heads/HEAD`, which holds the branch, so that Git refuses to delete it
+there; that is why its row's upstream evidence is not read (Context, rounds
+A28 and A29; the reader RJ's F2, under the reader RN's RN-1; lane
+openRepoProject-3's W166, OBS-1; rulings A-126, A-128 and A-132). That is the
+PR #2
 finding that `branch -d` "can accept a tracking branch based on its
 configured upstream"; D4 runs first, so the stage, not
 Git's test, decides eligibility. For an upstream whose remote-tracking ref is
@@ -730,7 +754,7 @@ leaves the branch to retire, the stage starts nothing more and the branch is
 The re-read's outcomes follow PR #19's rule for revalidation, which since its
 round (d) governs every Git child and every filesystem call of its steps, cited
 here at `f0bf538`, whose text there its rounds (f) to (i) keep, and its rounds
-(j) to (t), up to its current head `54e869b`, keep but for the work-tree
+(j) to (t), up to `54e869b`, keep but for the work-tree
 probe's outcomes, whose output round (j) reads as one path even over several
 lines (lane openRepoProject-2's R-287 and R-291), which this section does not
 restate (its `specs/project-clean-review-safety/spec.md:113-135`, and
@@ -1237,14 +1261,15 @@ the phase stays `reconciling` from the rescan until the next target sets
 reserve, and a second SIGINT would raise `Interrupted` out of its probes
 (`project:1309-1318`), where this change lets a second SIGINT abandon only the
 post-check; and `count_child` counts only a removal under `operations`
-(`project:1285-1291`). At `f3724fc` RE-4 still holds, as the reader RE found
-in the review wave of 2026-10-23 and this round re-read (ruling A-100):
+(`project:1285-1291`). At `904aefc` RE-4 still holds, as the reader RE found
+at `f3724fc` in the review wave of 2026-10-23, round A24 re-reading it there
+(ruling A-100), and the reader RN found at `904aefc` (its RN-3; ruling A-131):
 `child_budget` has no such term and gives the reserve while reconciling
-(`project:1402-1417`), the phase is set to `reconciling` in `remove_target`
-(`:6635`) and to `apply` before each target (`:6708`), a second SIGINT while
-reconciling still stops a probe (`interrupting()`, `:1443-1452`), and
+(`project:1487-1502`), the phase is set to `reconciling` in `remove_target`
+(`:6936`) and to `apply` before each target (`:7009`), a second SIGINT while
+reconciling still stops a probe (`interrupting()`, `:1528-1537`), and
 `count_child` still counts only a removal under `operations`
-(`:1419-1425`).
+(`:1504-1510`).
 
 The 64 s bound holds: a branch child spawns with more than 5 s of work left, so
 it ends or is stopped by the 50 s work deadline and is reaped within 4 s more;
@@ -1574,10 +1599,12 @@ rewords its revalidation phrase, "an entry found there is a new
 the target as at planning; in D18, which states the main worktree's
 recommendation; and in M1's labels and closing sentence and M3's lead-in, none
 of which moves a figure this section takes, D14 being unchanged, and none of
-which this section restates. Its head `54e869b`, PR #19's current head, after
-that lane's round (t), accepted under lane openRepoProject-2's R-415, keeps D14
-byte for byte, checked against `dab8a64` (D14 at its `:1107-1282`), and task
-2.1 as `4512441` has it (its `tasks.md:176-229`), so that every figure above
+which this section restates. At `54e869b`, after that lane's round (t),
+accepted under lane openRepoProject-2's R-415, PR #19 keeps D14 byte for
+byte, checked against `dab8a64` (D14 at its `:1107-1282`), and task 2.1 as
+`4512441` has it (its `tasks.md:176-229`), and at `1476110`, after its round
+(u), it keeps both as `54e869b` has them (D14 at its `:1131-1306`, task 2.1
+at its `tasks.md:182-235`; ruling A-134), so that every figure above
 stands; round (t) builds Brett Heap's "yes, recommended for M1 and M3" (R-413),
 each question's (a), so that M1 and M3 are ruled and leave its Open Questions:
 by M1 (a), where no row's path is unread, `project status`, `project doctor`
@@ -1869,8 +1896,12 @@ The cache change's worst shapes at `e1049b2`, the walk where every recorded
 object is a directory (about 32,800 calls, 7.3 s through one worker and 20.4 s
 at a thread per call) and the deep chains (up to 43,947 opens a pass for one
 target), lie outside this joint fit, which takes that change's inputs for
-ordinary trees, and stay under its B-3/CD-6 question and its `cache_opens`
-Open Question before Brett Heap (ruling A-25).
+ordinary trees, and stay under its `cache_opens` Open Question before Brett
+Heap (ruling A-25) and under its caps question, B-3/CD-6, which he ruled as
+recommended at 2026-10-31T17:58:12Z, `limits.targets` staying 16, to be
+measured by that change's task 2.3 (lane openRepoProject-3's ledger row
+27-05; this lane's RULED line, `lanes/log/openRepoProject-5.md:179`; rulings
+B-149, A-129 and A-132).
 
 So at the packet's 150 ms model a flagged run with cache disposal brings 9 of
 its 16 targets through their stage before the spawn limit, 8 in the worst case
@@ -1932,13 +1963,14 @@ the branch, where `branch -d -- -f` deletes it, exit 0 (lane
 openRepoProject-3's W52, F-4, reproduced there on Git 2.43.0 and on the 2.36.6
 floor; ruling A-52). That item is closed (ruling A-100; lane
 openRepoProject-3's W120, L-2, and the reader RE's RE23-2): feature 004 at
-`f3724fc` runs `git -C ROOT branch -d -- BRANCH` (`project:7040`), and PR #19's
+`904aefc` runs `git -C ROOT branch -d -- BRANCH` (`project:7367`; the reader
+RN's RN-3; ruling A-131), and PR #19's
 D18 records it at `88d0d36`, "feature 004 runs it as `git -C ROOT branch -d --
 BRANCH`, the `--` ending the options, so that a branch whose name begins with
 `-` is deleted rather than read as an option (W52 F-4, R-259)" (its
 `design.md:1436-1438`, the same sentence at `:1568-1570` at `818311a` and at
 `:1598-1600` at `4512441` and `:1652-1654` at `54e869b`); W120
-ran the printed retry `--branch=-f` against it on
+ran the printed retry `--branch=-f` against feature 004 at `f3724fc` on
 Git 2.43.0 and 2.36.6, and it deleted the branch, exit 0. The departure rests on
 lane openRepoProject-2's R-259, for Brett Heap's yes or no; if he declines, the
 `--` leaves that action and such a retry fails again as above. The printed
@@ -2012,8 +2044,10 @@ as amended, Codex's P2 on `9ff8202`).
     for-each-ref failed: unparseable output", whatever Git prints, by lane
     openRepoProject-2's R-61 (b), because the ref listing gives a branch
     named `HEAD` the upstream and track of the command directory's current
-    branch, never its own (its `project:2693-2697` and `:3487-3488`, and its
-    contract `:1070-1081`), a rule that change 1 as ratified does not state;
+    branch, its own only where that directory is the worktree on
+    `refs/heads/HEAD` (its `project:2693-2697` and `:3487-3488`, and its
+    contract `:1070-1081`; Context, round A29; lane openRepoProject-3's
+    W166, OBS-1), a rule that change 1 as ratified does not state;
     so that under either setting such a row is `inspection-error` before any
     plan selects it, its plan is incomplete, and no run retires such a
     branch, the form being only defensive under both (Context, round A28;
@@ -2322,8 +2356,9 @@ as amended, Codex's P2 on `9ff8202`).
     among others, since a stale `packed-refs.lock` or a rejecting
     `reference-transaction` hook gives the same refusal (Context, round A24),
     and the retry, which feature 004's `delete-branch` runs with Git's
-    standard error relayed to the person (`RelayParser`, `project:7084` at
-    `f3724fc`), shows Git's own reason if the cause persists; printing Git's
+    standard error relayed to the person (`RelayParser`, `project:7411` and
+    `:7384` at `904aefc`; the reader RN's RN-3), shows Git's own reason if the
+    cause persists; printing Git's
     first line in the `Kept` line is not taken, since it would need a field of
     its own, capped and printed by the path rule, where D5's record keeps no
     standard error, and Brett Heap's yes to Q8 does not reach it: PR #19's
@@ -2797,12 +2832,13 @@ Without the flag nothing changes: every run behaves as change 1 specifies.
 4. The feature implements D1 to D10 inside feature 004's seam, the README's
    "Clean up Git worktrees" (the flag, its flagged preview, the keeps, the
    stop, the branch lines, the retry path and D8's note on the `$'...'` form;
-   the section is `README.md:189-573` in feature 004 at `f3724fc`, where the
-   edit also takes the sentences that say no run deletes a branch, `:264-265`
-   and `:489-491`, and the places the flag changes, the question at `:295`, the
-   deferral row at `:397`, the stop block at `:502-503` and the kept-branches
-   lines at `:498` and `:506-508`, re-pinned to the text that merged; the
-   reader RE's RE2-2) and the tests of D9, merging
+   the section is `README.md:189-646` in feature 004 at `904aefc`, where the
+   edit also takes the sentences that say no run deletes a branch, `:270-271`
+   and `:545-547`, and the places the flag changes, the question at `:308`, the
+   deferral row at `:423`, the stop block at `:558-559` and the kept-branches
+   lines at `:554` and `:562-564`, re-pinned to the text that merged; the
+   reader RE's RE2-2, re-pinned from `f3724fc` by the reader RN's RN-3) and
+   the tests of D9, merging
    `main` into its branch as `main` moves, the cache-disposal feature included
    when it lands first, and never rebasing.
 5. The realization PR merges with green checks on every job that
