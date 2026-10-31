@@ -53,8 +53,8 @@ ignored path not proven a listed cache SHALL in every row.
 #### Scenario: An edit hidden by assume-unchanged survives
 
 - **WHEN** a merged, clean, published linked worktree's only change is an edit
-  to a file flagged assume-unchanged in its own index, and `--apply --action
-  remove --worktree` names it with `--yes`
+  to a file flagged assume-unchanged in its own index, its branch has a commit
+  of its own, and `--apply --action remove --worktree` names it with `--yes`
 - **THEN** removal is refused with `target-excluded`, reason
   `hidden-local-state`, and exit 2, and the edit survives, where before this
   change the worktree was removed with exit 0, edit included
@@ -62,7 +62,8 @@ ignored path not proven a listed cache SHALL in every row.
 #### Scenario: A worktree holding a submodule is never offered
 
 - **WHEN** a merged, clean, published linked worktree holds a populated
-  submodule, and `--apply --action remove --worktree` names it with `--yes`
+  submodule, its branch has a commit of its own, and `--apply --action remove
+  --worktree` names it with `--yes`
 - **THEN** removal is refused with `target-excluded`, reason
   `contains-submodule`, and exit 2 before any Git removal runs, where before
   this change it was offered and Git refused it with exit 128
@@ -96,7 +97,8 @@ ignored path not proven a listed cache SHALL in every row.
 #### Scenario: Caches alone are not a preservation state
 
 - **WHEN** a non-current, merged, clean, published linked worktree's only
-  ignored files are Python bytecode caches
+  ignored files are Python bytecode caches, and its branch has a commit of its
+  own
 - **THEN** cleanup reports no preservation state for them, and
   `--all-safe --apply --yes` disposes of the caches and removes the worktree,
   its branch kept
@@ -538,7 +540,10 @@ SHALL end the stage. The removal floor SHALL end it when it is reached at a
 hand-off, and when it stops a read: a read that cannot start because no more
 than the floor remains, or that outlives the shorter budget that the deadline
 set, `work remaining less the removal floor`, SHALL end the stage as the floor
-reached at a hand-off does, and SHALL NOT be reported as a change of state. A
+reached at a hand-off does, and the line that the person reads before the stop
+block SHALL name the work deadline and not a change of state, the target being
+`refused` with `state-changed`, as "Clean disposes of listed caches before a
+worktree removal" states for every stage that ends `refused` or `partial`. A
 stage that has handed over its first removal SHALL end `disposed` or `partial`,
 never `refused`, except that a stage every one of whose handed-over removals
 returned without removing its entry SHALL end `refused` with `cache-changed`,
@@ -649,7 +654,7 @@ removes in the planned entry's place, outside its guarantee.
 
 - **WHEN** the platform check reports the descriptor-relative calls unavailable,
   and the batch previews and applies a repository with one merged worktree whose
-  only ignored files are caches and one plain merged worktree
+  only ignored files are caches and one plain eligible worktree
 - **THEN** no cache enumeration runs, the first is `ignored-local-files` with
   `cache_disposal.reason: "cache-unsupported-platform"` and its caches are
   untouched, the second is selected and removed, and the exit status is 0

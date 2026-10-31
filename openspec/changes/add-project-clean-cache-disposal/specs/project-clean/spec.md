@@ -461,9 +461,11 @@ when its index holds any gitlink, its worktree administrative directory holds a
 `modules` entry, or an `lstat` of `<dir>/.git`, for any directory `<dir>` of
 the worktree that holds an index entry directly or below it, other than the
 worktree's own top level, finds an entry; those `lstat`s SHALL be counted in the
-filesystem budget, all of a row's in one filesystem call under one budget, and
-one that fails other than with `ENOENT` or `ENOTDIR`, or a call that runs past
-that budget, SHALL make the row `inspection-error`. A row SHALL be excluded as
+filesystem budget, all of a row's `lstat`s in one filesystem call under one
+budget, and one that fails other than with `ENOENT` or `ENOTDIR`, or a call not
+finished within that budget, the deadline not being the limit, SHALL make the
+row `inspection-error`, and the deadline passing SHALL leave the plan incomplete
+with `deadline-exceeded`, as for every other read. A row SHALL be excluded as
 `hidden-local-state` when its index flags any entry assume-unchanged or
 skip-worktree, sparse checkouts included; the index SHALL be read inside the
 row's own worktree, and both gates SHALL be checked only for rows that pass
@@ -1283,8 +1285,9 @@ them, and a row that only the sample test keeps from being a candidate, whose
 A row whose `cache_disposal.reason` is `not-candidate` and whose samples pass
 the sample test SHALL carry `candidate_block`: the class the ladder gives it
 with the `ignored-local-files` rung skipped, when that class is not
-`merged-removable`, or else the first gate before `deferred-target-cap` that it
-fails, so that its value is one of the existing class names or gate reasons.
+`merged-removable` and, for the main worktree, not `merged-current` either, or
+else the first gate before `deferred-target-cap` that it fails, so that its
+value is one of the existing class names or gate reasons.
 Every other row, and every row of a plan of `--action push` or `--action
 delete-branch`, SHALL carry `candidate_block` null. Computing it SHALL spawn no
 Git child.
@@ -1493,6 +1496,17 @@ and its residual window" states.
   and its preview line names that class and its next step, not the advice to
   delete ignored files; a detached worktree holding only caches names
   `detached`
+- **AND** when the main worktree, on a branch other than the merge target,
+  clean, in step with its upstream and merged into the merge target, holds
+  only caches, its `cache_disposal.candidate_block` is `main-worktree`, never
+  `merged-current`, whether plain `project clean` runs from inside it or from
+  outside the repository, and no line of the report tells the person to switch
+  away before removal
+- **AND** when a fourth linked worktree, merged, clean and level with its
+  pushed upstream, holds only caches on a branch created at the merge target's
+  tip with no commit of its own, its `cache_disposal.candidate_block` is
+  `unstarted-branch`, and its preview line names that gate with the next step
+  that the preview prints for the `unstarted-branch` group
 
 #### Scenario: Cache caps
 
@@ -1586,10 +1600,10 @@ and its residual window" states.
 
 #### Scenario: A failed cache enumeration preserves the row, not the plan
 
-- **WHEN** a merged, clean, published worktree holds only caches and a second
-  plain merged worktree is eligible, and a fake `git` makes the first
-  worktree's cache enumeration child exit 128, or print an untracked record
-  before its ignored ones
+- **WHEN** a merged, clean, published worktree with a commit of its own holds
+  only caches and a second plain merged worktree is eligible, and a fake `git`
+  makes the first worktree's cache enumeration child exit 128, or print an
+  untracked record before its ignored ones
 - **THEN** the first is `ignored-local-files` with `cache_disposal.reason:
   "cache-unverified"` and null counts, not `inspection-error`, the plan is
   complete, `--all-safe --apply --yes` removes only the second, the first's
@@ -1700,9 +1714,9 @@ and its residual window" states.
 #### Scenario: An unwritable cache directory is kept, not a stop
 
 - **WHEN** a merged, clean, published linked worktree's only ignored files are
-  caches and its `__pycache__` directory is mode 0555, beside a later plain
-  eligible worktree, and `--all-safe --apply --yes` runs as a user other than
-  root
+  caches, its branch has a commit of its own, and its `__pycache__` directory
+  is mode 0555, beside a later plain eligible worktree, and
+  `--all-safe --apply --yes` runs as a user other than root
 - **THEN** the first is `ignored-local-files` with `cache_disposal.reason:
   "cache-unwritable"`, its `disposable` and `entries` established and
   `blocking` 0, it is not selected, nothing in it is deleted, the second is
