@@ -10,12 +10,13 @@ duplicate them, and nothing here is an implementation step.
 
 - [x] 1.1 Proposal written: `proposal.md` adopts the packet's cache-disposal
   contract (`BA:1314-1337`) under the lane's rulings L-1 to L-17 and B-1 to
-  B-142, names three departures from B-6 as first written, which B-11 accepted,
+  B-156, names three departures from B-6 as first written, which B-11 accepted,
   and one from B's list of modified requirements (CD-1 to CD-4) with the rest
   of its own decisions (CD-5 to CD-18), and puts six Open Questions before
-  Brett Heap; verified by its Capabilities section accounting for every
-  requirement of `project-clean` and `project-clean-review-safety`, canonical
-  and change 1's ADDED alike, and for change 2's `project-overview`.
+  Brett Heap, two of which, enum closure and the caps, he ruled as recommended
+  on 2026-10-31 (B-149); verified by its Capabilities section accounting for
+  every requirement of `project-clean` and `project-clean-review-safety`,
+  canonical and change 1's ADDED alike, and for change 2's `project-overview`.
 - [x] 1.2 Alignment resolved: the alignment review (stack-architect and
   qa-lead) ran on `7290100`, and its findings are applied under the lane's
   rulings of 2026-10-11 and 2026-10-18; verified by the table "Questions
@@ -45,10 +46,12 @@ duplicate them, and nothing here is an implementation step.
   block, B-122, B-126, and the four more before them PR #19's as well, B-69),
   and `specs/project-clean-review-safety/spec.md` modifies three and adds one
   (35 scenarios: 8, 16, 4 and 7, B-26's among the 7, the 8 being PR #19's 7 at
-  `dab8a64`, as at `818311a`, two of them added by its round (q), and this
+  `1476110`, as at `dab8a64` and `818311a`, two of them added by its round (q),
+  and this
   change's one, and the 16 PR #19's 15 at `dab8a64`, as at `4512441`, one of
-  them added by its round (r), and this change's one (B-122, B-126, B-135), as
-  the 15 of rounds B19 to B24 were PR #19's 14 at `173d83c`, as at `b3228bb`
+  them added by its round (r), and this change's one (B-122, B-126, B-135,
+  B-154), as the 15 of rounds B19 to B24 were PR #19's 14 at `173d83c`, as at
+  `b3228bb`
   and `f0bf538` (B-54, round B13; B-84; B-88; B-93), and this change's one),
   every scenario of each modified requirement's source text kept by name, in
   order and byte-exact except four, whose ignored files are now named as not
@@ -62,14 +65,18 @@ duplicate them, and nothing here is an implementation step.
   committed as `4d5855a` (2.2); `design.md` holds D1 to D14 and
   `clarifications.md` the NOTED S-4; verified by `grep -c '^#### Scenario'` on
   each delta, by a script run after the council round and again after each
-  round from B3 to B26 that compares every scenario of each of the nine
+  round from B3 to B27 that compares every scenario of each of the nine
   MODIFIED blocks with its source text, the eight blocks written on PR #19's
-  text against it at each block's base since round B26, the round that last
-  changed it, `dab8a64` for the classification, batch, preservation and
-  revalidation blocks, `4512441` for the retire block, `818311a` for the bounds
-  and reconcilable-result blocks and `f0bf538` for the narrow-guarantee block,
-  whose text `54e869b` keeps (B-76, B-80, B-84, B-87, B-88, B-93, B-95, B-99,
-  B-104, B-107, B-122, B-126, B-128, B-135, B-139), in round B25 `4512441` for
+  text against it at each block's base since round B27, the round that last
+  changed it, `1476110` for the batch and preservation blocks, `dab8a64` for
+  the classification and revalidation blocks, `4512441` for the retire block,
+  `818311a` for the bounds and reconcilable-result blocks and `f0bf538` for the
+  narrow-guarantee block, whose text `1476110` keeps (B-76, B-80, B-84, B-87,
+  B-88, B-93, B-95, B-99, B-104, B-107, B-122, B-126, B-128, B-135, B-139,
+  B-154), in round B26 `dab8a64` for the classification, batch, preservation
+  and revalidation blocks, `4512441` for the retire block, `818311a` for the
+  bounds and reconcilable-result blocks and `f0bf538` for the narrow-guarantee
+  block, in round B25 `4512441` for
   the classification, retire and revalidation blocks, `818311a` for the batch,
   bounds, reconcilable-result and preservation blocks and `f0bf538` for the
   narrow-guarantee block, in rounds B22 to B24 `2250830` for the retire,
@@ -93,13 +100,14 @@ duplicate them, and nothing here is an implementation step.
   branch after 1.4, after the alignment fix round, after the council round
   (the last with the B-22 `project-overview` edit not yet committed), again
   after lane 4's agreement and that edit's commit, after round B3, after round
-  B4, and after each round from B5 to B26. The INFO lines, that the archive
+  B4, and after each round from B5 to B27. The INFO lines, that the archive
   would refuse a delta whose MODIFIED requirement change 1 or change 2 adds
   until that change is archived, are the expected state for blocks written on
   sister changes.
 - [ ] 1.6 Ratified by Brett Heap's word on this change's pull request, quoted
-  with its link here, with the six Open Questions of `proposal.md` before
-  him; verified by that quote. No implementation starts before it.
+  with its link here, with the four Open Questions of `proposal.md` that are
+  still before him, enum closure and the caps being ruled as recommended
+  (B-149); verified by that quote. No implementation starts before it.
 
 ## 2. Before the Speckit handoff
 
@@ -108,26 +116,30 @@ duplicate them, and nothing here is an implementation step.
   (L-16), or PR #19 closed, and the eight MODIFIED blocks written on PR #19's
   text, each at its base, the round that last changed it (B-54, B-58, B-60,
   B-69, B-76, B-80, B-84, B-87, B-88, B-93, B-95, B-99, B-104, B-107, B-122,
-  B-126, B-128, B-135), four at `dab8a64` ("Clean classifies preservation and
-  cleanup actions", "Clean previews and applies a batch of eligible worktree
-  removals in one repository", "Cleanup preserves all local work not proven
-  disposable" and "Cleanup revalidates destructive actions"), one at `4512441`
+  B-126, B-128, B-135, B-154), two at `1476110` ("Clean previews and applies a
+  batch of eligible worktree removals in one repository" and "Cleanup preserves
+  all local work not proven disposable"), two at `dab8a64` ("Clean classifies
+  preservation and cleanup actions" and "Cleanup revalidates destructive
+  actions"), one at `4512441`
   ("Clean can explicitly retire verified worktrees"), two at `818311a` ("Clean
   bounds its Git work and reports omitted work" and "Clean records a
   reconcilable result for every removal target") and one at `f0bf538` ("Cleanup
-  states a narrow guarantee and its residual window"), whose text `54e869b`, PR
-  #19's round (t) and its head, keeps (B-139) (round B25 having re-based the
+  states a narrow guarantee and its residual window"), whose text `1476110`, PR
+  #19's round (u), keeps (B-139, B-154) (round B25 having re-based the
   seven that PR #19's rounds (p) to (r) changed, the retire and
-  reconcilable-result blocks among them, lane 3's W128 LOW-1, and round B26 the
+  reconcilable-result blocks among them, lane 3's W128 LOW-1, round B26 the
   four that its round (s) changed, R-412: the main worktree's recommendation in
   the classification block, and the `contains-submodule` `lstat`'s scope in the
-  batch block's gate, PR19/pc:833-838 at `dab8a64`, with its one-call budget,
-  in the preservation block's clause, PR19/rs:9-11 at `dab8a64`, and in the
-  revalidation block's hidden-state step, PR19/rs:112-114 at `dab8a64`; the
-  preservation block's registration-mismatch sentence,
-  PR19/rs:13-17 at `dab8a64`, which this change carries byte for byte with no
-  addition inside it, is unchanged by rounds (s) and (t), lane 3's W146,
-  B-138), re-checked against the archived text and
+  batch block's gate, PR19/pc:896-903 at `1476110`, with its one-call budget,
+  in the preservation block's clause, PR19/rs:9-11 at `1476110`, and in the
+  revalidation block's hidden-state step, PR19/rs:112-114 at `dab8a64`, and
+  round B27 the two that its round (u) changed, R-432: the batch block's gate,
+  whose budget sentence round (u) rewords, lane 3's W146 LOW-1, and two of the
+  preservation block's scenarios, whose WHEN gains "its branch has a commit of
+  its own", B-150; the preservation block's registration-mismatch sentence,
+  PR19/rs:13-17 at `1476110`, which this change carries byte for byte with no
+  addition inside it, is unchanged by rounds (s) to (u), lane 3's W146, B-138),
+  re-checked against the archived text and
   rewritten where it differs; if PR #19 closes unmerged, those eight blocks are
   re-based on change 1's text at main (B-52, RD's M2); a re-base that changes
   this change's added text returns the block to Brett Heap before the Speckit
@@ -192,7 +204,15 @@ duplicate them, and nothing here is an implementation step.
   to head e1049b2. Lane 5 may cite this line for tasks 2.2." Round B5 leaves
   `specs/project-overview/spec.md` as it was at `e1049b2`, and round B6 leaves
   it so, its blob at `fffc194` being the same, as round B7 does, its blob at
-  `e399309` being the same again, and as round B8 does at `ca34644`.
+  `e399309` being the same again, and as round B8 does at `ca34644`. Its blob,
+  `a40458cb`, is the same from `4d5855a` to `7f3453c`. Reopened in round B27
+  for lane 4 (B-150): reader RK's LOW-1 (B-148) inserts ", with a commit of its
+  own," twice in the added scenario's WHEN
+  (`specs/project-overview/spec.md`:71), after its first and its third
+  worktree, so that gate 7 (`unstarted-branch`) can take neither, and the blob
+  becomes `667b9860`; lane 4 agreed the insertion exactly as drafted before its
+  commit, by its message received by the lead on 2026-10-31 at 18:50:08Z
+  (B-152), so the task stays ticked, and lane 4 receives the round's line map.
 - [ ] 2.3 Enumeration, walk and stage measured (Open Questions, the caps and
   the opens limit; S-4): the cache enumeration's child, the plan-time walk with
   its access checks, and the cache stage timed warm and cold by change 1's
