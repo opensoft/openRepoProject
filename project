@@ -3398,7 +3398,7 @@ def enclosing_rows(built, identity, registry):
     removal of it deletes what it encloses, the whole repository where the
     main worktree or the common directory sits in one of its tracked
     directories. Only clean's plan applies it (worktree_rows(for_clean=True);
-    lead R-409): it is clean's review safety (rs:13-15), which the evidence
+    lead R-409): it is clean's review safety (rs:14-16 at 54e869b), which the evidence
     model of status, doctor and update does not state. A pure function
     of values already read, nothing read again: the row's raw path and its
     realpath (`tree`) against identity's common directory and main worktree,
@@ -3531,7 +3531,7 @@ def _read_row(raw, main, common_dir, active, active_error, shared, for_clean=Fal
     fails to remove the link, and still deletes the administrative
     directory (Brett Heap's Q9 (b), "yes, recommended for Q1-Q9", lead
     R-380; wave 22's triage T12, sr-removal F7). That is clean's review
-    safety (rs:15-16), which the evidence model of status, doctor and
+    safety (rs:16-17 at 54e869b), which the evidence model of status, doctor and
     update does not state, so they read such a row's registration through
     the link as the baseline did (pc:311-312). A failed read becomes an
     entry of `errors`, and what follows it in the same step is not read.
