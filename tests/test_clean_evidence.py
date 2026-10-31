@@ -540,13 +540,14 @@ class EvidenceTests(clean_support.CleanCase):
             self.assertEqual(self.status_dirs(records), sorted(map(str, (shared_root, control))),
                              "no status probe in the shared path")
             # In process: `registered` is false (gate 3), and the duplicate check
-            # covers the whole registry when rows are built for one entry alone.
+            # covers the whole registry when rows are built for one entry alone,
+            # in clean's plan (for_clean; the rule is clean's alone, lead R-432).
             with mock.patch.dict(os.environ, self.env, clear=True):
                 run = project.Invocation()
                 repo = project.inspect_repository(os.fsencode(shared_root), run)
-                every = project.worktree_rows(repo, run)
+                every = project.worktree_rows(repo, run, for_clean=True)
                 twins = [record for record in repo["records"] if record["path"] == os.fsencode(shared)]
-                alone = project.worktree_rows(repo, run, records=twins[1:])
+                alone = project.worktree_rows(repo, run, records=twins[1:], for_clean=True)
             self.assertEqual([(row.registered, row.admin_id) for row in every if row.raw_path == os.fsencode(shared)],
                              [(False, None)] * 2)
             self.assertEqual([row.registered for row in every if row.raw_path == os.fsencode(gone)], [None] * 2)
@@ -583,15 +584,15 @@ class EvidenceTests(clean_support.CleanCase):
             # In process: verify_registration() alone passes both spellings with
             # one admin id, and worktree_rows() makes both `registered` false,
             # building every row or the two twins together, as match_target()
-            # builds P's rows.
+            # builds P's rows, in clean's plan (for_clean; lead R-432).
             with mock.patch.dict(os.environ, self.env, clear=True):
                 run = project.Invocation()
                 repo = project.inspect_repository(os.fsencode(twin_root), run)
                 common = repo["identity"]["common_dir"]
                 verdicts = [project.verify_registration(os.fsencode(path), common, False) for path in spellings]
-                every = project.worktree_rows(repo, run)
+                every = project.worktree_rows(repo, run, for_clean=True)
                 twins = [record for record in repo["records"] if os.fsdecode(record["path"]) in spellings]
-                together = project.worktree_rows(repo, run, records=twins)
+                together = project.worktree_rows(repo, run, records=twins, for_clean=True)
             self.assertEqual(verdicts, [(True, os.fsencode(spelled.name))] * 2)
             for label, rows in (("every row", every), ("the twins together", together)):
                 with self.subTest(label):
