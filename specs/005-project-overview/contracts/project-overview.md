@@ -16,15 +16,17 @@ replaced by an escaped value ([P]; FR-038). A row marked **CHOSEN** is an
 item of research.md R20 that Brett Heap's word chose for change 2 (C-72):
 the text above it is the one built until A1's re-alignment lands at PR
 #34, the text after it the one built then, but for a line that says it is
-built now. Of R20's items, every one, O1 to O21, is chosen (C-72). O11's
-part 1 is built now, and O15 (A), O16 (a), O19 (A) and O20 (A) now, ahead of
-A1's text; O17 (A) and O18 (A) land with A1's re-alignment, as most do. O19's
-outcome for a row in its two new cases is stated at feature 004's next head
-(C-72). Each item of R20 changes only its own rows. Every warning is in the
-words of PR #19's round (n) (`2250830`, unchanged at `88d0d36` and `e0b1671`,
-and in its unread forms at `818311a` and `4512441`; R-343, his "R-324:
-yes"); the plain stale forms that #19's round (q) ends with Q3 (b)'s warning
-are O18 (A)'s.
+built now. Of R20's items, O1 to O21 are chosen (C-72), and O22 and O23 are
+open for his word: a row marked **OPEN** is an item that C-72 records for it,
+the text above it the one built until he rules. O11's part 1 is built now, and
+O15 (A), O16 (a), O19 (A) and O20 (A) now, ahead of A1's text; O17 (A) and O18
+(A) land with A1's re-alignment, as most do. O19's outcome for a row in its
+two new cases is `project clean`'s at feature 004's `904aefc`,
+`inspection-error` (C-72). Each item of R20 changes only its own rows. Every
+warning is in the words of PR #19's round (n) (`2250830`, unchanged at
+`88d0d36` and `e0b1671`, and in its unread forms at `818311a`, `4512441` and
+`54e869b`; R-343, his "R-324: yes"); the plain stale forms that #19's round
+(q) ends with Q3 (b)'s warning are O18 (A)'s.
 
 ## Invocation
 
@@ -417,11 +419,11 @@ config`, `git for-each-ref`, `git status`), a filesystem call (`lstat`,
 
 ### Findings from the ladder (FR-028; [L], `project:2342-2362`)
 
-The class's recommendation, verbatim (the stale text without an unread row
-being O18 (A)'s, chosen: once A1's re-alignment lands, [L]'s 305- and
-318-character forms, as feature 004's `TEXT` at `41759a4` carries them, in
-place of A1's 50-character text and O8 (A)'s 63-character locked form; until
-then A1's one text, research.md R12):
+The class's recommendation, verbatim, but for the main worktree's row (O22,
+open, below) (the stale text without an unread row being O18 (A)'s, chosen:
+once A1's re-alignment lands, [L]'s 305- and 318-character forms, as feature
+004's `TEXT` at `41759a4` carries them, in place of A1's 50-character text and
+O8 (A)'s 63-character locked form; until then A1's one text, research.md R12):
 
 - `finding.stale-worktree`: "Review and prune stale worktree metadata
   manually."
@@ -433,8 +435,8 @@ then A1's one text, research.md R12):
     prune stale worktree metadata manually.", and under O6's test "Review,
     unlock it, then prune stale worktree metadata manually; a row's path
     could not be read, so do not run git worktree prune, git worktree
-    remove or git gc until it can." (#19's T7, `#19
-    design.md:1476-1514`), feature 004's locked text as at `d6bac50` and
+    remove or git gc until it can." (#19's T7, `#19 design.md:1513-1568`),
+    feature 004's locked text as at `d6bac50` and
     `d8724e2`, 63 characters, which O18 (A) ends with Q3 (b)'s warning
   - CHOSEN (O18 (A)), without an unread row: [L]'s plain and locked forms,
     the baseline text and the locked text each with its final period
@@ -443,7 +445,7 @@ then A1's one text, research.md R12):
     missing, one moved or on an unmounted drive included, so run git
     worktree prune --dry-run first and remount or repair any it lists that
     still exists.", 305 and 318 characters, kept
-    whole (PCL:188-197 at `4512441`; feature 004's `TEXT` at `41759a4`,
+    whole (PCL:216-225 at `54e869b`; feature 004's `TEXT` at `41759a4`,
     research.md R1), in place of the 50- and 63-character texts above; the
     forms under O6's test unchanged.
 - `finding.inspection-error`: "Preserve this worktree; Git could not
@@ -472,6 +474,13 @@ then A1's one text, research.md R12):
   be removed explicitly."
 - `finding.merged-current`: "The branch is merged, but this is the current
   checkout; switch away before removal."
+  - OPEN (O22): for the main worktree's row, in this class and in
+    `merged-removable`, "The main worktree is never removed by project clean."
+    in place of the class's text above (#19's round (s), PCL:207-214 at
+    `54e869b`; feature 004's `TEXT` key `recommendation_main_worktree`,
+    `project:933` at `904aefc`); recommended (A); until Brett Heap rules, the
+    class's text above, as A1 ratifies it, a `merged-removable` main row
+    showing those words through the `main-worktree` gate (FR-032).
 - `finding.pushed-unmerged`: "Continue through the repository's normal
   pull-request or merge process."
 
@@ -517,8 +526,25 @@ then A1's one text, research.md R12):
     registered path is a symbolic link; the overview evaluates both cases
     from its own evidence, the paths of the rows the listing gives and
     FR-007's no-follow `lstat`, with no new Git child, as `project clean`'s
-    classification (research.md R9). The outcome for such a row is stated
-    at feature 004's next head (C-72).
+    classification (research.md R9). At feature 004's `904aefc`, whose
+    `project` is that of `d640539` and which confines both cases to `project
+    clean`'s plan, `project clean` gives a linked row in either case
+    `inspection-error`, unprobed, its `dirty` null, excluded at the
+    `registration-mismatch` gate, and the main worktree's row, where a linked
+    row shares its path, `inspection-error` too, at the `main-worktree` gate,
+    while a row that such a row holds is read and classified as before (C-72;
+    lane openRepoProject-2's reports to lane 4 of 2026-10-23, its R-416 and
+    R-424). The overview's class follows it (FR-026), `inspection-error`, so
+    that the gate decides no `merged-removable` row, FR-034 withholds
+    `--all-safe` for the repository as `inspection-incomplete` and SC-004
+    takes no new exclusion; a row that shares its realpath with another is
+    FR-007's disagreement already (EC-031).
+  - OPEN (O23): whether such a row takes no status probe, its `dirty` null,
+    and this finding in place of the class's `inspection-error` finding, as
+    FR-007's disagreement case reads a row that shares its realpath (EC-031);
+    recommended (A); until Brett Heap rules, such a row takes FR-007's last
+    case, one status probe, its `dirty` read, and the class's
+    `inspection-error` finding (C-72).
 - `finding.unsupported-path-bytes.worktree`: "This worktree's path is not
   valid UTF-8, so no clean command can name it; rename it to valid UTF-8."
 - `finding.unsupported-path-bytes.repository`: "The repository's root or
@@ -580,13 +606,21 @@ from `limits` when the message is built.
     undecidable; review, then git worktree remove yourself (--force if it
     holds a submodule)"
   - CHOSEN (O17 (A)), for both remedies, in place of O1 (A)'s texts, the two
-    landing together: #19's Q5 next steps, kept whole, 248 and 243
-    characters, each saying after its first clause "its later gates did not
-    run, so check git log -g HEAD, git ls-files -v and git status there, then
-    git worktree remove yourself (--force if it holds a submodule, once its
-    commits are kept)" (`#19 design.md:1397-1403` at `4512441`; feature 004's
-    `NEXT_STEPS` at `41759a4`, research.md R1); beside the finding's own text,
-    cut to `...`, the messages are 253 and 248 characters (the composer).
+    landing together: #19's Q5 next steps, kept whole, 248 and 243 characters
+    (`#19 design.md:1419-1425` at `54e869b`; feature 004's `NEXT_STEPS` at
+    `41759a4` and `904aefc`, research.md R1). Beside the finding's own text,
+    cut to `...`, the two messages are, in full:
+    - `unstarted-branch`, 253 characters: "...; no commit was made on this
+      branch here since it was created; its later gates did not run, so check
+      git log -g HEAD, git ls-files -v and git status there, then git worktree
+      remove yourself (--force if it holds a submodule, once its commits are
+      kept)"
+    - `reflog-unavailable`, 248 characters: "...; the branch's reflog is
+      missing, expired or undecidable; its later gates did not run, so check
+      git log -g HEAD, git ls-files -v and git status there, then git worktree
+      remove yourself (--force if it holds a submodule, once its commits are
+      kept)"
+    each `...; ` and the remedy whole (the composer).
 - `remedy.target-cap` (limited): "limited to the batch's target limit of M
   per run; re-run to drain the backlog"
 

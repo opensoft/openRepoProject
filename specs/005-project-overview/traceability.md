@@ -109,9 +109,9 @@ changes"); lane 2 or lane openRepoProject-3 reads the diff before feature
 - FR-005: discovery; R10 (PN-9); contract "Row and scan errors".
 - FR-006: collect; R5; data model "Repository"; research.md O4 (a) and
   O13 (chosen; D5's clause 2 chosen by name).
-- FR-007: collect; R9, R17 (PN-18); research.md O5 (chosen), O11 (chosen:
-  part 1 built now as the plan's reading of a conflict in ratified A1, a
-  text re-alignment on a lane finding; part 2 with A1's re-alignment).
+- FR-007: collect; R9, R17 (PN-18); research.md O5 (chosen), O23 (open), O11
+  (chosen: part 1 built now as the plan's reading of a conflict in ratified A1,
+  a text re-alignment on a lane finding; part 2 with A1's re-alignment).
 - FR-008, FR-009: collect, findings; R5, R9; contract "Other findings",
   "Git children"; data model "Worktree row" (O16 (a), chosen, built now,
   ahead of A1's text); research.md O4 (a), O7, O13 and O14 (chosen), O11
@@ -136,13 +136,13 @@ changes"); lane 2 or lane openRepoProject-3 reads the diff before feature
   O12 and O21 (chosen).
 - FR-027: contract "The attention table".
 - FR-028: findings; R12 (PN-1); contract "Findings from the ladder";
-  research.md O6, O8 and O18 (chosen).
+  research.md O6, O8 and O18 (chosen), O22 (open).
 - FR-029, FR-030: render; data model "Exit statuses"; contract "Human
   report".
-- FR-031 to FR-035: findings; R12; data model "Gates"; contract
-  "Remedies", "Composer"; research.md O1, O2, O4, O6, O7, O11, O15, O17 and
-  O19 (chosen, O15 and O19 built now, ahead of A1's text; D5's clause 2
-  chosen by name).
+- FR-031 to FR-035: findings; R12; data model "Gates"; contract "Remedies",
+  "Composer"; research.md O1, O2, O4, O6, O7, O11, O15, O17 and O19 (chosen,
+  O15 and O19 built now, ahead of A1's text; D5's clause 2 chosen by name) and
+  O23 (open).
 - FR-036 to FR-038: render; R11, R15 (PN-6, PN-8); contract "JSON".
 - FR-039: render, dispatcher; R15 (PN-2); contract "Exit-2 outputs".
 - FR-040: R3 (the ban), R18 (the wrapper's allow-list), R19.
@@ -380,25 +380,50 @@ what flips.
   to 459 and 472; the forms under O6's test do not flip.
 - O19 (A), built now, ahead of A1's text:
   `test_overview_the_wider_registration_mismatch` (gates) and a unit of its
-  decider, fixtures for #19's two cases (R18); its expected result is stated
-  at feature 004's next head (C-72); nothing flips.
+  decider, fixtures for #19's two cases (R18); its expected result is `project
+  clean`'s at feature 004's `904aefc`, the named rows `inspection-error` and
+  every such repository `inspection-incomplete` (C-72); nothing flips.
 - O20 (A), built now, ahead of A1's text: the wrapper's assertion of
   `GIT_KINDS["status"]`'s pins by reference on every status probe (R18);
   nothing flips.
 - O21 (A), built now: a unit asserts every class null after a failed
-  merged-set listing, its ref listing read; the case is checked against
-  feature 004's next head (C-72); nothing flips.
+  merged-set listing, its ref listing read; the parity tests name the case as a
+  lasting difference, its rows `inspection-error`, `detached` and
+  `stale-worktree` at feature 004's `904aefc` against A1's null (C-72); nothing
+  flips.
+
+## Held items, open: their tests
+
+Brett Heap has not ruled on O22 and O23 (C-72): the first build asserts A1 as
+ratified for both, and the commit that carries his word flips, in one commit,
+the assertions named here. Per item: its behaviour test (module), its fixture
+and what flips.
+
+- O22: a unit over the message table and the attention test of a main
+  worktree's row on a merged branch, run from outside it (`merged-removable`)
+  and from inside it (`merged-current`); flips: the `merged-current` main row's
+  message from "The branch is merged, but this is the current checkout; switch
+  away before removal." to "The main worktree is never removed by project
+  clean.", the `merged-removable` main row staying as it is, the words reaching
+  it through the `main-worktree` gate.
+- O23: `test_overview_the_wider_registration_mismatch` (gates), its fixtures
+  for a row that holds another row or the main worktree, one registered through
+  a symbolic link and one at the common directory or an ancestor of it, with a
+  unit of the decider (R18); flips: the status probe and the `dirty` read to
+  none (null), the class's `inspection-error` finding to
+  `registration-mismatch`, and `estimated` leaving out the probes of such rows
+  (R14); the rows that share a realpath (EC-031) stay as they are.
 
 ## Success criteria
 
 - SC-001, SC-008: `test_overview_isolation.py`, `test_overview_identity.py`.
 - SC-002: the wrapper's assertions and the snapshot, in every module.
-- SC-003: `test_overview_classifier.py` (parity runs, `local.env`); the
-  parity tests name the cases left out as lasting differences, a working
-  directory whose realpath fails (O9 (A)) and a failed ref listing (O12
-  (A)), and, if #24's realization merges first, a cache-only worktree
-  (C-71); a failed merged-set listing's rows stand apart too, A1's null class
-  staying (O21 (A); research.md R20).
+- SC-003: `test_overview_classifier.py` (parity runs, `local.env`); the parity
+  tests name the cases left out as lasting differences, a working directory
+  whose realpath fails (O9 (A)), a failed ref listing (O12 (A)) and a failed
+  merged-set listing, its ref listing read, A1's null class staying in each
+  (O21 (A); research.md R20), and, if #24's realization merges first, a
+  cache-only worktree (C-71).
 - SC-004: `test_overview_gates.py`: the argument vectors, and in every gate
   fixture a helper, `assert_preview_agrees(root, document)`, that runs the
   preview each ungated `--all-safe` suggestion names and asserts every such

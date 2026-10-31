@@ -319,8 +319,9 @@ Sources of findings, in the order a row computes them:
    message), or, for `protected-default`, none of its own but FR-041's set:
    `dirty`, then at most one of `unpublished`, `remote-gone`, `diverged`,
    `unpushed`, `remote-ahead`, each with D4's message and no suggestion;
-3. a disagreeing registration's `registration-mismatch` in place of the
-   class's `inspection-error` finding (FR-007);
+3. a disagreeing registration's `registration-mismatch` in place of the class's
+   `inspection-error` finding (FR-007; a row in O19's cases joins it only if
+   O23 (A) is chosen);
 4. layouts: `unsupported-layout` (submodule, unnamed gitfile), and
    `main-worktree-missing` in place of `stale-worktree`; and paths:
    `unsupported-path-bytes`, once at repository level (null `checkout`)
@@ -350,8 +351,21 @@ fails replaces the housekeeping finding with its own, the class unchanged:
     `path` and every other row's `path` from the registry listing (equal to
     one, or an ancestor of one), and the mode of the row task's no-follow
     `lstat` of its registered path (a symbolic link); no new Git child
-    (research.md R9). The outcome for such a row is stated at feature 004's
-    next head (C-72)
+    (research.md R9). At feature 004's `904aefc`, whose `project` is that of
+    `d640539` and which confines both cases to `project clean`'s plan, `project
+    clean` gives a linked row in either case `inspection-error`, unprobed, its
+    `dirty` null, excluded at the `registration-mismatch` gate, and the main
+    worktree's row, where a linked row shares its path, `inspection-error` too,
+    at the `main-worktree` gate, while a row that such a row holds is read and
+    classified as before (C-72; lane openRepoProject-2's reports to lane 4 of
+    2026-10-23, its R-416 and R-424). The overview's class follows it (FR-026),
+    `inspection-error`, so that the gate decides no `merged-removable` row,
+    FR-034 withholds `--all-safe` for the repository as `inspection-incomplete`
+    and SC-004 takes no new exclusion; a row that shares its realpath with
+    another is FR-007's disagreement already (EC-031). Whether the overview
+    also status-probes the other rows, and which finding it shows for them, is
+    O23, open for his word: until he rules, FR-007 as ratified, one status
+    probe, `dirty` read, and the class's `inspection-error` finding (C-72)
 - `locked-worktree`
   - Fails when: it is locked
   - Finding: `locked-worktree`, read-only
