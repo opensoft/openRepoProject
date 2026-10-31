@@ -16,8 +16,9 @@ D18, D19, Risks and the Migration Plan here; R-17 edited Context and D14, and
 R-19 edited Context, D14 and D19; R-21 edited Context, D6 and D17; R-22 edited
 Context and D20; R-23 edited Context, D6, D9, D11 and D20; R-24 edited D5, D9,
 D11, D12, D18, Risks and the Migration Plan; R-25 edited Context, D6, D9, D11,
-D20 and Risks; the push-child exception, before Brett Heap, edits D6, D11, D20,
-Risks and Open Questions; and Brett Heap's ruling Q9 B of 2026-10-21, given
+D20 and Risks; the push-child exception, before Brett Heap until his word of
+2026-10-31, edits D6, D11, D20, Risks and Open Questions; and Brett Heap's
+ruling Q9 B of 2026-10-21, given
 through lane openRepoProject-4's spec 005 clarify round and recorded in
 `proposal.md` Decisions, edits Context, D6, D11, D17, D20 and Risks. Brett
 Heap's rulings of 2026-10-21 on lane openRepoProject-3's recommendations LQ-10
@@ -87,7 +88,11 @@ read of round (r) and its W139 LOW-1 and MEDIUM-1, under the lead's R-396, R-408
 and R-409, Context, D7, D18 and Open Questions; and round (t), Brett Heap's
 answer of 2026-10-23 to M1 and M3, lane openRepoProject-3's W133 MEDIUM-1 and
 MEDIUM-3, "yes, recommended for M1 and M3" (the lead's R-413), Context, D18 and
-Open Questions.
+Open Questions; and round (u), Brett Heap's answers of 2026-10-31 to M4, "(a)
+Add M3's exception (Recommended)", and on his ledger word for LQ-3 and O-2,
+"Yes, ruled as recommended (Recommended)" (the lead's R-432), with lane
+openRepoProject-5's RN-1 and lane openRepoProject-3's W161, W146 LOW-1 and W160
+OBS-9, Context, D1, D7, D18 and Open Questions.
 Brett Heap's ruling of 2026-10-09 on open question 1, that a local ancestry
 proof outranks `remote-gone` for worktree rows, is in `proposal.md` Decisions
 and edited Context, D6, D7, D20, Risks, the Migration Plan and Open Questions
@@ -190,10 +195,19 @@ status probe warns that the refname is ambiguous, therefore has every row
 configuration or the user's, which no pin overrides, the same pinned probe
 exits 0 with empty standard error, on Git 2.43.0 and 2.36.6 (lane
 openRepoProject-3's W131 LOW-3; the lead's R-391): no row is then
-`inspection-error` on that account, a run of
-`add-project-clean-branch-retirement` can retire `refs/heads/HEAD`, and that
-change's `Retired HEAD` restore line is then the restore that works. This
-change adds no pin for it and changes no behaviour (round (r)).
+`inspection-error` on that account. The row of a worktree whose branch is
+`refs/heads/HEAD` still is: the ref listing prints for that branch the upstream
+and track of the branch that HEAD names, whatever `branch.HEAD.*` says (checked
+on Git 2.43.0), so the evidence model reads no upstream evidence for it and
+makes it `inspection-error` with `probe-failed` (the lead's R-61 (b)). Under
+either setting such a row is therefore `inspection-error`, by Q8 where Git warns
+that the refname is ambiguous and by R-61 (b) where it does not, and is never
+selected, so that no run removes its worktree or retires its branch, and
+`add-project-clean-branch-retirement`'s `Retired HEAD` restore line is never
+reached through such a row; this paragraph said until round (u) that with the
+setting false a run of that change could retire `refs/heads/HEAD` and that the
+line was then the restore that works (lane openRepoProject-5's RN-1; the lead's
+R-432). This change adds no pin for it and changes no behaviour (round (r)).
 
 A short tick and a wakeup. The selector timeout is the least of 100 ms, the
 child's remaining budget, the work deadline's remaining time and, for a removal
@@ -595,8 +609,16 @@ evidence model's parity rule (baseline values stay, except where a requirement
 states a change), since the `project-command` delta states neither (round (s);
 lane openRepoProject-3's W139 MEDIUM-1, which found feature 004 at `41759a4`
 applying both in those three commands too; the lead's R-409, under which
-feature 004 classifies such rows only in `clean`'s plan). By his Q2 (2), the
-`contains-submodule` gate also `lstat`s `<dir>/.git` for every directory of the
+feature 004 classifies such rows only in `clean`'s plan). The same holds for a
+row that shares its raw registry path, its realpath or its administrative id
+with another row (the lead's R-57 L3, R-59 D5 and R-67 (c)): `clean`'s plan
+keeps it `registration-mismatch`, with M3's next step and M4's remedy (D18),
+while `project status`, `project doctor` and `project update` read it as the
+baseline does, probed, with the baseline's values and no `classification`, and
+doctor does not exit 1 for it, as R-409 has it for Q2 (1) and Q9 (b) (round (u);
+lane openRepoProject-3's W161, its ledger row 004-08; the lead's R-432). By his
+Q2 (2), the `contains-submodule` gate also `lstat`s `<dir>/.git` for every
+directory of the
 worktree that holds an index entry directly or below it, other than the
 worktree's own top level, from the hidden-state probe's listing, and an entry
 there excludes the row, since a repository nested in a tracked directory is as
@@ -656,7 +678,9 @@ L-4 and W42 L-2); and one that the deadline cuts leaves the target
 which "a value that cannot be re-read, including a filesystem call that times
 out, counts as a mismatch": a read that fails decides no identity difference, so
 its mismatch is the packet's "any other" difference, `state-changed`; this
-reading went to Brett Heap to confirm, as O-2, on 2026-10-22. Row 4c itself is
+reading went to Brett Heap to confirm, as O-2, on 2026-10-22, and his answer of
+2026-10-31 ruled it, through his ledger word read broadly (Open Questions; the
+lead's R-432). Row 4c itself is
 not re-read, which keeps revalidation at six Git children in a repository
 without the extension (nine where the path of its root or common directory holds
 a line feed, D14): an extension turned on after the plan, with a
@@ -1559,8 +1583,9 @@ R-248). The delta `Clean classifies preservation and cleanup actions` states it,
 by the same parity reading, with the scenario "The main worktree's
 recommendation" (round (s); lane openRepoProject-3's W141 MEDIUM-1; the lead's
 R-408), copied by script from feature 004's `TEXT` at `c0841aa`, its key
-`recommendation_main_worktree`, and the baseline's two from its `project:607`
-and `:610` at `15504f1`, which feature 004's `RECOMMENDATIONS` keeps unchanged.
+`recommendation_main_worktree`, and the baseline's two from its
+`cleanup_report()`, `project:607` and `:610` at `15504f1`, `:610` and `:613` at
+`b42355e`, which feature 004's `RECOMMENDATIONS` keeps unchanged.
 `project status`, `project doctor` and `project update` give a present row no
 recommendation, in the baseline and in feature 004, so the change is `clean`'s
 alone. For that row it narrows the ratified sentence that a merged row whose
@@ -1679,7 +1704,34 @@ prune, git worktree remove or git gc until it can", since `git worktree prune`
 deletes the administrative directory of a live worktree whose path Git cannot
 stat, and omitting prune advice never harms (lane openRepoProject-3's W87 M-1;
 the lead's R-307 and R-310, which Brett Heap confirmed on 2026-10-22 in his
-words "R-307: yes; R-310: yes", R-319); `inspect-cap` "N rows exceed the row cap
+words "R-307: yes; R-310: yes", R-319); and where a row it counts is
+`registration-mismatch` because its path is, or holds, the main worktree, the
+common directory or another worktree, or because it shares its path with another
+row, the rows that M3 (a) gives their own next step, the `registration-mismatch`
+form adds M3's exception to "or remove the row by hand after review", reading
+"repair or remove the inspection-error rows first: git worktree repair, git
+worktree prune, unset core.worktree and core.bare in the repository's config or
+in a worktree's config.worktree, or remove the row by hand after review, except
+one whose path is or holds the main worktree, the common directory or another
+worktree, which must not be deleted by hand or with git worktree remove: review
+its registration with git worktree list --porcelain; git worktree prune also
+deletes the entry, and so the HEAD reflog, of every other worktree whose path is
+missing, one moved or on an unmounted drive included, so run git worktree prune
+--dry-run first and remount or repair any it lists that still exists", and its
+unread form likewise, reading "repair or remove the inspection-error rows first:
+git worktree repair, unset core.worktree and core.bare in the repository's
+config or in a worktree's config.worktree, or remove the row by hand after
+review, except one whose path is or holds the main worktree, the common
+directory or another worktree, which must not be deleted by hand or with git
+worktree remove: review its registration with git worktree list --porcelain; a
+row's path could not be read, so do not run git worktree prune, git worktree
+remove or git gc until it can", in either mode, since that clause, followed
+literally for such a row, deletes the main worktree and the repository, or the
+other worktree, while every other refusal, one that counts no such row included,
+prints its remedy unchanged (Brett Heap's M4 (a) of 2026-10-31, "(a) Add M3's
+exception (Recommended)", the lead's R-432; each variant is its form with the
+question's words, copied by script, and feature 004's code round builds both);
+`inspect-cap` "N rows exceed the row cap
 of M; remove worktrees explicitly, or prune stale entries by hand", which is
 always, in place of the ratified remedy, "{N} rows exceed the row cap of {M};
 remove worktrees explicitly, or prune stale entries by hand; if a worktree's
@@ -2436,15 +2488,6 @@ the reading stated, and a different ruling edits the deltas before the archive.
 - Squash-merged branches never put their tip into the target's ancestry
   (BA:195-199). Recommendation: a local patch-equivalence proof (`git cherry` or
   patch IDs against the target) as a follow-on change, not in the MVP.
-- The push-child exception: the pins on every Git child (D11, R-23, R-25) refuse
-  a push over every protocol (a local-path `origin` fails with `fatal: transport
-  'file' not allowed`, exit 128), yet the change keeps the explicit push of
-  `clean --action push`, whose child must reach its remote. Recommendation:
-  amend the change in place before its archive, as this draft does, so that the
-  push child is the one Git child without the pins. The alternative is a
-  follow-up change after the archive, as `fix-parent-obstacle-wording` followed
-  `prefer-triad-in-project-new`, which costs a second archive and leaves the
-  archived spec wrong in between.
 - LQ-20, the fit where `extensions.worktreeConfig` is true (D14, Risks).
   RESOLVED on 2026-10-22: Brett Heap chose step (i), in his words to lane
   openRepoProject-2, "LQ-20: go with (i), measure first" (the lead's R-236). The
@@ -2545,8 +2588,8 @@ the gates after the cap (R-146) and the three markers that LQ-14's gate gained
 revalidation read or child that the work deadline cuts (D7), push's wider
 upstream refusal and branch deletion's message for a branch the main worktree
 holds (D18) and the line-feed exception to the revalidation and rescan bounds
-(D7, D14), as does the push-child exception (Open Questions above). His word of
-2026-10-22, "F-2: yes; F-1: prune-then-delete; O-1: deadline-exceeded", amends
+(D7, D14). His word of 2026-10-22, "F-2: yes; F-1: prune-then-delete; O-1:
+deadline-exceeded", amends
 three ratified sentences: a locked row's recovery text (D4, D18), the ceiling's
 recovery text (D9, D18) and gate 7's read that the deadline cuts (D10); his
 "R-284: yes" of the same day confirms the ceiling's third text, for a `.git` the
@@ -2616,7 +2659,31 @@ plain Git confirmed in wave 22's triage (T2); the step names no `git worktree
 prune`, so it takes no Q3 (b) warning, every other `registration-mismatch` row
 keeps the class's step, and feature 004's code round builds it (the lead's
 R-413; D18 and the `project-clean` delta's scenario "A worktree whose path holds
-the main worktree"). Five more amendments of
+the main worktree"). His answers of 2026-10-31, given at 18:20:06Z in lane
+openRepoProject-2's session to the lead's question prompt (the lead's R-432),
+rule three more. To M4, the question that feature 004's code round raised on
+M3's rows (the lead's R-416), put to him at 2026-10-23T22:00:07Z, he answered
+"(a) Add M3's exception (Recommended)": where an `inspection-incomplete` refusal
+counts such a row, both `registration-mismatch` forms of its remedy add M3's
+exception, since "or remove the row by hand after review", followed literally
+for such a row, deletes the main worktree and the repository, or the other
+worktree, and every other refusal prints its remedy unchanged (D18 and the
+`project-clean` delta's scenario "A refusal beside a worktree whose path holds
+the main worktree"). To whether his word of 2026-10-23, given at 21:31:02Z,
+"yes, recommended for the ledger rows and 19-02 and 19-16", which he confirmed
+at 2026-10-31T17:58:12Z in lane openRepoProject-5's session he meant broadly,
+"Broad (lane 3's reading)", rules LQ-3 and O-2 here, he answered "Yes, ruled as
+recommended (Recommended)". So the push-child exception (lane
+openRepoProject-3's ledger row 19-08) stands as recommended, the change amended
+in place before its archive, as this draft does, so that the push child is the
+one Git child without the pins, which refuse a push over every protocol, while
+the explicit push of `clean --action push` must reach its remote; the
+alternative, a follow-up change after the archive, would have cost a second
+archive and left the archived spec wrong in between; and its entry leaves the
+list above. And O-2, the lead's R-208 reading of BA:271-276 (row 19-09), stands:
+a revalidation read that fails, or runs past its own budget while the deadline
+is not the limit, is `state-changed` whatever its step (D7). The lane's LQ-6 and
+LQ-8, which no section here records, stay open. Five more amendments of
 ratified sentences rest on lane rulings and findings rather than his word, and
 wait on his ratification of this amendment: the line-feed exception to the
 bounds (D7, D14), the cap's re-run and the count split (`proposal.md`

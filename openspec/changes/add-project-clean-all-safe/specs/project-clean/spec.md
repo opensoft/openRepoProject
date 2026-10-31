@@ -93,7 +93,9 @@ resolved repository.
   inspection-error rows first: git worktree repair, or remove the row by hand
   after review; a row's path could not be read, so do not run git worktree
   prune, git worktree remove or git gc until it can" or, where a row it counts
-  is also excluded as `registration-mismatch`, "repair or remove the
+  is also excluded as `registration-mismatch`, but none whose path is, or holds,
+  the main worktree, the common directory or another worktree, or which shares
+  its path with another row, "repair or remove the
   inspection-error rows first: git worktree repair, unset core.worktree and
   core.bare in the repository's config or in a worktree's config.worktree, or
   remove the row by hand after review; a row's path could not be read, so do not
@@ -127,6 +129,48 @@ resolved repository.
   be read because its parent directory denies search permission, and it is the
   next step of a linked worktree whose path holds the common directory or
   another linked worktree, or which shares its path with another row
+
+#### Scenario: A refusal beside a worktree whose path holds the main worktree
+
+- **WHEN** the main worktree sits inside a tracked directory of an otherwise
+  eligible linked worktree W, whose registration agrees in both directions,
+  beside a linked worktree R whose `config.worktree` sets `core.worktree` to
+  another directory under `extensions.worktreeConfig`, and a preview of
+  `--all-safe` and `--all-safe --apply --yes` run
+- **THEN** the `inspection-incomplete` refusal of each names the remedy "repair
+  or remove the inspection-error rows first: git worktree repair, git worktree
+  prune, unset core.worktree and core.bare in the repository's config or in a
+  worktree's config.worktree, or remove the row by hand after review, except one
+  whose path is or holds the main worktree, the common directory or another
+  worktree, which must not be deleted by hand or with git worktree remove:
+  review its registration with git worktree list --porcelain; git worktree prune
+  also deletes the entry, and so the HEAD reflog, of every other worktree whose
+  path is missing, one moved or on an unmounted drive included, so run git
+  worktree prune --dry-run first and remount or repair any it lists that still
+  exists", since the `registration-mismatch` form's "or remove the row by hand
+  after review", followed literally for W, deletes the main worktree and the
+  repository
+- **AND** where a third linked worktree's path cannot be read because its parent
+  directory denies search permission, the remedy is "repair or remove the
+  inspection-error rows first: git worktree repair, unset core.worktree and
+  core.bare in the repository's config or in a worktree's config.worktree, or
+  remove the row by hand after review, except one whose path is or holds the
+  main worktree, the common directory or another worktree, which must not be
+  deleted by hand or with git worktree remove: review its registration with git
+  worktree list --porcelain; a row's path could not be read, so do not run git
+  worktree prune, git worktree remove or git gc until it can"
+- **AND** each remedy is the same where a row the refusal counts is a linked
+  worktree whose path holds the common directory or another linked worktree, or
+  which shares its path with another row
+- **AND** without W, the refusal names the `registration-mismatch` form
+  unchanged, "repair or remove the inspection-error rows first: git worktree
+  repair, git worktree prune, unset core.worktree and core.bare in the
+  repository's config or in a worktree's config.worktree, or remove the row by
+  hand after review; git worktree prune also deletes the entry, and so the HEAD
+  reflog, of every other worktree whose path is missing, one moved or on an
+  unmounted drive included, so run git worktree prune --dry-run first and
+  remount or repair any it lists that still exists", and, beside the third
+  linked worktree, the form that "An unreadable worktree is one row" states
 
 #### Scenario: A failed status probe on the merge-target checkout
 
@@ -852,9 +896,11 @@ when its index holds any gitlink, its worktree administrative directory holds a
 `modules` entry, or an `lstat` of `<dir>/.git`, for any directory `<dir>` of
 the worktree that holds an index entry directly or below it, other than the
 worktree's own top level, finds an entry; those `lstat`s SHALL be counted in the
-filesystem budget, all of a row's in one filesystem call under one budget, and
-one that fails other than with `ENOENT` or `ENOTDIR`, or a call that runs past
-that budget, SHALL make the row `inspection-error`. A row SHALL be excluded as
+filesystem budget, all of a row's `lstat`s in one filesystem call under one
+budget, and one that fails other than with `ENOENT` or `ENOTDIR`, or a call not
+finished within that budget, the deadline not being the limit, SHALL make the
+row `inspection-error`, and the deadline passing SHALL leave the plan incomplete
+with `deadline-exceeded`, as for every other read. A row SHALL be excluded as
 `hidden-local-state` when its index flags any entry assume-unchanged or
 skip-worktree, sparse checkouts included; the index SHALL be read inside the
 row's own worktree, and both gates SHALL be checked only for rows that pass

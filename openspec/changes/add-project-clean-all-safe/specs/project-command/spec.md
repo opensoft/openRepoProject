@@ -248,7 +248,12 @@ status probe: `status --porcelain=v1 -z --untracked-files=normal
 --ignored=matching`. Every Git output that carries a path SHALL be parsed
 NUL-delimited. A branch whose configured upstream's remote-tracking ref is
 missing SHALL have `upstream` set to the configured short name, `remote_present`
-false, and `ahead` and `behind` null.
+false, and `ahead` and `behind` null. A row whose branch is `refs/heads/HEAD`
+SHALL read no upstream evidence from that ref listing, since Git prints there
+the upstream and track of the branch that HEAD names, whatever `branch.HEAD.*`
+says: its `upstream`, `remote_present`, `ahead` and `behind` SHALL be null, and
+the row SHALL be `inspection-error` with the row error `probe-failed`, `git
+for-each-ref failed: unparseable output`, in every subcommand.
 
 Combined probe: `dirty` SHALL be true once a record other than an ignored one
 arrives, and false once an ignored record arrives first or an empty stream ends

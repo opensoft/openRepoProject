@@ -9,7 +9,7 @@ to follow.
 Revised after the alignment review and the council (resolved below and on
 PR #11; the council's noted constraints are in `clarifications.md`); it adds
 Decisions and Corrections sections because it adopts a non-normative packet,
-and Open Questions for the two questions still before Brett Heap.
+and Open Questions for the question still before Brett Heap.
 
 Governing issue: opensoft/openRepoProject#9, claimed by lane openRepoProject-2
 (comment 6069500401); refs #6, the record of the project maintenance design
@@ -242,8 +242,18 @@ Scope).
   the main worktree and the repository, or the other worktree (design D18; the
   delta `Clean reports local worktree state`, its scenario "A worktree whose
   path holds the main worktree"; Brett Heap's M3 (a) of 2026-10-23, the lead's
-  R-413). The stale recommendation of `project status`, `project doctor` and
-  `project update` names no command, so where no row's path is unread it stays
+  R-413). Where an `inspection-incomplete` refusal counts such a row, both
+  `registration-mismatch` forms of its remedy add M3's exception, so that "or
+  remove the row by hand after review" reads "or remove the row by hand after
+  review, except one whose path is or holds the main worktree, the common
+  directory or another worktree, which must not be deleted by hand or with git
+  worktree remove: review its registration with git worktree list --porcelain",
+  and every other refusal prints its remedy unchanged (design D18; the delta
+  `Clean reports local worktree state`, its scenario "A refusal beside a
+  worktree whose path holds the main worktree"; Brett Heap's M4 (a) of
+  2026-10-31, the lead's R-432). The stale recommendation of `project status`,
+  `project doctor` and `project update` names no command, so where no row's path
+  is unread it stays
   the baseline's, without that warning (design D18 and Open Questions; his M1
   (a) of the same day). F-1's (b), the
   ceiling's recovery text for a target whose `.git` file or registry entry is
@@ -523,7 +533,13 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     common directory or another worktree, or which shares its path with another
     row, its own next step, the same in every mode, beside the scenario "An
     unreadable worktree is one row", which states the class's next steps (Brett
-    Heap's M3 (a) of 2026-10-23, the lead's R-413; design D18).
+    Heap's M3 (a) of 2026-10-23, the lead's R-413; design D18). The added
+    scenario "A refusal beside a worktree whose path holds the main worktree"
+    gives an `inspection-incomplete` refusal that counts such a row both
+    `registration-mismatch` forms of its remedy with M3's exception, and "An
+    unreadable worktree is one row" keeps its `registration-mismatch` form for a
+    refusal that counts none of them (Brett Heap's M4 (a) of 2026-10-31, the
+    lead's R-432; design D18).
   - MODIFIED (`:25`):
     `### Requirement: Clean classifies preservation and cleanup actions`.
     `:27-28` names 7 classes and the ladder has 15 (`project:418-468`); the
@@ -660,11 +676,13 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     (2) of 2026-10-23, `contains-submodule` also excludes a row where an `lstat`
     of `<dir>/.git` finds an entry, for any directory of the worktree that holds
     an index entry directly or below it, other than the worktree's own top
-    level, those `lstat`s in the filesystem budget, all of a row's in one
-    filesystem call, and one that fails other than with `ENOENT` or `ENOTDIR`,
-    or a call past its budget, making the row `inspection-error` (round (s),
-    lane openRepoProject-3's W141 LOW-3 and W139 LOW-1; the lead's R-408 and
-    R-409).
+    level, those `lstat`s in the filesystem budget, all of a row's `lstat`s in
+    one filesystem call under one budget, and one that fails other than with
+    `ENOENT` or `ENOTDIR`, or a call not finished within that budget, the
+    deadline not being the limit, making the row `inspection-error`, the
+    deadline passing leaving the plan incomplete with `deadline-exceeded` (round
+    (s), lane openRepoProject-3's W141 LOW-3 and W139 LOW-1; the lead's R-408
+    and R-409; round (u), its W146 LOW-1).
   - ADDED:
     `### Requirement: Clean bounds its Git work and reports omitted work`.
     The deadline, budgets, caps, `omitted`, `probes`, `operations`, `limits`
@@ -797,7 +815,11 @@ Headers are quoted verbatim, one per line; ADDED headers are proposed text.
     except the push child, with `GIT_ALLOW_PROTOCOL` in the scrub, against lazy
     fetches (R-23, R-25); a status probe that exits 0 having written a warning
     to standard error being a failed one, so that the scenario "A git that
-    floods standard error" ends with the row `inspection-error` (his Q8); the
+    floods standard error" ends with the row `inspection-error` (his Q8); a row
+    whose branch is `refs/heads/HEAD` reading no upstream evidence from the ref
+    listing, which prints for it the upstream and track of the branch that HEAD
+    names, so that the row is `inspection-error` with `probe-failed` in every
+    subcommand (the lead's R-61 (b), stated by round (u)); the
     stale-worktree recommendation of status, doctor and update beside a row
     whose path could not be read, with the added scenario "A stale entry beside
     a worktree whose path cannot be read" (his "Yes, add T9 (Recommended)", the
@@ -976,9 +998,10 @@ Each is a proposal decision. Those that PR #11 carried were ratified with its
 merge by Brett Heap's word of 2026-10-09, "ratify, merge #11 and run the
 runbook". This amendment adds others: the departures from packet decisions
 below say which of their entries are which, the council's push-child exception
-names its own standing, before Brett Heap, and of the amendments of ratified
-text after the departures, the first group rests on his words of 2026-10-22 and
-2026-10-23 and the second on the lead's rulings, waiting on his ratification of
+names its own standing, before Brett Heap until his word of 2026-10-31, and of
+the amendments of ratified text after the departures, the first group rests on
+his words of 2026-10-22, 2026-10-23 and 2026-10-31 and the second on the lead's
+rulings, waiting on his ratification of
 #19; every other entry was carried by PR #11. OQ numbers are the lane's decision
 list. Packet open decisions taken, each citing the packet text that leaves it
 open:
@@ -1302,8 +1325,9 @@ W87 OBS-3). They take effect only when Brett Heap ratifies this amendment.
   HEAD there, or check out T there, then retry.`, T the merge target, where the
   baseline prints one message for any present holder, the main worktree
   included, `Remove the linked worktree first; branch deletion is a separate
-  action.` (`project:730` at `15504f1`, `project:582` at `a040790`), which names
-  a removal that Git refuses for the main worktree, `git worktree remove` of it
+  action.` (`clean()`, `project:733` at `b42355e`, `project:582` at `a040790`),
+  which names a removal that Git refuses for the main worktree, `git worktree
+  remove` of it
   exiting 128. The trigger, the exit status and every other message are the
   baseline's; only that message changes, so it allows no deletion that the
   baseline refused (Capabilities `:55`; design D18; the delta `Clean can
@@ -1335,11 +1359,14 @@ R-290), "R-307: yes; R-310: yes" (the lead's R-319), "R-320: yes" (the lead's
 R-321) and "R-324: yes" (the lead's R-343) of the same day, and on his "Yes,
 warn (Recommended)" of 2026-10-23 (the lead's R-365), his "yes, recommended
 for Q1-Q9" of the same day (the lead's R-380) and his "yes, recommended for M1
-and M3" of that day too (the lead's R-413); the entry for R-365 records his
+and M3" of that day too (the lead's R-413), and on his "(a) Add M3's exception
+(Recommended)" and "Yes, ruled as recommended (Recommended)" of 2026-10-31 (the
+lead's R-432); the entry for R-365 records his
 "Yes, add T9 (Recommended)" of that day as well, though it replaces no sentence,
 none stating its text, the entry for R-380 records the answers of R-380, some of
-which add text that replaces no sentence, and the last entry records the answers
-of R-413, of which M1's replaces no sentence:
+which add text that replaces no sentence, the entry for R-413 records the
+answers of R-413, of which M1's replaces no sentence, and the last entry records
+the answers of R-432, of which O-2's replaces no sentence:
 
 - **A locked worktree's recovery text** (lane openRepoProject-3's W52 F-2;
   amends `0050f3e` pcl:135-138): a locked linked worktree whose status records
@@ -1471,8 +1498,9 @@ of R-413, of which M1's replaces no sentence:
   exceed the row cap of M; remove worktrees explicitly, or prune stale entries
   by hand", and design:759-760, "every other class its recommendation", which
   carries the ladder's recommendation for a `stale-worktree` row, "Review and
-  prune stale worktree metadata manually." (`project:568` at `0050f3e`)): `git
-  worktree prune`, run for a stale entry's sake, deletes the administrative
+  prune stale worktree metadata manually." (`cleanup_report()`, `project:571` at
+  `b42355e`)): `git worktree prune`, run for a stale entry's sake, deletes the
+  administrative
   directory of a worktree whose path Git cannot stat too (W86 NM-1, on Git
   2.43.0 and 2.36.6), the hazard of R-307 and R-310 met at two more texts, yet
   both ratified sentences advise it beside such a row. Where any row of the same
@@ -1578,7 +1606,7 @@ of R-413, of which M1's replaces no sentence:
   answer. T9 is the lead's label in R-365 for `project
   status --json`'s recommendation for a stale entry, "Review the stale worktree
   metadata before pruning it manually.", which the baseline's `repo_state()`
-  sets (`project:501` at `0050f3e`) and which no sentence of PR #11 or of the
+  sets (`project:504` at `b42355e`) and which no sentence of PR #11 or of the
   deltas states: `git worktree prune`, run for a stale entry's sake, deletes the
   administrative directory of a worktree whose path Git cannot stat too (W86
   NM-1), as for T6 and T7. Where any row of the same repository's worktree
@@ -1747,6 +1775,65 @@ of R-413, of which M1's replaces no sentence:
     worktree" of `Clean reports local worktree state`, which lane
     openRepoProject-5's #27 does not carry (What Changes; Capabilities `:10`;
     design D18 and Open Questions).
+- **Brett Heap's answers of 2026-10-31** (his words in lane openRepoProject-2's
+  question prompt, given at 18:20:06Z in its session, the lead's R-432): to M4,
+  "(a) Add M3's exception (Recommended)"; and to whether his word of 2026-10-23,
+  given at 21:31:02Z, "yes, recommended for the ledger rows and 19-02 and
+  19-16", read broadly, as he confirmed at 2026-10-31T17:58:12Z in lane
+  openRepoProject-5's session, "Broad (lane 3's reading)", rules LQ-3 and O-2
+  here, "Yes, ruled as recommended (Recommended)". The lane's LQ-6 and LQ-8 stay
+  open.
+  - **M4** (amends, for a refusal that counts such a row, the remedy of
+    `inspection-incomplete`, `0050f3e` design:775-777, in the
+    `registration-mismatch` forms that round (h) and the entry "No prune advice
+    where a row's path could not be read" above gave it): where a row that an
+    `inspection-incomplete` refusal counts is `registration-mismatch` because
+    its path is, or holds, the main worktree, the common directory or another
+    worktree, or because it shares its path with another row, the rows that M3
+    gives their own next step, the `registration-mismatch` form of the remedy
+    reads "repair or remove the inspection-error rows first: git worktree
+    repair, git worktree prune, unset core.worktree and core.bare in the
+    repository's config or in a worktree's config.worktree, or remove the row by
+    hand after review, except one whose path is or holds the main worktree, the
+    common directory or another worktree, which must not be deleted by hand or
+    with git worktree remove: review its registration with git worktree list
+    --porcelain; git worktree prune also deletes the entry, and so the HEAD
+    reflog, of every other worktree whose path is missing, one moved or on an
+    unmounted drive included, so run git worktree prune --dry-run first and
+    remount or repair any it lists that still exists", and its unread form
+    "repair or remove the inspection-error rows first: git worktree repair,
+    unset core.worktree and core.bare in the repository's config or in a
+    worktree's config.worktree, or remove the row by hand after review, except
+    one whose path is or holds the main worktree, the common directory or
+    another worktree, which must not be deleted by hand or with git worktree
+    remove: review its registration with git worktree list --porcelain; a row's
+    path could not be read, so do not run git worktree prune, git worktree
+    remove or git gc until it can", since "or remove the row by hand after
+    review", followed literally for such a row, deletes the main worktree and
+    the repository, or the other worktree, as M3's step says; every other
+    refusal prints its remedy unchanged. The question came from feature 004's
+    code round (the lead's R-416) and stated a lean, its (a), and feature 004's
+    next code round builds both texts (the lead's R-432). The delta states them
+    in the added scenario "A refusal beside a worktree whose path holds the main
+    worktree" of `Clean reports local worktree state`, which lane
+    openRepoProject-5's #27 does not carry, beside the scenario "An unreadable
+    worktree is one row", whose `registration-mismatch` form is now for a
+    refusal that counts none of those rows (What Changes; Capabilities `:10`;
+    design D18 and Open Questions).
+  - **LQ-3, the push-child exception** (lane openRepoProject-3's ledger row
+    19-08; amends `0050f3e` pc:113-114, "Every Git child, of every kind, SHALL
+    also pass" the seven protocol pins, for the push child alone): as
+    recommended, the change is amended in place before its archive, as this
+    draft does, so that the push child of `clean --action push` is the one Git
+    child without the pins; the council's entry "Lazy fetches pinned off, the
+    push child excepted" below states the exception, and its question leaves
+    Open Questions here and in the design.
+  - **O-2** (lane openRepoProject-3's ledger row 19-09; replaces no sentence):
+    the lead's R-208 reading of `BA:271-276` stands, so that at revalidation a
+    filesystem read that fails, or runs past its own budget while the deadline
+    is not the limit, is `state-changed` whatever its step, as a Git child is
+    (the departure "A revalidation read or child that the work deadline cuts is
+    no difference"; design D7).
 
 Amendments of ratified text on lane rulings, waiting on his ratification of #19:
 each replaces a sentence that the merge of PR #11 ratified, on a ruling of the
@@ -1887,8 +1974,9 @@ Council decisions, with the packet text each replaces or extends:
   of another name with its own `allow=always` in the repository's configuration
   could still fetch; the probe then succeeds rather than fails, and no unsafe
   removal follows (design Context, D11, Risks). The push-child exception (R-23,
-  R-25 and R-28; before Brett Heap; Open Questions, the push-child exception;
-  lane 2's LQ-3): the push child of `clean --action push` reaches a remote,
+  R-25 and R-28; ruled by Brett Heap on 2026-10-31, Decisions, amendments,
+  "Brett Heap's answers of 2026-10-31"; lane 2's LQ-3): the push child of `clean
+  --action push` reaches a remote,
   which the pins would refuse over every protocol, so it keeps the scrub but for
   `GIT_ALLOW_PROTOCOL`, the other thirty names removed and a caller's
   `GIT_ALLOW_PROTOCOL` kept (R-28), runs unbounded in `project`'s process group
@@ -2018,15 +2106,6 @@ OQ-29's cap; these bind until that revision merges (C2 is now reading R9).
   merge commit, so in squash-merging repositories the MVP selects little.
   Before Brett Heap, recommending a local patch-equivalence proof (`git
   cherry` or patch IDs against the target) as a follow-on change.
-- **The push-child exception.** The pins on every Git child (R-23, R-25) refuse
-  a push over every protocol (a local-path `origin` fails with `fatal: transport
-  'file' not allowed`, exit 128), yet this change keeps the explicit push of
-  `clean --action push`, whose child must reach its remote. Before Brett Heap,
-  recommending that the change be amended in place before its archive, as this
-  draft does, so that the push child is the one Git child without the pins; the
-  alternative is a follow-up change after the archive, as
-  `fix-parent-obstacle-wording` followed `prefer-triad-in-project-new`, which
-  costs a second archive and leaves the archived spec wrong in between.
 - **LQ-20, the fit where `extensions.worktreeConfig` is true.** RESOLVED on
   2026-10-22: Brett Heap chose step (i), in his words to lane openRepoProject-2,
   "LQ-20: go with (i), measure first" (the lead's R-236). The two probes were
@@ -2092,7 +2171,10 @@ OQ-29's cap; these bind until that revision merges (C2 is now reading R9).
 
 The question of a merged worktree whose remote branch was deleted is closed:
 Brett Heap ruled on 2026-10-09 that a local ancestry proof outranks
-`remote-gone` for worktree rows (Decisions, departures).
+`remote-gone` for worktree rows (Decisions, departures). The push-child
+exception is closed too: on 2026-10-31 Brett Heap ruled it as recommended, his
+word of 2026-10-23 read broadly ruling it in this change (Decisions, amendments,
+"Brett Heap's answers of 2026-10-31"; lane 2's LQ-3).
 
 ## Questions Resolved by the Alignment Review
 
@@ -2552,8 +2634,9 @@ replaces the ratified text for locked rows and waits on Brett Heap's word
 together with F-1, the ceiling's recovery text (G-1), as both did until he
 ruled them on 2026-10-22 (round (h)). Branch deletion's message
 for a branch the main worktree holds, round (g)'s F-5, is declared among the
-departures, against `BA:424-425` and the baseline's `project:730` at `15504f1`,
-as push's wider refusal is (G-2). Two AND clauses pin round (g)'s two unpinned
+departures, against `BA:424-425` and the baseline's `clean()`, `project:733` at
+`b42355e`, as push's wider refusal is (G-2). Two AND clauses pin round (g)'s two
+unpinned
 clauses, so the scenario counts stay 71, 22 and 24: "Only tracked-file
 deletions" gains a locked worktree's recovery text, and "A linked worktree whose
 work tree is redirected" the remedy that its `registration-mismatch` group
@@ -2939,7 +3022,8 @@ recommendation of a `stale-worktree` row and the locked form of it leave prune
 out and warn against it, and the `inspect-cap` remedy, whose rows past the cap
 are never read, always does. The amendments list's first group gains an entry of
 its own for the three texts, quoting `0050f3e` design:777-779 and design:759-760
-and the ladder's `project:568`; design D18 states them beside the sentences they
+and the ladder's `cleanup_report()`, `project:571` at `b42355e`; design D18
+states them beside the sentences they
 qualify; the delta `Clean bounds its Git work and reports omitted work` states
 the cap remedy as an AND clause of its scenario "Row cap and planning failures",
 the only edit of a delta, which changes no requirement's text; and What Changes
@@ -3106,7 +3190,7 @@ unchanged, byte for byte. To the second, "Yes, add T9 (Recommended)": T9 is the
 lead's label for
 `project status --json`'s recommendation for a stale entry, "Review the stale
 worktree metadata before pruning it manually.", which the baseline's
-`repo_state()` sets (`project:501` at `0050f3e`) and which this change did not
+`repo_state()` sets (`project:504` at `b42355e`) and which this change did not
 state; beside a row whose path could not be read, in T6's condition for the
 worktree listing of one repository, it reads "Review the stale worktree metadata
 before pruning it manually; a row's path could not be read, so do not run git
@@ -3318,7 +3402,8 @@ in place of its class's, the baseline's "This clean, merged, non-current
 worktree may be removed explicitly." or "The branch is merged, but this is the
 current checkout; switch away before removal.", copied by script from feature
 004's `project` at `c0841aa`, its `TEXT` key `recommendation_main_worktree`,
-and from the baseline's `project:607` and `:610` at `15504f1`, with the added
+and from the baseline's `cleanup_report()`, `project:607` and `:610` at
+`15504f1`, `:610` and `:613` at `b42355e`, with the added
 scenario "The main worktree's recommendation"; for that row it narrows `0050f3e`
 pcl:128-131 and pcl:161-163, whose words stay, so it joins the amendments of
 ratified text that wait on Brett Heap's ratification, and round (g)'s "neither
@@ -3426,6 +3511,88 @@ re-wrapped the lines after each of its edits, up to where the old line breaks
 resume, with no other change of words (What Changes; Capabilities `:10`;
 Decisions, amendments; this list; design Context, D18 and Open Questions;
 `tasks.md` 1.2 and 1.4; the `project-clean` delta).
+
+Round (u), Brett Heap's answers of 2026-10-31, given at 18:20:06Z in lane
+openRepoProject-2's session to the lead's question prompt (the lead's R-432),
+with main's `b42355e` merged and four findings (validate 9 of 9, its output as
+at `54e869b`; the scenario counts 76, 25 and 26). To M4, the question that
+feature 004's code round raised on M3's rows (the lead's R-416), put to him at
+2026-10-23T22:00:07Z and again on 2026-10-31, he answered "(a) Add M3's
+exception (Recommended)": where an `inspection-incomplete` refusal counts a
+`registration-mismatch` row whose path is, or holds, the main worktree, the
+common directory or another worktree, or which shares its path with another row,
+the remedy's `registration-mismatch` form and its unread form each add M3's
+exception after "or remove the row by hand after review", and every other
+refusal prints its remedy unchanged; the two variants, of 699 and 534
+characters, are copied by script from those two forms with the question's words,
+and feature 004's code round builds them byte for byte. Design D18 states them
+beside the forms; the delta adds the scenario "A refusal beside a worktree whose
+path holds the main worktree" to `Clean reports local worktree state`, which
+lane openRepoProject-5's #27 does not carry, after "A worktree whose path holds
+the main worktree", and the scenario "An unreadable worktree is one row" says
+that its `registration-mismatch` form is for a refusal that counts none of those
+rows. M4 was never in Open Questions here, having been put to him after round
+(t), so it goes straight to the record of his rulings. To whether his word of
+2026-10-23T21:31:02Z, "yes, recommended for the ledger rows and 19-02 and
+19-16", read broadly, as he confirmed at 2026-10-31T17:58:12Z, "Broad (lane 3's
+reading)", rules LQ-3 and O-2 here, he answered "Yes, ruled as recommended
+(Recommended)": LQ-3, the push-child exception (lane openRepoProject-3's ledger
+row 19-08), leaves Open Questions here and in the design for the record of his
+rulings, and O-2, the lead's R-208 reading of `BA:271-276` (row 19-09), is
+recorded as ruled in design D7 and Open Questions; both were drafted that way,
+and no delta changes for them; the lane's LQ-6 and LQ-8 stay open. `tasks.md`
+1.7, which asks for his word on the pull request with its link, and the
+Migration Plan's first step, which points to it, are unchanged. Lane
+openRepoProject-5's RN-1, under the lead's R-432: the evidence model states R-61
+(b), that a row whose branch is `refs/heads/HEAD` reads no upstream evidence
+from the ref listing, which prints there the upstream and track of the branch
+that HEAD names (checked on Git 2.43.0), so that the row is `inspection-error`
+with `probe-failed`, `git for-each-ref failed: unparseable output`, in every
+subcommand, under the parity rule's "except where a requirement states a
+change"; design D1, which said that with `core.warnAmbiguousRefs` false a run of
+`add-project-clean-branch-retirement` could retire `refs/heads/HEAD`, now says
+that under either setting such a row is `inspection-error` and never selected,
+and round (r)'s entry keeps its words. R-61 (b) rests on the lead's ruling and
+waits on Brett Heap's ratification of this amendment. Lane openRepoProject-3's
+W161, its ledger row 004-08, under the lead's R-432: no text here said that a
+row which shares its path with another row is `registration-mismatch` in every
+command, or put it under the shared evidence model, whose registration test both
+such rows pass, and design D7 now confines R-67 (c) to `clean`'s plan, as R-409
+confined Q2 (1) and Q9 (b): `clean` keeps such a row `registration-mismatch`,
+with M3's step and M4's remedy, and `project status`, `project doctor` and
+`project update` probe it as the baseline does, doctor not exiting 1 for it.
+W146's LOW-1: the gate's sentence of `Clean previews and applies a batch of
+eligible worktree removals in one repository` names its noun, "all of a row's
+`lstat`s", and gives the deadline case in the sibling gates' words, "or a call
+not finished within that budget, the deadline not being the limit, ... and the
+deadline passing SHALL leave the plan incomplete with `deadline-exceeded`, as
+for every other read", and Capabilities follows; that sentence is one of Brett
+Heap's Q2 (2) texts as round (s) clarified it, and its meaning does not change.
+W160's OBS-9: main's `project` gained three lines in `workbenches()` with #40,
+so the cites of main's `project` past :89, pinned at `15504f1` or `0050f3e`, are
+re-cited at `b42355e`, each found by its content and named by its function,
+`clean()` :733, `cleanup_report()` :571, :610 and :613, and `repo_state()` :504,
+the two copy sources keeping their `15504f1` lines beside the new ones; the
+cites pinned at `da33d92`, this file's and the design's convention, name the
+`a040790` baseline, which #40 does not touch. Lane openRepoProject-5's
+observation from its round B27 (the lead's R-433): the scenarios "An edit hidden
+by assume-unchanged survives" and "A worktree holding a submodule is never
+offered" of `Cleanup preserves all local work not proven disposable` named a
+merged, clean, published worktree without saying that its branch has a commit of
+its own, so a worktree on an unstarted branch met their WHEN and was excluded at
+gate 7 as `unstarted-branch`, never reaching the `hidden-local-state` or
+`contains-submodule` gate that their THEN names; each WHEN gains "its branch has
+a commit of its own", the words of #27's own fix of that kind (its RK LOW-1),
+amending `0050f3e` rs:38-40 and rs:47-48 with no change of behaviour. Main's
+`b42355e` (#40 and #41) was merged clean in a commit of its own, changing no
+file of this change. Every text that Brett Heap ruled by name is unchanged, byte
+for byte, but the gate's sentence, by LOW-1's words; the new texts are M4's two
+variants. `tasks.md` 1.2 names this round, and 1.4 gives the new scenario
+counts. This round's commit re-wrapped only the lines of each edit, and the next
+line where an edit's last line was short, with no other change of words (What
+Changes; Capabilities; Decisions, amendments and council; Open Questions; this
+list; design Context, D1, D7, D18 and Open Questions; `tasks.md` 1.2 and 1.4;
+the three deltas).
 
 ### Council Verdicts
 

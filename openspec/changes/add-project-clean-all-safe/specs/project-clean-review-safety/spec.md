@@ -46,8 +46,8 @@ null, never false or 0, and SHALL keep its row out of every removal.
 #### Scenario: An edit hidden by assume-unchanged survives
 
 - **WHEN** a merged, clean, published linked worktree's only change is an edit
-  to a file flagged assume-unchanged in its own index, and `--apply --action
-  remove --worktree` names it with `--yes`
+  to a file flagged assume-unchanged in its own index, its branch has a commit
+  of its own, and `--apply --action remove --worktree` names it with `--yes`
 - **THEN** removal is refused with `target-excluded`, reason
   `hidden-local-state`, and exit 2, and the edit survives, where before this
   change the worktree was removed with exit 0, edit included
@@ -55,7 +55,8 @@ null, never false or 0, and SHALL keep its row out of every removal.
 #### Scenario: A worktree holding a submodule is never offered
 
 - **WHEN** a merged, clean, published linked worktree holds a populated
-  submodule, and `--apply --action remove --worktree` names it with `--yes`
+  submodule, its branch has a commit of its own, and `--apply --action remove
+  --worktree` names it with `--yes`
 - **THEN** removal is refused with `target-excluded`, reason
   `contains-submodule`, and exit 2 before any Git removal runs, where before
   this change it was offered and Git refused it with exit 128

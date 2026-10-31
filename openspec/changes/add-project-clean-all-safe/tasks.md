@@ -130,7 +130,13 @@ duplicate them, and nothing here is an implementation step.
   in status, doctor and update and M3 (a) giving a row whose path is, or holds,
   the main worktree, the common directory or another worktree its own next step
   (the commit titled 'Amend change 1: round (t), Brett Heap's M1 (a) and M3 (a)
-  (R-413)'); verified by the
+  (R-413)'); and round (u), Brett Heap's answers of 2026-10-31 to M4, "(a) Add
+  M3's exception (Recommended)", and on his ledger word for LQ-3 and O-2, "Yes,
+  ruled as recommended (Recommended)" (R-432), with R-61 (b) stated in the
+  evidence model, R-67 (c) confined to `clean`'s plan, lane 3's W146 LOW-1 and
+  W160 OBS-9, and lane 5's B27 observation on two scenarios, after main's
+  `b42355e` was merged (the commit titled 'Amend change 1: round (u), Brett
+  Heap's M4 (a), LQ-3 and O-2, R-61 (b), R-67 (c) (R-432)'); verified by the
   table "Questions Resolved by the Alignment Review" in `proposal.md` and the
   later-rulings list under it, which name the section each ruling edited.
 - [x] 1.3 Council resolved: every concern is VALID, none dismissed, the verdicts
@@ -138,9 +144,9 @@ duplicate them, and nothing here is an implementation step.
   recorded as N1 to N5 in `clarifications.md` (`1d4ed5b`); verified by
   `design.md`, whose D1 to D5 answer N1 to N5 one for one.
 - [x] 1.4 Spec deltas and design written: `specs/project-clean/spec.md` modifies
-  five requirements and adds six (75 scenarios, one added under each of Brett
-  Heap's rulings LQ-15, LQ-13 and LQ-14 and his Q1 and M3, one under the lead's
-  R-126, two under R-147, one under R-391 and one under R-408),
+  five requirements and adds six (76 scenarios, one added under each of Brett
+  Heap's rulings LQ-15, LQ-13 and LQ-14 and his Q1, M3 and M4, one under the
+  lead's R-126, two under R-147, one under R-391 and one under R-408),
   `specs/project-clean-review-safety/spec.md` modifies two and adds one (25
   scenarios, one added under R-22, one under each
   of LQ-13 and LQ-14, one under R-146, one under R-190, two under his Q2 and one
