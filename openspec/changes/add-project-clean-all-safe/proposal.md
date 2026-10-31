@@ -3582,17 +3582,60 @@ merged, clean, published worktree without saying that its branch has a commit of
 its own, so a worktree on an unstarted branch met their WHEN and was excluded at
 gate 7 as `unstarted-branch`, never reaching the `hidden-local-state` or
 `contains-submodule` gate that their THEN names; each WHEN gains "its branch has
-a commit of its own", the words of #27's own fix of that kind (its RK LOW-1),
-amending `0050f3e` rs:38-40 and rs:47-48 with no change of behaviour. Main's
-`b42355e` (#40 and #41) was merged clean in a commit of its own, changing no
-file of this change. Every text that Brett Heap ruled by name is unchanged, byte
-for byte, but the gate's sentence, by LOW-1's words; the new texts are M4's two
-variants. `tasks.md` 1.2 names this round, and 1.4 gives the new scenario
-counts. This round's commit re-wrapped only the lines of each edit, and the next
-line where an edit's last line was short, with no other change of words (What
-Changes; Capabilities; Decisions, amendments and council; Open Questions; this
-list; design Context, D1, D7, D18 and Open Questions; `tasks.md` 1.2 and 1.4;
-the three deltas).
+a commit of its own", the words of lane openRepoProject-5's round B27 draft of
+2026-10-31 for that kind of fix (its RK LOW-1, rs:98-99), which is not yet on
+#27's branch, amending `0050f3e` rs:38-40 and rs:47-48 with no change of
+behaviour. Main's `b42355e` (#40 and #41) was merged clean in a commit of its
+own, changing no file of this change. Round (u) changed five ruled or ratified
+texts, each declared above, and no other: the gate's sentence of `Clean
+previews and applies a batch of eligible worktree removals in one repository`,
+by LOW-1's words; the scenarios "An edit hidden by assume-unchanged survives"
+and "A worktree holding a submodule is never offered", ratified at `0050f3e`,
+by their WHENs; the requirement `Repository inspection requires Git 2.36 and
+shares one evidence model`, which gained R-61 (b); and the scenario "An
+unreadable worktree is one row", which took M4's qualifier. Every other text
+that Brett Heap ruled by name is unchanged, byte for byte; the new texts are
+M4's two variants, in D18 and in the added scenario "A refusal beside a
+worktree whose path holds the main worktree". `tasks.md` 1.2 names this round,
+and 1.4 gives the new scenario counts. This round's commit re-wrapped only the
+lines of each edit, and the next line where an edit's last line was short, with
+no other change of words (What Changes; Capabilities; Decisions, amendments and
+council; Open Questions; this list; design Context, D1, D7, D18 and Open
+Questions; `tasks.md` 1.2 and 1.4; the three deltas).
+
+Round (v), lane openRepoProject-3's W169 read of round (u), `54e869b..1476110`,
+under the lead's R-443 and R-444 (0 HIGH, 0 MEDIUM, 1 LOW, which is for feature
+004's T127 and not for this change, and 3 OBS), with no delta changed: lane
+openRepoProject-5's #27 carries the deltas' requirement blocks byte for byte,
+and the three items are in this file, `design.md` and `tasks.md`. W169's OBS-1:
+the round (u) entry's closing sentence, "Every text that Brett Heap ruled by
+name is unchanged, byte for byte, but the gate's sentence", counted one change
+where the entry declares five, so it now names every ruled or ratified text that
+round (u) changed: the gate's sentence, by LOW-1; the scenarios "An edit hidden
+by assume-unchanged survives" and "A worktree holding a submodule is never
+offered", ratified at `0050f3e`; the requirement `Repository inspection requires
+Git 2.36 and shares one evidence model`, which gained R-61 (b); and the scenario
+"An unreadable worktree is one row", which took M4's qualifier. W169's OBS-2:
+`tasks.md` 1.7, which round (u) left unchanged, still pointed at the `design.md`
+Open Questions entry that round (u) had moved out, and the Migration Plan's
+first step still said that the exception waits for his word; both now point at
+the record of his ruling (Decisions, amendments, "Brett Heap's answers of
+2026-10-31", LQ-3, and the closing paragraph of design Open Questions): his word
+of 2026-10-31, given at 18:20:06Z in lane openRepoProject-2's session to the
+lead's question prompt, "Yes, ruled as recommended (Recommended)", through his
+ledger word as he read it broadly (lane openRepoProject-2's RULED line
+3a060fccf). `tasks.md` 1.7 stays unticked, since its check asks for his word on
+the pull request, quoted with its link, which the archive pull request
+supplies. W169's OBS-3: the round (u) entry cited the added words of the two
+scenarios, "its branch has a commit of its own", as "#27's own fix", but #27's
+branch, at `7f3453c`, does not carry them; they are in lane openRepoProject-5's
+round B27 draft of 2026-10-31, not yet on #27's branch, and the entry now cites
+that draft. The LOW is feature 004's (T127's exception tuple lacks his quoted
+answer to M4), and no text here changes for it. `tasks.md` 1.2 names this
+round, and no count in 1.4 changes. This round's commit re-wrapped only the
+lines of each edit, and the next line where an edit's last line was short, with
+no other change of words (this list, round (u)'s entry; design Context and the
+Migration Plan; `tasks.md` 1.2 and 1.7).
 
 ### Council Verdicts
 

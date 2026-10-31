@@ -136,9 +136,15 @@ duplicate them, and nothing here is an implementation step.
   evidence model, R-67 (c) confined to `clean`'s plan, lane 3's W146 LOW-1 and
   W160 OBS-9, and lane 5's B27 observation on two scenarios, after main's
   `b42355e` was merged (the commit titled 'Amend change 1: round (u), Brett
-  Heap's M4 (a), LQ-3 and O-2, R-61 (b), R-67 (c) (R-432)'); verified by the
-  table "Questions Resolved by the Alignment Review" in `proposal.md` and the
-  later-rulings list under it, which name the section each ruling edited.
+  Heap's M4 (a), LQ-3 and O-2, R-61 (b), R-67 (c) (R-432)'); and round (v),
+  lane 3's W169 read of round (u), under the lead's R-443 and R-444, with no
+  delta changed: round (u)'s entry names the five ruled texts it changed and
+  cites lane 5's round B27 draft, not #27, for two scenarios' added words, and
+  1.7 and the Migration Plan's first step point at the record of his LQ-3
+  ruling (the commit titled 'Amend change 1: round (v), W169's OBS-1 to OBS-3
+  (R-443, R-444)'); verified by the table "Questions Resolved by the Alignment
+  Review" in `proposal.md` and the later-rulings list under it, which name the
+  section each ruling edited.
 - [x] 1.3 Council resolved: every concern is VALID, none dismissed, the verdicts
   V1 to V12 applied to `proposal.md` (`ea9c73b`) and the five NOTED constraints
   recorded as N1 to N5 in `clarifications.md` (`1d4ed5b`); verified by
@@ -172,10 +178,18 @@ duplicate them, and nothing here is an implementation step.
   https://github.com/opensoft/openRepoProject/pull/11#issuecomment-6087170840,
   PR #11 having landed by squash as 0050f3e.
 - [ ] 1.7 The push-child exception ratified by Brett Heap's word on the pull
-  request that amends this change, quoted with its link here, the `design.md`
-  Open Questions entry before him; verified by that quote. Feature 004 plans
-  under the exception, and a different ruling edits this amendment and that
-  plan. To fill when he rules: his words, verbatim, and the link to them.
+  request that amends this change, quoted with its link here; verified by that
+  quote. He ruled the exception (lane openRepoProject-3's LQ-3) on 2026-10-31
+  at 18:20:06Z, in lane openRepoProject-2's question prompt, "Yes, ruled as
+  recommended (Recommended)", through his ledger word as he read it broadly
+  (lane openRepoProject-2's RULED line 3a060fccf); the record of that ruling is
+  `proposal.md` Decisions, amendments, "Brett Heap's answers of 2026-10-31",
+  and the closing paragraph of `design.md` Open Questions, where the question no
+  longer stands as open. This task stays unticked, since its check asks for his
+  word on the pull request, quoted with its link, which the archive pull request
+  supplies. Feature 004 plans under the exception, and a different ruling edits
+  this amendment and that plan. To fill: his words, verbatim, and the link to
+  them.
 
 ## 2. Before the Speckit handoff
 

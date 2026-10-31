@@ -92,7 +92,9 @@ Open Questions; and round (u), Brett Heap's answers of 2026-10-31 to M4, "(a)
 Add M3's exception (Recommended)", and on his ledger word for LQ-3 and O-2,
 "Yes, ruled as recommended (Recommended)" (the lead's R-432), with lane
 openRepoProject-5's RN-1 and lane openRepoProject-3's W161, W146 LOW-1 and W160
-OBS-9, Context, D1, D7, D18 and Open Questions.
+OBS-9, Context, D1, D7, D18 and Open Questions; and round (v), lane
+openRepoProject-3's W169 read of round (u), under the lead's R-443 and R-444,
+the Migration Plan.
 Brett Heap's ruling of 2026-10-09 on open question 1, that a local ancestry
 proof outranks `remote-gone` for worktree rows, is in `proposal.md` Decisions
 and edited Context, D6, D7, D20, Risks, the Migration Plan and Open Questions
@@ -2433,8 +2435,12 @@ question 1). The README's clean section states them first.
 
 1. Ratification by Brett Heap's word on PR #11 (`tasks.md` 1.6), which
    ratified the V5 deferral and left the squash-merge question before him; the
-   push-child exception waits for his word on the pull request that amends
-   this change (`tasks.md` 1.7).
+   push-child exception, which he ruled as recommended on 2026-10-31 at
+   18:20:06Z, "Yes, ruled as recommended (Recommended)", through his ledger word
+   read broadly (the closing paragraph of Open Questions; `proposal.md`
+   Decisions, amendments), waits only for the quote of his word on the pull
+   request that `tasks.md` 1.7 asks for, which stays unticked until the archive
+   pull request supplies it.
 2. Governance tasks 2.1 (measurement) and 2.2 (the Git floor) ran before the
    handoff, and neither forced a change to a cap or the floor: the caps stand as
    measured, and the floor stays 2.36 with a scrub of one more name (R-21).
